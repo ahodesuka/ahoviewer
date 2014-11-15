@@ -1,0 +1,60 @@
+#ifndef _SITE_H_
+#define _SITE_H_
+
+#include <gtkmm.h>
+#include <pugixml.hpp>
+
+#include "curler.h"
+
+namespace AhoViewer
+{
+    namespace Booru
+    {
+        class Site
+        {
+        public:
+            enum class Rating
+            {
+                SAFE,
+                QUESTIONABLE,
+                EXPLICIT,
+            };
+
+            enum class Type
+            {
+                DANBOORU,
+                GELBOORU,
+            };
+
+            Site(std::string name, std::string url, Type type);
+            ~Site();
+
+            static Type string_to_type(std::string type);
+
+            pugi::xml_node download_posts(const std::string &tags, size_t page);
+
+            std::string get_name() const { return m_Name; }
+            std::string get_url() const { return m_Url; }
+            Glib::RefPtr<Gdk::Pixbuf> get_icon_pixbuf() const { return m_IconPixbuf; }
+            const std::vector<std::string>& get_tags() const { return m_Tags; }
+            std::string get_path();
+
+            void save_tags() const;
+            void set_row_values(Gtk::TreeModel::Row row);
+        private:
+            static const Glib::RefPtr<Gdk::Pixbuf>& get_missing_pixbuf();
+
+            static const std::map<Type, std::string> RequestURI;
+
+            std::string m_Name, m_Url, m_IconPath, m_TagsPath, m_Path;
+            Type m_Type;
+            std::vector<std::string> m_Tags;
+            Curler *m_Curl;
+
+            Glib::RefPtr<Gdk::Pixbuf> m_IconPixbuf;
+            Glib::Threads::Thread *m_IconCurlerThread;
+        };
+    }
+}
+
+#endif /* _SITE_H_ */
