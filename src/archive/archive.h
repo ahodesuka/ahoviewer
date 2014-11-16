@@ -12,7 +12,7 @@ namespace AhoViewer
     {
     public:
         // Progress signal to show the progress in the status bar
-        typedef sigc::signal<void, int, int> SignalExtractorProgressType;
+        typedef sigc::signal<void, size_t, size_t> SignalProgressType;
 
         enum class Type
         {
@@ -28,15 +28,15 @@ namespace AhoViewer
         class Extractor
         {
         public:
-            virtual ~Extractor() = 0;
+            virtual ~Extractor() { }
             virtual std::string extract(const std::string&) const = 0;
 
-            SignalExtractorProgressType signal_extractor_progress() const
+            SignalProgressType signal_progress() const
             {
-                return m_SignalExtractorProgress;
+                return m_SignalProgress;
             }
         protected:
-            SignalExtractorProgressType m_SignalExtractorProgress;
+            SignalProgressType m_SignalProgress;
         };
 
         // Simple Image class that overrides get_filename and get_thumbnail
@@ -68,8 +68,6 @@ namespace AhoViewer
 
         std::string m_Path, m_ExtractedPath;
     };
-
-    inline Archive::Extractor::~Extractor() { }
 }
 
 #endif /* _ARCHIVE_H_ */

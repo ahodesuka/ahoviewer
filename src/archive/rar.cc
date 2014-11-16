@@ -45,7 +45,7 @@ std::string Rar::extract(const std::string &path) const
                 while (RARReadHeader(rar, &header) == 0)
                 {
                     RARProcessFile(rar, RAR_EXTRACT, const_cast<char*>(extractedPath.c_str()), NULL);
-                    m_SignalExtractorProgress(++nExtracted, nEntries);
+                    m_SignalProgress(++nExtracted, nEntries);
                 }
             }
 

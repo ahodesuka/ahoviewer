@@ -69,7 +69,7 @@ std::string Zip::extract(const std::string &path) const
                     zip_fclose(file);
                 }
 
-                m_SignalExtractorProgress(i + 1, nEntries);
+                m_SignalProgress(i + 1, nEntries);
             }
         }
 

@@ -47,7 +47,7 @@ MainWindow::MainWindow(BaseObjectType *cobj, const Glib::RefPtr<Gtk::Builder> &b
     // Connect archive extractors progress signals
     for (const std::pair<Archive::Type, const Archive::Extractor*> &kv : Archive::Extractors)
     {
-        kv.second->signal_extractor_progress().connect([ this ](int e, int t)
+        kv.second->signal_progress().connect([ this ](size_t e, size_t t)
         {
             m_StatusBar->set_message("Extracting");
             m_StatusBar->set_progress((double)e / t);
