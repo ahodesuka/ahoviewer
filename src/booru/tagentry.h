@@ -21,6 +21,8 @@ namespace AhoViewer
             ~TagEntry();
 
             void set_tags(const std::vector<std::string> &tags);
+        protected:
+            virtual void on_grab_focus();
         private:
             inline bool match_func(const std::string&,
                                    const Gtk::TreeModel::const_iterator&) { return true; }

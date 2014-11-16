@@ -33,6 +33,14 @@ void TagEntry::set_tags(const std::vector<std::string> &tags)
     m_Tags = &tags;
 }
 
+void TagEntry::on_grab_focus()
+{
+    Gtk::Entry::on_grab_focus();
+
+    select_region(0, 0);
+    set_position(-1);
+}
+
 void TagEntry::on_text_changed()
 {
     size_t pos = get_text().find_last_of(' ');
