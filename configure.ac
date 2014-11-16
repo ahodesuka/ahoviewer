@@ -21,7 +21,6 @@ AC_SUBST(libzip_CFLAGS)
 AC_SUBST(libzip_LIBS)
 
 CXXFLAGS="$CXXFLAGS -Wall -Wextra -pedantic"
-# -ggdb"
 
 AC_PROG_CXX
 AC_PROG_INSTALL
@@ -37,7 +36,7 @@ PKG_CHECK_MODULES([glibmm], [glibmm-2.4 >= 2.36.0])
 
 PKG_CHECK_MODULES([gtkmm], [gtkmm-2.4 >= 2.20.0])
 
-LIBCURL_CHECK_CONFIG(, 7.32.0,, [AC_MSG_ERROR([libcurl >= 7.32.0 not found])])
+LIBCURL_CHECK_CONFIG(, 7.16.0,, [AC_MSG_ERROR([libcurl >= 7.16.0 not found])])
 
 AC_CHECK_HEADER([pugixml.hpp],, AC_MSG_ERROR([pugixml.hpp not found]))
 AC_CHECK_LIB([pugixml], [main], [pugixml_LIBS="-lpugixml"],
