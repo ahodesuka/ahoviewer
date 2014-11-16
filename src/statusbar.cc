@@ -1,5 +1,4 @@
 #include <iomanip>
-#include <iostream>
 #include <sstream>
 
 #include "statusbar.h"
@@ -47,9 +46,7 @@ void StatusBar::set_message(const std::string &msg, const Priority priority, con
     if (priority < m_MessagePriority)
         return;
 
-    if (m_MessageConn)
-        m_MessageConn.disconnect();
-
+    m_MessageConn.disconnect();
     m_MessagePriority = priority;
     m_Message->set_text(msg);
     m_MessageSeparator->show();
@@ -65,9 +62,7 @@ void StatusBar::set_progress(const double fraction, const Priority priority, con
     if (priority < m_ProgressPriority)
         return;
 
-    if (m_ProgressConn)
-        m_ProgressConn.disconnect();
-
+    m_ProgressConn.disconnect();
     m_ProgressPriority = priority;
     m_ProgressBar->set_fraction(fraction);
     m_ProgressBar->show();
@@ -93,9 +88,7 @@ void StatusBar::clear_filename()
 
 void StatusBar::clear_message()
 {
-    if (m_MessageConn)
-        m_MessageConn.disconnect();
-
+    m_MessageConn.disconnect();
     m_MessageSeparator->hide();
     m_Message->set_text("");
     m_MessagePriority = Priority::NORMAL;
@@ -103,9 +96,7 @@ void StatusBar::clear_message()
 
 void StatusBar::clear_progress()
 {
-    if (m_ProgressConn)
-        m_ProgressConn.disconnect();
-
+    m_ProgressConn.disconnect();
     m_ProgressBar->hide();
     m_ProgressBar->set_fraction(0);
     m_ProgressPriority = Priority::NORMAL;

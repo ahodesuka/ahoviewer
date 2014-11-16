@@ -1,8 +1,9 @@
 #include <iostream>
 
-#include "config.h"
 #include "settings.h"
 using namespace AhoViewer;
+
+#include "config.h"
 
 SettingsManager AhoViewer::Settings;
 

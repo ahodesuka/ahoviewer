@@ -1,9 +1,8 @@
-#include <iostream>
-
 #include "imagebox.h"
+using namespace AhoViewer;
+
 #include "settings.h"
 #include "statusbar.h"
-using namespace AhoViewer;
 
 const double ImageBox::SmoothScrollStep = 1000.0 / 60.0;
 
@@ -34,9 +33,7 @@ void ImageBox::queue_draw_image(const bool scroll)
     if (!get_realized() || !m_Image || (m_DrawConn && !scroll))
         return;
 
-    if (m_DrawConn)
-        m_DrawConn.disconnect();
-
+    m_DrawConn.disconnect();
     m_DrawConn = Glib::signal_idle().connect(
             sigc::bind_return(sigc::bind(sigc::mem_fun(*this, &ImageBox::draw_image), scroll), false));
 }
@@ -48,15 +45,14 @@ void ImageBox::set_image(const std::shared_ptr<Image> &image)
 
     m_Image = image;
     m_Scroll = true;
-
-    if (m_Image)
-        m_ImageConn = m_Image->signal_pixbuf_changed().connect([ this ]() { queue_draw_image(m_Scroll); });
+    m_ImageConn = m_Image->signal_pixbuf_changed().connect([ this ]() { queue_draw_image(m_Scroll); });
 
     queue_draw_image(true);
 }
 
 void ImageBox::clear_image()
 {
+    m_DrawConn.disconnect();
     m_GtkImage->clear();
     m_Layout->set_size(0, 0);
 

@@ -1,11 +1,12 @@
 #include <iostream>
 #include <glibmm/i18n.h>
 
-#include "config.h"
 #include "mainwindow.h"
+using namespace AhoViewer;
+
+#include "config.h"
 #include "settings.h"
 #include "tempdir.h"
-using namespace AhoViewer;
 
 MainWindow::MainWindow(BaseObjectType *cobj, const Glib::RefPtr<Gtk::Builder> &bldr)
   : Gtk::Window(cobj),

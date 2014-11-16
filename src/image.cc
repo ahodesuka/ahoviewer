@@ -1,9 +1,10 @@
 #include <iostream>
 
-#include "config.h"
 #include "image.h"
-#include "settings.h"
 using namespace AhoViewer;
+
+#include "config.h"
+#include "settings.h"
 
 std::string Image::ThumbnailDir = Glib::build_filename(Glib::get_home_dir(), ".thumbnails", "normal");
 

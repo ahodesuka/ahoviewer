@@ -8,7 +8,8 @@ namespace AhoViewer
 {
     namespace Booru
     {
-        class Image : public AhoViewer::Image
+        class Image : public AhoViewer::Image,
+                      public sigc::trackable
         {
         public:
             Image(const std::string &path, const std::string &url,
@@ -24,14 +25,15 @@ namespace AhoViewer
 
             virtual void load_pixbuf();
         private:
+            void on_finished();
             void on_area_prepared();
             void on_area_updated(int, int, int, int);
 
             std::string m_Url, m_ThumbnailUrl;
             std::vector<std::string> m_Tags;
+            Page *m_Page;
             Curler *m_Curler;
             Glib::RefPtr<Gdk::PixbufLoader> m_Loader;
-            Page *m_Page;
             Glib::Threads::RWLock m_ThumbnailLock;
         };
     }

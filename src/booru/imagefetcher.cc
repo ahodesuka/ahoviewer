@@ -1,8 +1,6 @@
 #include "imagefetcher.h"
 using namespace AhoViewer::Booru;
 
-#include <iostream>
-
 int ImageFetcher::socket_cb(CURL*, curl_socket_t s, int action, void *userp, void *sockp)
 {
     ImageFetcher *self = static_cast<ImageFetcher*>(userp);
@@ -96,9 +94,7 @@ bool ImageFetcher::event_cb(curl_socket_t sockfd, Glib::IOCondition cond)
 
     if (m_RunningHandles == 0)
     {
-        if (m_TimeoutConn)
-            m_TimeoutConn.disconnect();
-
+        m_TimeoutConn.disconnect();
         return false;
     }
 
@@ -128,7 +124,7 @@ void ImageFetcher::read_info()
             if (curler)
             {
                 remove_handle(curler);
-                curler->signal_finished().emit();
+                curler->m_SignalFinished();
             }
         }
     }

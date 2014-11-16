@@ -1,5 +1,4 @@
 #include <cstring>
-#include <iostream>
 #include <fstream>
 
 #include "curler.h"
@@ -29,14 +28,16 @@ size_t Curler::write_cb(const unsigned char *ptr, size_t size, size_t nmemb, voi
 }
 
 Curler::Curler()
-  : m_DownloadTotal(0),
+  : m_EasyHandle(curl_easy_init()),
+    m_DownloadTotal(0),
     m_DownloadCurrent(0)
 {
     init();
 }
 
 Curler::Curler(const std::string &url)
-  : m_DownloadTotal(0),
+  : m_EasyHandle(curl_easy_init()),
+    m_DownloadTotal(0),
     m_DownloadCurrent(0)
 {
     init();
@@ -50,8 +51,6 @@ Curler::~Curler()
 
 void Curler::init()
 {
-    m_EasyHandle = curl_easy_init();
-
     curl_easy_setopt(m_EasyHandle, CURLOPT_WRITEFUNCTION, &Curler::write_cb);
     curl_easy_setopt(m_EasyHandle, CURLOPT_WRITEDATA, this);
     curl_easy_setopt(m_EasyHandle, CURLOPT_FOLLOWLOCATION, 1);

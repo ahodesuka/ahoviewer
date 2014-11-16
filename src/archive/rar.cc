@@ -1,11 +1,10 @@
-#include <iostream>
-
 #include "../config.h"
-#include "../tempdir.h"
 
 #ifdef HAVE_LIBUNRAR
 #include "rar.h"
 using namespace AhoViewer;
+
+#include "tempdir.h"
 
 const char Rar::Magic[Rar::MagicSize] = { 'R', 'a', 'r', '!', 0x1A, 0x07 };
 

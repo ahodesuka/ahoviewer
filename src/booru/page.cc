@@ -1,3 +1,5 @@
+#include <glibmm/i18n.h>
+
 #include "page.h"
 using namespace AhoViewer::Booru;
 
@@ -5,9 +7,6 @@ using namespace AhoViewer::Booru;
 #include "curler.h"
 #include "image.h"
 #include "settings.h"
-
-#include <glibmm/i18n.h>
-#include <iostream>
 
 Page::Page(Browser *browser)
   : Gtk::ScrolledWindow(),

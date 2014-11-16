@@ -1,8 +1,9 @@
+#include <iostream>
+
 #include "browser.h"
-#include "image.h"
 using namespace AhoViewer::Booru;
 
-#include <iostream>
+#include "image.h"
 
 Browser::Browser(BaseObjectType *cobj, const Glib::RefPtr<Gtk::Builder> &bldr)
   : Gtk::VPaned(cobj),
@@ -129,6 +130,14 @@ void Browser::on_page_removed(Gtk::Widget*, guint)
         m_TagEntry->set_text("");
         m_TagView->clear();
         m_SaveImagesButton->set_sensitive(false);
+
+        if (m_ImageProgConn)
+        {
+            m_ImageProgConn.disconnect();
+            m_StatusBar->clear_message();
+            m_StatusBar->clear_progress();
+        }
+
         m_SignalPageChanged(nullptr);
     }
 }
@@ -137,10 +146,7 @@ void Browser::on_switch_page(void*, guint)
 {
     Page *page = get_active_page();
 
-    // Connect the active page's signals
-    if (m_NoResultsConn)
-        m_NoResultsConn.disconnect();
-
+    m_NoResultsConn.disconnect();
     m_NoResultsConn = page->signal_no_results().connect([ this, page ]()
     {
         std::ostringstream ss;
@@ -149,9 +155,7 @@ void Browser::on_switch_page(void*, guint)
         m_StatusBar->set_message(ss.str());
     });
 
-    if (m_ImageListConn)
-        m_ImageListConn.disconnect();
-
+    m_ImageListConn.disconnect();
     m_ImageListConn = page->get_imagelist()->signal_changed().connect(
             sigc::mem_fun(*this, &Browser::on_imagelist_changed));
 
@@ -185,11 +189,11 @@ void Browser::on_imagelist_changed(const std::shared_ptr<AhoViewer::Image> &imag
     m_TagView->set_tags(bimage->get_tags());
 
     if (m_ImageProgConn)
+    {
         m_ImageProgConn.disconnect();
-
-    // if !saving
-    m_StatusBar->clear_message();
-    m_StatusBar->clear_progress();
+        m_StatusBar->clear_message();
+        m_StatusBar->clear_progress();
+    }
 
     m_ImageProgConn = bimage->get_curler()->signal_progress().connect([ this, bimage ]()
     {

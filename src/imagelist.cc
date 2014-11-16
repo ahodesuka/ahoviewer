@@ -1,14 +1,12 @@
-#include <iostream>
-
 #include "imagelist.h"
+using namespace AhoViewer;
+
 #include "naturalsort.h"
 #include "settings.h"
 #include "booru/image.h"
-using namespace AhoViewer;
 
 ImageList::ImageList(Widget *w)
-  : sigc::trackable(),
-    m_Widget(w),
+  : m_Widget(w),
     m_Index(0),
     m_CacheCancel(Gio::Cancellable::create()),
     m_ThumbnailCancel(Gio::Cancellable::create()),
@@ -31,17 +29,18 @@ ImageList::~ImageList()
 
 void ImageList::clear()
 {
-    m_ThumbnailCancel->cancel();
     cancel_cache();
-    m_Images.clear();
-    m_Widget->clear();
-    m_Archive.reset();
+    m_ThumbnailCancel->cancel();
 
     if (m_ThumbnailThread)
     {
         m_ThumbnailThread->join();
         m_ThumbnailThread = nullptr;
     }
+
+    m_Images.clear();
+    m_Widget->clear();
+    m_Archive.reset();
 
     m_Index = 0;
     m_SignalCleared();
@@ -301,8 +300,10 @@ void ImageList::load_thumbnails()
                 return;
 
             const Glib::RefPtr<Gdk::Pixbuf> &thumb = m_Images[i]->get_thumbnail();
-            Glib::Threads::Mutex::Lock lock(m_ThumbnailMutex);
-            m_ThumbnailQueue.push(PixbufPair(i, thumb));
+            {
+                Glib::Threads::Mutex::Lock lock(m_ThumbnailMutex);
+                m_ThumbnailQueue.push(PixbufPair(i, thumb));
+            }
 
             if (!m_ThumbnailCancel->is_cancelled())
                 m_SignalThumbnailLoaded();

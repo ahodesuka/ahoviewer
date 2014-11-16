@@ -1,12 +1,14 @@
+#include "../config.h"
+
+#ifdef HAVE_LIBZIP
+
 #include <fstream>
 #include <iostream>
 
-#include "../config.h"
-#include "../tempdir.h"
-
-#ifdef HAVE_LIBZIP
 #include "zip.h"
 using namespace AhoViewer;
+
+#include "tempdir.h"
 
 const char Zip::Magic[Zip::MagicSize] = { 'P', 'K', 0x03, 0x04 };
 

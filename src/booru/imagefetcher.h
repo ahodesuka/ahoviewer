@@ -7,7 +7,7 @@ namespace AhoViewer
 {
     namespace Booru
     {
-        class ImageFetcher
+        class ImageFetcher : public sigc::trackable
         {
         public:
             ImageFetcher();

@@ -3,7 +3,6 @@
 
 #include <curl/curl.h>
 #include <glibmm.h>
-#include <giomm.h>
 #include <chrono>
 #include <string>
 #include <vector>
@@ -12,7 +11,7 @@ namespace AhoViewer
 {
     namespace Booru
     {
-        class Curler : public sigc::trackable
+        class Curler
         {
         public:
             friend class ImageFetcher;
@@ -44,7 +43,6 @@ namespace AhoViewer
             Glib::Dispatcher& signal_finished() { return m_SignalFinished; }
         private:
             static size_t write_cb(const unsigned char *ptr, size_t size, size_t nmemb, void *userp);
-            static int progress_cb(void *clientp, curl_off_t dltotal, curl_off_t dlnow, curl_off_t, curl_off_t);
 
             void init();
 

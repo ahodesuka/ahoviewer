@@ -1,8 +1,6 @@
 #include "tagview.h"
 using namespace AhoViewer::Booru;
 
-#include <iostream>
-
 TagView::TagView(BaseObjectType *cobj, const Glib::RefPtr<Gtk::Builder>&)
   : Gtk::TreeView(cobj)
 {

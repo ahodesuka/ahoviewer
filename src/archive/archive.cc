@@ -1,11 +1,11 @@
 #include <cstring>
 #include <fstream>
-#include <iostream>
-
-#include "../config.h"
-#include "../tempdir.h"
 
 #include "archive.h"
+using namespace AhoViewer;
+
+#include "config.h"
+#include "tempdir.h"
 
 #ifdef HAVE_LIBUNRAR
 #include "rar.h"
@@ -14,8 +14,6 @@
 #ifdef HAVE_LIBZIP
 #include "zip.h"
 #endif // HAVE_LIBZIP
-
-using namespace AhoViewer;
 
 const std::map<Archive::Type, const Archive::Extractor *const> Archive::Extractors =
 {

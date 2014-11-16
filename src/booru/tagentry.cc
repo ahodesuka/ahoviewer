@@ -1,8 +1,6 @@
 #include "tagentry.h"
 using namespace AhoViewer::Booru;
 
-#include <iostream>
-
 TagEntry::TagEntry(BaseObjectType *cobj, const Glib::RefPtr<Gtk::Builder> &bldr)
   : Gtk::Entry(cobj)
 {
@@ -20,7 +18,7 @@ TagEntry::TagEntry(BaseObjectType *cobj, const Glib::RefPtr<Gtk::Builder> &bldr)
     // Gtkmm's cursor-on-match signal seems to be broken.
     g_signal_connect(m_TagCompletion->gobj(), "cursor-on-match", G_CALLBACK(on_cursor_on_match_c), this);
 
-    m_ChangedConn = signal_changed().connect(sigc::mem_fun(*this, &TagEntry::on_text_changed), true);
+    m_ChangedConn = signal_changed().connect(sigc::mem_fun(*this, &TagEntry::on_text_changed));
 }
 
 TagEntry::~TagEntry()
