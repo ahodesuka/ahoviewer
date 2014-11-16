@@ -32,6 +32,7 @@ namespace AhoViewer
             Curler *m_Curler;
             Glib::RefPtr<Gdk::PixbufLoader> m_Loader;
             Page *m_Page;
+            Glib::Threads::RWLock m_ThumbnailLock;
         };
     }
 }

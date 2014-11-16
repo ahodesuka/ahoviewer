@@ -48,6 +48,7 @@ const Glib::RefPtr<Gdk::Pixbuf>& Image::get_thumbnail()
     {
         Curler curl(m_ThumbnailUrl);
 
+        m_ThumbnailLock.writer_lock();
         if (curl.perform())
         {
             curl.save_file(m_ThumbnailPath);
@@ -59,6 +60,7 @@ const Glib::RefPtr<Gdk::Pixbuf>& Image::get_thumbnail()
                       << " " << std::endl << "  " << curl.get_error() << std::endl;
             m_ThumbnailPixbuf  = get_missing_pixbuf();
         }
+        m_ThumbnailLock.writer_unlock();
     }
 
     return m_ThumbnailPixbuf;
@@ -81,15 +83,16 @@ void Image::load_pixbuf()
 
 void Image::on_area_prepared()
 {
+    m_ThumbnailLock.reader_lock();
     if (m_ThumbnailPixbuf && m_ThumbnailPixbuf != get_missing_pixbuf())
     {
-        Glib::RefPtr<Gdk::Pixbuf> temp = m_ThumbnailPixbuf->scale_simple(
-                                                m_Loader->get_pixbuf()->get_width(),
-                                                m_Loader->get_pixbuf()->get_height(),
-                                                Gdk::INTERP_BILINEAR);
-
-        temp->copy_area(0, 0, temp->get_width(), temp->get_height(), m_Loader->get_pixbuf(), 0, 0);
+        Glib::RefPtr<Gdk::Pixbuf> pixbuf = m_Loader->get_pixbuf();
+        m_ThumbnailPixbuf->composite(pixbuf, 0, 0, pixbuf->get_width(), pixbuf->get_height(), 0, 0,
+                                     (double)pixbuf->get_width() / m_ThumbnailPixbuf->get_width(),
+                                     (double)pixbuf->get_height() / m_ThumbnailPixbuf->get_height(),
+                                     Gdk::INTERP_BILINEAR, 255);
     }
+    m_ThumbnailLock.reader_unlock();
 
     m_Pixbuf = m_Loader->get_pixbuf();
     m_SignalPixbufChanged();
