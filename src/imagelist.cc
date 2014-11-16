@@ -44,6 +44,7 @@ void ImageList::clear()
     }
 
     m_Index = 0;
+    m_SignalCleared();
 }
 
 /**

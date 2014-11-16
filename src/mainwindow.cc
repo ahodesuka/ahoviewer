@@ -38,7 +38,8 @@ MainWindow::MainWindow(BaseObjectType *cobj, const Glib::RefPtr<Gtk::Builder> &b
     m_LocalImageList = std::make_shared<ImageList>(m_ThumbnailBar);
     m_LocalImageList->signal_archive_error().connect([ this ](const std::string e) { m_StatusBar->set_message(e); });
 
-    m_BooruBrowser->signal_page_changed().connect(sigc::mem_fun(*this, &MainWindow::on_page_changed));
+    m_BooruBrowser->signal_page_changed().connect([ this ](Booru::Page *page)
+            { set_active_imagelist(page ? page->get_imagelist() : m_LocalImageList); });
 
     // Setup drag and drop
     std::vector<Gtk::TargetEntry> dropTargets = { Gtk::TargetEntry("text/uri-list") };
@@ -97,6 +98,9 @@ void MainWindow::open_file(const std::string &path, const int index)
             absolutePath = Glib::build_filename(Glib::get_current_dir(), path);
     }
 
+    std::shared_ptr<ImageList> oldList = m_ActiveImageList;
+    set_active_imagelist(m_LocalImageList);
+
     std::string error;
     if (!m_LocalImageList->load(absolutePath, error, index))
     {
@@ -106,11 +110,10 @@ void MainWindow::open_file(const std::string &path, const int index)
             Gtk::RecentManager::get_default()->remove_item(uri);
 
         m_StatusBar->set_message(error);
+        set_active_imagelist(oldList);
     }
     else
     {
-        set_active_imagelist(m_LocalImageList);
-
         if (Settings.get_bool("StoreRecentFiles"))
             Gtk::RecentManager::get_default()->add_item(Glib::filename_to_uri(absolutePath));
 
@@ -118,6 +121,7 @@ void MainWindow::open_file(const std::string &path, const int index)
             Glib::RefPtr<Gtk::ToggleAction>::cast_static(m_ActionGroup->get_action("ToggleThumbnailBar"))->set_active();
 
         present();
+        set_sensitives();
     }
 }
 
@@ -138,23 +142,22 @@ void MainWindow::set_active_imagelist(std::shared_ptr<ImageList> imageList)
         return;
 
     m_ImageListConn.disconnect();
+    m_ImageListClearedConn.disconnect();
     m_ActiveImageList = imageList;
 
     if (m_ActiveImageList)
     {
         m_ImageListConn = m_ActiveImageList->signal_changed().connect(
                 sigc::mem_fun(*this, &MainWindow::on_imagelist_changed));
+        m_ImageListClearedConn = m_ActiveImageList->signal_cleared().connect(
+                sigc::mem_fun(*this, &MainWindow::clear));
 
         if (!m_ActiveImageList->empty())
             m_ImageBox->set_image(m_ActiveImageList->get_current());
     }
 
     if (!m_ActiveImageList || m_ActiveImageList->empty())
-    {
-        m_ImageBox->clear_image();
-        m_StatusBar->clear_page_info();
-        m_StatusBar->clear_filename();
-    }
+        clear();
 
     update_title();
     set_sensitives();
@@ -213,11 +216,12 @@ void MainWindow::on_drag_data_received(const Glib::RefPtr<Gdk::DragContext> &ctx
         {
             open_file(uri);
             ctx->drag_finish(true, false, time);
-            return;
         }
     }
-
-    ctx->drag_finish(false, false, time);
+    else
+    {
+        ctx->drag_finish(false, false, time);
+    }
 }
 
 bool MainWindow::on_key_press_event(GdkEventKey *e)
@@ -556,22 +560,17 @@ void MainWindow::update_title()
     }
 }
 
+void MainWindow::clear()
+{
+    m_ImageBox->clear_image();
+    m_StatusBar->clear_page_info();
+    m_StatusBar->clear_filename();
+}
+
 bool MainWindow::is_fullscreen() const
 {
     return get_window() &&
         (get_window()->get_state() & Gdk::WINDOW_STATE_FULLSCREEN) == Gdk::WINDOW_STATE_FULLSCREEN;
-}
-
-void MainWindow::on_page_changed(Booru::Page *page)
-{
-    if (page)
-    {
-        set_active_imagelist(page->get_imagelist());
-    }
-    else
-    {
-        set_active_imagelist(m_LocalImageList);
-    }
 }
 
 void MainWindow::on_imagelist_changed(const std::shared_ptr<Image> &image)

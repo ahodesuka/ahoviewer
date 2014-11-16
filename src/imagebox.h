@@ -23,7 +23,7 @@ namespace AhoViewer
         virtual ~ImageBox();
 
         void queue_draw_image(const bool scroll = false);
-        void set_image(const std::shared_ptr<Image>& image);
+        void set_image(const std::shared_ptr<Image> &image);
         void clear_image();
         void update_background_color();
 
@@ -54,7 +54,7 @@ namespace AhoViewer
         virtual bool on_motion_notify_event(GdkEventMotion*);
         virtual bool on_scroll_event(GdkEventScroll*);
     private:
-        void draw_image(const bool);
+        void draw_image(const bool _scroll);
         void scroll(const int x, const int y, const bool panning = false, const bool fromSlideshow = false);
         void smooth_scroll(const int, const Glib::RefPtr<Gtk::Adjustment>&);
         bool update_smooth_scroll();

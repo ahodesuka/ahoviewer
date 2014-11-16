@@ -64,7 +64,7 @@ void ImageBox::clear_image()
     m_VScroll->hide();
 
     m_StatusBar->clear_resolution();
-    m_Image.reset();
+    m_Image = nullptr;
     stop_slideshow();
 }
 

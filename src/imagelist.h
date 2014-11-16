@@ -29,6 +29,9 @@ namespace AhoViewer
         // and there is no archive to go to if AutoOpenArchive is true.
         typedef sigc::signal<void> SignalEndOfListType;
 
+        // Emitted when clear() is called.
+        typedef sigc::signal<void> SignalClearedType;
+
         // Used for async thumbnail pixbuf loading
         typedef std::pair<size_t, const Glib::RefPtr<Gdk::Pixbuf>&> PixbufPair;
         typedef std::queue<PixbufPair> PixbufQueue;
@@ -95,6 +98,7 @@ namespace AhoViewer
         SignalChangedType signal_changed() const { return m_SignalChanged; }
         SignalArchiveErrorType signal_archive_error() const { return m_SignalArchiveError; }
         SignalEndOfListType signal_end_of_list() const { return m_SignalEndOfList; }
+        SignalClearedType signal_cleared() const { return m_SignalCleared; }
     private:
         std::vector<std::string> get_image_entries(const std::string &path, int recurseCount = 0);
         std::vector<std::string> get_archive_entries();
@@ -128,6 +132,7 @@ namespace AhoViewer
         SignalChangedType m_SignalChanged;
         SignalArchiveErrorType m_SignalArchiveError;
         SignalEndOfListType m_SignalEndOfList;
+        SignalClearedType m_SignalCleared;
     };
 }
 

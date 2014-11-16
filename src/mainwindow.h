@@ -34,10 +34,10 @@ namespace AhoViewer
         void show_widgets();
         void set_sensitives();
         void update_title();
+        void clear();
 
         bool is_fullscreen() const;
 
-        void on_page_changed(Booru::Page *page);
         void on_imagelist_changed(const std::shared_ptr<Image> &image);
 
         void on_connect_proxy(const Glib::RefPtr<Gtk::Action> &action, Gtk::Widget *w);
@@ -76,8 +76,8 @@ namespace AhoViewer
 
         std::shared_ptr<ImageList> m_ActiveImageList,
                                    m_LocalImageList;
-        sigc::connection m_HPanedPosConn,
-                         m_ImageListConn;
+        sigc::connection m_ImageListConn,
+                         m_ImageListClearedConn;
 
         int m_Width, m_Height, m_HPanedMinPos;
     };
