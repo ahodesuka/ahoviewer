@@ -52,6 +52,7 @@ void ImageBox::set_image(const std::shared_ptr<Image> &image)
 
 void ImageBox::clear_image()
 {
+    m_ImageConn.disconnect();
     m_DrawConn.disconnect();
     m_GtkImage->clear();
     m_Layout->set_size(0, 0);
