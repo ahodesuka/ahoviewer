@@ -77,6 +77,10 @@ void Image::load_pixbuf()
         {
             m_Page->get_image_fetcher()->add_handle(m_Curler);
         }
+        else if (m_Curler->is_active() && m_Loader->get_pixbuf())
+        {
+            m_Pixbuf = m_Loader->get_pixbuf();
+        }
     }
 }
 
