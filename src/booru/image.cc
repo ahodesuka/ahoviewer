@@ -18,6 +18,7 @@ Image::Image(const std::string &path, const std::string &url,
 {
     m_Curler->signal_write().connect(
             [ this ](const unsigned char *d, size_t l) { m_Loader->write(d, l); });
+    m_Curler->signal_progress().connect(sigc::mem_fun(*this, &Image::on_progress));
     m_Curler->signal_finished().connect(sigc::mem_fun(*this, &Image::on_finished));
 
     m_Loader->signal_area_prepared().connect(sigc::mem_fun(*this, &Image::on_area_prepared));
@@ -76,6 +77,19 @@ void Image::load_pixbuf()
         {
             m_Page->get_image_fetcher()->add_handle(m_Curler);
         }
+    }
+}
+
+void Image::on_progress()
+{
+    double c, t;
+    m_Curler->get_progress(c, t);
+
+    if (t > 0 && (c != m_DownloadCurrent || t != m_DownloadTotal))
+    {
+        m_DownloadCurrent = c;
+        m_DownloadTotal   = t;
+        m_SignalProgress(c, t);
     }
 }
 

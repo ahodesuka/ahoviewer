@@ -3,14 +3,13 @@
 #include "page.h"
 using namespace AhoViewer::Booru;
 
-#include "browser.h"
 #include "curler.h"
 #include "image.h"
 #include "settings.h"
 
-Page::Page(Browser *browser)
+Page::Page(ImageFetcher *imagefetcher)
   : Gtk::ScrolledWindow(),
-    m_Browser(browser),
+    m_ImageFetcher(imagefetcher),
     m_IconView(Gtk::manage(new Gtk::IconView())),
     m_Tab(Gtk::manage(new Gtk::HBox())),
     m_TabIcon(Gtk::manage(new Gtk::Image(Gtk::Stock::NEW, Gtk::ICON_SIZE_MENU))),
@@ -32,7 +31,7 @@ Page::Page(Browser *browser)
     m_TabButton->property_relief() = Gtk::RELIEF_NONE;
     m_TabButton->set_focus_on_click(false);
     m_TabButton->set_tooltip_text(_("Close Tab"));
-    m_TabButton->signal_clicked().connect([ this ]() { m_SignalClosed(this); });
+    m_TabButton->signal_clicked().connect([ this ]() { m_SignalClosed(); });
 
     m_TabLabel->set_alignment(0.0, 0.5);
     m_TabLabel->set_ellipsize(Pango::ELLIPSIZE_END);
@@ -99,11 +98,6 @@ void Page::search(std::shared_ptr<Site> site, const std::string &tags)
     m_TabIcon->set(site->get_icon_pixbuf());
 
     get_posts();
-}
-
-ImageFetcher* Page::get_image_fetcher() const
-{
-    return m_Browser->get_image_fetcher();
 }
 
 void Page::get_posts()

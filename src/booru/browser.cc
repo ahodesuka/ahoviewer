@@ -51,8 +51,8 @@ Browser::~Browser()
 
 void Browser::on_new_tab()
 {
-    Page *page = Gtk::manage(new Page(this));
-    page->signal_closed().connect(sigc::mem_fun(*this, &Browser::on_page_closed));
+    Page *page = Gtk::manage(new Page(m_ImageFetcher));
+    page->signal_closed().connect([ this, page ](){ m_Notebook->remove_page(*page); });
 
     int page_num = m_Notebook->append_page(*page, *page->get_tab());
 
@@ -63,13 +63,10 @@ void Browser::on_new_tab()
     m_TagEntry->grab_focus();
 }
 
-/**
- * For the close tab action.
- **/
 void Browser::on_close_tab()
 {
     if (m_Notebook->get_n_pages() > 0)
-        on_page_closed(get_active_page());
+        m_Notebook->remove_page(*get_active_page());
 }
 
 void Browser::on_save_images()
@@ -113,14 +110,6 @@ void Browser::on_entry_activate()
     m_TagView->clear();
     get_active_page()->search(get_active_site(), m_TagEntry->get_text());
     m_SignalPageChanged(get_active_page());
-}
-
-/**
- * For when the close button on the tab is pressed.
- **/
-void Browser::on_page_closed(Page *page)
-{
-    m_Notebook->remove_page(*page);
 }
 
 void Browser::on_page_removed(Gtk::Widget*, guint)
@@ -195,11 +184,8 @@ void Browser::on_imagelist_changed(const std::shared_ptr<AhoViewer::Image> &imag
         m_StatusBar->clear_progress();
     }
 
-    m_ImageProgConn = bimage->get_curler()->signal_progress().connect([ this, bimage ]()
+    m_ImageProgConn = bimage->signal_progress().connect([ this, bimage ](double c, double t)
     {
-        double c, t;
-        bimage->get_curler()->get_progress(c, t);
-
         if (t > 0)
         {
             double speed = (c / std::chrono::duration<double>(std::chrono::steady_clock::now() -

@@ -10,7 +10,8 @@ using namespace AhoViewer::Booru;
 #include "tempdir.h"
 
 // 1: page, 2: limit, 3: tags
-const std::map<Site::Type, std::string> Site::RequestURI = {
+const std::map<Site::Type, std::string> Site::RequestURI =
+{
     { Type::DANBOORU, "/post/index.xml?page=%1&limit=%2&tags=%3" },
     { Type::GELBOORU, "/index.php?page=dapi&s=post&q=index&pid=%1&limit=%2&tags=%3" },
 };

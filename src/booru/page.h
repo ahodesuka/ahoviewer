@@ -11,22 +11,21 @@ namespace AhoViewer
 {
     namespace Booru
     {
-        class Browser;
         class Page : public Gtk::ScrolledWindow,
                      public ImageList::Widget
         {
         public:
-            typedef sigc::signal<void, Page*> SignalClosedType;
+            typedef sigc::signal<void> SignalClosedType;
             typedef sigc::signal<void> SignalNoResultsType;
 
-            Page(Browser *browser);
+            Page(ImageFetcher *imagefetcher);
             virtual ~Page();
 
             virtual void set_selected(const size_t index);
 
             void search(std::shared_ptr<Site> site, const std::string &tags);
 
-            ImageFetcher* get_image_fetcher() const;
+            ImageFetcher* get_image_fetcher() const { return m_ImageFetcher; }
             Gtk::Widget* get_tab() const { return m_Tab; }
             std::shared_ptr<Site> get_site() const { return m_Site; }
             std::shared_ptr<ImageList> get_imagelist() const { return m_ImageList; }
@@ -40,7 +39,7 @@ namespace AhoViewer
             void on_selection_changed();
             void on_value_changed();
 
-            Browser *m_Browser;
+            ImageFetcher *m_ImageFetcher;
             Gtk::IconView *m_IconView;
             Gtk::HBox *m_Tab;
             Gtk::Image *m_TabIcon;
