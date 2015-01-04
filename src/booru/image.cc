@@ -7,7 +7,7 @@ using namespace AhoViewer::Booru;
 
 Image::Image(const std::string &path, const std::string &url,
              const std::string &thumbPath, const std::string &thumbUrl,
-             std::vector<std::string> tags, Page *page)
+             std::set<std::string> tags, Page *page)
   : AhoViewer::Image(path, thumbPath),
     m_Url(url),
     m_ThumbnailUrl(thumbUrl),

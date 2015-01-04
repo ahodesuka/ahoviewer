@@ -51,7 +51,7 @@ Site::Site(std::string name, std::string url, Type type)
         {
             std::copy(std::istream_iterator<std::string>(ifs),
                       std::istream_iterator<std::string>(),
-                      std::back_inserter(m_Tags));
+                      std::inserter(m_Tags, m_Tags.begin()));
         }
     }
 }

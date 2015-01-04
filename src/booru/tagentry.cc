@@ -26,7 +26,7 @@ TagEntry::~TagEntry()
 
 }
 
-void TagEntry::set_tags(const std::vector<std::string> &tags)
+void TagEntry::set_tags(const std::set<std::string> &tags)
 {
     m_Tags = &tags;
 }

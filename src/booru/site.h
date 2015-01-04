@@ -3,6 +3,7 @@
 
 #include <gtkmm.h>
 #include <pugixml.hpp>
+#include <set>
 
 #include "curler.h"
 
@@ -36,7 +37,7 @@ namespace AhoViewer
             std::string get_name() const { return m_Name; }
             std::string get_url() const { return m_Url; }
             Glib::RefPtr<Gdk::Pixbuf> get_icon_pixbuf() const { return m_IconPixbuf; }
-            const std::vector<std::string>& get_tags() const { return m_Tags; }
+            const std::set<std::string>& get_tags() const { return m_Tags; }
             std::string get_path();
 
             void save_tags() const;
@@ -48,7 +49,7 @@ namespace AhoViewer
 
             std::string m_Name, m_Url, m_IconPath, m_TagsPath, m_Path;
             Type m_Type;
-            std::vector<std::string> m_Tags;
+            std::set<std::string> m_Tags;
             Curler *m_Curl;
 
             Glib::RefPtr<Gdk::Pixbuf> m_IconPixbuf;

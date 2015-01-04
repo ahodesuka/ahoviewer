@@ -16,11 +16,11 @@ namespace AhoViewer
 
             Image(const std::string &path, const std::string &url,
                   const std::string &thumbPath, const std::string &thumbUrl,
-                  std::vector<std::string> tags, Page *page);
+                  std::set<std::string> tags, Page *page);
             virtual ~Image();
 
             Curler* get_curler() const { return m_Curler; }
-            std::vector<std::string> get_tags() const { return m_Tags; }
+            std::set<std::string> get_tags() const { return m_Tags; }
 
             SignalProgressType signal_progress() const { return m_SignalProgress; }
         protected:
@@ -35,7 +35,7 @@ namespace AhoViewer
             void on_area_updated(int, int, int, int);
 
             std::string m_Url, m_ThumbnailUrl;
-            std::vector<std::string> m_Tags;
+            std::set<std::string> m_Tags;
             Page *m_Page;
 
             double m_DownloadCurrent,

@@ -161,8 +161,8 @@ void ImageList::load(pugi::xml_node posts, Booru::Page *page)
                                                    Glib::uri_unescape_string(Glib::path_get_basename(imageUrl))));
 
         std::istringstream ss(post.attribute("tags").value());
-        std::vector<std::string> tags { std::istream_iterator<std::string>(ss),
-                                        std::istream_iterator<std::string>() };
+        std::set<std::string> tags { std::istream_iterator<std::string>(ss),
+                                     std::istream_iterator<std::string>() };
 
         if (thumbUrl[0] == '/')
             thumbUrl = page->get_site()->get_url() + thumbUrl;

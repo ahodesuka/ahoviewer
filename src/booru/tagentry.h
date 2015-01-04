@@ -2,6 +2,7 @@
 #define _TAGENTRY_H_
 
 #include <gtkmm.h>
+#include <set>
 
 namespace AhoViewer
 {
@@ -20,7 +21,7 @@ namespace AhoViewer
             TagEntry(BaseObjectType *cobj, const Glib::RefPtr<Gtk::Builder> &bldr);
             ~TagEntry();
 
-            void set_tags(const std::vector<std::string> &tags);
+            void set_tags(const std::set<std::string> &tags);
         protected:
             virtual void on_grab_focus();
         private:
@@ -33,7 +34,7 @@ namespace AhoViewer
             void on_cursor_on_match(const std::string &tag);
             bool on_match_selected(const Gtk::TreeModel::iterator &iter);
 
-            const std::vector<std::string> *m_Tags;
+            const std::set<std::string> *m_Tags;
             Glib::RefPtr<Gtk::EntryCompletion> m_TagCompletion;
             Glib::RefPtr<Gtk::ListStore> m_Model;
             ModelColumns m_Columns;

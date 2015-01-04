@@ -15,7 +15,7 @@ namespace AhoViewer
 
             void clear() { m_ListStore->clear(); }
 
-            void set_tags(const std::vector<std::string> &tags);
+            void set_tags(const std::set<std::string> &tags);
             void set_tag_entry(TagEntry *e) { m_TagEntry = e; }
         protected:
             virtual bool on_button_press_event(GdkEventButton *e);
