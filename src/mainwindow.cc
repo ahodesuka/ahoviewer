@@ -243,7 +243,7 @@ bool MainWindow::on_key_press_event(GdkEventKey *e)
             return true;
         }
     }
-    else if (m_BooruBrowser->get_tag_entry()->has_focus())
+    else if (m_BooruBrowser->get_tag_entry()->has_focus() && !(e->state & GDK_CONTROL_MASK))
     {
         return m_BooruBrowser->get_tag_entry()->event((GdkEvent*)e);
     }
