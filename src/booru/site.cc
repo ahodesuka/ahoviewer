@@ -88,6 +88,11 @@ pugi::xml_node Site::download_posts(const std::string &tags, size_t page)
     return doc.document_element();
 }
 
+void Site::add_tags(const std::set<std::string> &tags)
+{
+    m_Tags.insert(tags.begin(), tags.end());
+}
+
 std::string Site::get_path()
 {
     if (m_Path.empty())

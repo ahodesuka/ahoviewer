@@ -163,6 +163,7 @@ void ImageList::load(pugi::xml_node posts, Booru::Page *page)
         std::istringstream ss(post.attribute("tags").value());
         std::set<std::string> tags { std::istream_iterator<std::string>(ss),
                                      std::istream_iterator<std::string>() };
+        page->get_site()->add_tags(tags);
 
         if (thumbUrl[0] == '/')
             thumbUrl = page->get_site()->get_url() + thumbUrl;

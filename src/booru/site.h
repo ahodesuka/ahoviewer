@@ -33,6 +33,7 @@ namespace AhoViewer
             static Type string_to_type(std::string type);
 
             pugi::xml_node download_posts(const std::string &tags, size_t page);
+            void add_tags(const std::set<std::string> &tags);
 
             std::string get_name() const { return m_Name; }
             std::string get_url() const { return m_Url; }
