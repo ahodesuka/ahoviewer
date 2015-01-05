@@ -7,6 +7,7 @@ using namespace AhoViewer::Booru;
 
 Browser::Browser(BaseObjectType *cobj, const Glib::RefPtr<Gtk::Builder> &bldr)
   : Gtk::VPaned(cobj),
+    m_IgnorePageSwitch(false),
     m_MinWidth(0),
     m_ImageFetcher(new ImageFetcher())
 {

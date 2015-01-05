@@ -1,7 +1,7 @@
 #ifndef _IMAGELIST_H_
 #define _IMAGELIST_H_
 
-#include <sigc++/sigc++.h>
+#include <gtkmm.h>
 #include <memory>
 #include <queue>
 #include <string>
@@ -10,7 +10,6 @@
 
 #include "archive/archive.h"
 #include "image.h"
-#include "statusbar.h"
 
 namespace AhoViewer
 {

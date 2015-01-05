@@ -52,10 +52,10 @@ SettingsManager::SettingsManager()
         {
             "File",
             {
-                { "OpenFile",            "<Primary>o"        },
-                { "Preferences",         "p"                 },
-                { "Close",               "<Primary><Shift>w" },
-                { "Quit",                "<Primary>q"        },
+                { "OpenFile",            "<Primary>o" },
+                { "Preferences",         "p"          },
+                { "Close",               "<Primary>w" },
+                { "Quit",                "<Primary>q" },
             }
         },
         {
@@ -111,7 +111,6 @@ SettingsManager::SettingsManager()
             "Booru Browser",
             {
                 { "NewTab",              "<Primary>t" },
-                { "CloseTab",            "<Primary>w" },
                 { "SaveImages",          "<Primary>s" },
             }
         }

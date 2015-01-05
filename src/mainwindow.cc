@@ -139,25 +139,18 @@ void MainWindow::restore_last_file()
 
 void MainWindow::set_active_imagelist(std::shared_ptr<ImageList> imageList)
 {
-    if (imageList == m_ActiveImageList)
-        return;
-
     m_ImageListConn.disconnect();
     m_ImageListClearedConn.disconnect();
     m_ActiveImageList = imageList;
 
-    if (m_ActiveImageList)
-    {
-        m_ImageListConn = m_ActiveImageList->signal_changed().connect(
-                sigc::mem_fun(*this, &MainWindow::on_imagelist_changed));
-        m_ImageListClearedConn = m_ActiveImageList->signal_cleared().connect(
-                sigc::mem_fun(*this, &MainWindow::clear));
+    m_ImageListConn = m_ActiveImageList->signal_changed().connect(
+            sigc::mem_fun(*this, &MainWindow::on_imagelist_changed));
+    m_ImageListClearedConn = m_ActiveImageList->signal_cleared().connect(
+            sigc::mem_fun(*this, &MainWindow::clear));
 
-        if (!m_ActiveImageList->empty())
-            m_ImageBox->set_image(m_ActiveImageList->get_current());
-    }
-
-    if (!m_ActiveImageList || m_ActiveImageList->empty())
+    if (!m_ActiveImageList->empty())
+        m_ImageBox->set_image(m_ActiveImageList->get_current());
+    else
         clear();
 
     update_title();
@@ -290,7 +283,7 @@ void MainWindow::create_actions()
             Gtk::AccelKey(Settings.get_keybinding("File", "Preferences")),
             sigc::mem_fun(*this, &MainWindow::placeholder));
     m_ActionGroup->add(Gtk::Action::create("Close", Gtk::Stock::CLOSE,
-                _("_Close"), _("Close local image list")),
+                _("_Close"), _("Close local image list or booru tab")),
             Gtk::AccelKey(Settings.get_keybinding("File", "Close")),
             sigc::mem_fun(*this, &MainWindow::on_close));
     m_ActionGroup->add(Gtk::Action::create("Quit", Gtk::Stock::QUIT,
@@ -346,9 +339,6 @@ void MainWindow::create_actions()
     m_ActionGroup->add(Gtk::Action::create("NewTab", Gtk::Stock::ADD, _("New Tab"), _("New Tab")),
             Gtk::AccelKey(Settings.get_keybinding("Booru Browser", "NewTab")),
             sigc::mem_fun(m_BooruBrowser, &Booru::Browser::on_new_tab));
-    m_ActionGroup->add(Gtk::Action::create("CloseTab"),
-            Gtk::AccelKey(Settings.get_keybinding("Booru Browser", "CloseTab")),
-            sigc::mem_fun(m_BooruBrowser, &Booru::Browser::on_close_tab));
     m_ActionGroup->add(Gtk::Action::create("SaveImages", Gtk::Stock::SAVE, _("Save Images"), _("Save Images")),
             Gtk::AccelKey(Settings.get_keybinding("Booru Browser", "SaveImages")),
             sigc::mem_fun(m_BooruBrowser, &Booru::Browser::on_save_images));
@@ -537,7 +527,12 @@ void MainWindow::set_sensitives()
         Glib::RefPtr<Gtk::ToggleAction>::cast_static(m_ActionGroup->get_action(s))->
             set_sensitive(!!m_ActiveImageList);
 
-    m_ActionGroup->get_action("Close")->set_sensitive(!m_LocalImageList->empty());
+    Booru::Page *page = m_BooruBrowser->get_active_page();
+    bool local = !m_LocalImageList->empty() && m_LocalImageList == m_ActiveImageList,
+         booru = page && (m_BooruBrowser->get_visible() ||
+                          page->get_imagelist() == m_ActiveImageList);
+
+    m_ActionGroup->get_action("Close")->set_sensitive(local || booru);
 }
 
 void MainWindow::update_title()
@@ -554,6 +549,10 @@ void MainWindow::update_title()
            << m_ActiveImageList->get_current()->get_filename()
            << " - " PACKAGE;
         set_title(ss.str());
+
+
+        m_StatusBar->set_page_info(m_ActiveImageList->get_index() + 1, m_ActiveImageList->get_size());
+        m_StatusBar->set_filename(m_ActiveImageList->get_current()->get_filename());
     }
     else
     {
@@ -578,9 +577,6 @@ void MainWindow::on_imagelist_changed(const std::shared_ptr<Image> &image)
 {
     m_ImageBox->set_image(image);
     update_title();
-
-    m_StatusBar->set_page_info(m_ActiveImageList->get_index() + 1, m_ActiveImageList->get_size());
-    m_StatusBar->set_filename(image->get_filename());
 }
 
 void MainWindow::on_connect_proxy(const Glib::RefPtr<Gtk::Action> &action, Gtk::Widget *w)
@@ -623,10 +619,22 @@ void MainWindow::on_open_recent_file()
 
 void MainWindow::on_close()
 {
-    m_LocalImageList->clear();
-
     if (m_ActiveImageList == m_LocalImageList)
-        set_active_imagelist(nullptr);
+    {
+        m_LocalImageList->clear();
+
+        Booru::Page *page = m_BooruBrowser->get_active_page();
+
+        if (page && !page->get_imagelist()->empty())
+            set_active_imagelist(page->get_imagelist());
+        else
+            set_sensitives();
+    }
+    else
+    {
+        m_BooruBrowser->on_close_tab();
+        // The page_changed signal will change the image list for us
+    }
 }
 
 void MainWindow::on_quit()

@@ -6,6 +6,7 @@
 #include "imagefetcher.h"
 #include "page.h"
 #include "site.h"
+#include "statusbar.h"
 #include "tagentry.h"
 #include "tagview.h"
 

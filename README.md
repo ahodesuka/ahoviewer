@@ -24,7 +24,7 @@ or
 | ----------------------------------------- | --------------- |
 | Open File                                 | Control+o       |
 | Open Preferences                          | p               |
-| Close local image list                    | Control+Shift+w |
+| Close local image list or booru tab       | Control+w       |
 | Quit                                      | Control+q       |
 | Fullscreen                                | f               |
 | Toggle Manga Mode                         | g               |
@@ -47,5 +47,4 @@ or
 | Last Image                                | End             |
 | Toggle Slideshow                          | s               |
 | New Booru Browser Tab                     | Control+t       |
-| Close Booru Browser Tab                   | Control+w       |
 | Save Booru Browser Tab                    | Control+s       |
