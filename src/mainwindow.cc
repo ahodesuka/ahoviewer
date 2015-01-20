@@ -626,9 +626,14 @@ void MainWindow::on_close()
         Booru::Page *page = m_BooruBrowser->get_active_page();
 
         if (page && !page->get_imagelist()->empty())
+        {
             set_active_imagelist(page->get_imagelist());
+        }
         else
+        {
             set_sensitives();
+            update_title();
+        }
     }
     else
     {
