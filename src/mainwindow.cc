@@ -111,7 +111,9 @@ void MainWindow::open_file(const std::string &path, const int index)
             Gtk::RecentManager::get_default()->remove_item(uri);
 
         m_StatusBar->set_message(error);
-        set_active_imagelist(oldList);
+
+        if (oldList)
+            set_active_imagelist(oldList);
     }
     else
     {
