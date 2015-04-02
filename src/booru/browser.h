@@ -38,6 +38,7 @@ namespace AhoViewer
             // Action callbacks {{{
             void on_new_tab();
             void on_close_tab();
+            void on_save_image();
             void on_save_images();
             // }}}
         protected:
@@ -79,7 +80,8 @@ namespace AhoViewer
 
             ImageFetcher *m_ImageFetcher;
             Glib::RefPtr<Gtk::UIManager> m_UIManager;
-            Glib::RefPtr<Gtk::Action> m_SaveImagesAction;
+            Glib::RefPtr<Gtk::Action> m_SaveImageAction,
+                                      m_SaveImagesAction;
 
             sigc::connection m_NoResultsConn,
                              m_ImageListConn,

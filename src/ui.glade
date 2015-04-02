@@ -469,6 +469,7 @@
       <accelerator action="ScrollRight"/>
 
       <accelerator action="NewTab"/>
+      <accelerator action="SaveImage"/>
       <accelerator action="SaveImages"/>
 
       <popup name="PopupMenu">

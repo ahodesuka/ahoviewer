@@ -341,6 +341,9 @@ void MainWindow::create_actions()
     m_ActionGroup->add(Gtk::Action::create("NewTab", Gtk::Stock::ADD, _("New Tab"), _("New Tab")),
             Gtk::AccelKey(Settings.get_keybinding("Booru Browser", "NewTab")),
             sigc::mem_fun(m_BooruBrowser, &Booru::Browser::on_new_tab));
+    m_ActionGroup->add(Gtk::Action::create("SaveImage", Gtk::Stock::SAVE_AS, _("Save Image"), _("Save Image")),
+            Gtk::AccelKey(Settings.get_keybinding("Booru Browser", "SaveImage")),
+            sigc::mem_fun(m_BooruBrowser, &Booru::Browser::on_save_image));
     m_ActionGroup->add(Gtk::Action::create("SaveImages", Gtk::Stock::SAVE, _("Save Images"), _("Save Images")),
             Gtk::AccelKey(Settings.get_keybinding("Booru Browser", "SaveImages")),
             sigc::mem_fun(m_BooruBrowser, &Booru::Browser::on_save_images));
@@ -535,6 +538,17 @@ void MainWindow::set_sensitives()
                           page->get_imagelist() == m_ActiveImageList);
 
     m_ActionGroup->get_action("Close")->set_sensitive(local || booru);
+    set_booru_sensitives();
+}
+
+void MainWindow::set_booru_sensitives()
+{
+    Booru::Page *page = m_BooruBrowser->get_active_page();
+    bool s = page && page->get_imagelist() == m_ActiveImageList &&
+             !page->get_imagelist()->empty();
+
+    m_ActionGroup->get_action("SaveImage")->set_sensitive(s);
+    m_ActionGroup->get_action("SaveImages")->set_sensitive(s);
 }
 
 void MainWindow::update_title()
@@ -579,6 +593,7 @@ void MainWindow::on_imagelist_changed(const std::shared_ptr<Image> &image)
 {
     m_ImageBox->set_image(image);
     update_title();
+    set_booru_sensitives();
 }
 
 void MainWindow::on_connect_proxy(const Glib::RefPtr<Gtk::Action> &action, Gtk::Widget *w)

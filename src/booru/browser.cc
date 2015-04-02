@@ -70,6 +70,11 @@ void Browser::on_close_tab()
         m_Notebook->remove_page(*get_active_page());
 }
 
+void Browser::on_save_image()
+{
+    std::cout << "on_save_image" << std::endl;
+}
+
 void Browser::on_save_images()
 {
     std::cout << "on_save_images" << std::endl;
@@ -83,8 +88,8 @@ void Browser::on_realize()
     Glib::RefPtr<Gtk::ActionGroup> actionGroup =
         static_cast<std::vector<Glib::RefPtr<Gtk::ActionGroup>>>(m_UIManager->get_action_groups())[0];
 
+    m_SaveImageAction = actionGroup->get_action("SaveImage");
     m_SaveImagesAction = actionGroup->get_action("SaveImages");
-    m_SaveImagesAction->set_sensitive(false);
 
     // Gtkmm2 doesn't implement activatable completely
     GtkActivatable *able = (GtkActivatable*)m_NewTabButton->gobj();

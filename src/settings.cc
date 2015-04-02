@@ -110,8 +110,9 @@ SettingsManager::SettingsManager()
         {
             "Booru Browser",
             {
-                { "NewTab",              "<Primary>t" },
-                { "SaveImages",          "<Primary>s" },
+                { "NewTab",              "<Primary>t"        },
+                { "SaveImage",           "<Primary><Shift>s" },
+                { "SaveImages",          "<Primary>s"        },
             }
         }
     }),

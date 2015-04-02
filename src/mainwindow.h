@@ -33,6 +33,7 @@ namespace AhoViewer
         void hide_widgets();
         void show_widgets();
         void set_sensitives();
+        void set_booru_sensitives();
         void update_title();
         void clear();
 
