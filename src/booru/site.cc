@@ -37,8 +37,8 @@ Site::Type Site::string_to_type(std::string type)
 Site::Site(std::string name, std::string url, Type type)
   : m_Name(name),
     m_Url(url),
-    m_IconPath(Glib::build_filename(Settings.BooruPath, m_Name + ".png")),
-    m_TagsPath(Glib::build_filename(Settings.BooruPath, m_Name + "-tags")),
+    m_IconPath(Glib::build_filename(Settings.get_booru_path(), m_Name + ".png")),
+    m_TagsPath(Glib::build_filename(Settings.get_booru_path(), m_Name + "-tags")),
     m_Type(type),
     m_Curl(new Curler),
     m_IconCurlerThread(nullptr)

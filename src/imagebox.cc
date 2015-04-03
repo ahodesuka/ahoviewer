@@ -132,7 +132,7 @@ void ImageBox::on_reset_zoom()
 
 void ImageBox::on_toggle_scrollbars()
 {
-    Settings.set_bool("ScrollbarsVisible", !Settings.get_bool("ScrollbarsVisible"));
+    Settings.set("ScrollbarsVisible", !Settings.get_bool("ScrollbarsVisible"));
     queue_draw_image();
 }
 

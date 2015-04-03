@@ -2,6 +2,9 @@
 #define _SETTINGS_H_
 
 #include <glibmm.h>
+#include <libconfig.h++>
+using libconfig::Setting;
+
 #include <map>
 
 #include "booru/site.h"
@@ -16,10 +19,7 @@ namespace AhoViewer
         ~SettingsManager();
 
         bool get_bool(const std::string &key) const;
-        void set_bool(const std::string &key, const bool value);
-
         int get_int(const std::string &key) const;
-        void set_int(const std::string &key, const int value);
 
         std::vector<std::shared_ptr<Booru::Site>> get_sites();
 
@@ -30,7 +30,6 @@ namespace AhoViewer
         void set_geometry(const int x, const int y, const int w, const int h);
 
         bool get_last_open_file(std::string &path) const;
-        void set_last_open_file(const std::string &path);
 
         Gdk::Color get_background_color() const;
         void set_background_color(const Gdk::Color &value);
@@ -41,13 +40,28 @@ namespace AhoViewer
         ImageBox::ZoomMode get_zoom_mode() const;
         void set_zoom_mode(const ImageBox::ZoomMode value);
 
+        const std::string get_booru_path() const { return BooruPath; }
+
         void remove_key(const std::string &key);
+
+        void set(const std::string &key, const bool value)
+        {
+            set(key, value, Setting::TypeBoolean);
+        }
+        void set(const std::string &key, const int value)
+        {
+            set(key, value, Setting::TypeInt);
+        }
+        void set(const std::string &key, const std::string &value)
+        {
+            set(key, value, Setting::TypeString);
+        }
     private:
-        Glib::KeyFile KeyFile;
+        libconfig::Config Config;
+
         const std::string Path;
-    public:
         const std::string BooruPath;
-    private:
+
         const std::map<std::string, bool> DefaultBools;
         const std::map<std::string, int> DefaultInts;
         const std::vector<std::shared_ptr<Booru::Site>> DefaultSites;
@@ -57,6 +71,20 @@ namespace AhoViewer
         const ImageBox::ZoomMode DefaultZoomMode = ImageBox::ZoomMode::MANUAL;
 
         std::vector<std::shared_ptr<Booru::Site>> m_Sites;
+
+        template<typename T>
+        void set(const std::string &key, const T value, Setting::Type type)
+        {
+            set(key, value, type, Config.getRoot());
+        }
+        template<typename T>
+        void set(const std::string &key, const T value, Setting::Type type, Setting &s)
+        {
+            if (!s.exists(key))
+                s.add(key, type);
+
+            s[key] = value;
+        }
     };
 
     extern SettingsManager Settings;

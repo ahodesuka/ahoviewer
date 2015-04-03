@@ -8,8 +8,8 @@ using namespace AhoViewer;
 SettingsManager AhoViewer::Settings;
 
 SettingsManager::SettingsManager()
-  : KeyFile(),
-    Path(Glib::build_filename(Glib::get_user_config_dir(), PACKAGE, PACKAGE ".conf")),
+  : Config(),
+    Path(Glib::build_filename(Glib::get_user_config_dir(), PACKAGE, PACKAGE ".cfg")),
     BooruPath(Glib::build_filename(Glib::get_user_config_dir(), PACKAGE, "booru")),
 // Defaults {{{
     DefaultBools(
@@ -119,48 +119,46 @@ SettingsManager::SettingsManager()
     DefaultBGColor("#161616")
 // }}}
 {
+    Config.setTabWidth(4); // this is very important
     if (Glib::file_test(Path, Glib::FILE_TEST_EXISTS))
     {
         try
         {
-            KeyFile.load_from_file(Path);
+            Config.readFile(Path.c_str());
         }
-        catch (const Glib::KeyFileError &ex)
+        catch (const libconfig::ParseException &ex)
         {
-            std::cerr << "Glib::KeyFile::load_from_file: " << ex.what() << std::endl;
+            std::cerr << "libconfig::Config.readFile: " << ex.what() << std::endl;
         }
     }
 }
 
 SettingsManager::~SettingsManager()
 {
-    Glib::file_set_contents(Path, KeyFile.to_data());
+    try
+    {
+        Config.writeFile(Path.c_str());
+    }
+    catch (const libconfig::FileIOException &ex)
+    {
+        std::cerr << "libconfig::Config.writeFile: " << ex.what() << std::endl;
+    }
 }
 
 bool SettingsManager::get_bool(const std::string &key) const
 {
-    if (KeyFile.has_group(PACKAGE) && KeyFile.has_key(PACKAGE, key))
-        return KeyFile.get_boolean(PACKAGE, key);
+    if (Config.exists(key))
+        return Config.lookup(key);
 
     return DefaultBools.at(key);
 }
 
-void SettingsManager::set_bool(const std::string &key, const bool value)
-{
-    KeyFile.set_boolean(PACKAGE, key, value);
-}
-
 int SettingsManager::get_int(const std::string &key) const
 {
-    if (KeyFile.has_group(PACKAGE) && KeyFile.has_key(PACKAGE, key))
-        return KeyFile.get_integer(PACKAGE, key);
+    if (Config.exists(key))
+        return Config.lookup(key);
 
     return DefaultInts.at(key);
-}
-
-void SettingsManager::set_int(const std::string &key, const int value)
-{
-    KeyFile.set_integer(PACKAGE, key, value);
 }
 
 std::vector<std::shared_ptr<Booru::Site>> SettingsManager::get_sites()
@@ -169,16 +167,16 @@ std::vector<std::shared_ptr<Booru::Site>> SettingsManager::get_sites()
     {
         return m_Sites;
     }
-    else if (KeyFile.has_group("sites"))
+    else if (Config.exists("Sites"))
     {
-        std::vector<std::string> keys = KeyFile.get_keys("sites");
-
-        if (keys.size())
+        const Setting &sites = Config.lookup("Sites");
+        if (sites.getLength() > 0)
         {
-            for (const std::string &key : keys)
+            for (size_t i = 0; i < (size_t)sites.getLength(); ++i)
             {
-                std::vector<std::string> s = KeyFile.get_string_list("sites", key);
-                m_Sites.push_back(std::make_shared<Booru::Site>(s[0], s[1], Booru::Site::string_to_type(s[2])));
+                const Setting &s = sites[i];
+                m_Sites.push_back(std::make_shared<Booru::Site>(s["name"], s["url"],
+                            Booru::Site::string_to_type(s["type"])));
             }
 
             return m_Sites;
@@ -190,16 +188,9 @@ std::vector<std::shared_ptr<Booru::Site>> SettingsManager::get_sites()
 
 bool SettingsManager::get_geometry(int &x, int &y, int &w, int &h) const
 {
-    if (KeyFile.has_group("geometry") && KeyFile.has_key("geometry", "x") &&
-                                         KeyFile.has_key("geometry", "y") &&
-                                         KeyFile.has_key("geometry", "w") &&
-                                         KeyFile.has_key("geometry", "h"))
+    if (Config.lookupValue("Geometry.x", x) && Config.lookupValue("Geometry.y", y) &&
+        Config.lookupValue("Geometry.w", w) && Config.lookupValue("Geometry.h", h))
     {
-        x = KeyFile.get_integer("geometry", "x");
-        y = KeyFile.get_integer("geometry", "y");
-        w = KeyFile.get_integer("geometry", "w");
-        h = KeyFile.get_integer("geometry", "h");
-
         return true;
     }
 
@@ -208,26 +199,26 @@ bool SettingsManager::get_geometry(int &x, int &y, int &w, int &h) const
 
 void SettingsManager::set_geometry(const int x, const int y, const int w, const int h)
 {
-    KeyFile.set_integer("geometry", "x", x);
-    KeyFile.set_integer("geometry", "y", y);
-    KeyFile.set_integer("geometry", "w", w);
-    KeyFile.set_integer("geometry", "h", h);
+    if (!Config.exists("Geometry"))
+        Config.getRoot().add("Geometry", Setting::TypeGroup);
+
+    Setting &geo = Config.lookup("Geometry");
+
+    set("x", x, Setting::TypeInt, geo);
+    set("y", y, Setting::TypeInt, geo);
+    set("w", w, Setting::TypeInt, geo);
+    set("h", h, Setting::TypeInt, geo);
 }
 
 bool SettingsManager::get_last_open_file(std::string &path) const
 {
-    if (KeyFile.has_key(PACKAGE, "LastOpenFile"))
+    if (Config.exists("LastOpenFile"))
     {
-        path = KeyFile.get_string(PACKAGE, "LastOpenFile");
+        path = (const char*)Config.lookup("LastOpenFile");
         return true;
     }
 
     return false;
-}
-
-void SettingsManager::set_last_open_file(const std::string &path)
-{
-    KeyFile.set_string(PACKAGE, "LastOpenFile", path);
 }
 
 std::string SettingsManager::get_keybinding(const std::string &group, const std::string &name) const
@@ -237,50 +228,58 @@ std::string SettingsManager::get_keybinding(const std::string &group, const std:
 
 void SettingsManager::set_keybinding(const std::string &group, const std::string &name, const std::string &value)
 {
-    KeyFile.set_string(group, name, value);
+    if (!Config.exists("Keybindings"))
+        Config.getRoot().add("Keybindings", Setting::TypeGroup);
+
+    Setting &keys = Config.lookup("Keybindings");
+
+    if (!keys.exists(group))
+        keys.add(group, Setting::TypeGroup);
+
+    set(name, value, Setting::TypeString, keys[group]);
 }
 
 Gdk::Color SettingsManager::get_background_color() const
 {
-    if (KeyFile.has_group(PACKAGE) && KeyFile.has_key(PACKAGE, "BackgroundColor"))
-        return Gdk::Color(KeyFile.get_string(PACKAGE, "BackgroundColor"));
+    if (Config.exists("BackgroundColor"))
+        return Gdk::Color((const char*)Config.lookup("BackgroundColor"));
 
     return DefaultBGColor;
 }
 
 void SettingsManager::set_background_color(const Gdk::Color &value)
 {
-    KeyFile.set_string(PACKAGE, "BackgroundColor", value.to_string());
+    set("BackgroundColor", value.to_string());
 }
 
 Booru::Site::Rating SettingsManager::get_booru_max_rating() const
 {
-    if (KeyFile.has_group(PACKAGE) && KeyFile.has_key(PACKAGE, "BooruMaxRating"))
-        return Booru::Site::Rating(KeyFile.get_integer(PACKAGE, "BooruMaxRating"));
+    if (Config.exists("BooruMaxRating"))
+        return Booru::Site::Rating((int)Config.lookup("BooruMaxRating"));
 
     return DefaultBooruMaxRating;
 }
 
 void SettingsManager::set_booru_max_rating(const Booru::Site::Rating value)
 {
-    KeyFile.set_integer(PACKAGE, "BooruMaxRating", static_cast<int>(value));
+    set("BooruMaxRating", static_cast<int>(value));
 }
 
 ImageBox::ZoomMode SettingsManager::get_zoom_mode() const
 {
-    if (KeyFile.has_group(PACKAGE) && KeyFile.has_key(PACKAGE, "ZoomMode"))
-        return ImageBox::ZoomMode(KeyFile.get_string(PACKAGE, "ZoomMode")[0]);
+    if (Config.exists("ZoomMode"))
+        return ImageBox::ZoomMode(((const char*)Config.lookup("ZoomMode"))[0]);
 
     return DefaultZoomMode;
 }
 
 void SettingsManager::set_zoom_mode(const ImageBox::ZoomMode value)
 {
-    KeyFile.set_string(PACKAGE, "ZoomMode", std::string(1, static_cast<char>(value)));
+    set("ZoomMode", std::string(1, static_cast<char>(value)));
 }
 
 void SettingsManager::remove_key(const std::string &key)
 {
-    if (KeyFile.has_key(PACKAGE, key))
-        KeyFile.remove_key(PACKAGE, key);
+    if (Config.exists(key))
+        Config.getRoot().remove(key);
 }

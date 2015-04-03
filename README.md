@@ -6,6 +6,7 @@ A GTK2 image viewer, manga reader, and booru browser.
 ### Dependencies
 * gtkmm-2.4 `>= 2.20.0`
 * glibmm-2.4 `>= 2.36.0`
+* libconfig++ `>= 1.4`
 * libcurl `>= 7.16.0`
 * pugixml
 * libunrar `optional`

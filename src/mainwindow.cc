@@ -29,7 +29,7 @@ MainWindow::MainWindow(BaseObjectType *cobj, const Glib::RefPtr<Gtk::Builder> &b
 
         if (m_HPaned->get_position() != Settings.get_int("BooruWidth"))
         {
-            Settings.set_int("BooruWidth", m_HPaned->get_position());
+            Settings.set("BooruWidth", m_HPaned->get_position());
             m_ImageBox->queue_draw_image();
         }
     });
@@ -661,9 +661,9 @@ void MainWindow::on_close()
 
 void MainWindow::on_quit()
 {
-    Settings.set_int("TagViewPosition", m_BooruBrowser->get_position());
-    Settings.set_int("BooruWidth", m_HPaned->get_position());
-    Settings.set_int("SelectedBooru", m_BooruBrowser->get_selected_booru());
+    Settings.set("TagViewPosition", m_BooruBrowser->get_position());
+    Settings.set("BooruWidth", m_HPaned->get_position());
+    Settings.set("SelectedBooru", m_BooruBrowser->get_selected_booru());
 
     for (std::shared_ptr<Booru::Site> site : Settings.get_sites())
         site->save_tags();
@@ -677,14 +677,14 @@ void MainWindow::on_quit()
         if (m_LocalImageList->from_archive())
         {
             path = m_LocalImageList->get_archive()->get_path();
-            Settings.set_int("ArchiveIndex", m_LocalImageList->get_index());
+            Settings.set("ArchiveIndex", (int)m_LocalImageList->get_index());
         }
         else
         {
             Settings.remove_key("ArchiveIndex");
         }
 
-        Settings.set_last_open_file(path);
+        Settings.set("LastOpenFile", path);
     }
     else
     {
@@ -722,7 +722,7 @@ void MainWindow::on_toggle_manga_mode()
     bool active = Glib::RefPtr<Gtk::ToggleAction>::cast_static(m_ActionGroup->
             get_action("ToggleMangaMode"))->get_active();
 
-    Settings.set_bool("MangaMode", active);
+    Settings.set("MangaMode", active);
 
     m_ImageBox->queue_draw_image(true);
 }
@@ -732,7 +732,7 @@ void MainWindow::on_toggle_menu_bar()
     Glib::RefPtr<Gtk::ToggleAction> a =
         Glib::RefPtr<Gtk::ToggleAction>::cast_static(m_ActionGroup->get_action("ToggleMenuBar"));
 
-    Settings.set_bool("MenuBarVisible", a->get_active());
+    Settings.set("MenuBarVisible", a->get_active());
 
     if (a->get_active())
         m_MenuBar->show();
@@ -747,7 +747,7 @@ void MainWindow::on_toggle_status_bar()
     Glib::RefPtr<Gtk::ToggleAction> a =
         Glib::RefPtr<Gtk::ToggleAction>::cast_static(m_ActionGroup->get_action("ToggleStatusBar"));
 
-    Settings.set_bool("StatusBarVisible", a->get_active());
+    Settings.set("StatusBarVisible", a->get_active());
 
     if (a->get_active())
         m_StatusBar->show();
@@ -764,7 +764,7 @@ void MainWindow::on_toggle_booru_browser()
     Glib::RefPtr<Gtk::ToggleAction> bbAction =
         Glib::RefPtr<Gtk::ToggleAction>::cast_static(m_ActionGroup->get_action("ToggleBooruBrowser"));
 
-    Settings.set_bool("BooruBrowserVisible", bbAction->get_active());
+    Settings.set("BooruBrowserVisible", bbAction->get_active());
 
     if (bbAction->get_active())
     {
@@ -795,7 +795,7 @@ void MainWindow::on_toggle_thumbnail_bar()
     Glib::RefPtr<Gtk::ToggleAction> bbAction =
         Glib::RefPtr<Gtk::ToggleAction>::cast_static(m_ActionGroup->get_action("ToggleBooruBrowser"));
 
-    Settings.set_bool("ThumbnailBarVisible", tbAction->get_active());
+    Settings.set("ThumbnailBarVisible", tbAction->get_active());
 
     if (tbAction->get_active())
     {
@@ -821,7 +821,7 @@ void MainWindow::on_toggle_hide_all()
     Glib::RefPtr<Gtk::ToggleAction> a =
         Glib::RefPtr<Gtk::ToggleAction>::cast_static(m_ActionGroup->get_action("ToggleHideAll"));
 
-    Settings.set_bool("HideAll", a->get_active());
+    Settings.set("HideAll", a->get_active());
 
     if (a->get_active())
         hide_widgets();
