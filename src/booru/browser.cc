@@ -33,7 +33,8 @@ Browser::Browser(BaseObjectType *cobj, const Glib::RefPtr<Gtk::Builder> &bldr)
     for (std::shared_ptr<Site> site : Settings.get_sites())
         site->set_row_values(*(m_ComboModel->append()));
 
-    m_ComboBox->set_active(Settings.get_int("SelectedBooru"));
+    int selected = std::min(Settings.get_int("SelectedBooru"), (int)Settings.get_sites().size() - 1);
+    m_ComboBox->set_active(selected);
 
     m_ComboBox->pack_start(m_ComboColumns.pixbuf_column, false);
     m_ComboBox->pack_start(m_ComboColumns.text_column);
