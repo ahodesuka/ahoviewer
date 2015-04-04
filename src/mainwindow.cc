@@ -681,15 +681,15 @@ void MainWindow::on_quit()
         }
         else
         {
-            Settings.remove_key("ArchiveIndex");
+            Settings.remove("ArchiveIndex");
         }
 
         Settings.set("LastOpenFile", path);
     }
     else
     {
-        Settings.remove_key("LastOpenFile");
-        Settings.remove_key("ArchiveIndex");
+        Settings.remove("LastOpenFile");
+        Settings.remove("ArchiveIndex");
     }
 
     hide();

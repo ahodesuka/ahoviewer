@@ -42,7 +42,7 @@ namespace AhoViewer
 
         const std::string get_booru_path() const { return BooruPath; }
 
-        void remove_key(const std::string &key);
+        void remove(const std::string &key);
 
         void set(const std::string &key, const bool value)
         {

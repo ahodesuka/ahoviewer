@@ -278,7 +278,7 @@ void SettingsManager::set_zoom_mode(const ImageBox::ZoomMode value)
     set("ZoomMode", std::string(1, static_cast<char>(value)));
 }
 
-void SettingsManager::remove_key(const std::string &key)
+void SettingsManager::remove(const std::string &key)
 {
     if (Config.exists(key))
         Config.getRoot().remove(key);
