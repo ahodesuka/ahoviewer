@@ -611,16 +611,27 @@ void MainWindow::on_connect_proxy(const Glib::RefPtr<Gtk::Action> &action, Gtk::
 void MainWindow::on_open_file_dialog()
 {
     Gtk::FileChooserDialog dialog(*this, "Open File - " PACKAGE, Gtk::FILE_CHOOSER_ACTION_OPEN);
-    Gtk::FileFilter filter;
+    Gtk::FileFilter filter, imageFilter, archiveFilter;
 
     dialog.add_button(Gtk::Stock::CANCEL, Gtk::RESPONSE_CANCEL);
     dialog.add_button("Open", Gtk::RESPONSE_OK);
-    dialog.add_filter(filter);
+
+    filter.set_name("All Files");
+    imageFilter.set_name("All Images");
+    archiveFilter.set_name("All Archives");
 
     filter.add_pixbuf_formats();
+    imageFilter.add_pixbuf_formats();
 
     for (const std::string &mimeType : Archive::MimeTypes)
+    {
         filter.add_mime_type(mimeType);
+        archiveFilter.add_mime_type(mimeType);
+    }
+
+    dialog.add_filter(filter);
+    dialog.add_filter(imageFilter);
+    dialog.add_filter(archiveFilter);
 
     if (dialog.run() == Gtk::RESPONSE_OK)
         open_file(dialog.get_filename());
