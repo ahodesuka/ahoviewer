@@ -6,7 +6,7 @@ using namespace AhoViewer;
 #include "config.h"
 #include "settings.h"
 
-std::string Image::ThumbnailDir = Glib::build_filename(Glib::get_home_dir(), ".thumbnails", "normal");
+std::string Image::ThumbnailDir = Glib::build_filename(Glib::get_user_cache_dir(), "thumbnails", "normal");
 
 bool Image::is_valid(const std::string &path)
 {
