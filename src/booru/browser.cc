@@ -8,8 +8,7 @@ using namespace AhoViewer::Booru;
 Browser::Browser(BaseObjectType *cobj, const Glib::RefPtr<Gtk::Builder> &bldr)
   : Gtk::VPaned(cobj),
     m_IgnorePageSwitch(false),
-    m_MinWidth(0),
-    m_ImageFetcher(new ImageFetcher())
+    m_MinWidth(0)
 {
     bldr->get_widget("Booru::Browser::Notebook",          m_Notebook);
     bldr->get_widget("Booru::Browser::NewTabButton",      m_NewTabButton);
@@ -53,7 +52,7 @@ Browser::~Browser()
 
 void Browser::on_new_tab()
 {
-    Page *page = Gtk::manage(new Page(m_ImageFetcher));
+    Page *page = Gtk::manage(new Page());
     page->signal_closed().connect([ this, page ](){ m_Notebook->remove_page(*page); });
 
     int page_num = m_Notebook->append_page(*page, *page->get_tab());

@@ -3,7 +3,6 @@
 
 #include <gtkmm.h>
 
-#include "imagefetcher.h"
 #include "page.h"
 #include "site.h"
 #include "statusbar.h"
@@ -28,7 +27,6 @@ namespace AhoViewer
                 { return static_cast<Page*>(m_Notebook->get_nth_page(m_Notebook->get_current_page())); }
             int get_selected_booru() const { return m_ComboBox->get_active_row_number(); }
             Gtk::Entry* get_tag_entry() const { return m_TagEntry; }
-            ImageFetcher* get_image_fetcher() const { return m_ImageFetcher; }
             int get_min_width() const { return m_MinWidth; }
 
             void set_statusbar(StatusBar *sb) { m_StatusBar = sb; }
@@ -78,7 +76,6 @@ namespace AhoViewer
             bool m_IgnorePageSwitch;
             int m_MinWidth;
 
-            ImageFetcher *m_ImageFetcher;
             Glib::RefPtr<Gtk::UIManager> m_UIManager;
             Glib::RefPtr<Gtk::Action> m_SaveImageAction,
                                       m_SaveImagesAction;

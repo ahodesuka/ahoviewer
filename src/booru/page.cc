@@ -7,9 +7,9 @@ using namespace AhoViewer::Booru;
 #include "image.h"
 #include "settings.h"
 
-Page::Page(ImageFetcher *imagefetcher)
+Page::Page()
   : Gtk::ScrolledWindow(),
-    m_ImageFetcher(imagefetcher),
+    m_ImageFetcher(new ImageFetcher()),
     m_IconView(Gtk::manage(new Gtk::IconView())),
     m_Tab(Gtk::manage(new Gtk::HBox())),
     m_TabIcon(Gtk::manage(new Gtk::Image(Gtk::Stock::NEW, Gtk::ICON_SIZE_MENU))),
@@ -71,6 +71,8 @@ Page::~Page()
         m_GetPostsThread->join();
         m_GetPostsThread = nullptr;
     }
+
+    delete m_ImageFetcher;
 }
 
 void Page::set_selected(const size_t index)

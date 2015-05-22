@@ -18,7 +18,7 @@ namespace AhoViewer
             typedef sigc::signal<void> SignalClosedType;
             typedef sigc::signal<void> SignalNoResultsType;
 
-            Page(ImageFetcher *imagefetcher);
+            Page();
             virtual ~Page();
 
             virtual void set_selected(const size_t index);
