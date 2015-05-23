@@ -633,6 +633,13 @@ void MainWindow::on_open_file_dialog()
     dialog.add_filter(imageFilter);
     dialog.add_filter(archiveFilter);
 
+    if (!m_LocalImageList->empty())
+    {
+        std::string path = m_LocalImageList->from_archive() ?
+            m_LocalImageList->get_archive()->get_path() : m_LocalImageList->get_current()->get_path();
+        dialog.set_filename(path);
+    }
+
     if (dialog.run() == Gtk::RESPONSE_OK)
         open_file(dialog.get_filename());
 }
