@@ -530,7 +530,7 @@ void MainWindow::set_sensitives()
 
     for (const std::string &s : names)
         Glib::RefPtr<Gtk::ToggleAction>::cast_static(m_ActionGroup->get_action(s))->
-            set_sensitive(!!m_ActiveImageList);
+            set_sensitive(!!m_ActiveImageList && !m_ActiveImageList->empty());
 
     Booru::Page *page = m_BooruBrowser->get_active_page();
     bool local = !m_LocalImageList->empty() && m_LocalImageList == m_ActiveImageList,
