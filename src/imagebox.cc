@@ -262,7 +262,6 @@ bool ImageBox::on_scroll_event(GdkEventScroll *e)
     return Gtk::EventBox::on_scroll_event(e);
 }
 
-#include <iostream>
 void ImageBox::draw_image(const bool _scroll)
 {
     std::shared_ptr<Image> image = m_Image;
