@@ -124,5 +124,5 @@ void Image::on_area_prepared()
 
 void Image::on_area_updated(int, int, int, int)
 {
-//    m_SignalPixbufChanged();
+    m_SignalPixbufChanged();
 }
