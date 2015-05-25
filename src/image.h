@@ -16,10 +16,11 @@ namespace AhoViewer
         static bool is_valid(const std::string&);
         static const Glib::RefPtr<Gdk::Pixbuf>& get_missing_pixbuf();
 
-        inline const std::string get_path() const { return m_Path; }
+        const std::string get_path() const { return m_Path; }
+        bool is_loading() const { return m_Loading; }
 
         virtual std::string get_filename() const;
-        virtual const Glib::RefPtr<Gdk::Pixbuf>& get_pixbuf();
+        virtual const Glib::RefPtr<Gdk::PixbufAnimation>& get_pixbuf();
         virtual const Glib::RefPtr<Gdk::Pixbuf>& get_thumbnail();
 
         virtual void load_pixbuf();
@@ -33,10 +34,12 @@ namespace AhoViewer
         Glib::RefPtr<Gdk::Pixbuf> create_pixbuf_at_size(const std::string &path,
                                                         const double w, const double h);
 
+        bool m_Loading;
         std::string m_Path, m_ThumbnailPath;
 
-        Glib::RefPtr<Gdk::Pixbuf> m_Pixbuf,
-                                  m_ThumbnailPixbuf;
+        Glib::RefPtr<Gdk::Pixbuf> m_ThumbnailPixbuf;
+        Glib::RefPtr<Gdk::PixbufAnimation> m_Pixbuf;
+
         Glib::Threads::Mutex m_Mutex;
         Glib::Dispatcher m_SignalPixbufChanged;
     private:

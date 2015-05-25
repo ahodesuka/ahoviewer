@@ -55,6 +55,7 @@ namespace AhoViewer
         virtual bool on_scroll_event(GdkEventScroll*);
     private:
         void draw_image(const bool _scroll);
+        bool update_animation();
         void scroll(const int x, const int y, const bool panning = false, const bool fromSlideshow = false);
         void smooth_scroll(const int, const Glib::RefPtr<Gtk::Adjustment>&);
         bool update_smooth_scroll();
@@ -77,7 +78,9 @@ namespace AhoViewer
         const Gdk::Cursor m_LeftPtrCursor, m_FleurCursor;
 
         std::shared_ptr<Image> m_Image;
-        sigc::connection m_DrawConn, m_ImageConn, m_ScrollConn, m_SlideshowConn;
+        Glib::RefPtr<Gdk::PixbufAnimation> m_PixbufAnim;
+        Glib::RefPtr<Gdk::PixbufAnimationIter> m_PixbufAnimIter;
+        sigc::connection m_DrawConn, m_ImageConn, m_ScrollConn, m_SlideshowConn, m_AnimConn;
 
         bool m_Scroll;
         ZoomMode m_ZoomMode;

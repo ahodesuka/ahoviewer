@@ -54,6 +54,7 @@ void ImageBox::clear_image()
 {
     m_ImageConn.disconnect();
     m_DrawConn.disconnect();
+    m_AnimConn.disconnect();
     m_GtkImage->clear();
     m_Layout->set_size(0, 0);
 
@@ -261,6 +262,7 @@ bool ImageBox::on_scroll_event(GdkEventScroll *e)
     return Gtk::EventBox::on_scroll_event(e);
 }
 
+#include <iostream>
 void ImageBox::draw_image(const bool _scroll)
 {
     std::shared_ptr<Image> image = m_Image;
@@ -272,7 +274,21 @@ void ImageBox::draw_image(const bool _scroll)
     // m_Scroll will be true if this is the first time the image is being drawn.
     bool scroll = _scroll || m_Scroll;
     m_Scroll = false;
-    Glib::RefPtr<Gdk::Pixbuf> pixbuf = image->get_pixbuf(),
+
+    Glib::RefPtr<Gdk::PixbufAnimation> pixbuf_anim = image->get_pixbuf();
+
+    if (m_PixbufAnim != pixbuf_anim)
+    {
+        m_PixbufAnim = pixbuf_anim;
+        m_PixbufAnimIter = m_PixbufAnim->get_iter(NULL);
+
+        m_AnimConn.disconnect();
+        m_AnimConn = Glib::signal_timeout().connect(
+                sigc::mem_fun(*this, &ImageBox::update_animation),
+                m_PixbufAnimIter->get_delay_time());
+    }
+
+    Glib::RefPtr<Gdk::Pixbuf> pixbuf = m_PixbufAnimIter->get_pixbuf()->copy(),
                               temp = pixbuf;
 
     get_window()->freeze_updates();
@@ -357,6 +373,22 @@ void ImageBox::draw_image(const bool _scroll)
     get_window()->thaw_updates();
     double scale = (double)temp->get_width() / pixbuf->get_width() * 100;
     m_StatusBar->set_resolution(pixbuf->get_width(), pixbuf->get_height(), scale, m_ZoomMode);
+}
+
+bool ImageBox::update_animation()
+{
+    if (m_Image->is_loading())
+        return true;
+
+    m_AnimConn.disconnect();
+    m_PixbufAnimIter->advance();
+    queue_draw_image();
+
+    m_AnimConn = Glib::signal_timeout().connect(
+            sigc::mem_fun(*this, &ImageBox::update_animation),
+            m_PixbufAnimIter->get_delay_time());
+
+    return false;
 }
 
 void ImageBox::scroll(const int x, const int y, const bool panning, const bool fromSlideshow)

@@ -74,7 +74,7 @@ std::string Curler::escape(const std::string &str) const
 
 bool Curler::perform()
 {
-    m_Buffer.clear();
+    clear();
     m_Response = curl_easy_perform(m_EasyHandle);
 
     return m_Response == CURLE_OK;

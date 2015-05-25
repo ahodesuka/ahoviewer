@@ -76,10 +76,11 @@ void Image::load_pixbuf()
         else if (!m_Curler->is_active())
         {
             m_Page->get_image_fetcher()->add_handle(m_Curler);
+            m_Loading = true;
         }
-        else if (m_Curler->is_active() && m_Loader->get_pixbuf())
+        else if (m_Curler->is_active() && m_Loader->get_animation())
         {
-            m_Pixbuf = m_Loader->get_pixbuf();
+            m_Pixbuf = m_Loader->get_animation();
         }
     }
 }
@@ -101,6 +102,7 @@ void Image::on_finished()
 {
     m_Curler->save_file(m_Path);
     m_Curler->clear();
+    m_Loading = false;
 }
 
 void Image::on_area_prepared()
@@ -116,11 +118,11 @@ void Image::on_area_prepared()
     }
     m_ThumbnailLock.reader_unlock();
 
-    m_Pixbuf = m_Loader->get_pixbuf();
+    m_Pixbuf = m_Loader->get_animation();
     m_SignalPixbufChanged();
 }
 
 void Image::on_area_updated(int, int, int, int)
 {
-    m_SignalPixbufChanged();
+//    m_SignalPixbufChanged();
 }

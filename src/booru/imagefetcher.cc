@@ -63,11 +63,11 @@ ImageFetcher::ImageFetcher()
 
 ImageFetcher::~ImageFetcher()
 {
-    curl_multi_cleanup(m_MultiHandle);
-
     m_MainLoop->quit();
     m_Thread->join();
     m_Thread = nullptr;
+
+    curl_multi_cleanup(m_MultiHandle);
 }
 
 void ImageFetcher::add_handle(Curler *curler)

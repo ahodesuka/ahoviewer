@@ -22,14 +22,16 @@ const Glib::RefPtr<Gdk::Pixbuf>& Image::get_missing_pixbuf()
 }
 
 Image::Image(const std::string &path)
-  : m_Path(path),
+  : m_Loading(false),
+    m_Path(path),
     m_SignalPixbufChanged()
 {
 
 }
 
 Image::Image(const std::string &path, const std::string &thumb_path)
-  : m_Path(path),
+  : m_Loading(false),
+    m_Path(path),
     m_ThumbnailPath(thumb_path),
     m_SignalPixbufChanged()
 {
@@ -48,7 +50,7 @@ std::string Image::get_filename() const
             Glib::path_get_basename(m_Path));
 }
 
-const Glib::RefPtr<Gdk::Pixbuf>& Image::get_pixbuf()
+const Glib::RefPtr<Gdk::PixbufAnimation>& Image::get_pixbuf()
 {
     Glib::Threads::Mutex::Lock lock(m_Mutex);
     return m_Pixbuf;
@@ -104,7 +106,7 @@ void Image::load_pixbuf()
 {
     if (!m_Pixbuf)
     {
-        Glib::RefPtr<Gdk::Pixbuf> p = Gdk::Pixbuf::create_from_file(m_Path);
+        Glib::RefPtr<Gdk::PixbufAnimation> p = Gdk::PixbufAnimation::create_from_file(m_Path);
         {
             Glib::Threads::Mutex::Lock lock(m_Mutex);
             m_Pixbuf = p;
