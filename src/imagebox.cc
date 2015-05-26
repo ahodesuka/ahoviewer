@@ -282,9 +282,11 @@ void ImageBox::draw_image(const bool _scroll)
         m_PixbufAnimIter = m_PixbufAnim->get_iter(NULL);
 
         m_AnimConn.disconnect();
-        m_AnimConn = Glib::signal_timeout().connect(
-                sigc::mem_fun(*this, &ImageBox::update_animation),
-                m_PixbufAnimIter->get_delay_time());
+
+        if (m_PixbufAnimIter->get_delay_time() >= 0)
+            m_AnimConn = Glib::signal_timeout().connect(
+                    sigc::mem_fun(*this, &ImageBox::update_animation),
+                    m_PixbufAnimIter->get_delay_time());
     }
 
     Glib::RefPtr<Gdk::Pixbuf> pixbuf = m_PixbufAnimIter->get_pixbuf()->copy(),
@@ -383,9 +385,10 @@ bool ImageBox::update_animation()
     m_PixbufAnimIter->advance();
     queue_draw_image();
 
-    m_AnimConn = Glib::signal_timeout().connect(
-            sigc::mem_fun(*this, &ImageBox::update_animation),
-            m_PixbufAnimIter->get_delay_time());
+    if (m_PixbufAnimIter->get_delay_time() >= 0)
+        m_AnimConn = Glib::signal_timeout().connect(
+                sigc::mem_fun(*this, &ImageBox::update_animation),
+                m_PixbufAnimIter->get_delay_time());
 
     return false;
 }
