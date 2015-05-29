@@ -534,21 +534,11 @@ void MainWindow::set_sensitives()
 
     Booru::Page *page = m_BooruBrowser->get_active_page();
     bool local = !m_LocalImageList->empty() && m_LocalImageList == m_ActiveImageList,
-         booru = page && (m_BooruBrowser->get_visible() ||
-                          page->get_imagelist() == m_ActiveImageList);
+         booru = page && (m_BooruBrowser->get_visible() || page->get_imagelist() == m_ActiveImageList);
 
     m_ActionGroup->get_action("Close")->set_sensitive(local || booru);
-    set_booru_sensitives();
-}
-
-void MainWindow::set_booru_sensitives()
-{
-    Booru::Page *page = m_BooruBrowser->get_active_page();
-    bool s = page && page->get_imagelist() == m_ActiveImageList &&
-             !page->get_imagelist()->empty();
-
-    m_ActionGroup->get_action("SaveImage")->set_sensitive(s);
-    m_ActionGroup->get_action("SaveImages")->set_sensitive(s);
+    m_ActionGroup->get_action("SaveImage")->set_sensitive(booru && !page->get_imagelist()->empty());
+    m_ActionGroup->get_action("SaveImages")->set_sensitive(booru && !page->get_imagelist()->empty());
 }
 
 void MainWindow::update_title()
@@ -593,7 +583,7 @@ void MainWindow::on_imagelist_changed(const std::shared_ptr<Image> &image)
 {
     m_ImageBox->set_image(image);
     update_title();
-    set_booru_sensitives();
+    set_sensitives();
 }
 
 void MainWindow::on_connect_proxy(const Glib::RefPtr<Gtk::Action> &action, Gtk::Widget *w)
