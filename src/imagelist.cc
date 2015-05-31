@@ -394,10 +394,11 @@ void ImageList::update_cache()
                 cache.begin(), cache.end(), std::back_inserter(diff));
     }
 
+    // Sort by how close a/b is to the current index
     std::sort(cache.begin(), cache.end(), [ this ](size_t a, size_t b)
     {
-        return (a < m_Index ? std::abs(a - m_Index) + 1e18 : a) <
-               (b < m_Index ? std::abs(b - m_Index) + 1e18 : b);
+        return (a < m_Index ? std::abs(static_cast<int>(a - m_Index)) + 1e18 : a) <
+               (b < m_Index ? std::abs(static_cast<int>(b - m_Index)) + 1e18 : b);
     });
 
     cancel_cache();
