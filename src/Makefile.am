@@ -5,6 +5,8 @@ CLEANFILES = ui.cc
 
 file2string_SOURCES = file2string.cc
 
+file2string_LDADD = @CXXFLAGS@
+
 ahoviewer_SOURCES =       \
 	archive/archive.cc    \
 	archive/image.cc      \

@@ -9,8 +9,6 @@ AC_CONFIG_SRCDIR([src/main.cc])
 AC_CONFIG_HEADER([src/config.h])
 AM_SILENT_RULES([yes])
 
-AC_SUBST(CPPFLAGS)
-AC_SUBST(CXXFLAGS)
 AC_SUBST(gtkmm_CFLAGS)
 AC_SUBST(gtkmm_LIBS)
 AC_SUBST(LIBCURL_CPPFLAGS)
@@ -27,9 +25,6 @@ AC_PROG_INSTALL
 
 AC_LANG([C++])
 AX_CXX_COMPILE_STDCXX_11([noext])
-
-CPPFLAGS="$CPPFLAGS -std=c++11"
-AC_CHECK_HEADER([cstdint])
 
 # Make sure glibmm is up to date for Glib::Threads::Thread::create
 PKG_CHECK_MODULES([glibmm], [glibmm-2.4 >= 2.36.0])
