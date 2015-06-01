@@ -16,14 +16,14 @@ namespace AhoViewer
             void add_handle(Curler *curler);
             void remove_handle(Curler *curler);
         private:
-            typedef struct SockInfo
+            struct SockInfo
             {
                 ~SockInfo() { if (conn) conn.disconnect(); }
 
                 curl_socket_t sockfd;
                 Glib::RefPtr<Glib::IOChannel> chan;
                 sigc::connection conn;
-            } SockInfo;
+            };
 
             static int socket_cb(CURL*, curl_socket_t s, int action, void *userp, void *sockp);
             static int timer_cb(CURLM*, long timeout_ms, void *userp);
