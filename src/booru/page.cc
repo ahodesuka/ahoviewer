@@ -15,6 +15,9 @@ Page::Page()
     m_TabIcon(Gtk::manage(new Gtk::Image(Gtk::Stock::NEW, Gtk::ICON_SIZE_MENU))),
     m_TabLabel(Gtk::manage(new Gtk::Label(_("New Tab")))),
     m_TabButton(Gtk::manage(new Gtk::Button())),
+    m_Page(0),
+    m_NumPosts(0),
+    m_LastPage(false),
     m_GetPostsThread(nullptr),
     m_SignalClosed()
 {

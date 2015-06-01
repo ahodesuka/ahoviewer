@@ -19,8 +19,7 @@ namespace AhoViewer
             typedef std::chrono::time_point<std::chrono::steady_clock> time_point_t;
             typedef sigc::signal<void, const unsigned char*, size_t> SignalWriteType;
 
-            Curler();
-            Curler(const std::string &url);
+            Curler(const std::string &url = "");
             ~Curler();
 
             void set_url(const std::string &url);
@@ -43,8 +42,6 @@ namespace AhoViewer
             Glib::Dispatcher& signal_finished() { return m_SignalFinished; }
         private:
             static size_t write_cb(const unsigned char *ptr, size_t size, size_t nmemb, void *userp);
-
-            void init();
 
             CURL *m_EasyHandle;
             CURLcode m_Response;

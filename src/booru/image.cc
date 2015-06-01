@@ -13,6 +13,8 @@ Image::Image(const std::string &path, const std::string &url,
     m_ThumbnailUrl(thumbUrl),
     m_Tags(tags),
     m_Page(page),
+    m_DownloadCurrent(0),
+    m_DownloadTotal(0),
     m_Curler(new Curler(m_Url)),
     m_Loader(Gdk::PixbufLoader::create())
 {

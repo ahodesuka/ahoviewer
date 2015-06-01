@@ -1,4 +1,3 @@
-#include <cstring>
 #include <fstream>
 
 #include "curler.h"
@@ -27,29 +26,11 @@ size_t Curler::write_cb(const unsigned char *ptr, size_t size, size_t nmemb, voi
     return len;
 }
 
-Curler::Curler()
-  : m_EasyHandle(curl_easy_init()),
-    m_DownloadTotal(0),
-    m_DownloadCurrent(0)
-{
-    init();
-}
-
 Curler::Curler(const std::string &url)
   : m_EasyHandle(curl_easy_init()),
+    m_Active(false),
     m_DownloadTotal(0),
     m_DownloadCurrent(0)
-{
-    init();
-    set_url(url);
-}
-
-Curler::~Curler()
-{
-    curl_easy_cleanup(m_EasyHandle);
-}
-
-void Curler::init()
 {
     curl_easy_setopt(m_EasyHandle, CURLOPT_WRITEFUNCTION, &Curler::write_cb);
     curl_easy_setopt(m_EasyHandle, CURLOPT_WRITEDATA, this);
@@ -59,6 +40,14 @@ void Curler::init()
     curl_easy_setopt(m_EasyHandle, CURLOPT_VERBOSE, 0);
     curl_easy_setopt(m_EasyHandle, CURLOPT_CONNECTTIMEOUT, 10);
     curl_easy_setopt(m_EasyHandle, CURLOPT_NOSIGNAL, 1);
+
+    if (!url.empty())
+        set_url(url);
+}
+
+Curler::~Curler()
+{
+    curl_easy_cleanup(m_EasyHandle);
 }
 
 void Curler::set_url(const std::string &url)
