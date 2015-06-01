@@ -18,8 +18,6 @@ AC_SUBST(libunrar_LIBS)
 AC_SUBST(libzip_CFLAGS)
 AC_SUBST(libzip_LIBS)
 
-CXXFLAGS="$CXXFLAGS -Wall -Wextra -pedantic"
-
 AC_PROG_CXX
 AC_PROG_INSTALL
 
