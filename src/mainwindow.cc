@@ -168,6 +168,8 @@ void MainWindow::on_realize()
 {
     Gtk::Window::on_realize();
 
+    m_BooruBrowser->set_position(Settings.get_int("TagViewPosition"));
+
     hide_widgets();
     show_widgets();
 

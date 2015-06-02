@@ -166,7 +166,6 @@ void Browser::on_realize()
 
     m_MinWidth = get_allocation().get_width();
     set_size_request(std::max(Settings.get_int("BooruWidth"), m_MinWidth), -1);
-    set_position(Settings.get_int("TagViewPosition"));
 }
 
 void Browser::close_page(Page *page)
@@ -176,7 +175,7 @@ void Browser::close_page(Page *page)
         Gtk::Window *window = static_cast<Gtk::Window*>(get_toplevel());
         Gtk::MessageDialog dialog(*window, _("Are you sure that you want to stop saving images?"),
                                   false, Gtk::MESSAGE_QUESTION, Gtk::BUTTONS_YES_NO, true);
-        dialog.set_secondary_text(_("Close this tab will stop the save operation."));
+        dialog.set_secondary_text(_("Closing this tab will stop the save operation."));
 
         int response = dialog.run();
 
