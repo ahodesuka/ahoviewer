@@ -108,7 +108,7 @@ void ImageBox::set_zoom_mode(const ZoomMode mode)
     {
         Settings.set_zoom_mode(mode);
         m_ZoomMode = mode;
-        queue_draw_image();
+        queue_draw_image(true);
     }
 }
 
