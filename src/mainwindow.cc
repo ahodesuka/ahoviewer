@@ -24,9 +24,13 @@ MainWindow::MainWindow(BaseObjectType *cobj, const Glib::RefPtr<Gtk::Builder> &b
     m_ImageBox->set_statusbar(m_StatusBar);
 
     m_Builder->get_widget("MainWindow::HPaned", m_HPaned);
+    m_HPaned->set_position(Settings.get_int("BooruWidth"));
     m_HPaned->property_position().signal_changed().connect(
     [ this ]()
     {
+        if (!m_BooruBrowser->get_realized())
+            return;
+
         if (m_HPaned->get_position() < m_BooruBrowser->get_min_width())
             m_HPaned->set_position(m_BooruBrowser->get_min_width());
 
@@ -167,8 +171,6 @@ void MainWindow::set_active_imagelist(std::shared_ptr<ImageList> imageList)
 void MainWindow::on_realize()
 {
     Gtk::Window::on_realize();
-
-    m_BooruBrowser->set_position(Settings.get_int("TagViewPosition"));
 
     hide_widgets();
     show_widgets();
@@ -504,8 +506,7 @@ void MainWindow::show_widgets()
 
     if (Settings.get_bool("BooruBrowserVisible"))
         m_BooruBrowser->show();
-
-    if (Settings.get_bool("ThumbnailBarVisible"))
+    else if (Settings.get_bool("ThumbnailBarVisible"))
         m_ThumbnailBar->show();
 
     m_ImageBox->queue_draw_image();
@@ -675,8 +676,12 @@ void MainWindow::on_close()
 
 void MainWindow::on_quit()
 {
-    Settings.set("TagViewPosition", m_BooruBrowser->get_position());
-    Settings.set("BooruWidth", m_HPaned->get_position());
+    if (m_BooruBrowser->get_realized())
+    {
+        Settings.set("TagViewPosition", m_BooruBrowser->get_position());
+        Settings.set("BooruWidth", m_HPaned->get_position());
+    }
+
     Settings.set("SelectedBooru", m_BooruBrowser->get_selected_booru());
 
     for (std::shared_ptr<Booru::Site> site : Settings.get_sites())

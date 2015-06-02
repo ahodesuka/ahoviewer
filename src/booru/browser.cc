@@ -166,6 +166,7 @@ void Browser::on_realize()
 
     m_MinWidth = get_allocation().get_width();
     set_size_request(std::max(Settings.get_int("BooruWidth"), m_MinWidth), -1);
+    set_position(Settings.get_int("TagViewPosition"));
 }
 
 void Browser::close_page(Page *page)
