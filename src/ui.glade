@@ -184,18 +184,6 @@
                           </packing>
                         </child>
                         <child>
-                          <object class="GtkToolItem" id="spacer">
-                            <property name="visible">True</property>
-                            <property name="can_focus">False</property>
-                            <child>
-                              <placeholder/>
-                            </child>
-                          </object>
-                          <packing>
-                            <property name="expand">True</property>
-                          </packing>
-                        </child>
-                        <child>
                           <object class="GtkSeparatorToolItem" id="toolbarseperator">
                             <property name="visible">True</property>
                             <property name="can_focus">False</property>

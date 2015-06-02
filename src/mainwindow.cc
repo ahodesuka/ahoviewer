@@ -24,7 +24,6 @@ MainWindow::MainWindow(BaseObjectType *cobj, const Glib::RefPtr<Gtk::Builder> &b
     m_ImageBox->set_statusbar(m_StatusBar);
 
     m_Builder->get_widget("MainWindow::HPaned", m_HPaned);
-    m_HPaned->set_position(Settings.get_int("BooruWidth"));
     m_HPaned->property_position().signal_changed().connect(
     [ this ]()
     {
@@ -34,9 +33,9 @@ MainWindow::MainWindow(BaseObjectType *cobj, const Glib::RefPtr<Gtk::Builder> &b
         if (m_HPaned->get_position() < m_BooruBrowser->get_min_width())
             m_HPaned->set_position(m_BooruBrowser->get_min_width());
 
-        if (m_HPaned->get_position() != Settings.get_int("BooruWidth"))
+        if (m_HPanedLastPos != m_HPaned->get_position())
         {
-            Settings.set("BooruWidth", m_HPaned->get_position());
+            m_HPanedLastPos = m_HPaned->get_position();
             m_ImageBox->queue_draw_image();
         }
     });
@@ -48,6 +47,8 @@ MainWindow::MainWindow(BaseObjectType *cobj, const Glib::RefPtr<Gtk::Builder> &b
 
     m_BooruBrowser->signal_page_changed().connect([ this ](Booru::Page *page)
             { set_active_imagelist(page ? page->get_imagelist() : m_LocalImageList); });
+    m_BooruBrowser->signal_realize().connect([ this ]()
+            { m_HPaned->set_position(Settings.get_int("BooruWidth")); });
 
     // Setup drag and drop
     std::vector<Gtk::TargetEntry> dropTargets = { Gtk::TargetEntry("text/uri-list") };

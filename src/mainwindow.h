@@ -80,7 +80,7 @@ namespace AhoViewer
         sigc::connection m_ImageListConn,
                          m_ImageListClearedConn;
 
-        int m_Width, m_Height, m_HPanedMinPos;
+        int m_Width, m_Height, m_HPanedMinPos, m_HPanedLastPos;
     };
 }
 
