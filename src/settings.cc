@@ -131,6 +131,9 @@ SettingsManager::SettingsManager()
             std::cerr << "libconfig::Config.readFile: " << ex.what() << std::endl;
         }
     }
+
+    if (!Glib::file_test(BooruPath, Glib::FILE_TEST_EXISTS))
+        g_mkdir_with_parents(BooruPath.c_str(), 0700);
 }
 
 SettingsManager::~SettingsManager()
@@ -159,6 +162,14 @@ int SettingsManager::get_int(const std::string &key) const
         return Config.lookup(key);
 
     return DefaultInts.at(key);
+}
+
+std::string SettingsManager::get_string(const std::string &key) const
+{
+    if (Config.exists(key))
+        return (const char*)Config.lookup(key);
+
+    return "";
 }
 
 std::vector<std::shared_ptr<Booru::Site>> SettingsManager::get_sites()
@@ -208,17 +219,6 @@ void SettingsManager::set_geometry(const int x, const int y, const int w, const 
     set("y", y, Setting::TypeInt, geo);
     set("w", w, Setting::TypeInt, geo);
     set("h", h, Setting::TypeInt, geo);
-}
-
-bool SettingsManager::get_last_open_file(std::string &path) const
-{
-    if (Config.exists("LastOpenFile"))
-    {
-        path = (const char*)Config.lookup("LastOpenFile");
-        return true;
-    }
-
-    return false;
 }
 
 std::string SettingsManager::get_keybinding(const std::string &group, const std::string &name) const

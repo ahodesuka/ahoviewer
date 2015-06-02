@@ -134,7 +134,8 @@ void ImageBox::on_reset_zoom()
 
 void ImageBox::on_toggle_scrollbars()
 {
-    Settings.set("ScrollbarsVisible", !Settings.get_bool("ScrollbarsVisible"));
+    Settings.set("ScrollbarsVisible",
+            !Settings.get_bool("ScrollbarsVisible"));
     queue_draw_image();
 }
 
@@ -315,7 +316,8 @@ void ImageBox::draw_image(const bool _scroll)
         h       = lHeight;
     double windowAspect = (double)wWidth / wHeight,
            imageAspect  = (double)pixbuf->get_width() / pixbuf->get_height();
-    bool hideScrollbars = !Settings.get_bool("ScrollbarsVisible") || Settings.get_bool("HideAll");
+    bool hideScrollbars = !Settings.get_bool("ScrollbarsVisible") ||
+                          Settings.get_bool("HideAll");
 
     if ((pixbuf->get_width() > wWidth || (pixbuf->get_height() > wHeight && pixbuf->get_width() > lWidth)) &&
         (m_ZoomMode == ZoomMode::FIT_WIDTH || (m_ZoomMode == ZoomMode::AUTO_FIT && windowAspect < imageAspect)))

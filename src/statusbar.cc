@@ -52,7 +52,7 @@ void StatusBar::set_message(const std::string &msg, const Priority priority, con
     m_MessageSeparator->show();
 
     // Tooltip messages are manually cleared.
-    if (priority != Priority::TOOLTIP)
+    if (priority != Priority::TOOLTIP && delay > 0)
         m_MessageConn = Glib::signal_timeout().connect_seconds(
                 sigc::bind_return(sigc::mem_fun(*this, &StatusBar::clear_message), false), delay);
 }
@@ -67,8 +67,9 @@ void StatusBar::set_progress(const double fraction, const Priority priority, con
     m_ProgressBar->set_fraction(fraction);
     m_ProgressBar->show();
 
-    m_ProgressConn = Glib::signal_timeout().connect_seconds(
-            sigc::bind_return(sigc::mem_fun(*this, &StatusBar::clear_progress), false), delay);
+    if (delay > 0)
+        m_ProgressConn = Glib::signal_timeout().connect_seconds(
+                sigc::bind_return(sigc::mem_fun(*this, &StatusBar::clear_progress), false), delay);
 }
 
 void StatusBar::clear_page_info()

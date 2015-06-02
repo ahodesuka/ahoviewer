@@ -28,6 +28,7 @@ namespace AhoViewer
             int get_selected_booru() const { return m_ComboBox->get_active_row_number(); }
             Gtk::Entry* get_tag_entry() const { return m_TagEntry; }
             int get_min_width() const { return m_MinWidth; }
+            std::string get_last_save_path() const { return m_LastSavePath; }
 
             void set_statusbar(StatusBar *sb) { m_StatusBar = sb; }
 
@@ -50,15 +51,15 @@ namespace AhoViewer
                 Gtk::TreeModelColumn<std::string> text_column;
             };
 
+            void close_page(Page *page);
+
             void on_entry_activate();
-            void on_page_closed(Page *page);
             void on_page_removed(Gtk::Widget*, guint);
             void on_switch_page(void*, guint);
             void on_imagelist_changed(const std::shared_ptr<AhoViewer::Image> &image);
 
-            std::string readable_file_size(double s);
-
-            std::shared_ptr<Site> get_active_site() const { return Settings.get_sites()[m_ComboBox->get_active_row_number()]; }
+            std::shared_ptr<Site> get_active_site() const
+                { return Settings.get_sites()[m_ComboBox->get_active_row_number()]; }
 
             StatusBar *m_StatusBar;
 
@@ -75,6 +76,7 @@ namespace AhoViewer
 
             bool m_IgnorePageSwitch;
             int m_MinWidth;
+            std::string m_LastSavePath;
 
             Glib::RefPtr<Gtk::UIManager> m_UIManager;
             Glib::RefPtr<Gtk::Action> m_SaveImageAction,
@@ -82,7 +84,8 @@ namespace AhoViewer
 
             sigc::connection m_NoResultsConn,
                              m_ImageListConn,
-                             m_ImageProgConn;
+                             m_ImageProgConn,
+                             m_SaveProgConn;
 
             SignalPageChangedType m_SignalPageChanged;
         };

@@ -1,4 +1,5 @@
 #include <glibmm/i18n.h>
+#include <iostream>
 
 #include "page.h"
 using namespace AhoViewer::Booru;
@@ -18,7 +19,10 @@ Page::Page()
     m_Page(0),
     m_NumPosts(0),
     m_LastPage(false),
+    m_SavingImage(nullptr),
+    m_SaveCancel(Gio::Cancellable::create()),
     m_GetPostsThread(nullptr),
+    m_SaveImagesThread(nullptr),
     m_SignalClosed()
 {
     set_policy(Gtk::POLICY_NEVER, Gtk::POLICY_AUTOMATIC);
@@ -62,6 +66,8 @@ Page::Page()
 
     m_ImageList = std::make_shared<ImageList>(this);
     m_SignalPostsDownloaded.connect(sigc::mem_fun(*this, &Page::on_posts_downloaded));
+    m_SignalSaveProgressDisp.connect([ this ]()
+            { m_SignalSaveProgress(m_SaveImagesCurrent, m_SaveImagesTotal); });
 
     add(*m_IconView);
     show_all();
@@ -69,10 +75,23 @@ Page::Page()
 
 Page::~Page()
 {
+    m_Curler.cancel();
+
     if (m_GetPostsThread)
     {
         m_GetPostsThread->join();
         m_GetPostsThread = nullptr;
+    }
+
+    m_SaveCancel->cancel();
+
+    if (m_SavingImage)
+        m_SavingImage->cancel_save();
+
+    if (m_SaveImagesThread)
+    {
+        m_SaveImagesThread->join();
+        m_SaveImagesThread = nullptr;
     }
 
     delete m_ImageFetcher;
@@ -105,27 +124,64 @@ void Page::search(std::shared_ptr<Site> site, const std::string &tags)
     get_posts();
 }
 
-void Page::get_posts()
+void Page::save_images(const std::string &path)
 {
-    m_GetPostsThread = Glib::Threads::Thread::create([ this ]()
+    m_SaveImagesCurrent = 0;
+    m_SaveImagesTotal   = m_ImageList->get_size();
+    m_SaveImagesThread  = Glib::Threads::Thread::create([ this, path ]()
     {
-        std::string tags(m_Tags);
-
-        if (m_Tags.find("rating:") == std::string::npos)
+        for (const std::shared_ptr<AhoViewer::Image> &img : m_ImageList->get_images())
         {
-            if (Settings.get_booru_max_rating() == Site::Rating::SAFE)
-            {
-                tags += " rating:safe";
-            }
-            else if (Settings.get_booru_max_rating() == Site::Rating::QUESTIONABLE)
-            {
-                tags += " -rating:explicit";
-            }
+            if (m_SaveCancel->is_cancelled())
+                break;
+
+            m_SavingImage = std::static_pointer_cast<Image>(img);
+            m_SavingImage->save(Glib::build_filename(path, Glib::path_get_basename(img->get_filename())));
+            ++m_SaveImagesCurrent;
+
+            if (!m_SaveCancel->is_cancelled())
+                m_SignalSaveProgressDisp();
         }
 
-        m_Posts = m_Site->download_posts(tags, m_Page);
-        m_NumPosts = std::distance(m_Posts.begin(), m_Posts.end());
-        m_SignalPostsDownloaded();
+        m_SavingImage = nullptr;
+    });
+}
+
+void Page::get_posts()
+{
+    std::string tags(m_Tags);
+
+    if (m_Tags.find("rating:") == std::string::npos)
+    {
+        if (Settings.get_booru_max_rating() == Site::Rating::SAFE)
+        {
+            tags += " rating:safe";
+        }
+        else if (Settings.get_booru_max_rating() == Site::Rating::QUESTIONABLE)
+        {
+            tags += " -rating:explicit";
+        }
+    }
+
+    m_Curler.set_url(m_Site->get_url(tags, m_Page));
+
+    m_GetPostsThread = Glib::Threads::Thread::create([ this ]()
+    {
+        if (m_Curler.perform())
+        {
+            pugi::xml_document doc;
+            doc.load_buffer(m_Curler.get_data(), m_Curler.get_data_size());
+            m_Posts = doc.document_element();
+            m_NumPosts = std::distance(m_Posts.begin(), m_Posts.end());
+        }
+        else
+        {
+            std::cerr << "Error while downloading posts on " << m_Curler.get_url() << std::endl
+                      << "  " << m_Curler.get_error() << std::endl;
+        }
+
+        if (!m_Curler.is_cancelled())
+            m_SignalPostsDownloaded();
     });
 }
 

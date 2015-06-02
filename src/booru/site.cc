@@ -40,7 +40,7 @@ Site::Site(std::string name, std::string url, Type type)
     m_IconPath(Glib::build_filename(Settings.get_booru_path(), m_Name + ".png")),
     m_TagsPath(Glib::build_filename(Settings.get_booru_path(), m_Name + "-tags")),
     m_Type(type),
-    m_Curl(new Curler),
+    m_Curler(false),
     m_IconCurlerThread(nullptr)
 {
     // Load tags
@@ -63,29 +63,13 @@ Site::~Site()
         m_IconCurlerThread->join();
         m_IconCurlerThread = nullptr;
     }
-
-    delete m_Curl;
 }
 
-pugi::xml_node Site::download_posts(const std::string &tags, size_t page)
+std::string Site::get_url(const std::string &tags, size_t page)
 {
-    pugi::xml_document doc;
-    std::string url(Glib::ustring::compose(m_Url + RequestURI.at(m_Type),
-                                           (m_Type == Type::GELBOORU ? page - 1 : page),
-                                           Settings.get_int("BooruLimit"), m_Curl->escape(tags)));
-
-    m_Curl->set_url(url);
-    if (m_Curl->perform())
-    {
-        doc.load_buffer(m_Curl->get_data(), m_Curl->get_data_size());
-    }
-    else
-    {
-        std::cerr << "Error while downloading posts on " << url << std::endl
-                  << "  " << m_Curl->get_error() << std::endl;
-    }
-
-    return doc.document_element();
+    return Glib::ustring::compose(m_Url + RequestURI.at(m_Type),
+                                  (m_Type == Type::GELBOORU ? page - 1 : page),
+                                  Settings.get_int("BooruLimit"), m_Curler.escape(tags));
 }
 
 void Site::add_tags(const std::set<std::string> &tags)
@@ -114,6 +98,7 @@ void Site::save_tags() const
 
 void Site::set_row_values(Gtk::TreeModel::Row row)
 {
+    m_SignalIconDownloaded.connect([ this, row ]() { row.set_value(0, m_IconPixbuf); });
     row.set_value(1, m_Name);
     if (Glib::file_test(m_IconPath, Glib::FILE_TEST_EXISTS))
     {
@@ -129,15 +114,15 @@ void Site::set_row_values(Gtk::TreeModel::Row row)
             for (const std::string &url : { m_Url + "/favicon.ico",
                                             m_Url + "/favicon.png" })
             {
-                m_Curl->set_url(url);
-                if (m_Curl->perform())
+                m_Curler.set_url(url);
+                if (m_Curler.perform())
                 {
                     Glib::RefPtr<Gdk::PixbufLoader> loader = Gdk::PixbufLoader::create();
                     loader->set_size(16, 16);
 
                     try
                     {
-                        loader->write(m_Curl->get_data(), m_Curl->get_data_size());
+                        loader->write(m_Curler.get_data(), m_Curler.get_data_size());
                         loader->close();
                         m_IconPixbuf = loader->get_pixbuf();
                         m_IconPixbuf->save(m_IconPath, "png");
@@ -151,7 +136,7 @@ void Site::set_row_values(Gtk::TreeModel::Row row)
                 }
             }
 
-            row.set_value(0, m_IconPixbuf);
+            m_SignalIconDownloaded();
         });
     }
 }

@@ -1,14 +1,27 @@
 #include <iostream>
+#include <glibmm/i18n.h>
 
 #include "browser.h"
 using namespace AhoViewer::Booru;
 
 #include "image.h"
 
+static std::string readable_file_size(double s)
+{
+    gchar *fsize = g_format_size(s);
+    std::string str(fsize);
+
+    if (fsize)
+        g_free(fsize);
+
+    return str;
+}
+
 Browser::Browser(BaseObjectType *cobj, const Glib::RefPtr<Gtk::Builder> &bldr)
   : Gtk::VPaned(cobj),
     m_IgnorePageSwitch(false),
-    m_MinWidth(0)
+    m_MinWidth(0),
+    m_LastSavePath(Settings.get_string("LastSavePath"))
 {
     bldr->get_widget("Booru::Browser::Notebook",          m_Notebook);
     bldr->get_widget("Booru::Browser::NewTabButton",      m_NewTabButton);
@@ -32,12 +45,13 @@ Browser::Browser(BaseObjectType *cobj, const Glib::RefPtr<Gtk::Builder> &bldr)
     for (std::shared_ptr<Site> site : Settings.get_sites())
         site->set_row_values(*(m_ComboModel->append()));
 
-    int selected = std::min(Settings.get_int("SelectedBooru"), (int)Settings.get_sites().size() - 1);
+    int selected = std::min(Settings.get_int("SelectedBooru"),
+                           (int)Settings.get_sites().size() - 1);
     m_ComboBox->set_active(selected);
 
     m_ComboBox->pack_start(m_ComboColumns.pixbuf_column, false);
     m_ComboBox->pack_start(m_ComboColumns.text_column);
-    static_cast<std::vector<Gtk::CellRenderer*>>(m_ComboBox->get_cells())[0]->set_fixed_size(18, 16);
+    static_cast<std::vector<Gtk::CellRenderer*>>(m_ComboBox->get_cells())[0]->set_fixed_size(20, 16);
 
     m_UIManager = Glib::RefPtr<Gtk::UIManager>::cast_static(bldr->get_object("UIManager"));
 
@@ -53,7 +67,7 @@ Browser::~Browser()
 void Browser::on_new_tab()
 {
     Page *page = Gtk::manage(new Page());
-    page->signal_closed().connect([ this, page ](){ m_Notebook->remove_page(*page); });
+    page->signal_closed().connect([ this, page ]() { close_page(page); });
 
     int page_num = m_Notebook->append_page(*page, *page->get_tab());
 
@@ -67,17 +81,67 @@ void Browser::on_new_tab()
 void Browser::on_close_tab()
 {
     if (m_Notebook->get_n_pages() > 0)
-        m_Notebook->remove_page(*get_active_page());
+        close_page(get_active_page());
 }
 
 void Browser::on_save_image()
 {
-    std::cout << "on_save_image" << std::endl;
+    Gtk::Window *window = static_cast<Gtk::Window*>(get_toplevel());
+    Gtk::FileChooserDialog dialog(*window, "Save Image As", Gtk::FILE_CHOOSER_ACTION_SAVE);
+    dialog.set_modal();
+
+    const std::shared_ptr<Image> image =
+        std::static_pointer_cast<Image>(get_active_page()->get_imagelist()->get_current());
+
+    dialog.add_button(Gtk::Stock::CANCEL, Gtk::RESPONSE_CANCEL);
+    dialog.add_button("Save", Gtk::RESPONSE_OK);
+
+    if (!m_LastSavePath.empty())
+        dialog.set_current_folder(m_LastSavePath);
+
+    dialog.set_current_name(Glib::path_get_basename(image->get_filename()));
+
+    if (dialog.run() == Gtk::RESPONSE_OK)
+    {
+        std::string path = dialog.get_filename();
+        m_LastSavePath = Glib::path_get_dirname(path);
+        image->save(path);
+    }
 }
 
 void Browser::on_save_images()
 {
-    std::cout << "on_save_images" << std::endl;
+    Gtk::Window *window = static_cast<Gtk::Window*>(get_toplevel());
+    Gtk::FileChooserDialog dialog(*window, "Save Images", Gtk::FILE_CHOOSER_ACTION_SELECT_FOLDER);
+    dialog.set_modal();
+
+    dialog.add_button(Gtk::Stock::CANCEL, Gtk::RESPONSE_CANCEL);
+    dialog.add_button("Save", Gtk::RESPONSE_OK);
+
+    if (!m_LastSavePath.empty())
+        dialog.set_current_folder(m_LastSavePath);
+
+    if (dialog.run() == Gtk::RESPONSE_OK)
+    {
+        std::string path = dialog.get_filename();
+        m_LastSavePath = path;
+        Page *page = get_active_page();
+
+        m_SaveProgConn = page->signal_save_progress().connect([ this, page ](size_t c, size_t t)
+        {
+            std::ostringstream ss;
+            ss << "Saving "
+               << page->get_site()->get_name() + (!page->get_tags().empty() ? " - " + page->get_tags() : "")
+               << " " << c << " / " << t;
+            m_StatusBar->set_progress(c / (double)t, StatusBar::Priority::HIGH, c == t ? 2 : 0);
+            m_StatusBar->set_message(ss.str(), StatusBar::Priority::HIGH, c == t ? 2 : 0);
+
+            if (c == t)
+                m_SaveProgConn.disconnect();
+        });
+
+        page->save_images(path);
+    }
 }
 
 void Browser::on_realize()
@@ -103,6 +167,24 @@ void Browser::on_realize()
     m_MinWidth = get_allocation().get_width();
     set_size_request(std::max(Settings.get_int("BooruWidth"), m_MinWidth), -1);
     set_position(Settings.get_int("TagViewPosition"));
+}
+
+void Browser::close_page(Page *page)
+{
+    if (page->is_saving())
+    {
+        Gtk::Window *window = static_cast<Gtk::Window*>(get_toplevel());
+        Gtk::MessageDialog dialog(*window, _("Are you sure that you want to stop saving images?"),
+                                  false, Gtk::MESSAGE_QUESTION, Gtk::BUTTONS_YES_NO, true);
+        dialog.set_secondary_text(_("Close this tab will stop the save operation."));
+
+        int response = dialog.run();
+
+        if (response == Gtk::RESPONSE_NO || response == Gtk::RESPONSE_DELETE_EVENT)
+            return;
+    }
+
+    m_Notebook->remove_page(*page);
 }
 
 void Browser::on_entry_activate()
@@ -145,8 +227,9 @@ void Browser::on_switch_page(void*, guint)
     m_NoResultsConn = page->signal_no_results().connect([ this, page ]()
     {
         std::ostringstream ss;
-        ss << "No results found for '" << page->get_tags()
-           << "' on " << page->get_site()->get_name();
+        ss << "No results found"
+           << (!page->get_tags().empty() ? " for '" + page->get_tags() + "'" : "")
+           << " on " << page->get_site()->get_name();
         m_StatusBar->set_message(ss.str());
     });
 
@@ -192,26 +275,21 @@ void Browser::on_imagelist_changed(const std::shared_ptr<AhoViewer::Image> &imag
 
     m_ImageProgConn = bimage->signal_progress().connect([ this, bimage ](double c, double t)
     {
+        double speed = (c / std::chrono::duration<double>(std::chrono::steady_clock::now() -
+                                                          bimage->get_curler()->get_start_time()).count());
+        std::ostringstream ss;
+
         if (t > 0)
         {
-            double speed = (c / std::chrono::duration<double>(std::chrono::steady_clock::now() -
-                                                              bimage->get_curler()->get_start_time()).count());
-            std::ostringstream ss;
             ss << "Downloading " << readable_file_size(c) << " / " << readable_file_size(t) << " @ "
                << readable_file_size(speed) << "/s";
             m_StatusBar->set_progress(c / t, StatusBar::Priority::NORMAL, 2);
-            m_StatusBar->set_message(ss.str(), StatusBar::Priority::NORMAL, 2);
         }
+        else
+        {
+             ss << "Downloading " << readable_file_size(c) << " / ?? @ "
+                << readable_file_size(speed) << "/s";
+        }
+        m_StatusBar->set_message(ss.str(), StatusBar::Priority::NORMAL, 2);
     });
-}
-
-std::string Browser::readable_file_size(double s)
-{
-    gchar *fsize = g_format_size(s);
-    std::string str(fsize);
-
-    if (fsize)
-        g_free(fsize);
-
-    return str;
 }

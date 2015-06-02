@@ -2,7 +2,6 @@
 #define _SITE_H_
 
 #include <gtkmm.h>
-#include <pugixml.hpp>
 #include <set>
 
 #include "curler.h"
@@ -32,7 +31,7 @@ namespace AhoViewer
 
             static Type string_to_type(std::string type);
 
-            pugi::xml_node download_posts(const std::string &tags, size_t page);
+            std::string get_url(const std::string &tags, size_t page);
             void add_tags(const std::set<std::string> &tags);
 
             std::string get_name() const { return m_Name; }
@@ -51,10 +50,11 @@ namespace AhoViewer
             std::string m_Name, m_Url, m_IconPath, m_TagsPath, m_Path;
             Type m_Type;
             std::set<std::string> m_Tags;
-            Curler *m_Curl;
+            Curler m_Curler;
 
             Glib::RefPtr<Gdk::Pixbuf> m_IconPixbuf;
             Glib::Threads::Thread *m_IconCurlerThread;
+            Glib::Dispatcher m_SignalIconDownloaded;
         };
     }
 }

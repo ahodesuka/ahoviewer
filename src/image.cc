@@ -23,8 +23,7 @@ const Glib::RefPtr<Gdk::Pixbuf>& Image::get_missing_pixbuf()
 
 Image::Image(const std::string &path)
   : m_Loading(false),
-    m_Path(path),
-    m_SignalPixbufChanged()
+    m_Path(path)
 {
 
 }
@@ -32,8 +31,7 @@ Image::Image(const std::string &path)
 Image::Image(const std::string &path, const std::string &thumb_path)
   : m_Loading(false),
     m_Path(path),
-    m_ThumbnailPath(thumb_path),
-    m_SignalPixbufChanged()
+    m_ThumbnailPath(thumb_path)
 {
 
 }

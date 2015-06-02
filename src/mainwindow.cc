@@ -123,8 +123,10 @@ void MainWindow::open_file(const std::string &path, const int index)
         if (Settings.get_bool("StoreRecentFiles"))
             Gtk::RecentManager::get_default()->add_item(Glib::filename_to_uri(absolutePath));
 
-        if (!Settings.get_bool("HideAll") && !(is_fullscreen() && Settings.get_bool("HideAllFullscreen")))
-            Glib::RefPtr<Gtk::ToggleAction>::cast_static(m_ActionGroup->get_action("ToggleThumbnailBar"))->set_active();
+        if (!Settings.get_bool("HideAll") &&
+            !(is_fullscreen() && Settings.get_bool("HideAllFullscreen")))
+            Glib::RefPtr<Gtk::ToggleAction>::cast_static(
+                    m_ActionGroup->get_action("ToggleThumbnailBar"))->set_active();
 
         present();
         set_sensitives();
@@ -135,9 +137,9 @@ void MainWindow::restore_last_file()
 {
     if (Settings.get_bool("RememberLastFile"))
     {
-        std::string path;
+        std::string path = Settings.get_string("LastOpenFile");
 
-        if (Settings.get_last_open_file(path))
+        if (!path.empty())
             open_file(path, Settings.get_int("ArchiveIndex"));
     }
 }
@@ -603,7 +605,7 @@ void MainWindow::on_connect_proxy(const Glib::RefPtr<Gtk::Action> &action, Gtk::
 
 void MainWindow::on_open_file_dialog()
 {
-    Gtk::FileChooserDialog dialog(*this, "Open File - " PACKAGE, Gtk::FILE_CHOOSER_ACTION_OPEN);
+    Gtk::FileChooserDialog dialog(*this, "Open", Gtk::FILE_CHOOSER_ACTION_OPEN);
     Gtk::FileFilter filter, imageFilter, archiveFilter;
 
     dialog.add_button(Gtk::Stock::CANCEL, Gtk::RESPONSE_CANCEL);
@@ -666,7 +668,6 @@ void MainWindow::on_close()
     else
     {
         m_BooruBrowser->on_close_tab();
-        // The page_changed signal will change the image list for us
     }
 }
 
@@ -696,11 +697,13 @@ void MainWindow::on_quit()
         }
 
         Settings.set("LastOpenFile", path);
+        Settings.set("LastSavePath", m_BooruBrowser->get_last_save_path());
     }
     else
     {
         Settings.remove("LastOpenFile");
         Settings.remove("ArchiveIndex");
+        Settings.remove("LastSavePath");
     }
 
     hide();
