@@ -13,7 +13,8 @@ MainWindow::MainWindow(BaseObjectType *cobj, const Glib::RefPtr<Gtk::Builder> &b
     m_Builder(bldr),
     m_Width(0),
     m_Height(0),
-    m_HPanedMinPos(0)
+    m_HPanedMinPos(0),
+    m_HPanedLastPos(0)
 {
     m_Builder->get_widget_derived("ThumbnailBar",   m_ThumbnailBar);
     m_Builder->get_widget_derived("Booru::Browser", m_BooruBrowser);

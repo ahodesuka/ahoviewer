@@ -164,7 +164,10 @@ void Browser::on_realize()
     while (Gtk::Main::events_pending())
         Gtk::Main::iteration();
 
-    m_MinWidth = get_allocation().get_width();
+    // +1 is a cheap hack for clean startups
+    // without it the tag entry will not be visible
+    // until the user resizes this widget
+    m_MinWidth = get_allocation().get_width() + 1;
     set_size_request(std::max(Settings.get_int("BooruWidth"), m_MinWidth), -1);
     set_position(Settings.get_int("TagViewPosition"));
 }
