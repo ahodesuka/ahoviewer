@@ -49,3 +49,4 @@ or
 | Toggle Slideshow                          | s               |
 | New Booru Browser Tab                     | Control+t       |
 | Save Booru Browser Tab                    | Control+s       |
+| Save Current Booru Image                  | Contrl+Shift+s  |
