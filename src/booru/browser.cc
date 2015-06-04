@@ -30,7 +30,8 @@ Browser::Browser(BaseObjectType *cobj, const Glib::RefPtr<Gtk::Builder> &bldr)
     bldr->get_widget_derived("Booru::Browser::TagEntry",  m_TagEntry);
     bldr->get_widget_derived("Booru::Browser::TagView",   m_TagView);
 
-    m_TagEntry->signal_activate().connect(sigc::mem_fun(*this, &Browser::on_entry_activate));
+    m_TagEntry->signal_key_press_event().connect(
+            sigc::mem_fun(*this, &Browser::on_entry_key_press_event), false);
     m_TagView->set_tag_entry(m_TagEntry);
 
     m_ComboBox->signal_changed().connect([ this ]()
@@ -190,9 +191,15 @@ void Browser::close_page(Page *page)
     m_Notebook->remove_page(*page);
 }
 
-void Browser::on_entry_activate()
+bool Browser::on_entry_key_press_event(GdkEventKey *e)
 {
-    if (m_Notebook->get_n_pages() == 0)
+    // we only care if enter/return was pressed while shift or no modifier was down
+    if ((e->keyval != GDK_Return && e->keyval != GDK_ISO_Enter && e->keyval != GDK_KP_Enter) ||
+        !((e->state & GDK_SHIFT_MASK) == GDK_SHIFT_MASK || e->state == 0))
+        return false;
+
+    bool new_tab = (e->state & GDK_SHIFT_MASK) == GDK_SHIFT_MASK;
+    if (new_tab || m_Notebook->get_n_pages() == 0)
     {
         m_IgnorePageSwitch = true;
         on_new_tab();
@@ -201,6 +208,8 @@ void Browser::on_entry_activate()
     m_TagView->clear();
     get_active_page()->search(get_active_site(), m_TagEntry->get_text());
     m_SignalPageChanged(get_active_page());
+
+    return true;
 }
 
 void Browser::on_page_removed(Gtk::Widget*, guint)
