@@ -15,9 +15,6 @@ namespace AhoViewer
 
         static int const MagicSize = 6;
         static const char Magic[MagicSize];
-    private:
-        typedef struct RAROpenArchiveData RAROpenArchiveData;
-        typedef struct RARHeaderData      RARHeaderData;
     };
 }
 

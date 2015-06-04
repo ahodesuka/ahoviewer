@@ -14,10 +14,6 @@ namespace AhoViewer
 
         static int const MagicSize = 4;
         static const char Magic[MagicSize];
-    private:
-        typedef struct zip      zip_archive;
-        typedef struct zip_stat zip_stat;
-        typedef struct zip_file zip_file;
     };
 }
 

@@ -15,7 +15,7 @@ const char Zip::Magic[Zip::MagicSize] = { 'P', 'K', 0x03, 0x04 };
 std::string Zip::extract(const std::string &path) const
 {
     std::string extractedPath;
-    zip_archive *zip = zip_open(path.c_str(), 0, NULL);
+    zip *zip = zip_open(path.c_str(), 0, NULL);
 
     if (zip)
     {
@@ -27,7 +27,7 @@ std::string Zip::extract(const std::string &path) const
         {
             for (zip_int64_t i = 0; i < nEntries; ++i)
             {
-                zip_stat st;
+                struct zip_stat st;
                 zip_stat_init(&st);
 
                 if (zip_stat_index(zip, i, 0, &st) == -1)
