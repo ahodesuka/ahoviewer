@@ -63,13 +63,13 @@ namespace AhoViewer
 
         const std::map<std::string, bool> DefaultBools;
         const std::map<std::string, int> DefaultInts;
-        const std::vector<std::shared_ptr<Booru::Site>> DefaultSites;
+        const std::vector<std::tuple<std::string, std::string, Booru::Site::Type>> DefaultSites;
         const std::map<std::string, std::map<std::string, std::string>> DefaultKeybindings;
         const Gdk::Color DefaultBGColor;
         const Booru::Site::Rating DefaultBooruMaxRating = Booru::Site::Rating::EXPLICIT;
         const ImageBox::ZoomMode DefaultZoomMode = ImageBox::ZoomMode::MANUAL;
 
-        std::vector<std::shared_ptr<Booru::Site>> m_Sites;
+        std::vector<std::shared_ptr<Booru::Site>> m_Sites, m_DefaultSites;
 
         template<typename T>
         void set(const std::string &key, const T value, Setting::Type type)

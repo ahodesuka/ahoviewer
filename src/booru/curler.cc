@@ -52,20 +52,12 @@ int Curler::progress_cb(void *userp, curl_off_t, curl_off_t, curl_off_t, curl_of
 }
 
 Curler::Curler(const std::string &url)
-  : Curler::Curler(true, url)
-{
-
-}
-
-Curler::Curler(bool cancellable, const std::string &url)
   : m_EasyHandle(curl_easy_init()),
     m_Active(false),
     m_DownloadTotal(0),
-    m_DownloadCurrent(0)
+    m_DownloadCurrent(0),
+    m_Cancel(Gio::Cancellable::create())
 {
-    if (cancellable)
-        m_Cancel = Gio::Cancellable::create();
-
     curl_easy_setopt(m_EasyHandle, CURLOPT_WRITEFUNCTION, &Curler::write_cb);
     curl_easy_setopt(m_EasyHandle, CURLOPT_WRITEDATA, this);
     curl_easy_setopt(m_EasyHandle, CURLOPT_XFERINFOFUNCTION, &Curler::progress_cb);

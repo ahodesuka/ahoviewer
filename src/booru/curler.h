@@ -20,8 +20,7 @@ namespace AhoViewer
             typedef std::chrono::time_point<std::chrono::steady_clock> time_point_t;
             typedef sigc::signal<void, const unsigned char*, size_t> SignalWriteType;
 
-            Curler(const std::string &url);
-            Curler(bool cancellable = true, const std::string &url = "");
+            Curler(const std::string &url = "");
             ~Curler();
 
             void set_url(const std::string &url);
@@ -42,8 +41,8 @@ namespace AhoViewer
             std::string get_error() const  { return curl_easy_strerror(m_Response); }
             time_point_t get_start_time() const { return m_StartTime; }
 
-            void cancel() { if (m_Cancel) m_Cancel->cancel(); }
-            bool is_cancelled() const { return m_Cancel && m_Cancel->is_cancelled(); }
+            void cancel() { m_Cancel->cancel(); }
+            bool is_cancelled() const { return m_Cancel->is_cancelled(); }
 
             SignalWriteType signal_write() const { return m_SignalWrite; }
             Glib::Dispatcher& signal_progress() { return m_SignalProgress; }

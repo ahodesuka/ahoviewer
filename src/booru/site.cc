@@ -40,7 +40,6 @@ Site::Site(std::string name, std::string url, Type type)
     m_IconPath(Glib::build_filename(Settings.get_booru_path(), m_Name + ".png")),
     m_TagsPath(Glib::build_filename(Settings.get_booru_path(), m_Name + "-tags")),
     m_Type(type),
-    m_Curler(false),
     m_IconCurlerThread(nullptr)
 {
     // Load tags
@@ -58,6 +57,7 @@ Site::Site(std::string name, std::string url, Type type)
 
 Site::~Site()
 {
+    m_Curler.cancel();
     if (m_IconCurlerThread)
     {
         m_IconCurlerThread->join();

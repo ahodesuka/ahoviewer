@@ -41,11 +41,11 @@ SettingsManager::SettingsManager()
     }),
     DefaultSites(
     {
-        std::make_shared<Booru::Site>("Gelbooru",   "http://gelbooru.com",        Booru::Site::Type::GELBOORU),
-        std::make_shared<Booru::Site>("Danbooru",   "http://danbooru.donmai.us",  Booru::Site::Type::DANBOORU),
-        std::make_shared<Booru::Site>("Konachan",   "http://konachan.com",        Booru::Site::Type::DANBOORU),
-        std::make_shared<Booru::Site>("yande.re",   "https://yande.re",           Booru::Site::Type::DANBOORU),
-        std::make_shared<Booru::Site>("Safebooru",  "http://safebooru.org",       Booru::Site::Type::GELBOORU),
+        std::make_tuple("Gelbooru",   "http://gelbooru.com",        Booru::Site::Type::GELBOORU),
+        std::make_tuple("Danbooru",   "http://danbooru.donmai.us",  Booru::Site::Type::DANBOORU),
+        std::make_tuple("Konachan",   "http://konachan.com",        Booru::Site::Type::DANBOORU),
+        std::make_tuple("yande.re",   "https://yande.re",           Booru::Site::Type::DANBOORU),
+        std::make_tuple("Safebooru",  "http://safebooru.org",       Booru::Site::Type::GELBOORU),
     }),
     DefaultKeybindings(
     {
@@ -193,8 +193,14 @@ std::vector<std::shared_ptr<Booru::Site>> SettingsManager::get_sites()
             return m_Sites;
         }
     }
+    else if (!m_DefaultSites.size())
+    {
+        for (const std::tuple<std::string, std::string, Booru::Site::Type> &s : DefaultSites)
+            m_DefaultSites.push_back(std::make_shared<Booru::Site>(
+                        std::get<0>(s), std::get<1>(s), std::get<2>(s)));
+    }
 
-    return DefaultSites;
+    return m_DefaultSites;
 }
 
 bool SettingsManager::get_geometry(int &x, int &y, int &w, int &h) const
