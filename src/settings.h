@@ -53,7 +53,10 @@ namespace AhoViewer
         }
         void set(const std::string &key, const std::string &value)
         {
-            set(key, value, Setting::TypeString);
+            if (value.empty())
+                remove(key);
+            else
+                set(key, value, Setting::TypeString);
         }
     private:
         libconfig::Config Config;
