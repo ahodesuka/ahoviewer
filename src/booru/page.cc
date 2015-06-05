@@ -19,7 +19,7 @@ Page::Page()
     m_Page(0),
     m_NumPosts(0),
     m_LastPage(false),
-    m_SavingImage(nullptr),
+    m_Saving(false),
     m_SaveCancel(Gio::Cancellable::create()),
     m_GetPostsThread(nullptr),
     m_SaveImagesThread(nullptr),
@@ -67,7 +67,10 @@ Page::Page()
     m_ImageList = std::make_shared<ImageList>(this);
     m_SignalPostsDownloaded.connect(sigc::mem_fun(*this, &Page::on_posts_downloaded));
     m_SignalSaveProgressDisp.connect([ this ]()
-            { m_SignalSaveProgress(m_SaveImagesCurrent, m_SaveImagesTotal); });
+    {
+        Glib::Threads::Mutex::Lock lock(m_SaveMutex);
+        m_SignalSaveProgress(m_SaveImagesCurrent, m_SaveImagesTotal);
+    });
 
     add(*m_IconView);
     show_all();
@@ -83,16 +86,7 @@ Page::~Page()
         m_GetPostsThread = nullptr;
     }
 
-    m_SaveCancel->cancel();
-
-    if (m_SavingImage)
-        m_SavingImage->cancel_save();
-
-    if (m_SaveImagesThread)
-    {
-        m_SaveImagesThread->join();
-        m_SaveImagesThread = nullptr;
-    }
+    cancel_save();
 
     delete m_ImageFetcher;
 }
@@ -111,6 +105,10 @@ void Page::set_selected(const size_t index)
 
 void Page::search(std::shared_ptr<Site> site, const std::string &tags)
 {
+    if (!ask_cancel_save())
+        return;
+
+    cancel_save();
     m_ImageList->clear();
 
     m_Site = site;
@@ -126,25 +124,74 @@ void Page::search(std::shared_ptr<Site> site, const std::string &tags)
 
 void Page::save_images(const std::string &path)
 {
+    m_SaveCancel->reset();
+
+    m_Saving            = true;
     m_SaveImagesCurrent = 0;
     m_SaveImagesTotal   = m_ImageList->get_size();
     m_SaveImagesThread  = Glib::Threads::Thread::create([ this, path ]()
     {
+        // 2 if cachesize is 0, 8 if cachesize > 2
+        Glib::ThreadPool pool(std::max(std::min(Settings.get_int("CacheSize") * 4, 8), 2));
         for (const std::shared_ptr<AhoViewer::Image> &img : m_ImageList->get_images())
         {
-            if (m_SaveCancel->is_cancelled())
-                break;
+            pool.push([ this, path, img ]()
+            {
+                if (m_SaveCancel->is_cancelled())
+                    return;
 
-            m_SavingImage = std::static_pointer_cast<Image>(img);
-            m_SavingImage->save(Glib::build_filename(path, Glib::path_get_basename(img->get_filename())));
-            ++m_SaveImagesCurrent;
+                std::shared_ptr<Image> bimage = std::static_pointer_cast<Image>(img);
+                bimage->save(Glib::build_filename(path, Glib::path_get_basename(bimage->get_filename())));
 
-            if (!m_SaveCancel->is_cancelled())
-                m_SignalSaveProgressDisp();
+                {
+                    Glib::Threads::Mutex::Lock lock(m_SaveMutex);
+                    ++m_SaveImagesCurrent;
+                }
+
+                if (!m_SaveCancel->is_cancelled())
+                    m_SignalSaveProgressDisp();
+            });
         }
 
-        m_SavingImage = nullptr;
+        pool.shutdown(m_SaveCancel->is_cancelled());
+        m_Saving = false;
     });
+}
+
+/**
+ * Returns true if we want to cancel or we're not saving
+ **/
+bool Page::ask_cancel_save()
+{
+    if (!m_Saving)
+        return true;
+
+    Gtk::Window *window = static_cast<Gtk::Window*>(get_toplevel());
+    Gtk::MessageDialog dialog(*window, _("Are you sure that you want to stop saving images?"),
+                              false, Gtk::MESSAGE_QUESTION, Gtk::BUTTONS_YES_NO, true);
+    dialog.set_secondary_text(_("Closing this tab will stop the save operation."));
+
+    return dialog.run() == Gtk::RESPONSE_YES;
+}
+
+void Page::cancel_save()
+{
+    m_SaveCancel->cancel();
+
+    if (m_Saving)
+    {
+        for (const std::shared_ptr<AhoViewer::Image> &img : m_ImageList->get_images())
+        {
+            std::shared_ptr<Image> bimage = std::static_pointer_cast<Image>(img);
+            bimage->cancel_save();
+        }
+    }
+
+    if (m_SaveImagesThread)
+    {
+        m_SaveImagesThread->join();
+        m_SaveImagesThread = nullptr;
+    }
 }
 
 void Page::get_posts()
@@ -185,6 +232,26 @@ void Page::get_posts()
     });
 }
 
+bool Page::get_next_page()
+{
+    if (m_LastPage || m_GetPostsThread)
+        return false;
+
+    if (!m_Saving)
+    {
+        ++m_Page;
+        get_posts();
+
+        return false;
+    }
+    else if (!m_GetNextPageConn)
+    {
+        m_GetNextPageConn = Glib::signal_timeout().connect(sigc::mem_fun(*this, &Page::get_next_page), 1000);
+    }
+
+    return true;
+}
+
 /**
  * Adds the downloaded posts to the image list.
  **/
@@ -219,12 +286,8 @@ void Page::on_selection_changed()
         {
             size_t index = path[0];
 
-            if (index + Settings.get_int("CacheSize") >= m_ImageList->get_size() - 1 &&
-                !m_LastPage && !m_GetPostsThread)
-            {
-                ++m_Page;
-                get_posts();
-            }
+            if (index + Settings.get_int("CacheSize") >= m_ImageList->get_size() - 1)
+                get_next_page();
 
             m_SignalSelectedChanged(index);
         }
@@ -241,9 +304,6 @@ void Page::on_value_changed()
                    get_vadjustment()->get_page_size() -
                    get_vadjustment()->get_step_increment();
 
-    if (value >= limit && !m_LastPage && !m_GetPostsThread)
-    {
-        ++m_Page;
-        get_posts();
-    }
+    if (value >= limit)
+        get_next_page();
 }

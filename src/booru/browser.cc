@@ -87,6 +87,9 @@ void Browser::on_close_tab()
 
 void Browser::on_save_image()
 {
+    if (get_active_page()->is_saving())
+        return;
+
     Gtk::Window *window = static_cast<Gtk::Window*>(get_toplevel());
     Gtk::FileChooserDialog dialog(*window, "Save Image As", Gtk::FILE_CHOOSER_ACTION_SAVE);
     dialog.set_modal();
@@ -112,6 +115,9 @@ void Browser::on_save_image()
 
 void Browser::on_save_images()
 {
+    if (get_active_page()->is_saving())
+        return;
+
     Gtk::Window *window = static_cast<Gtk::Window*>(get_toplevel());
     Gtk::FileChooserDialog dialog(*window, "Save Images", Gtk::FILE_CHOOSER_ACTION_SELECT_FOLDER);
     dialog.set_modal();
@@ -175,20 +181,8 @@ void Browser::on_realize()
 
 void Browser::close_page(Page *page)
 {
-    if (page->is_saving())
-    {
-        Gtk::Window *window = static_cast<Gtk::Window*>(get_toplevel());
-        Gtk::MessageDialog dialog(*window, _("Are you sure that you want to stop saving images?"),
-                                  false, Gtk::MESSAGE_QUESTION, Gtk::BUTTONS_YES_NO, true);
-        dialog.set_secondary_text(_("Closing this tab will stop the save operation."));
-
-        int response = dialog.run();
-
-        if (response == Gtk::RESPONSE_NO || response == Gtk::RESPONSE_DELETE_EVENT)
-            return;
-    }
-
-    m_Notebook->remove_page(*page);
+    if (page->ask_cancel_save())
+        m_Notebook->remove_page(*page);
 }
 
 bool Browser::on_entry_key_press_event(GdkEventKey *e)

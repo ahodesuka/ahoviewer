@@ -28,19 +28,22 @@ namespace AhoViewer
 
             void search(std::shared_ptr<Site> site, const std::string &tags);
             void save_images(const std::string &path);
+            bool ask_cancel_save();
 
             ImageFetcher* get_image_fetcher() const { return m_ImageFetcher; }
             Gtk::Widget* get_tab() const { return m_Tab; }
             std::shared_ptr<Site> get_site() const { return m_Site; }
             std::shared_ptr<ImageList> get_imagelist() const { return m_ImageList; }
             std::string get_tags() const { return m_Tags; }
-            bool is_saving() const { return !!m_SavingImage; }
+            bool is_saving() const { return m_Saving; }
 
             SignalClosedType signal_closed() const { return m_SignalClosed; }
             SignalNoResultsType signal_no_results() const { return m_SignalNoResults; }
             SignalSaveProgressType signal_save_progress() const { return m_SignalSaveProgress; }
         private:
+            void cancel_save();
             void get_posts();
+            bool get_next_page();
             void on_posts_downloaded();
             void on_selection_changed();
             void on_value_changed();
@@ -60,15 +63,17 @@ namespace AhoViewer
             size_t m_Page, m_NumPosts,
                    m_SaveImagesCurrent,
                    m_SaveImagesTotal;
-            bool m_LastPage;
-            std::shared_ptr<Image> m_SavingImage;
+            bool m_LastPage, m_Saving;
             pugi::xml_node m_Posts;
 
             Glib::RefPtr<Gio::Cancellable> m_SaveCancel;
+            Glib::Threads::Mutex m_SaveMutex;
             Glib::Threads::Thread *m_GetPostsThread,
                                   *m_SaveImagesThread;
             Glib::Dispatcher m_SignalPostsDownloaded,
                              m_SignalSaveProgressDisp;
+
+            sigc::connection m_GetNextPageConn;
 
             SignalClosedType m_SignalClosed;
             SignalNoResultsType m_SignalNoResults;
