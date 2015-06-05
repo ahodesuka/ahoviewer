@@ -4,6 +4,7 @@
 #include <curl/curl.h>
 #include <glibmm.h>
 #include <giomm.h>
+#include <atomic>
 #include <chrono>
 #include <string>
 #include <vector>
@@ -57,11 +58,10 @@ namespace AhoViewer
             std::vector<unsigned char> m_Buffer;
 
             bool m_Active;
-            double m_DownloadTotal,
-                   m_DownloadCurrent;
+            std::atomic<double> m_DownloadTotal,
+                                m_DownloadCurrent;
             time_point_t m_StartTime;
 
-            Glib::Threads::RWLock m_ProgressLock;
             Glib::RefPtr<Gio::Cancellable> m_Cancel;
 
             SignalWriteType m_SignalWrite;

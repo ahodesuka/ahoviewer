@@ -15,7 +15,6 @@ size_t Curler::write_cb(const unsigned char *ptr, size_t size, size_t nmemb, voi
     self->m_Buffer.insert(self->m_Buffer.end(), ptr, ptr + len);
     self->m_SignalWrite(ptr, len);
 
-    self->m_ProgressLock.writer_lock();
     if (self->m_DownloadTotal == 0)
     {
         double s;
@@ -24,7 +23,6 @@ size_t Curler::write_cb(const unsigned char *ptr, size_t size, size_t nmemb, voi
     }
 
     self->m_DownloadCurrent = self->m_Buffer.size();
-    self->m_ProgressLock.writer_unlock();
 
     if (!self->is_cancelled())
         self->m_SignalProgress();
@@ -39,10 +37,8 @@ int Curler::progress_cb(void *userp, curl_off_t, curl_off_t, curl_off_t, curl_of
     // This callback is called way too frequently and will
     // lock up the UI thread if the progress is dispatched from it
     /*
-    self->m_ProgressLock.writer_lock();
     self->m_DownloadTotal = dlt;
     self->m_DownloadCurrent = dln;
-    self->m_ProgressLock.writer_unlock();
 
     if (!self->is_cancelled())
         self->m_SignalProgress();
@@ -110,10 +106,8 @@ bool Curler::perform()
 
 void Curler::get_progress(double &current, double &total)
 {
-    m_ProgressLock.reader_lock();
     current = m_DownloadCurrent;
     total   = m_DownloadTotal;
-    m_ProgressLock.reader_unlock();
 }
 
 void Curler::save_file(const std::string &path) const

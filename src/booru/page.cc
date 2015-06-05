@@ -68,7 +68,6 @@ Page::Page()
     m_SignalPostsDownloaded.connect(sigc::mem_fun(*this, &Page::on_posts_downloaded));
     m_SignalSaveProgressDisp.connect([ this ]()
     {
-        Glib::Threads::Mutex::Lock lock(m_SaveMutex);
         m_SignalSaveProgress(m_SaveImagesCurrent, m_SaveImagesTotal);
     });
 
@@ -142,11 +141,7 @@ void Page::save_images(const std::string &path)
 
                 std::shared_ptr<Image> bimage = std::static_pointer_cast<Image>(img);
                 bimage->save(Glib::build_filename(path, Glib::path_get_basename(bimage->get_filename())));
-
-                {
-                    Glib::Threads::Mutex::Lock lock(m_SaveMutex);
-                    ++m_SaveImagesCurrent;
-                }
+                ++m_SaveImagesCurrent;
 
                 if (!m_SaveCancel->is_cancelled())
                     m_SignalSaveProgressDisp();

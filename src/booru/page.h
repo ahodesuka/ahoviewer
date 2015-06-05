@@ -1,6 +1,7 @@
 #ifndef _PAGE_H_
 #define _PAGE_H_
 
+#include <atomic>
 #include <gtkmm.h>
 
 #include "curler.h"
@@ -61,13 +62,12 @@ namespace AhoViewer
 
             std::string m_Tags, m_Path;
             size_t m_Page, m_NumPosts,
-                   m_SaveImagesCurrent,
                    m_SaveImagesTotal;
+            std::atomic<size_t> m_SaveImagesCurrent;
             bool m_LastPage, m_Saving;
             pugi::xml_node m_Posts;
 
             Glib::RefPtr<Gio::Cancellable> m_SaveCancel;
-            Glib::Threads::Mutex m_SaveMutex;
             Glib::Threads::Thread *m_GetPostsThread,
                                   *m_SaveImagesThread;
             Glib::Dispatcher m_SignalPostsDownloaded,
