@@ -706,14 +706,17 @@ void MainWindow::on_quit()
         }
 
         Settings.set("LastOpenFile", path);
-        Settings.set("LastSavePath", m_BooruBrowser->get_last_save_path());
     }
     else
     {
         Settings.remove("LastOpenFile");
         Settings.remove("ArchiveIndex");
-        Settings.remove("LastSavePath");
     }
+
+    if (Settings.get_bool("RememberLastSavePath"))
+        Settings.set("LastSavePath", m_BooruBrowser->get_last_save_path());
+    else
+        Settings.remove("LastSavePath");
 
     hide();
 }

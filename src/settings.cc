@@ -17,6 +17,7 @@ SettingsManager::SettingsManager()
         { "AutoOpenArchive",      true  },
         { "MangaMode",            true  },
         { "RememberLastFile",     true  },
+        { "RememberLastSavePath", true  },
         { "SaveThumbnails",       true  },
         { "StartFullscreen",      false },
         { "StoreRecentFiles",     true  },
