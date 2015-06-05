@@ -188,22 +188,25 @@ void Browser::close_page(Page *page)
 bool Browser::on_entry_key_press_event(GdkEventKey *e)
 {
     // we only care if enter/return was pressed while shift or no modifier was down
-    if ((e->keyval != GDK_Return && e->keyval != GDK_ISO_Enter && e->keyval != GDK_KP_Enter) ||
-        !((e->state & GDK_SHIFT_MASK) == GDK_SHIFT_MASK || e->state == 0))
-        return false;
-
-    bool new_tab = (e->state & GDK_SHIFT_MASK) == GDK_SHIFT_MASK;
-    if (new_tab || m_Notebook->get_n_pages() == 0)
+    if ((e->keyval == GDK_Return || e->keyval == GDK_ISO_Enter || e->keyval == GDK_KP_Enter) &&
+        ((e->state & GDK_SHIFT_MASK) == GDK_SHIFT_MASK || e->state == 0))
     {
-        m_IgnorePageSwitch = true;
-        on_new_tab();
+        bool new_tab = (e->state & GDK_SHIFT_MASK) == GDK_SHIFT_MASK;
+        if (new_tab || m_Notebook->get_n_pages() == 0)
+        {
+            m_IgnorePageSwitch = true;
+            on_new_tab();
+        }
+
+        if (new_tab)
+            m_TagEntry->activate();
+
+        m_TagView->clear();
+        get_active_page()->search(get_active_site(), m_TagEntry->get_text());
+        m_SignalPageChanged(get_active_page());
     }
 
-    m_TagView->clear();
-    get_active_page()->search(get_active_site(), m_TagEntry->get_text());
-    m_SignalPageChanged(get_active_page());
-
-    return true;
+    return false;
 }
 
 void Browser::on_page_removed(Gtk::Widget*, guint)
