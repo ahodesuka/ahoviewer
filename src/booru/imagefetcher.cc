@@ -72,7 +72,7 @@ ImageFetcher::~ImageFetcher()
 
 void ImageFetcher::add_handle(Curler *curler)
 {
-    Glib::Threads::RecMutex::Lock lock(m_Mutex);
+    Glib::Threads::Mutex::Lock lock(m_Mutex);
     curl_easy_setopt(curler->m_EasyHandle, CURLOPT_PRIVATE, curler);
     curl_multi_add_handle(m_MultiHandle, curler->m_EasyHandle);
     curler->m_Active = true;
@@ -81,7 +81,7 @@ void ImageFetcher::add_handle(Curler *curler)
 
 void ImageFetcher::remove_handle(Curler *curler)
 {
-    Glib::Threads::RecMutex::Lock lock(m_Mutex);
+    Glib::Threads::Mutex::Lock lock(m_Mutex);
     curl_multi_remove_handle(m_MultiHandle, curler->m_EasyHandle);
     curler->m_Active = false;
 }
@@ -91,8 +91,10 @@ bool ImageFetcher::event_cb(curl_socket_t sockfd, Glib::IOCondition cond)
     int action = (cond & Glib::IO_IN ? CURL_CSELECT_IN : 0) |
                  (cond & Glib::IO_OUT ? CURL_CSELECT_OUT : 0);
 
-    Glib::Threads::RecMutex::Lock lock(m_Mutex);
-    curl_multi_socket_action(m_MultiHandle, sockfd, action, &m_RunningHandles);
+    {
+        Glib::Threads::Mutex::Lock lock(m_Mutex);
+        curl_multi_socket_action(m_MultiHandle, sockfd, action, &m_RunningHandles);
+    }
     read_info();
 
     if (m_RunningHandles == 0)
@@ -116,6 +118,7 @@ void ImageFetcher::read_info()
 {
     int msgs;
     CURLMsg *msg = nullptr;
+    Glib::Threads::Mutex::Lock lock(m_Mutex);
 
     while ((msg = curl_multi_info_read(m_MultiHandle, &msgs)))
     {
@@ -126,7 +129,9 @@ void ImageFetcher::read_info()
 
             if (curler)
             {
+                lock.release();
                 remove_handle(curler);
+                lock.acquire();
 
                 if (!curler->is_cancelled())
                     curler->m_SignalFinished();

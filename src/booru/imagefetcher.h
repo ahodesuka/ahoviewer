@@ -35,7 +35,7 @@ namespace AhoViewer
             Glib::RefPtr<Glib::MainContext> m_MainContext;
             Glib::RefPtr<Glib::MainLoop> m_MainLoop;
             Glib::Threads::Thread *m_Thread;
-            Glib::Threads::RecMutex m_Mutex;
+            Glib::Threads::Mutex m_Mutex;
 
             CURLM *m_MultiHandle;
             int m_RunningHandles;
