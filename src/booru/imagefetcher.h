@@ -7,6 +7,10 @@ namespace AhoViewer
 {
     namespace Booru
     {
+        /**
+         * This is not a thread safe class.
+         * All calls to add/remove_handle should be made from the same thread.
+         **/
         class ImageFetcher : public sigc::trackable
         {
         public:
@@ -35,7 +39,6 @@ namespace AhoViewer
             Glib::RefPtr<Glib::MainContext> m_MainContext;
             Glib::RefPtr<Glib::MainLoop> m_MainLoop;
             Glib::Threads::Thread *m_Thread;
-            Glib::Threads::RecMutex m_Mutex;
 
             CURLM *m_MultiHandle;
             int m_RunningHandles;
