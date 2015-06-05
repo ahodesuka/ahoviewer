@@ -86,6 +86,7 @@ Page::~Page()
     }
 
     cancel_save();
+    m_ImageList->clear();
 
     delete m_ImageFetcher;
 }
@@ -173,13 +174,10 @@ void Page::cancel_save()
 {
     m_SaveCancel->cancel();
 
-    if (m_Saving)
+    for (const std::shared_ptr<AhoViewer::Image> &img : m_ImageList->get_images())
     {
-        for (const std::shared_ptr<AhoViewer::Image> &img : m_ImageList->get_images())
-        {
-            std::shared_ptr<Image> bimage = std::static_pointer_cast<Image>(img);
-            bimage->cancel_save();
-        }
+        std::shared_ptr<Image> bimage = std::static_pointer_cast<Image>(img);
+        bimage->cancel_download();
     }
 
     if (m_SaveImagesThread)
@@ -206,6 +204,9 @@ void Page::get_posts()
     }
 
     m_Curler.set_url(m_Site->get_url(tags, m_Page));
+
+    if (m_GetPostsThread)
+        m_GetPostsThread->join();
 
     m_GetPostsThread = Glib::Threads::Thread::create([ this ]()
     {

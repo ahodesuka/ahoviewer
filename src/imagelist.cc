@@ -32,6 +32,11 @@ void ImageList::clear()
     cancel_cache();
     m_ThumbnailCancel->cancel();
 
+    {
+        Glib::Threads::Mutex::Lock lock(m_ThumbnailMutex);
+        m_ThumbnailQueue = std::queue<PixbufPair>();
+    }
+
     if (m_ThumbnailThread)
     {
         m_ThumbnailThread->join();

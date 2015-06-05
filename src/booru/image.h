@@ -2,6 +2,7 @@
 #define _BOORUIMAGE_H_
 
 #include "../image.h"
+#include "curler.h"
 #include "page.h"
 
 namespace AhoViewer
@@ -19,7 +20,7 @@ namespace AhoViewer
                   std::set<std::string> tags, Page *page);
             virtual ~Image();
 
-            Curler* get_curler() const { return m_Curler; }
+            Curler::time_point_t get_start_time() const { return m_Curler->get_start_time(); }
             std::set<std::string> get_tags() const { return m_Tags; }
 
             virtual std::string get_filename() const;
@@ -28,7 +29,7 @@ namespace AhoViewer
             virtual void load_pixbuf();
 
             void save(const std::string &path);
-            void cancel_save();
+            void cancel_download();
 
             SignalProgressType signal_progress() const { return m_SignalProgress; }
         private:

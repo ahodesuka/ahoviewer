@@ -32,8 +32,7 @@ namespace AhoViewer
         typedef sigc::signal<void> SignalClearedType;
 
         // Used for async thumbnail pixbuf loading
-        typedef std::pair<size_t, const Glib::RefPtr<Gdk::Pixbuf>&> PixbufPair;
-        typedef std::queue<PixbufPair> PixbufQueue;
+        typedef std::pair<size_t, const Glib::RefPtr<Gdk::Pixbuf>> PixbufPair;
 
         // ImageList::Widget {{{
         // This is used by ThumbnailBar and Booru::Page.
@@ -58,7 +57,7 @@ namespace AhoViewer
                 for (size_t i = 0; i < s; ++i)
                     m_ListStore->append();
             }
-            void set_pixbuf(const size_t index, const Glib::RefPtr<Gdk::Pixbuf> &pixbuf)
+            void set_pixbuf(const size_t index, const Glib::RefPtr<Gdk::Pixbuf> pixbuf)
             {
                 m_ListStore->children()[index]->set_value(0, pixbuf);
             }
@@ -117,7 +116,7 @@ namespace AhoViewer
         std::vector<size_t> m_Cache;
         std::shared_ptr<Archive> m_Archive;
         std::vector<std::string> m_ArchiveEntries;
-        PixbufQueue m_ThumbnailQueue;
+        std::queue<PixbufPair> m_ThumbnailQueue;
         size_t m_Index;
 
         Glib::RefPtr<Gio::Cancellable> m_CacheCancel,

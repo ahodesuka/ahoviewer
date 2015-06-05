@@ -28,7 +28,8 @@ Image::Image(const std::string &path, const std::string &url,
 
 Image::~Image()
 {
-    m_Curler->cancel();
+    cancel_download();
+
     if (m_Curler->is_active())
         m_Page->get_image_fetcher()->remove_handle(m_Curler);
 
@@ -110,7 +111,7 @@ void Image::save(const std::string &path)
     src->copy(dst, Gio::FILE_COPY_OVERWRITE);
 }
 
-void Image::cancel_save()
+void Image::cancel_download()
 {
     Glib::Threads::Mutex::Lock lock(m_DownloadMutex);
     m_Curler->cancel();
@@ -126,7 +127,7 @@ void Image::on_write(const unsigned char *d, size_t l)
     catch (const Gdk::PixbufError &ex)
     {
         std::cout << ex.what() << std::endl;
-        cancel_save();
+        cancel_download();
     }
 }
 

@@ -285,7 +285,7 @@ void Browser::on_imagelist_changed(const std::shared_ptr<AhoViewer::Image> &imag
     m_ImageProgConn = bimage->signal_progress().connect([ this, bimage ](double c, double t)
     {
         double speed = (c / std::chrono::duration<double>(std::chrono::steady_clock::now() -
-                                                          bimage->get_curler()->get_start_time()).count());
+                                                          bimage->get_start_time()).count());
         std::ostringstream ss;
 
         if (t > 0)
