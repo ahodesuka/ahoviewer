@@ -67,14 +67,20 @@ ImageFetcher::~ImageFetcher()
     m_Thread->join();
     m_Thread = nullptr;
 
+    for (Curler *c : m_Curlers)
+        remove_handle(c);
+
     curl_multi_cleanup(m_MultiHandle);
 }
 
 void ImageFetcher::add_handle(Curler *curler)
 {
     Glib::Threads::Mutex::Lock lock(m_Mutex);
+
     curl_easy_setopt(curler->m_EasyHandle, CURLOPT_PRIVATE, curler);
+    m_Curlers.push_back(curler);
     curl_multi_add_handle(m_MultiHandle, curler->m_EasyHandle);
+
     curler->m_Active = true;
     curler->m_StartTime = std::chrono::steady_clock::now();
 }
@@ -82,7 +88,10 @@ void ImageFetcher::add_handle(Curler *curler)
 void ImageFetcher::remove_handle(Curler *curler)
 {
     Glib::Threads::Mutex::Lock lock(m_Mutex);
+
     curl_multi_remove_handle(m_MultiHandle, curler->m_EasyHandle);
+    m_Curlers.erase(std::remove(m_Curlers.begin(), m_Curlers.end(), curler), m_Curlers.end());
+
     curler->m_Active = false;
 }
 

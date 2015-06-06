@@ -11,9 +11,7 @@ ImageList::ImageList(Widget *w)
     m_CacheCancel(Gio::Cancellable::create()),
     m_ThumbnailCancel(Gio::Cancellable::create()),
     m_CacheThread(nullptr),
-    m_ThumbnailThread(nullptr),
-    m_SignalThumbnailLoaded(),
-    m_SignalThumbnailsLoaded()
+    m_ThumbnailThread(nullptr)
 {
     m_Widget->signal_selected_changed().connect(
             sigc::bind<1>(sigc::mem_fun(*this, &ImageList::set_current), true));

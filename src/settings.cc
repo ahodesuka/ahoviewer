@@ -8,8 +8,7 @@ using namespace AhoViewer;
 SettingsManager AhoViewer::Settings;
 
 SettingsManager::SettingsManager()
-  : Config(),
-    Path(Glib::build_filename(Glib::get_user_config_dir(), PACKAGE, PACKAGE ".cfg")),
+  : Path(Glib::build_filename(Glib::get_user_config_dir(), PACKAGE, PACKAGE ".cfg")),
     BooruPath(Glib::build_filename(Glib::get_user_config_dir(), PACKAGE, "booru")),
 // Defaults {{{
     DefaultBools(

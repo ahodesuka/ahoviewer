@@ -39,6 +39,7 @@ namespace AhoViewer
 
             CURLM *m_MultiHandle;
             int m_RunningHandles;
+            std::vector<Curler*> m_Curlers;
 
             sigc::connection m_TimeoutConn;
         };

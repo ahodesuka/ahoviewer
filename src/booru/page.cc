@@ -22,8 +22,7 @@ Page::Page()
     m_Saving(false),
     m_SaveCancel(Gio::Cancellable::create()),
     m_GetPostsThread(nullptr),
-    m_SaveImagesThread(nullptr),
-    m_SignalClosed()
+    m_SaveImagesThread(nullptr)
 {
     set_policy(Gtk::POLICY_NEVER, Gtk::POLICY_AUTOMATIC);
     set_shadow_type(Gtk::SHADOW_ETCHED_IN);
