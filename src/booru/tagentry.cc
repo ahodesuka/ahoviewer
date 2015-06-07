@@ -56,7 +56,7 @@ void TagEntry::on_text_changed()
     Gtk::TreeModel::Row row;
     m_Model->clear();
 
-    if (key.length() >= (size_t)m_TagCompletion->get_minimum_key_length())
+    if (key.length() >= static_cast<size_t>(m_TagCompletion->get_minimum_key_length()))
     {
         size_t i = 0;
         for (const std::string &tag : *m_Tags)

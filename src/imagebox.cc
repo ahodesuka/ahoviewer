@@ -314,8 +314,8 @@ void ImageBox::draw_image(const bool _scroll)
         lHeight = m_Layout->get_allocation().get_height(),
         w       = lWidth,
         h       = lHeight;
-    double windowAspect = (double)wWidth / wHeight,
-           imageAspect  = (double)pixbuf->get_width() / pixbuf->get_height();
+    double windowAspect = static_cast<double>(wWidth) / wHeight,
+           imageAspect  = static_cast<double>(pixbuf->get_width()) / pixbuf->get_height();
     bool hideScrollbars = !Settings.get_bool("ScrollbarsVisible") ||
                           Settings.get_bool("HideAll");
 
@@ -333,8 +333,8 @@ void ImageBox::draw_image(const bool _scroll)
     }
     else if (m_ZoomMode == ZoomMode::MANUAL && m_ZoomPercent != 100)
     {
-        temp = pixbuf->scale_simple(pixbuf->get_width() * (double)m_ZoomPercent / 100,
-                                    pixbuf->get_height() * (double)m_ZoomPercent / 100,
+        temp = pixbuf->scale_simple(pixbuf->get_width() * static_cast<double>(m_ZoomPercent) / 100,
+                                    pixbuf->get_height() * static_cast<double>(m_ZoomPercent) / 100,
                                     Gdk::INTERP_BILINEAR);
     }
 
@@ -375,7 +375,7 @@ void ImageBox::draw_image(const bool _scroll)
     }
 
     get_window()->thaw_updates();
-    double scale = (double)temp->get_width() / pixbuf->get_width() * 100;
+    double scale = static_cast<double>(temp->get_width()) / pixbuf->get_width() * 100;
     m_StatusBar->set_resolution(pixbuf->get_width(), pixbuf->get_height(), scale, m_ZoomMode);
 }
 
@@ -398,8 +398,8 @@ bool ImageBox::update_animation()
 
 void ImageBox::scroll(const int x, const int y, const bool panning, const bool fromSlideshow)
 {
-    int adjustUpperX = std::max(0, (int)(m_HAdjust->get_upper() - m_HAdjust->get_page_size())),
-        adjustUpperY = std::max(0, (int)(m_VAdjust->get_upper() - m_VAdjust->get_page_size()));
+    int adjustUpperX = std::max(0, static_cast<int>((m_HAdjust->get_upper()) - m_HAdjust->get_page_size())),
+        adjustUpperY = std::max(0, static_cast<int>((m_VAdjust->get_upper()) - m_VAdjust->get_page_size()));
 
     if (panning)
     {

@@ -61,7 +61,7 @@ MainWindow::MainWindow(BaseObjectType *cobj, const Glib::RefPtr<Gtk::Builder> &b
         kv.second->signal_progress().connect([ this ](size_t e, size_t t)
         {
             m_StatusBar->set_message("Extracting");
-            m_StatusBar->set_progress((double)e / t);
+            m_StatusBar->set_progress(static_cast<double>(e) / t);
             while (Gtk::Main::events_pending())
                 Gtk::Main::iteration();
         });
@@ -241,7 +241,7 @@ bool MainWindow::on_key_press_event(GdkEventKey *e)
     {
         GtkAccelGroupEntry *entries;
         if ((entries = gtk_accel_group_query(m_UIManager->get_accel_group()->gobj(),
-                    e->keyval, (GdkModifierType)e->state, NULL)))
+                    e->keyval, static_cast<GdkModifierType>(e->state), NULL)))
         {
             std::string path(g_quark_to_string(entries[0].accel_path_quark));
             m_ActionGroup->get_action(path.substr(path.rfind('/') + 1))->activate();
@@ -425,30 +425,30 @@ void MainWindow::create_actions()
 
     radioAction = Gtk::RadioAction::create(zoomModeGroup, "AutoFitMode",
             _("_Auto Fit Mode"), _("Fit the image to either the height or width of the window"));
-    radioAction->property_value().set_value((int)ImageBox::ZoomMode::AUTO_FIT);
+    radioAction->property_value().set_value(static_cast<int>(ImageBox::ZoomMode::AUTO_FIT));
     m_ActionGroup->add(radioAction,
             Gtk::AccelKey(Settings.get_keybinding("View Mode", "AutoFitMode")),
             sigc::bind(sigc::mem_fun(m_ImageBox, &ImageBox::set_zoom_mode), ImageBox::ZoomMode::AUTO_FIT));
     radioAction = Gtk::RadioAction::create(zoomModeGroup, "FitWidthMode",
             _("Fit _Width Mode"), _("Fit the image to the width of the window"));
-    radioAction->property_value().set_value((int)ImageBox::ZoomMode::FIT_WIDTH);
+    radioAction->property_value().set_value(static_cast<int>(ImageBox::ZoomMode::FIT_WIDTH));
     m_ActionGroup->add(radioAction,
             Gtk::AccelKey(Settings.get_keybinding("View Mode", "FitWidthMode")),
             sigc::bind(sigc::mem_fun(m_ImageBox, &ImageBox::set_zoom_mode), ImageBox::ZoomMode::FIT_WIDTH));
     radioAction = Gtk::RadioAction::create(zoomModeGroup, "FitHeightMode",
             _("Fit _Height Mode"), _("Fit the image to the height of the window"));
-    radioAction->property_value().set_value((int)ImageBox::ZoomMode::FIT_HEIGHT);
+    radioAction->property_value().set_value(static_cast<int>(ImageBox::ZoomMode::FIT_HEIGHT));
     m_ActionGroup->add(radioAction,
             Gtk::AccelKey(Settings.get_keybinding("View Mode", "FitHeightMode")),
             sigc::bind(sigc::mem_fun(m_ImageBox, &ImageBox::set_zoom_mode), ImageBox::ZoomMode::FIT_HEIGHT));
     radioAction = Gtk::RadioAction::create(zoomModeGroup, "ManualZoomMode",
             _("_Manual Zoom"), _("Display the image at it's original size, with the ability to zoom in and out"));
-    radioAction->property_value().set_value((int)ImageBox::ZoomMode::MANUAL);
+    radioAction->property_value().set_value(static_cast<int>(ImageBox::ZoomMode::MANUAL));
     m_ActionGroup->add(radioAction,
             Gtk::AccelKey(Settings.get_keybinding("View Mode", "ManualZoomMode")),
             sigc::bind(sigc::mem_fun(m_ImageBox, &ImageBox::set_zoom_mode), ImageBox::ZoomMode::MANUAL));
 
-    radioAction->set_current_value((int)m_ImageBox->get_zoom_mode());
+    radioAction->set_current_value(static_cast<int>(m_ImageBox->get_zoom_mode()));
     // }}}
 
     m_UIManager->insert_action_group(m_ActionGroup);
@@ -698,7 +698,7 @@ void MainWindow::on_quit()
         if (m_LocalImageList->from_archive())
         {
             path = m_LocalImageList->get_archive()->get_path();
-            Settings.set("ArchiveIndex", (int)m_LocalImageList->get_index());
+            Settings.set("ArchiveIndex", static_cast<int>(m_LocalImageList->get_index()));
         }
         else
         {

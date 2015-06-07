@@ -183,7 +183,7 @@ std::vector<std::shared_ptr<Booru::Site>> SettingsManager::get_sites()
         const Setting &sites = Config.lookup("Sites");
         if (sites.getLength() > 0)
         {
-            for (size_t i = 0; i < (size_t)sites.getLength(); ++i)
+            for (size_t i = 0; i < static_cast<size_t>(sites.getLength()); ++i)
             {
                 const Setting &s = sites[i];
                 m_Sites.push_back(std::make_shared<Booru::Site>(s["name"], s["url"],
@@ -261,7 +261,7 @@ void SettingsManager::set_background_color(const Gdk::Color &value)
 Booru::Site::Rating SettingsManager::get_booru_max_rating() const
 {
     if (Config.exists("BooruMaxRating"))
-        return Booru::Site::Rating((int)Config.lookup("BooruMaxRating"));
+        return Booru::Site::Rating(static_cast<int>(Config.lookup("BooruMaxRating")));
 
     return DefaultBooruMaxRating;
 }

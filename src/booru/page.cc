@@ -262,7 +262,7 @@ void Page::on_posts_downloaded()
         m_SignalNoResults();
     }
 
-    if (m_NumPosts < (size_t)Settings.get_int("BooruLimit"))
+    if (m_NumPosts < static_cast<size_t>(Settings.get_int("BooruLimit")))
         m_LastPage = true;
 
     m_GetPostsThread->join();

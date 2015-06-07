@@ -47,7 +47,7 @@ Browser::Browser(BaseObjectType *cobj, const Glib::RefPtr<Gtk::Builder> &bldr)
         site->set_row_values(*(m_ComboModel->append()));
 
     int selected = std::min(Settings.get_int("SelectedBooru"),
-                           (int)Settings.get_sites().size() - 1);
+                           static_cast<int>(Settings.get_sites().size()) - 1);
     m_ComboBox->set_active(selected);
 
     m_ComboBox->pack_start(m_ComboColumns.pixbuf_column, false);
@@ -140,7 +140,7 @@ void Browser::on_save_images()
             ss << "Saving "
                << page->get_site()->get_name() + (!page->get_tags().empty() ? " - " + page->get_tags() : "")
                << " " << c << " / " << t;
-            m_StatusBar->set_progress(c / (double)t, StatusBar::Priority::HIGH, c == t ? 2 : 0);
+            m_StatusBar->set_progress(static_cast<double>(c) / t, StatusBar::Priority::HIGH, c == t ? 2 : 0);
             m_StatusBar->set_message(ss.str(), StatusBar::Priority::HIGH, c == t ? 2 : 0);
 
             if (c == t)

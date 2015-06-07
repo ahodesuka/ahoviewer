@@ -169,8 +169,8 @@ void Image::on_area_prepared()
     {
         Glib::RefPtr<Gdk::Pixbuf> pixbuf = m_Loader->get_pixbuf();
         m_ThumbnailPixbuf->composite(pixbuf, 0, 0, pixbuf->get_width(), pixbuf->get_height(), 0, 0,
-                                     (double)pixbuf->get_width() / m_ThumbnailPixbuf->get_width(),
-                                     (double)pixbuf->get_height() / m_ThumbnailPixbuf->get_height(),
+                                     static_cast<double>(pixbuf->get_width()) / m_ThumbnailPixbuf->get_width(),
+                                     static_cast<double>(pixbuf->get_height()) / m_ThumbnailPixbuf->get_height(),
                                      Gdk::INTERP_BILINEAR, 255);
     }
     m_ThumbnailLock.reader_unlock();
