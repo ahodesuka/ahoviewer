@@ -33,6 +33,8 @@ namespace AhoViewer
 
             SignalProgressType signal_progress() const { return m_SignalProgress; }
         private:
+            bool start_download();
+
             void on_write(const unsigned char *d, size_t l);
             void on_progress();
             void on_finished();

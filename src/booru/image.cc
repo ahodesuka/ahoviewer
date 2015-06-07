@@ -13,15 +13,11 @@ Image::Image(const std::string &path, const std::string &url,
     m_ThumbnailUrl(thumbUrl),
     m_Tags(tags),
     m_Page(page),
-    m_Curler(m_Url),
-    m_Loader(Gdk::PixbufLoader::create())
+    m_Curler(m_Url)
 {
     m_Curler.signal_write().connect(sigc::mem_fun(*this, &Image::on_write));
     m_Curler.signal_progress().connect(sigc::mem_fun(*this, &Image::on_progress));
     m_Curler.signal_finished().connect(sigc::mem_fun(*this, &Image::on_finished));
-
-    m_Loader->signal_area_prepared().connect(sigc::mem_fun(*this, &Image::on_area_prepared));
-    m_Loader->signal_area_updated().connect(sigc::mem_fun(*this, &Image::on_area_updated));
 }
 
 Image::~Image()
@@ -30,9 +26,6 @@ Image::~Image()
 
     if (m_Curler.is_active())
         m_Page->get_image_fetcher()->remove_handle(&m_Curler);
-
-    try { m_Loader->close(); }
-    catch (Gdk::PixbufError) { }
 }
 
 std::string Image::get_filename() const
@@ -72,12 +65,7 @@ void Image::load_pixbuf()
         {
             AhoViewer::Image::load_pixbuf();
         }
-        else if (!m_Curler.is_active())
-        {
-            m_Page->get_image_fetcher()->add_handle(&m_Curler);
-            m_Loading = true;
-        }
-        else if (m_Curler.is_active() && m_Loader->get_animation())
+        else if (!start_download() && m_Loader->get_animation())
         {
             m_Pixbuf = m_Loader->get_animation();
         }
@@ -88,11 +76,7 @@ void Image::save(const std::string &path)
 {
     if (!Glib::file_test(m_Path, Glib::FILE_TEST_EXISTS))
     {
-        if (!m_Curler.is_active())
-        {
-            m_Page->get_image_fetcher()->add_handle(&m_Curler);
-            m_Loading = true;
-        }
+        start_download();
 
         Glib::Threads::Mutex::Lock lock(m_DownloadMutex);
         while (!m_Curler.is_cancelled() && !Glib::file_test(m_Path, Glib::FILE_TEST_EXISTS))
@@ -111,7 +95,35 @@ void Image::cancel_download()
 {
     Glib::Threads::Mutex::Lock lock(m_DownloadMutex);
     m_Curler.cancel();
+
+    if (m_Loader)
+    {
+        try { m_Loader->close(); }
+        catch (Gdk::PixbufError) { }
+        m_Loader.reset();
+    }
+
     m_DownloadCond.signal();
+}
+
+/**
+ * Returns true if the download was started
+ **/
+bool Image::start_download()
+{
+    if (!m_Curler.is_active())
+    {
+        m_Page->get_image_fetcher()->add_handle(&m_Curler);
+        m_Loading = true;
+
+        m_Loader = Gdk::PixbufLoader::create();
+        m_Loader->signal_area_prepared().connect(sigc::mem_fun(*this, &Image::on_area_prepared));
+        m_Loader->signal_area_updated().connect(sigc::mem_fun(*this, &Image::on_area_updated));
+
+        return true;
+    }
+
+    return false;
 }
 
 void Image::on_write(const unsigned char *d, size_t l)
@@ -140,8 +152,13 @@ void Image::on_finished()
 
     m_Curler.save_file(m_Path);
     m_Curler.clear();
+
+    m_Loader->close();
+    m_Loader.reset();
+
     m_Loading = false;
 
+    m_SignalPixbufChanged();
     m_DownloadCond.signal();
 }
 
