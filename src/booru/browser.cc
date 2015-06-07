@@ -278,8 +278,12 @@ void Browser::on_imagelist_changed(const std::shared_ptr<AhoViewer::Image> &imag
     if (m_ImageProgConn)
     {
         m_ImageProgConn.disconnect();
-        m_StatusBar->clear_message();
-        m_StatusBar->clear_progress();
+
+        if (!get_active_page()->is_saving())
+        {
+            m_StatusBar->clear_message();
+            m_StatusBar->clear_progress();
+        }
     }
 
     m_ImageProgConn = bimage->signal_progress().connect([ this, bimage ](double c, double t)
