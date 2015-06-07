@@ -13,8 +13,6 @@ Image::Image(const std::string &path, const std::string &url,
     m_ThumbnailUrl(thumbUrl),
     m_Tags(tags),
     m_Page(page),
-    m_DownloadCurrent(0),
-    m_DownloadTotal(0),
     m_Curler(m_Url),
     m_Loader(Gdk::PixbufLoader::create())
 {
@@ -133,13 +131,7 @@ void Image::on_progress()
 {
     double c, t;
     m_Curler.get_progress(c, t);
-
-    if (t > 0 && (c != m_DownloadCurrent || t != m_DownloadTotal))
-    {
-        m_DownloadCurrent = c;
-        m_DownloadTotal   = t;
-        m_SignalProgress(c, t);
-    }
+    m_SignalProgress(c, t);
 }
 
 void Image::on_finished()

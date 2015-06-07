@@ -43,9 +43,6 @@ namespace AhoViewer
             std::set<std::string> m_Tags;
             Page *m_Page;
 
-            double m_DownloadCurrent,
-                   m_DownloadTotal;
-
             Curler m_Curler;
             Glib::RefPtr<Gdk::PixbufLoader> m_Loader;
             Glib::Threads::RWLock m_ThumbnailLock;
