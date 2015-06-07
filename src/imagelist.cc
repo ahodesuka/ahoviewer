@@ -152,7 +152,7 @@ bool ImageList::load(const std::string path, std::string &error, int index)
     return true;
 }
 
-void ImageList::load(pugi::xml_node posts, Booru::Page *page)
+void ImageList::load(const pugi::xml_node &posts, Booru::Page *const page)
 {
     for (const pugi::xml_node &post : posts.children("post"))
     {
@@ -180,7 +180,7 @@ void ImageList::load(pugi::xml_node posts, Booru::Page *page)
     m_ThumbnailThread = Glib::Threads::Thread::create(sigc::mem_fun(*this, &ImageList::load_thumbnails));
 
     // only call set_current if this is the first page
-    if (m_Images.size() <= (size_t)Settings.get_int("BooruLimit"))
+    if (page->get_page_num() == 1)
         set_current(m_Index);
     else
         m_SignalChanged(m_Images[m_Index]);

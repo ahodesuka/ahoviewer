@@ -36,6 +36,7 @@ namespace AhoViewer
             std::shared_ptr<Site> get_site() const { return m_Site; }
             std::shared_ptr<ImageList> get_imagelist() const { return m_ImageList; }
             std::string get_tags() const { return m_Tags; }
+            size_t get_page_num() const { return m_Page; }
             bool is_saving() const { return m_Saving; }
 
             SignalClosedType signal_closed() const { return m_SignalClosed; }

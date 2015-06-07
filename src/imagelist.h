@@ -77,7 +77,7 @@ namespace AhoViewer
 
         void clear();
         bool load(const std::string path, std::string &error, int index = 0);
-        void load(pugi::xml_node posts, Booru::Page *page);
+        void load(const pugi::xml_node &posts, Booru::Page *const page);
 
         // Action callbacks {{{
         void go_next();
