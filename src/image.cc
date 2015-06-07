@@ -140,8 +140,9 @@ Glib::RefPtr<Gdk::Pixbuf> Image::create_pixbuf_at_size(const std::string &path,
     Glib::RefPtr<Gdk::Pixbuf> pixbuf = Gdk::Pixbuf::create_from_file(path);
     double ratio = std::min(w / pixbuf->get_width(), h / pixbuf->get_height());
 
-    return pixbuf->scale_simple(pixbuf->get_width() * ratio,
-                                pixbuf->get_height() * ratio, Gdk::INTERP_BILINEAR);
+    return pixbuf->scale_simple(std::max(pixbuf->get_width() * ratio, 20.0),
+                                std::max(pixbuf->get_height() * ratio, 20.0),
+                                Gdk::INTERP_BILINEAR);
 }
 
 void Image::create_save_thumbnail()
