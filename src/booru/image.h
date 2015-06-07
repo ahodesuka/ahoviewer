@@ -20,7 +20,7 @@ namespace AhoViewer
                   std::set<std::string> tags, Page *page);
             virtual ~Image();
 
-            Curler::time_point_t get_start_time() const { return m_Curler->get_start_time(); }
+            Curler::time_point_t get_start_time() const { return m_Curler.get_start_time(); }
             std::set<std::string> get_tags() const { return m_Tags; }
 
             virtual std::string get_filename() const;
@@ -46,7 +46,7 @@ namespace AhoViewer
             double m_DownloadCurrent,
                    m_DownloadTotal;
 
-            Curler *m_Curler;
+            Curler m_Curler;
             Glib::RefPtr<Gdk::PixbufLoader> m_Loader;
             Glib::Threads::RWLock m_ThumbnailLock;
 
