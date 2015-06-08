@@ -284,6 +284,14 @@ void ImageBox::draw_image(const bool _scroll)
     if (m_PixbufAnim != pixbuf_anim)
     {
         m_PixbufAnim = pixbuf_anim;
+
+        // https://bugzilla.gnome.org/show_bug.cgi?id=688686
+        if (m_PixbufAnimIter)
+        {
+            g_object_unref(m_PixbufAnimIter->gobj());
+            m_PixbufAnimIter.reset();
+        }
+
         m_PixbufAnimIter = m_PixbufAnim->get_iter(NULL);
 
         m_AnimConn.disconnect();
