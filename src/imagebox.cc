@@ -11,6 +11,7 @@ ImageBox::ImageBox(BaseObjectType *cobj, const Glib::RefPtr<Gtk::Builder> &bldr)
     m_LeftPtrCursor(Gdk::LEFT_PTR),
     m_FleurCursor(Gdk::FLEUR),
     m_Scroll(false),
+    m_RedrawQueued(false),
     m_ZoomMode(Settings.get_zoom_mode()),
     m_ZoomPercent(100)
 {
@@ -31,10 +32,11 @@ ImageBox::~ImageBox()
 
 void ImageBox::queue_draw_image(const bool scroll)
 {
-    if (!get_realized() || !m_Image || (m_DrawConn && !scroll))
+    if (!get_realized() || !m_Image || m_RedrawQueued)
         return;
 
     m_DrawConn.disconnect();
+    m_RedrawQueued = true;
     m_DrawConn = Glib::signal_idle().connect(
             sigc::bind_return(sigc::bind(sigc::mem_fun(*this, &ImageBox::draw_image), scroll), false));
 }
@@ -266,6 +268,7 @@ bool ImageBox::on_scroll_event(GdkEventScroll *e)
 
 void ImageBox::draw_image(const bool _scroll)
 {
+    m_RedrawQueued = false;
     std::shared_ptr<Image> image = m_Image;
 
     // Make sure the pixbuf is ready

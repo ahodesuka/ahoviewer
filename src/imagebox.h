@@ -82,7 +82,7 @@ namespace AhoViewer
         Glib::RefPtr<Gdk::PixbufAnimationIter> m_PixbufAnimIter;
         sigc::connection m_DrawConn, m_ImageConn, m_ScrollConn, m_SlideshowConn, m_AnimConn;
 
-        bool m_Scroll;
+        bool m_Scroll, m_RedrawQueued;
         ZoomMode m_ZoomMode;
         uint32_t m_ZoomPercent;
         double m_PressX, m_PreviousX,
