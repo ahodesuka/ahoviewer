@@ -4,14 +4,116 @@ using namespace AhoViewer;
 #include "settings.h"
 #include "statusbar.h"
 
+#ifdef HAVE_GSTREAMER
+#include <GL/gl.h>
+#include <gst/video/videooverlay.h>
+#ifdef GDK_WINDOWING_X11
+#include <gdk/gdkx.h>
+#endif // GDK_WINDOWING_X11
+#ifdef GDK_WINDOWING_WIN32
+#include <gdk/gdkwin32.h>
+#endif // GDK_WINDOWING_WIN32
+#include <iostream>
+
+GstBusSyncReply ImageBox::create_window(GstBus*, GstMessage *message, void *userp)
+{
+    if (!gst_is_video_overlay_prepare_window_handle_message(message))
+        return GST_BUS_PASS;
+
+    ImageBox *self = static_cast<ImageBox*>(userp);
+    gst_video_overlay_set_window_handle(GST_VIDEO_OVERLAY(self->m_VideoSink), self->m_WindowHandle);
+
+    gst_message_unref(message);
+
+    return GST_BUS_DROP;
+}
+
+gboolean ImageBox::bus_cb(GstBus*, GstMessage *message, void *userp)
+{
+    ImageBox *self = static_cast<ImageBox*>(userp);
+
+    switch (GST_MESSAGE_TYPE(message))
+    {
+        case GST_MESSAGE_EOS:
+            gst_element_seek_simple(self->m_Playbin, GST_FORMAT_TIME, GST_SEEK_FLAG_FLUSH, 0);
+        default:
+            break;
+    }
+
+    return TRUE;
+}
+
+gboolean ImageBox::draw_cb(void*, GLuint texture, GLuint w, GLuint h, void *userp)
+{
+    ImageBox *self = static_cast<ImageBox*>(userp);
+
+    int sWidth = 0,
+        sHeight = 0;
+    bool scaled = self->get_scaled_size(w, h, sWidth, sHeight);
+
+    GLfloat verts[8] =
+    {
+        1.0f, 1.0f,
+        -1.0f, 1.0f,
+        -1.0f, -1.0f,
+        1.0f, -1.0f
+    };
+    GLfloat texcoords[8] =
+    {
+        1.0f, 0.0f,
+        0.0f, 0.0f,
+        0.0f, 1.0f,
+        1.0f, 1.0f
+    };
+
+    glClearColor(self->m_BGColor.get_red_p(),
+                 self->m_BGColor.get_green_p(),
+                 self->m_BGColor.get_blue_p(),
+                 1.0);
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+    glMatrixMode(GL_PROJECTION);
+    glLoadIdentity();
+
+    glEnable(GL_TEXTURE_2D);
+    glBindTexture(GL_TEXTURE_2D, texture);
+
+    glEnableClientState(GL_VERTEX_ARRAY);
+    glEnableClientState(GL_TEXTURE_COORD_ARRAY);
+    glVertexPointer(2, GL_FLOAT, 0, &verts);
+    glTexCoordPointer(2, GL_FLOAT, 0, &texcoords);
+
+    if ((sWidth < self->m_LayoutWidth && sHeight < self->m_LayoutHeight) || scaled)
+    {
+        double scale = std::max(static_cast<double>(sWidth) / self->m_LayoutWidth,
+                                static_cast<double>(sHeight) / self->m_LayoutHeight);
+        glScaled(scale, scale, 1.0);
+    }
+
+    glDrawArrays(GL_TRIANGLE_FAN, 0, 4);
+
+    glDisableClientState(GL_VERTEX_ARRAY);
+    glDisableClientState(GL_TEXTURE_COORD_ARRAY);
+
+    glDisable(GL_TEXTURE_2D);
+
+    return TRUE;
+}
+#endif // HAVE_GSTREAMER
+
 const double ImageBox::SmoothScrollStep = 1000.0 / 60.0;
 
 ImageBox::ImageBox(BaseObjectType *cobj, const Glib::RefPtr<Gtk::Builder> &bldr)
   : Gtk::EventBox(cobj),
     m_LeftPtrCursor(Gdk::LEFT_PTR),
     m_FleurCursor(Gdk::FLEUR),
+    m_WindowWidth(0),
+    m_WindowHeight(0),
+    m_LayoutWidth(0),
+    m_LayoutHeight(0),
     m_Scroll(false),
     m_RedrawQueued(false),
+    m_HideScrollbars(false),
     m_ZoomMode(Settings.get_zoom_mode()),
     m_ZoomPercent(100)
 {
@@ -23,6 +125,34 @@ ImageBox::ImageBox(BaseObjectType *cobj, const Glib::RefPtr<Gtk::Builder> &bldr)
     m_HAdjust = Glib::RefPtr<Gtk::Adjustment>::cast_static(bldr->get_object("ImageBox::HAdjust"));
     m_VAdjust = Glib::RefPtr<Gtk::Adjustment>::cast_static(bldr->get_object("ImageBox::VAdjust"));
     m_UIManager = Glib::RefPtr<Gtk::UIManager>::cast_static(bldr->get_object("UIManager"));
+
+#ifdef HAVE_GSTREAMER
+    m_Playbin   = gst_element_factory_make("playbin", "playbin"),
+    m_VideoSink = gst_element_factory_make("glimagesink", "videosink");
+
+    g_object_set(m_Playbin,
+            "video-sink", m_VideoSink,
+            NULL);
+    g_signal_connect(m_VideoSink,
+            "client-draw", G_CALLBACK(&ImageBox::draw_cb), this);
+
+    GstBus *bus = gst_pipeline_get_bus(GST_PIPELINE(m_Playbin));
+    gst_bus_add_watch(bus, &ImageBox::bus_cb, this);
+    gst_bus_set_sync_handler(bus, &ImageBox::create_window, this, NULL);
+    g_object_unref(bus);
+
+    m_GtkImage->signal_realize().connect([ this ]()
+    {
+#ifdef GDK_WINDOWING_X11
+        m_WindowHandle = GDK_WINDOW_XID(m_GtkImage->get_window()->gobj());
+#endif // GDK_WINDOWING_X11
+#ifdef GDK_WINDOWING_WIN32
+        m_WindowHandle = (guintptr)GDK_WINDOW_HWND(m_GtkImage->get_window()->gobj());
+#endif // GDK_WINDOWING_WIN32
+        gst_element_set_state(m_Playbin, GST_STATE_READY);
+     });
+#endif // HAVE_GSTREAMER
+
 }
 
 ImageBox::~ImageBox()
@@ -46,6 +176,10 @@ void ImageBox::set_image(const std::shared_ptr<Image> &image)
     m_ImageConn.disconnect();
     reset_slideshow();
 
+#ifdef HAVE_GSTREAMER
+    gst_element_set_state(m_Playbin, GST_STATE_NULL);
+#endif // HAVE_GSTREAMER
+
     m_Image = image;
     m_Scroll = true;
     m_ImageConn = m_Image->signal_pixbuf_changed().connect([ this ]() { queue_draw_image(m_Scroll); });
@@ -61,6 +195,10 @@ void ImageBox::clear_image()
     m_GtkImage->clear();
     m_Layout->set_size(0, 0);
 
+#ifdef HAVE_GSTREAMER
+    gst_element_set_state(m_Playbin, GST_STATE_NULL);
+#endif // HAVE_GSTREAMER
+
     m_HScroll->hide();
     m_VScroll->hide();
 
@@ -71,7 +209,8 @@ void ImageBox::clear_image()
 
 void ImageBox::update_background_color()
 {
-    m_Layout->modify_bg(Gtk::STATE_NORMAL, Settings.get_background_color());
+    m_BGColor = Settings.get_background_color();
+    m_Layout->modify_bg(Gtk::STATE_NORMAL, m_BGColor);
 }
 
 bool ImageBox::is_slideshow_running()
@@ -136,8 +275,7 @@ void ImageBox::on_reset_zoom()
 
 void ImageBox::on_toggle_scrollbars()
 {
-    Settings.set("ScrollbarsVisible",
-            !Settings.get_bool("ScrollbarsVisible"));
+    Settings.set("ScrollbarsVisible", !Settings.get_bool("ScrollbarsVisible"));
     queue_draw_image();
 }
 
@@ -271,46 +409,30 @@ void ImageBox::draw_image(const bool _scroll)
     m_RedrawQueued = false;
     std::shared_ptr<Image> image = m_Image;
 
-    // Make sure the pixbuf is ready
-    if (!image->get_pixbuf())
-        return;
-
-    // m_Scroll will be true if this is the first time the image is being drawn.
-    bool scroll = _scroll || m_Scroll;
-    m_Scroll = false;
-
-    Glib::RefPtr<Gdk::PixbufAnimation> pixbuf_anim = image->get_pixbuf();
-
-    if (m_PixbufAnim != pixbuf_anim)
-    {
-        m_PixbufAnim = pixbuf_anim;
-
-        // https://bugzilla.gnome.org/show_bug.cgi?id=688686
-        if (m_PixbufAnimIter)
-        {
-            g_object_unref(m_PixbufAnimIter->gobj());
-            m_PixbufAnimIter.reset();
-        }
-
-        m_PixbufAnimIter = m_PixbufAnim->get_iter(NULL);
-
-        m_AnimConn.disconnect();
-
-        if (m_PixbufAnimIter->get_delay_time() >= 0)
-            m_AnimConn = Glib::signal_timeout().connect(
-                    sigc::mem_fun(*this, &ImageBox::update_animation),
-                    m_PixbufAnimIter->get_delay_time());
-    }
-
-    Glib::RefPtr<Gdk::Pixbuf> pixbuf = m_PixbufAnimIter->get_pixbuf()->copy(),
-                              temp = pixbuf;
-
     get_window()->freeze_updates();
     m_HScroll->show();
     m_VScroll->show();
 
+    // update to get the layout dimensions when the scrollbars are shown
     while (Gtk::Main::events_pending())
         Gtk::Main::iteration();
+
+    m_WindowWidth  = get_allocation().get_width();
+    m_WindowHeight = get_allocation().get_height();
+    m_LayoutWidth  = m_Layout->get_allocation().get_width();
+    m_LayoutHeight = m_Layout->get_allocation().get_height();
+
+    int w       = m_LayoutWidth,
+        h       = m_LayoutHeight,
+        sWidth  = 0,
+        sHeight = 0,
+        origWidth, origHeight;
+
+    m_HideScrollbars = !Settings.get_bool("ScrollbarsVisible") || Settings.get_bool("HideAll");
+
+    // m_Scroll will be true if this is the first time the image is being drawn.
+    bool scroll = _scroll || m_Scroll;
+    m_Scroll = false;
 
     // Make sure the image wasn't changed while handling events.
     if (image != m_Image)
@@ -319,53 +441,117 @@ void ImageBox::draw_image(const bool _scroll)
         return;
     }
 
-    int wWidth  = get_allocation().get_width(),
-        wHeight = get_allocation().get_height(),
-        lWidth  = m_Layout->get_allocation().get_width(),
-        lHeight = m_Layout->get_allocation().get_height(),
-        w       = lWidth,
-        h       = lHeight;
-    double windowAspect = static_cast<double>(wWidth) / wHeight,
-           imageAspect  = static_cast<double>(pixbuf->get_width()) / pixbuf->get_height();
-    bool hideScrollbars = !Settings.get_bool("ScrollbarsVisible") ||
-                          Settings.get_bool("HideAll");
+#ifdef HAVE_GSTREAMER
+    if (image->is_webm())
+    {
+        GstState state;
+        g_object_set(m_Playbin, "uri", Glib::filename_to_uri(image->get_path()).c_str(), NULL);
+        gst_element_get_state(m_Playbin, &state, NULL, 1);
+        gst_element_set_state(m_Playbin, GST_STATE_PLAYING);
 
-    if ((pixbuf->get_width() > wWidth || (pixbuf->get_height() > wHeight && pixbuf->get_width() > lWidth)) &&
-        (m_ZoomMode == ZoomMode::FIT_WIDTH || (m_ZoomMode == ZoomMode::AUTO_FIT && windowAspect < imageAspect)))
-    {
-        w = std::floor(wWidth / imageAspect) > wHeight && !hideScrollbars ? lWidth : wWidth;
-        temp = pixbuf->scale_simple(w, std::floor(w / imageAspect), Gdk::INTERP_BILINEAR);
-    }
-    else if ((pixbuf->get_height() > wHeight || (pixbuf->get_width() > wWidth && pixbuf->get_height() > lHeight)) &&
-             (m_ZoomMode == ZoomMode::FIT_HEIGHT || (m_ZoomMode == ZoomMode::AUTO_FIT && windowAspect > imageAspect)))
-    {
-        h = std::floor(wHeight * imageAspect) > wWidth && !hideScrollbars ? lHeight : wHeight;
-        temp = pixbuf->scale_simple(std::floor(h * imageAspect), h, Gdk::INTERP_BILINEAR);
-    }
-    else if (m_ZoomMode == ZoomMode::MANUAL && m_ZoomPercent != 100)
-    {
-        temp = pixbuf->scale_simple(pixbuf->get_width() * static_cast<double>(m_ZoomPercent) / 100,
-                                    pixbuf->get_height() * static_cast<double>(m_ZoomPercent) / 100,
-                                    Gdk::INTERP_BILINEAR);
-    }
+        GstPad *pad = nullptr;
+        g_signal_emit_by_name(m_Playbin, "get-video-pad", 0, &pad, NULL);
 
-    if (hideScrollbars || temp->get_width() <= lWidth ||
-            (temp->get_width() <= wWidth && temp->get_height() <= wHeight))
+        if (pad)
+        {
+            GstCaps *caps = gst_pad_get_current_caps(pad);
+            GstStructure *s = nullptr;
+
+            if (caps)
+                s = gst_caps_get_structure(caps, 0);
+
+            if (s)
+            {
+                gst_structure_get_int(s, "width", &origWidth);
+                gst_structure_get_int(s, "height", &origHeight);
+
+                gst_caps_unref(caps);
+            }
+            else
+            {
+                m_HScroll->hide();
+                m_VScroll->hide();
+
+                queue_draw_image();
+                get_window()->thaw_updates();
+
+                return;
+            }
+
+            if (origHeight > 0 && origHeight > 0)
+                get_scaled_size(origWidth, origHeight, sWidth, sHeight);
+        }
+        else
+        {
+            m_HScroll->hide();
+            m_VScroll->hide();
+
+            queue_draw_image();
+            get_window()->thaw_updates();
+
+            return;
+        }
+    }
+    else
+    {
+#endif // HAVE_GSTREAMER
+        // Make sure the pixbuf is ready
+        if (!image->get_pixbuf())
+            return;
+
+        Glib::RefPtr<Gdk::PixbufAnimation> pixbuf_anim = image->get_pixbuf();
+
+        if (m_PixbufAnim != pixbuf_anim)
+        {
+            m_PixbufAnim = pixbuf_anim;
+
+            // https://bugzilla.gnome.org/show_bug.cgi?id=688686
+            if (m_PixbufAnimIter)
+            {
+                g_object_unref(m_PixbufAnimIter->gobj());
+                m_PixbufAnimIter.reset();
+            }
+
+            m_PixbufAnimIter = m_PixbufAnim->get_iter(NULL);
+
+            m_AnimConn.disconnect();
+
+            if (m_PixbufAnimIter->get_delay_time() >= 0)
+                m_AnimConn = Glib::signal_timeout().connect(
+                        sigc::mem_fun(*this, &ImageBox::update_animation),
+                        m_PixbufAnimIter->get_delay_time());
+        }
+
+        Glib::RefPtr<Gdk::Pixbuf> pixbuf = m_PixbufAnimIter->get_pixbuf()->copy(),
+                                  temp   = pixbuf;
+        origWidth  = pixbuf->get_width();
+        origHeight = pixbuf->get_height();
+
+        if (get_scaled_size(pixbuf->get_width(), pixbuf->get_height(), sWidth, sHeight))
+            temp = pixbuf->scale_simple(sWidth, sHeight, Gdk::INTERP_BILINEAR);
+
+        m_GtkImage->set(temp);
+#ifdef HAVE_GSTREAMER
+    }
+#endif // HAVE_GSTREAMER
+
+    if (m_HideScrollbars || sWidth <= m_LayoutWidth || (sWidth <= m_WindowWidth && sHeight <= m_WindowHeight))
     {
         m_HScroll->hide();
-        h = wHeight;
-    }
-    if (hideScrollbars || temp->get_height() <= lHeight ||
-            (temp->get_height() <= wHeight && temp->get_width() <= wWidth))
-    {
-        m_VScroll->hide();
-        w = wWidth;
+        h = m_WindowHeight;
     }
 
-    m_Layout->move(*m_GtkImage, std::max(0, (w - temp->get_width()) / 2),
-                                std::max(0, (h - temp->get_height()) / 2));
-    m_Layout->set_size(temp->get_width(), temp->get_height());
-    m_GtkImage->set(temp);
+    if (m_HideScrollbars || sHeight <= m_LayoutHeight || (sHeight <= m_WindowHeight && sWidth <= m_WindowWidth))
+    {
+        m_VScroll->hide();
+        w = m_WindowWidth;
+    }
+
+    int x = std::max(0, (w - sWidth) / 2),
+        y = std::max(0, (h - sHeight) / 2);
+
+    m_Layout->move(*m_GtkImage, x, y);
+    m_Layout->set_size(sWidth, sHeight);
 
     // Reset the scrollbar positions
     if (scroll)
@@ -385,9 +571,44 @@ void ImageBox::draw_image(const bool _scroll)
         }
     }
 
+    double scale = m_ZoomMode == ZoomMode::MANUAL ? m_ZoomPercent :
+                        static_cast<double>(sWidth) / origWidth * 100;
+    m_StatusBar->set_resolution(origWidth, origHeight, scale, m_ZoomMode);
+
     get_window()->thaw_updates();
-    double scale = static_cast<double>(temp->get_width()) / pixbuf->get_width() * 100;
-    m_StatusBar->set_resolution(pixbuf->get_width(), pixbuf->get_height(), scale, m_ZoomMode);
+}
+
+bool ImageBox::get_scaled_size(int origWidth, int origHeight, int &w, int &h)
+{
+    double windowAspect = static_cast<double>(m_WindowWidth) / m_WindowHeight,
+           imageAspect  = static_cast<double>(origWidth) / origHeight;
+
+    if ((origWidth > m_WindowWidth || (origHeight > m_WindowHeight && origWidth > m_LayoutWidth)) &&
+        (m_ZoomMode == ZoomMode::FIT_WIDTH || (m_ZoomMode == ZoomMode::AUTO_FIT && windowAspect < imageAspect)))
+    {
+        w = std::floor(m_WindowWidth / imageAspect) > m_WindowHeight && !m_HideScrollbars ? m_LayoutWidth : m_WindowWidth;
+        h = std::floor(w / imageAspect);
+    }
+    else if ((origHeight > m_WindowHeight || (origWidth > m_WindowWidth && origHeight > m_LayoutHeight)) &&
+             (m_ZoomMode == ZoomMode::FIT_HEIGHT || (m_ZoomMode == ZoomMode::AUTO_FIT && windowAspect > imageAspect)))
+    {
+        h = std::floor(m_WindowHeight * imageAspect) > m_WindowWidth && !m_HideScrollbars ? m_LayoutHeight : m_WindowHeight;
+        w = std::floor(h * imageAspect);
+    }
+    else if (m_ZoomMode == ZoomMode::MANUAL && m_ZoomPercent != 100)
+    {
+        w = origWidth * static_cast<double>(m_ZoomPercent) / 100;
+        h = origHeight * static_cast<double>(m_ZoomPercent) / 100;
+    }
+    else
+    {
+        // no scaling needed
+        w = origWidth;
+        h = origHeight;
+        return false;
+    }
+
+    return true;
 }
 
 bool ImageBox::update_animation()

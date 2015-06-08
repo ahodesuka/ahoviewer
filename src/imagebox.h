@@ -3,7 +3,13 @@
 
 #include <gtkmm.h>
 
+#include "config.h"
 #include "image.h"
+
+#ifdef HAVE_GSTREAMER
+#include <gst/gst.h>
+#include <GL/glu.h>
+#endif // HAVE_GSTREAMER
 
 namespace AhoViewer
 {
@@ -55,6 +61,7 @@ namespace AhoViewer
         virtual bool on_scroll_event(GdkEventScroll*);
     private:
         void draw_image(const bool _scroll);
+        bool get_scaled_size(int origWidth, int origHeight, int &w, int &h);
         bool update_animation();
         void scroll(const int x, const int y, const bool panning = false, const bool fromSlideshow = false);
         void smooth_scroll(const int, const Glib::RefPtr<Gtk::Adjustment>&);
@@ -73,8 +80,19 @@ namespace AhoViewer
         Glib::RefPtr<Gtk::UIManager> m_UIManager;
         Glib::RefPtr<Gtk::Action> m_NextAction, m_PreviousAction;
 
+#ifdef HAVE_GSTREAMER
+        static GstBusSyncReply create_window(GstBus*, GstMessage *message, void *userp);
+        static gboolean bus_cb(GstBus*, GstMessage *message, void *userp);
+        static gboolean draw_cb(void*, GLuint texture, GLuint w, GLuint h, void *userp);
+
+        GstElement *m_Playbin,
+                   *m_VideoSink;
+        guintptr m_WindowHandle;
+#endif // HAVE_GSTREAMER
+
         StatusBar *m_StatusBar;
 
+        Gdk::Color m_BGColor;
         const Gdk::Cursor m_LeftPtrCursor, m_FleurCursor;
 
         std::shared_ptr<Image> m_Image;
@@ -82,7 +100,9 @@ namespace AhoViewer
         Glib::RefPtr<Gdk::PixbufAnimationIter> m_PixbufAnimIter;
         sigc::connection m_DrawConn, m_ImageConn, m_ScrollConn, m_SlideshowConn, m_AnimConn;
 
-        bool m_Scroll, m_RedrawQueued;
+        int m_WindowWidth, m_WindowHeight,
+            m_LayoutWidth, m_LayoutHeight;
+        bool m_Scroll, m_RedrawQueued, m_HideScrollbars;
         ZoomMode m_ZoomMode;
         uint32_t m_ZoomPercent;
         double m_PressX, m_PreviousX,

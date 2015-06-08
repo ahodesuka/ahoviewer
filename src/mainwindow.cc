@@ -468,6 +468,10 @@ void MainWindow::create_actions()
     for (const std::string &mimeType : Archive::MimeTypes)
         filter.add_mime_type(mimeType);
 
+#ifdef HAVE_GSTREAMER
+    filter.add_mime_type("video/webm");
+#endif // HAVE_GSTREAMER
+
     m_RecentMenu->add_filter(filter);
 
     Gtk::MenuItem *menuItem = static_cast<Gtk::MenuItem*>(m_UIManager->get_widget("/MenuBar/FileMenu/RecentMenu"));

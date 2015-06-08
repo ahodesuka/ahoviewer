@@ -3,7 +3,12 @@
 #include <iostream>
 #include <cstdlib>
 
+#include "config.h"
 #include "mainwindow.h"
+
+#ifdef HAVE_GSTREAMER
+#include <gst/gst.h>
+#endif // HAVE_GSTREAMER
 
 extern const char ahoviewer_ui[];
 
@@ -12,6 +17,9 @@ int main(int argc, char **argv)
     curl_global_init(CURL_GLOBAL_ALL);
 
     Gtk::Main main(argc, argv);
+#ifdef HAVE_GSTREAMER
+    gst_init(&argc, &argv);
+#endif // HAVE_GSTREAMER
     Glib::RefPtr<Gtk::Builder> builder = Gtk::Builder::create();
 
     try

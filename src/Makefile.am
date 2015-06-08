@@ -32,6 +32,6 @@ ui.cc: ui.glade file2string
 	@./file2string $< $@ ahoviewer_ui
 
 ahoviewer_CPPFLAGS = @CPPFLAGS@ @LIBCURL_CPPFLAGS@
-ahoviewer_CXXFLAGS = @CXXFLAGS@ @gtkmm_CFLAGS@ @libzip_CFLAGS@
+ahoviewer_CXXFLAGS = @CXXFLAGS@ @gtkmm_CFLAGS@ @gstreamer_CFLAGS@ @libzip_CFLAGS@
 ahoviewer_LDADD = @LIBS@ @gtkmm_LIBS@ @libconfig_LIBS@ @LIBCURL@ \
-				@pugixml_LIBS@ @libunrar_LIBS@ @libzip_LIBS@
+				@pugixml_LIBS@ @gstreamer_LIBS@ @libunrar_LIBS@ @libzip_LIBS@

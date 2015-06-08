@@ -9,8 +9,7 @@ namespace AhoViewer
     class Image
     {
     public:
-        Image(const std::string&);
-        Image(const std::string&, const std::string&);
+        Image(const std::string &path, const std::string &thumb_path = "");
         virtual ~Image();
 
         static bool is_valid(const std::string&);
@@ -18,6 +17,7 @@ namespace AhoViewer
 
         const std::string get_path() const { return m_Path; }
         bool is_loading() const { return m_Loading; }
+        bool is_webm() const { return m_isWebM; }
 
         virtual std::string get_filename() const;
         virtual const Glib::RefPtr<Gdk::PixbufAnimation>& get_pixbuf();
@@ -30,11 +30,13 @@ namespace AhoViewer
 
         static std::uint8_t const ThumbnailSize = 100;
     protected:
+        static bool is_webm(const std::string&);
+
         void create_thumbnail();
         Glib::RefPtr<Gdk::Pixbuf> create_pixbuf_at_size(const std::string &path,
                                                         const double w, const double h);
 
-        bool m_Loading;
+        bool m_Loading, m_isWebM;
         std::string m_Path, m_ThumbnailPath;
 
         Glib::RefPtr<Gdk::Pixbuf> m_ThumbnailPixbuf;

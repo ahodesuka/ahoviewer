@@ -10,7 +10,20 @@ std::string Image::ThumbnailDir = Glib::build_filename(Glib::get_user_cache_dir(
 
 bool Image::is_valid(const std::string &path)
 {
-    return gdk_pixbuf_get_file_info(path.c_str(), 0, 0) != NULL;
+    return gdk_pixbuf_get_file_info(path.c_str(), 0, 0) != NULL || is_webm(path);
+}
+
+bool Image::is_webm(const std::string &path)
+{
+#ifdef HAVE_GSTREAMER
+    bool uncertain;
+    std::string ct       = Gio::content_type_guess(path, "", uncertain);
+    std::string mimeType = Gio::content_type_get_mime_type(ct);
+
+    return mimeType == "video/webm";
+#else
+    return false;
+#endif // HAVE_GSTREAMER
 }
 
 const Glib::RefPtr<Gdk::Pixbuf>& Image::get_missing_pixbuf()
@@ -21,15 +34,9 @@ const Glib::RefPtr<Gdk::Pixbuf>& Image::get_missing_pixbuf()
     return pixbuf;
 }
 
-Image::Image(const std::string &path)
-  : m_Loading(false),
-    m_Path(path)
-{
-
-}
-
 Image::Image(const std::string &path, const std::string &thumb_path)
   : m_Loading(false),
+    m_isWebM(Image::is_webm(path)),
     m_Path(path),
     m_ThumbnailPath(thumb_path)
 {
@@ -102,7 +109,7 @@ const Glib::RefPtr<Gdk::Pixbuf>& Image::get_thumbnail()
 
 void Image::load_pixbuf()
 {
-    if (!m_Pixbuf)
+    if (!m_Pixbuf && !m_isWebM)
     {
         Glib::RefPtr<Gdk::PixbufAnimation> p = Gdk::PixbufAnimation::create_from_file(m_Path);
         {
@@ -145,6 +152,7 @@ Glib::RefPtr<Gdk::Pixbuf> Image::create_pixbuf_at_size(const std::string &path,
                                 Gdk::INTERP_BILINEAR);
 }
 
+// TODO: webm thumbnails
 void Image::create_save_thumbnail()
 {
 #ifdef __linux__

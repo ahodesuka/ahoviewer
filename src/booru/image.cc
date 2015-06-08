@@ -15,7 +15,9 @@ Image::Image(const std::string &path, const std::string &url,
     m_Page(page),
     m_Curler(m_Url)
 {
-    m_Curler.signal_write().connect(sigc::mem_fun(*this, &Image::on_write));
+    if (!m_isWebM)
+        m_Curler.signal_write().connect(sigc::mem_fun(*this, &Image::on_write));
+
     m_Curler.signal_progress().connect(sigc::mem_fun(*this, &Image::on_progress));
     m_Curler.signal_finished().connect(sigc::mem_fun(*this, &Image::on_finished));
 }
@@ -65,7 +67,7 @@ void Image::load_pixbuf()
         {
             AhoViewer::Image::load_pixbuf();
         }
-        else if (!start_download() && m_Loader->get_animation())
+        else if (!start_download() && !m_isWebM && m_Loader->get_animation())
         {
             m_Pixbuf = m_Loader->get_animation();
         }
@@ -116,9 +118,12 @@ bool Image::start_download()
         m_Page->get_image_fetcher()->add_handle(&m_Curler);
         m_Loading = true;
 
-        m_Loader = Gdk::PixbufLoader::create();
-        m_Loader->signal_area_prepared().connect(sigc::mem_fun(*this, &Image::on_area_prepared));
-        m_Loader->signal_area_updated().connect(sigc::mem_fun(*this, &Image::on_area_updated));
+        if (!m_isWebM)
+        {
+            m_Loader = Gdk::PixbufLoader::create();
+            m_Loader->signal_area_prepared().connect(sigc::mem_fun(*this, &Image::on_area_prepared));
+            m_Loader->signal_area_updated().connect(sigc::mem_fun(*this, &Image::on_area_updated));
+        }
 
         return true;
     }
@@ -153,8 +158,11 @@ void Image::on_finished()
     m_Curler.save_file(m_Path);
     m_Curler.clear();
 
-    m_Loader->close();
-    m_Loader.reset();
+    if (!m_isWebM)
+    {
+        m_Loader->close();
+        m_Loader.reset();
+    }
 
     m_Loading = false;
 
