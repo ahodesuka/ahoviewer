@@ -438,7 +438,8 @@ void ImageBox::draw_image(const bool _scroll)
     m_Scroll = false;
 
     // Make sure the image wasn't changed while handling events.
-    if (image != m_Image || (!image->is_webm() && !image->get_pixbuf()))
+    if (image != m_Image || (!image->is_webm() && !image->get_pixbuf()) ||
+        (image->is_webm() && image->is_loading()))
     {
         m_HScroll->hide();
         m_VScroll->hide();
@@ -479,8 +480,6 @@ void ImageBox::draw_image(const bool _scroll)
     else
     {
 #endif // HAVE_GSTREAMER
-
-
         Glib::RefPtr<Gdk::PixbufAnimation> pixbuf_anim = image->get_pixbuf();
 
         if (m_PixbufAnim != pixbuf_anim)
