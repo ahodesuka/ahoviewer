@@ -4,6 +4,12 @@
 #include <gdkmm.h>
 #include <glibmm.h>
 
+#include "config.h"
+
+#ifdef HAVE_GSTREAMER
+#include <gst/gst.h>
+#endif // HAVE_GSTREAMER
+
 namespace AhoViewer
 {
     class Image
@@ -34,7 +40,7 @@ namespace AhoViewer
 
         void create_thumbnail();
         Glib::RefPtr<Gdk::Pixbuf> create_pixbuf_at_size(const std::string &path,
-                                                        const double w, const double h);
+                                                        const int w, const int h) const;
 
         bool m_Loading, m_isWebM;
         std::string m_Path, m_ThumbnailPath;
@@ -45,7 +51,21 @@ namespace AhoViewer
         Glib::Threads::Mutex m_Mutex;
         Glib::Dispatcher m_SignalPixbufChanged;
     private:
+        Glib::RefPtr<Gdk::Pixbuf> scale_pixbuf(Glib::RefPtr<Gdk::Pixbuf> &pixbuf,
+                                               const int w, const int h) const;
+        Glib::RefPtr<Gdk::Pixbuf> create_webm_thumbnail(const int w, const int h) const;
+        Glib::RefPtr<Gdk::Pixbuf> create_webm_thumbnail(const int w, const int h,
+                                                        int &oWidth, int &oHeight) const;
+#ifdef HAVE_GSTREAMER
+        Glib::RefPtr<Gdk::Pixbuf> capture_frame(GstElement *playbin, const int w,
+                                                int &oWidth, int &oHeight) const;
+        bool is_pixbuf_interesting(Glib::RefPtr<Gdk::Pixbuf> &pixbuf) const;
+
+        static double constexpr BoringImageVariance = 256.0;
+#endif // HAVE_GSTREAMER
         void create_save_thumbnail();
+        void save_thumbnail(Glib::RefPtr<Gdk::Pixbuf> &pixbuf,
+                            const int w, const int h, const gchar *mimeType) const;
         static std::string ThumbnailDir;
     };
 }
