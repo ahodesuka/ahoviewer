@@ -207,8 +207,6 @@ void ImageList::go_next()
                 return;
         }
     }
-
-    m_SignalEndOfList();
 }
 
 void ImageList::go_previous()
