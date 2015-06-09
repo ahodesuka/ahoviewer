@@ -110,6 +110,8 @@ bool ImageList::load(const std::string path, std::string &error, int index)
         return false;
     }
 
+    m_SignalLoadSuccess();
+
     // Sort entries alphanumerically
     std::sort(entries.begin(), entries.end(), NaturalSort());
 

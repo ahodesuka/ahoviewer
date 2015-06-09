@@ -45,6 +45,7 @@ MainWindow::MainWindow(BaseObjectType *cobj, const Glib::RefPtr<Gtk::Builder> &b
 
     m_LocalImageList = std::make_shared<ImageList>(m_ThumbnailBar);
     m_LocalImageList->signal_archive_error().connect([ this ](const std::string e) { m_StatusBar->set_message(e); });
+    m_LocalImageList->signal_load_success().connect([ this ]() { set_active_imagelist(m_LocalImageList); });
 
     m_BooruBrowser->signal_page_changed().connect([ this ](Booru::Page *page)
             { set_active_imagelist(page ? page->get_imagelist() : m_LocalImageList); });
@@ -92,7 +93,7 @@ void MainWindow::open_file(const std::string &path, const int index)
     if (path.empty())
         return;
 
-    std::string absolutePath;
+    std::string absolutePath, error;
 
     if (Glib::path_is_absolute(path))
     {
@@ -108,10 +109,6 @@ void MainWindow::open_file(const std::string &path, const int index)
             absolutePath = Glib::build_filename(Glib::get_current_dir(), path);
     }
 
-    std::shared_ptr<ImageList> oldList = m_ActiveImageList;
-    set_active_imagelist(m_LocalImageList);
-
-    std::string error;
     if (!m_LocalImageList->load(absolutePath, error, index))
     {
         std::string uri = Glib::filename_to_uri(absolutePath);
@@ -120,9 +117,6 @@ void MainWindow::open_file(const std::string &path, const int index)
             Gtk::RecentManager::get_default()->remove_item(uri);
 
         m_StatusBar->set_message(error);
-
-        if (oldList)
-            set_active_imagelist(oldList);
     }
     else
     {

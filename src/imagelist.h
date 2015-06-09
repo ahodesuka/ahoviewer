@@ -27,6 +27,9 @@ namespace AhoViewer
         // Emitted when clear() is called.
         typedef sigc::signal<void> SignalClearedType;
 
+        // Emitted when load() is successful
+        typedef sigc::signal<void> SignalLoadSuccessType;
+
         // Used for async thumbnail pixbuf loading
         typedef std::pair<size_t, const Glib::RefPtr<Gdk::Pixbuf>> PixbufPair;
 
@@ -93,6 +96,7 @@ namespace AhoViewer
         SignalChangedType signal_changed() const { return m_SignalChanged; }
         SignalArchiveErrorType signal_archive_error() const { return m_SignalArchiveError; }
         SignalClearedType signal_cleared() const { return m_SignalCleared; }
+        SignalLoadSuccessType signal_load_success() const { return m_SignalLoadSuccess; }
     private:
         std::vector<std::string> get_image_entries(const std::string &path, int recurseCount = 0);
         std::vector<std::string> get_archive_entries();
@@ -126,6 +130,7 @@ namespace AhoViewer
         SignalChangedType m_SignalChanged;
         SignalArchiveErrorType m_SignalArchiveError;
         SignalClearedType m_SignalCleared;
+        SignalLoadSuccessType m_SignalLoadSuccess;
     };
 }
 
