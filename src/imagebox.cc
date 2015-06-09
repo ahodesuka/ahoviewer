@@ -447,18 +447,15 @@ void ImageBox::draw_image(const bool _scroll)
     }
 
 #ifdef HAVE_GSTREAMER
+    bool start_playing = false;
     if (image->is_webm())
     {
         if (!m_Playing)
         {
             g_object_set(m_Playbin, "uri", Glib::filename_to_uri(image->get_path()).c_str(), NULL);
             gst_element_set_state(m_Playbin, GST_STATE_PAUSED);
-
-            if (gst_element_get_state(m_Playbin, NULL, NULL, GST_CLOCK_TIME_NONE) == GST_STATE_CHANGE_SUCCESS)
-            {
-                gst_element_set_state(m_Playbin, GST_STATE_PLAYING);
-                m_Playing = true;
-            }
+            gst_element_get_state(m_Playbin, NULL, NULL, GST_CLOCK_TIME_NONE);
+            start_playing = m_Playing = true;
         }
 
         GstPad *pad = nullptr;
@@ -556,6 +553,11 @@ void ImageBox::draw_image(const bool _scroll)
     m_StatusBar->set_resolution(origWidth, origHeight, scale, m_ZoomMode);
 
     get_window()->thaw_updates();
+
+#ifdef HAVE_GSTREAMER
+    if (start_playing)
+        gst_element_set_state(m_Playbin, GST_STATE_PLAYING);
+#endif // HAVE_GSTREAMER
 }
 
 bool ImageBox::get_scaled_size(int origWidth, int origHeight, int &w, int &h)
