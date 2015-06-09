@@ -627,6 +627,11 @@ void MainWindow::on_open_file_dialog()
     filter.add_pixbuf_formats();
     imageFilter.add_pixbuf_formats();
 
+#ifdef HAVE_GSTREAMER
+    filter.add_mime_type("video/webm");
+    imageFilter.add_mime_type("video/webm");
+#endif // HAVE_GSTREAMER
+
     for (const std::string &mimeType : Archive::MimeTypes)
     {
         filter.add_mime_type(mimeType);

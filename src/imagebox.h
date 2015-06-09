@@ -1,6 +1,7 @@
 #ifndef _IMAGEBOX_H_
 #define _IMAGEBOX_H_
 
+#include <atomic>
 #include <gtkmm.h>
 
 #include "config.h"
@@ -100,9 +101,11 @@ namespace AhoViewer
         Glib::RefPtr<Gdk::PixbufAnimationIter> m_PixbufAnimIter;
         sigc::connection m_DrawConn, m_ImageConn, m_ScrollConn, m_SlideshowConn, m_AnimConn;
 
-        int m_WindowWidth, m_WindowHeight,
-            m_LayoutWidth, m_LayoutHeight;
-        bool m_Scroll, m_RedrawQueued, m_HideScrollbars;
+        std::atomic<int> m_WindowWidth,
+                         m_WindowHeight,
+                         m_LayoutWidth,
+                         m_LayoutHeight;
+        bool m_Scroll, m_RedrawQueued, m_HideScrollbars, m_Playing;
         ZoomMode m_ZoomMode;
         uint32_t m_ZoomPercent;
         double m_PressX, m_PreviousX,

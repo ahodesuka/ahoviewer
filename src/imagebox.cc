@@ -114,6 +114,7 @@ ImageBox::ImageBox(BaseObjectType *cobj, const Glib::RefPtr<Gtk::Builder> &bldr)
     m_Scroll(false),
     m_RedrawQueued(false),
     m_HideScrollbars(false),
+    m_Playing(false),
     m_ZoomMode(Settings.get_zoom_mode()),
     m_ZoomPercent(100)
 {
@@ -178,6 +179,7 @@ void ImageBox::set_image(const std::shared_ptr<Image> &image)
 
 #ifdef HAVE_GSTREAMER
     gst_element_set_state(m_Playbin, GST_STATE_NULL);
+    m_Playing = false;
 #endif // HAVE_GSTREAMER
 
     m_Image = image;
@@ -197,6 +199,7 @@ void ImageBox::clear_image()
 
 #ifdef HAVE_GSTREAMER
     gst_element_set_state(m_Playbin, GST_STATE_NULL);
+    m_Playing = false;
 #endif // HAVE_GSTREAMER
 
     m_HScroll->hide();
@@ -435,8 +438,10 @@ void ImageBox::draw_image(const bool _scroll)
     m_Scroll = false;
 
     // Make sure the image wasn't changed while handling events.
-    if (image != m_Image)
+    if (image != m_Image || (!image->is_webm() && !image->get_pixbuf()))
     {
+        m_HScroll->hide();
+        m_VScroll->hide();
         get_window()->thaw_updates();
         return;
     }
@@ -444,60 +449,36 @@ void ImageBox::draw_image(const bool _scroll)
 #ifdef HAVE_GSTREAMER
     if (image->is_webm())
     {
-        GstState state;
-        g_object_set(m_Playbin, "uri", Glib::filename_to_uri(image->get_path()).c_str(), NULL);
-        gst_element_get_state(m_Playbin, &state, NULL, 1);
-        gst_element_set_state(m_Playbin, GST_STATE_PLAYING);
+        if (!m_Playing)
+        {
+            g_object_set(m_Playbin, "uri", Glib::filename_to_uri(image->get_path()).c_str(), NULL);
+            gst_element_set_state(m_Playbin, GST_STATE_PAUSED);
+
+            if (gst_element_get_state(m_Playbin, NULL, NULL, GST_CLOCK_TIME_NONE) == GST_STATE_CHANGE_SUCCESS)
+            {
+                gst_element_set_state(m_Playbin, GST_STATE_PLAYING);
+                m_Playing = true;
+            }
+        }
 
         GstPad *pad = nullptr;
         g_signal_emit_by_name(m_Playbin, "get-video-pad", 0, &pad, NULL);
 
-        if (pad)
-        {
-            GstCaps *caps = gst_pad_get_current_caps(pad);
-            GstStructure *s = nullptr;
+        GstCaps *caps = gst_pad_get_current_caps(pad);
+        GstStructure *s = gst_caps_get_structure(caps, 0);
 
-            if (caps)
-                s = gst_caps_get_structure(caps, 0);
+        gst_structure_get_int(s, "width", &origWidth);
+        gst_structure_get_int(s, "height", &origHeight);
 
-            if (s)
-            {
-                gst_structure_get_int(s, "width", &origWidth);
-                gst_structure_get_int(s, "height", &origHeight);
+        gst_caps_unref(caps);
 
-                gst_caps_unref(caps);
-            }
-            else
-            {
-                m_HScroll->hide();
-                m_VScroll->hide();
-
-                queue_draw_image();
-                get_window()->thaw_updates();
-
-                return;
-            }
-
-            if (origHeight > 0 && origHeight > 0)
-                get_scaled_size(origWidth, origHeight, sWidth, sHeight);
-        }
-        else
-        {
-            m_HScroll->hide();
-            m_VScroll->hide();
-
-            queue_draw_image();
-            get_window()->thaw_updates();
-
-            return;
-        }
+        if (origHeight > 0 && origHeight > 0)
+            get_scaled_size(origWidth, origHeight, sWidth, sHeight);
     }
     else
     {
 #endif // HAVE_GSTREAMER
-        // Make sure the pixbuf is ready
-        if (!image->get_pixbuf())
-            return;
+
 
         Glib::RefPtr<Gdk::PixbufAnimation> pixbuf_anim = image->get_pixbuf();
 
@@ -576,6 +557,7 @@ void ImageBox::draw_image(const bool _scroll)
     m_StatusBar->set_resolution(origWidth, origHeight, scale, m_ZoomMode);
 
     get_window()->thaw_updates();
+    return;
 }
 
 bool ImageBox::get_scaled_size(int origWidth, int origHeight, int &w, int &h)
