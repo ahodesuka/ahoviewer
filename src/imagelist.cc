@@ -193,7 +193,6 @@ void ImageList::go_next()
     if (m_Index + 1 < m_Images.size())
     {
         set_current(m_Index + 1);
-        return;
     }
     else if (m_Archive && Settings.get_bool("AutoOpenArchive"))
     {
@@ -205,8 +204,6 @@ void ImageList::go_next()
             std::string e;
             if (!load(m_ArchiveEntries[i + 1], e))
                 m_SignalArchiveError(e);
-            else
-                return;
         }
     }
 }
@@ -239,6 +236,28 @@ void ImageList::go_first()
 void ImageList::go_last()
 {
     set_current(m_Images.size() - 1);
+}
+
+bool ImageList::can_go_next() const
+{
+    if (m_Index + 1 < m_Images.size())
+        return true;
+    else if (m_Archive && Settings.get_bool("AutoOpenArchive"))
+        return std::find(m_ArchiveEntries.begin(), m_ArchiveEntries.end(),
+                m_Archive->get_path()) - m_ArchiveEntries.begin() < static_cast<long>(m_ArchiveEntries.size() - 1);
+
+    return false;
+}
+
+bool ImageList::can_go_previous() const
+{
+    if (m_Index != 0)
+        return true;
+    else if (m_Archive && Settings.get_bool("AutoOpenArchive"))
+        return std::find(m_ArchiveEntries.begin(), m_ArchiveEntries.end(),
+                m_Archive->get_path()) - m_ArchiveEntries.begin() > 0;
+
+    return false;
 }
 
 std::vector<std::string> ImageList::get_image_entries(const std::string &path, int recurseCount)

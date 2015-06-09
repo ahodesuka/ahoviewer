@@ -85,6 +85,9 @@ namespace AhoViewer
         void go_last();
         // }}}
 
+        bool can_go_next() const;
+        bool can_go_previous() const;
+
         size_t get_index() const { return m_Index; }
         size_t get_size() const { return m_Images.size(); }
         const std::shared_ptr<Image>& get_current() const { return m_Images.at(m_Index); }

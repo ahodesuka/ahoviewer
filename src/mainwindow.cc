@@ -537,8 +537,16 @@ void MainWindow::set_sensitives()
     };
 
     for (const std::string &s : names)
-        Glib::RefPtr<Gtk::ToggleAction>::cast_static(m_ActionGroup->get_action(s))->
-            set_sensitive(!!m_ActiveImageList && !m_ActiveImageList->empty());
+    {
+        bool sens = !!m_ActiveImageList && !m_ActiveImageList->empty();
+
+        if (s == "NextImage")
+            sens = sens && m_ActiveImageList->can_go_next();
+        else if (s == "PreviousImage")
+            sens = sens && m_ActiveImageList->can_go_previous();
+
+        Glib::RefPtr<Gtk::ToggleAction>::cast_static(m_ActionGroup->get_action(s))->set_sensitive(sens);
+    }
 
     Booru::Page *page = m_BooruBrowser->get_active_page();
     bool local = !m_LocalImageList->empty() && m_LocalImageList == m_ActiveImageList,
