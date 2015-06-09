@@ -89,6 +89,7 @@ namespace AhoViewer
         GstElement *m_Playbin,
                    *m_VideoSink;
         guintptr m_WindowHandle;
+        bool m_Playing = false;
 #endif // HAVE_GSTREAMER
 
         StatusBar *m_StatusBar;
@@ -105,7 +106,7 @@ namespace AhoViewer
                          m_WindowHeight,
                          m_LayoutWidth,
                          m_LayoutHeight;
-        bool m_Scroll, m_RedrawQueued, m_HideScrollbars, m_Playing;
+        bool m_Scroll, m_RedrawQueued, m_HideScrollbars;
         ZoomMode m_ZoomMode;
         uint32_t m_ZoomPercent;
         double m_PressX, m_PreviousX,

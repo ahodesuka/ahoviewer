@@ -12,7 +12,11 @@ bool Image::is_valid(const std::string &path)
     return gdk_pixbuf_get_file_info(path.c_str(), 0, 0) != NULL || is_webm(path);
 }
 
+#ifdef HAVE_GSTREAMER
 bool Image::is_webm(const std::string &path)
+#else
+bool Image::is_webm(const std::string&)
+#endif // HAVE_GSTREAMER
 {
 #ifdef HAVE_GSTREAMER
     bool uncertain;
@@ -171,8 +175,13 @@ Glib::RefPtr<Gdk::Pixbuf> Image::create_webm_thumbnail(const int w, const int h)
     return create_webm_thumbnail(w, h, ww, hh);
 }
 
+#ifdef HAVE_GSTREAMER
 Glib::RefPtr<Gdk::Pixbuf> Image::create_webm_thumbnail(const int w, const int h,
                                                        int &oWidth, int &oHeight) const
+#else
+Glib::RefPtr<Gdk::Pixbuf> Image::create_webm_thumbnail(const int, const int,
+                                                       int&, int&) const
+#endif // HAVE_GSTREAMER
 {
     Glib::RefPtr<Gdk::Pixbuf> pixbuf;
 #ifdef HAVE_GSTREAMER

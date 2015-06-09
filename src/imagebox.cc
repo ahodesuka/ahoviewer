@@ -113,7 +113,6 @@ ImageBox::ImageBox(BaseObjectType *cobj, const Glib::RefPtr<Gtk::Builder> &bldr)
     m_Scroll(false),
     m_RedrawQueued(false),
     m_HideScrollbars(false),
-    m_Playing(false),
     m_ZoomMode(Settings.get_zoom_mode()),
     m_ZoomPercent(100)
 {
