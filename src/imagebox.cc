@@ -132,6 +132,7 @@ ImageBox::ImageBox(BaseObjectType *cobj, const Glib::RefPtr<Gtk::Builder> &bldr)
     m_VideoSink = gst_element_factory_make("glimagesink", "videosink");
 
     g_object_set(m_Playbin,
+            "audio-sink", gst_element_factory_make("fakesink", "audiosink"),
             "video-sink", m_VideoSink,
             NULL);
     g_signal_connect(m_VideoSink,
