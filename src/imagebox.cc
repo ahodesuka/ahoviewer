@@ -13,7 +13,6 @@ using namespace AhoViewer;
 #ifdef GDK_WINDOWING_WIN32
 #include <gdk/gdkwin32.h>
 #endif // GDK_WINDOWING_WIN32
-#include <iostream>
 
 GstBusSyncReply ImageBox::create_window(GstBus*, GstMessage *message, void *userp)
 {
