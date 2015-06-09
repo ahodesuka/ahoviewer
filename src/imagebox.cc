@@ -472,6 +472,7 @@ void ImageBox::draw_image(const bool _scroll)
         gst_structure_get_int(s, "height", &origHeight);
 
         gst_caps_unref(caps);
+        gst_object_unref(pad);
 
         if (origHeight > 0 && origHeight > 0)
             get_scaled_size(origWidth, origHeight, sWidth, sHeight);
@@ -558,7 +559,6 @@ void ImageBox::draw_image(const bool _scroll)
     m_StatusBar->set_resolution(origWidth, origHeight, scale, m_ZoomMode);
 
     get_window()->thaw_updates();
-    return;
 }
 
 bool ImageBox::get_scaled_size(int origWidth, int origHeight, int &w, int &h)
