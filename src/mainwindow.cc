@@ -808,7 +808,8 @@ void MainWindow::on_toggle_booru_browser()
         m_BooruBrowser->show();
         m_BooruBrowser->get_tag_entry()->grab_focus();
 
-        if (m_BooruBrowser->get_active_page())
+        if (m_BooruBrowser->get_active_page() &&
+            m_BooruBrowser->get_active_page()->get_imagelist() != m_ActiveImageList)
             set_active_imagelist(m_BooruBrowser->get_active_page()->get_imagelist());
 
         if (tbAction->get_active())
@@ -837,7 +838,9 @@ void MainWindow::on_toggle_thumbnail_bar()
     if (tbAction->get_active())
     {
         m_ThumbnailBar->show();
-        set_active_imagelist(m_LocalImageList);
+
+        if (m_ActiveImageList != m_LocalImageList)
+            set_active_imagelist(m_LocalImageList);
 
         if (bbAction->get_active())
         {
