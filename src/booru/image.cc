@@ -1,3 +1,4 @@
+#include <chrono>
 #include <iostream>
 
 #include "image.h"
@@ -13,6 +14,7 @@ Image::Image(const std::string &path, const std::string &url,
     m_ThumbnailUrl(thumbUrl),
     m_Tags(tags),
     m_Page(page),
+    m_LastDraw(std::chrono::steady_clock::now()),
     m_Curler(m_Url)
 {
     if (!m_isWebM)
@@ -191,6 +193,12 @@ void Image::on_area_prepared()
 
 void Image::on_area_updated(int, int, int, int)
 {
-    if (!m_Curler.is_cancelled())
+    long since = std::chrono::duration_cast<std::chrono::milliseconds>(
+            std::chrono::steady_clock::now() - m_LastDraw).count();
+
+    if (!m_Curler.is_cancelled() && since >= 100)
+    {
         m_SignalPixbufChanged();
+        m_LastDraw = std::chrono::steady_clock::now();
+    }
 }
