@@ -144,26 +144,6 @@ void MainWindow::restore_last_file()
     }
 }
 
-void MainWindow::set_active_imagelist(std::shared_ptr<ImageList> imageList)
-{
-    m_ImageListConn.disconnect();
-    m_ImageListClearedConn.disconnect();
-    m_ActiveImageList = imageList;
-
-    m_ImageListConn = m_ActiveImageList->signal_changed().connect(
-            sigc::mem_fun(*this, &MainWindow::on_imagelist_changed));
-    m_ImageListClearedConn = m_ActiveImageList->signal_cleared().connect(
-            sigc::mem_fun(*this, &MainWindow::clear));
-
-    if (!m_ActiveImageList->empty())
-        m_ImageBox->set_image(m_ActiveImageList->get_current());
-    else
-        clear();
-
-    update_title();
-    set_sensitives();
-}
-
 void MainWindow::on_realize()
 {
     Gtk::Window::on_realize();
@@ -249,6 +229,26 @@ bool MainWindow::on_key_press_event(GdkEventKey *e)
     }
 
     return Gtk::Window::on_key_press_event(e);
+}
+
+void MainWindow::set_active_imagelist(std::shared_ptr<ImageList> imageList)
+{
+    m_ImageListConn.disconnect();
+    m_ImageListClearedConn.disconnect();
+    m_ActiveImageList = imageList;
+
+    m_ImageListConn = m_ActiveImageList->signal_changed().connect(
+            sigc::mem_fun(*this, &MainWindow::on_imagelist_changed));
+    m_ImageListClearedConn = m_ActiveImageList->signal_cleared().connect(
+            sigc::mem_fun(*this, &MainWindow::clear));
+
+    if (!m_ActiveImageList->empty())
+        m_ImageBox->set_image(m_ActiveImageList->get_current());
+    else
+        clear();
+
+    update_title();
+    set_sensitives();
 }
 
 void MainWindow::save_window_geometry()

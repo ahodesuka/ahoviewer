@@ -19,7 +19,6 @@ namespace AhoViewer
 
         void open_file(const std::string &path, const int index = 0);
         void restore_last_file();
-        void set_active_imagelist(std::shared_ptr<ImageList> imageList);
     protected:
         virtual void on_realize();
         virtual void on_check_resize();
@@ -28,6 +27,7 @@ namespace AhoViewer
                                            const Gtk::SelectionData &data, guint, guint time);
         virtual bool on_key_press_event(GdkEventKey *e);
     private:
+        void set_active_imagelist(std::shared_ptr<ImageList> imageList);
         void save_window_geometry();
         void create_actions();
         void hide_widgets();
