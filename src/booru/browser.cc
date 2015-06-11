@@ -304,8 +304,5 @@ void Browser::on_imagelist_changed(const std::shared_ptr<AhoViewer::Image> &imag
                 << readable_file_size(speed) << "/s";
         }
         m_StatusBar->set_message(ss.str(), StatusBar::Priority::NORMAL, 2);
-
-        while (Gtk::Main::events_pending())
-            Gtk::Main::iteration(false);
     });
 }

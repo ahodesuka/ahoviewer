@@ -14,7 +14,6 @@ Image::Image(const std::string &path, const std::string &url,
     m_ThumbnailUrl(thumbUrl),
     m_Tags(tags),
     m_Page(page),
-    m_LastDraw(std::chrono::steady_clock::now()),
     m_Curler(m_Url)
 {
     if (!m_isWebM)
