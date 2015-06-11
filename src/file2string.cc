@@ -1,14 +1,11 @@
-#include <stdlib.h>
-#include <algorithm>
+#include <cstdlib>
 #include <fstream>
 #include <iostream>
-#include <string>
 
 int main(int argc, char **argv)
 {
-    std::ifstream in;
-    std::ofstream out;
-    std::string   line;
+    std::ifstream in(argv[1], std::ifstream::binary | std::ifstream::ate);
+    std::ofstream out(argv[2], std::ofstream::trunc);
 
     if (argc != 4)
     {
@@ -16,31 +13,34 @@ int main(int argc, char **argv)
         return EXIT_FAILURE;
     }
 
-    in.open(argv[1]);
-
     if (!in.is_open())
     {
         std::cerr << "Input file doesn't exist." << std::endl;
         return EXIT_FAILURE;
     }
 
-    out.open(argv[2], std::ofstream::trunc);
-
-    out << "char " << argv[3] << "[] =" << std::endl
+    out << "unsigned long " << argv[3] << "_size = " << in.tellg() << ";" << std::endl;
+    out << "unsigned char " << argv[3] << "[] =" << std::endl
         << "{" << std::endl;
 
-    while (std::getline(in, line))
+    char inchar;
+    size_t newline = 0;
+    in.seekg(0, in.beg);
+
+    while (in >> std::noskipws >> inchar)
     {
-        size_t pos = 0;
-        while ((pos = line.find('"', pos)) != std::string::npos)
+        if (newline >= 30)
         {
-            line.replace(pos, 1, "\\\"");
-            pos += 2;
+            newline = 0;
+            out << std::endl;
         }
-        out << '"' << line << '"' << std::endl;
+
+        out << static_cast<unsigned>(inchar) << ",";
+        ++newline;
     }
 
-    out << "};" << std::endl;
+    out.seekp(-1, out.cur);
+    out << std::endl << "};" << std::endl;
 
     return EXIT_SUCCESS;
 }

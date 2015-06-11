@@ -10,7 +10,8 @@
 #include <gst/gst.h>
 #endif // HAVE_GSTREAMER
 
-extern const char ahoviewer_ui[];
+extern const unsigned char ahoviewer_ui[];
+extern const unsigned long ahoviewer_ui_size;
 
 int main(int argc, char **argv)
 {
@@ -24,7 +25,8 @@ int main(int argc, char **argv)
 
     try
     {
-        builder->add_from_string(ahoviewer_ui);
+        builder->add_from_string(reinterpret_cast<const char*>(ahoviewer_ui),
+                                 ahoviewer_ui_size);
     }
     catch (Gtk::BuilderError &ex)
     {
