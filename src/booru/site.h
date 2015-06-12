@@ -31,6 +31,7 @@ namespace AhoViewer
             ~Site();
 
             static std::shared_ptr<Site> create(const std::string &name, const std::string &url);
+            static const Glib::RefPtr<Gdk::Pixbuf>& get_missing_pixbuf();
 
             std::string get_posts_url(const std::string &tags, size_t page);
             void add_tags(const std::set<std::string> &tags);
@@ -45,14 +46,13 @@ namespace AhoViewer
             const std::set<std::string>& get_tags() const { return m_Tags; }
 
             std::string get_path();
-            Glib::RefPtr<Gdk::Pixbuf> get_icon_pixbuf();
+            Glib::RefPtr<Gdk::Pixbuf> get_icon_pixbuf(const bool update = false);
 
             void save_tags() const;
             void set_row_values(Gtk::TreeRow row);
 
             Glib::Dispatcher& signal_icon_downloaded() { return m_SignalIconDownloaded; }
         private:
-            static const Glib::RefPtr<Gdk::Pixbuf>& get_missing_pixbuf();
             static Type get_type_from_url(const std::string &url);
 
             static const std::map<Type, std::string> RequestURI;

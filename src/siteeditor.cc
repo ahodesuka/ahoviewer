@@ -1,5 +1,4 @@
 #include <glibmm/i18n.h>
-#include <iostream>
 
 #include "siteeditor.h"
 using namespace AhoViewer;
@@ -12,8 +11,13 @@ SiteEditor::SiteEditor(BaseObjectType *cobj, const Glib::RefPtr<Gtk::Builder> &b
     m_NameColumn(Gtk::manage(new Gtk::TreeView::Column(_("Name"), m_Columns.name))),
     m_UrlColumn(Gtk::manage(new Gtk::TreeView::Column(_("Url"), m_Columns.url))),
     m_Sites(Settings.get_sites()),
-    m_ErrorPixbuf(Gtk::Invisible().render_icon(Gtk::Stock::DELETE, Gtk::ICON_SIZE_MENU))
+    m_ErrorPixbuf(Gtk::Invisible().render_icon(Gtk::Stock::DELETE, Gtk::ICON_SIZE_MENU)),
+    m_SiteCheckEdit(false),
+    m_SiteCheckEditSuccess(false),
+    m_SiteCheckThread(nullptr)
 {
+    m_SignalSiteChecked.connect(sigc::mem_fun(*this, &SiteEditor::on_site_checked));
+
     for (const std::shared_ptr<Booru::Site> &s : m_Sites)
     {
         Gtk::TreeIter iter = m_Model->append();
@@ -25,10 +29,12 @@ SiteEditor::SiteEditor(BaseObjectType *cobj, const Glib::RefPtr<Gtk::Builder> &b
         iter->set_value(m_Columns.site, s);
     }
 
-    Gtk::CellRendererPixbuf *iconRenderer = Gtk::manage(new Gtk::CellRendererPixbuf());
+    CellRendererIcon *iconRenderer = Gtk::manage(new CellRendererIcon(this));
     iconRenderer->property_xpad() = 2;
     iconRenderer->property_ypad() = 2;
     append_column("", *iconRenderer);
+    get_column(0)->add_attribute(iconRenderer->property_loading(), m_Columns.loading);
+    get_column(0)->add_attribute(iconRenderer->property_pulse(), m_Columns.pulse);
     get_column(0)->add_attribute(iconRenderer->property_pixbuf(), m_Columns.icon);
 
     Gtk::CellRendererText *textRenderer = nullptr;
@@ -56,7 +62,11 @@ SiteEditor::SiteEditor(BaseObjectType *cobj, const Glib::RefPtr<Gtk::Builder> &b
 
 SiteEditor::~SiteEditor()
 {
-
+    if (m_SiteCheckThread)
+    {
+        m_SiteCheckThread->join();
+        m_SiteCheckThread = nullptr;
+    }
 }
 
 void SiteEditor::add_row()
@@ -131,6 +141,11 @@ void SiteEditor::add_edit_site(const Gtk::TreeIter &iter)
         return;
     }
 
+    if (m_SiteCheckThread)
+        m_SiteCheckThread->join();
+
+    m_SiteCheckIter = iter;
+
     std::vector<std::shared_ptr<Booru::Site>>::iterator i =
         std::find(m_Sites.begin(), m_Sites.end(), iter->get_value(m_Columns.site));
     std::shared_ptr<Booru::Site> site = i != m_Sites.end() ? *i : nullptr;
@@ -138,42 +153,79 @@ void SiteEditor::add_edit_site(const Gtk::TreeIter &iter)
     // editting
     if (site)
     {
-        if (name != site->get_name() || url != site->get_url())
-        {
-            site->set_name(name);
-
-            if (!site->set_url(url))
-                iter->set_value(m_Columns.icon, m_ErrorPixbuf);
-            else
-                iter->set_value(m_Columns.icon, site->get_icon_pixbuf());
-        }
-        else
-        {
+        if (name == site->get_name() && url == site->get_url())
             return;
+
+        m_SiteCheckEdit = true;
+        m_SiteCheckSite = site;
+        m_SiteCheckIter->set_value(m_Columns.loading, true);
+        m_SiteCheckThread = Glib::Threads::Thread::create([ this, name, url ]()
+        {
+            m_SiteCheckSite->set_name(name);
+            m_SiteCheckEditSuccess = m_SiteCheckSite->set_url(url);
+
+            if (m_SiteCheckEditSuccess)
+                update_edited_site_icon();
+
+            m_SignalSiteChecked();
+        });
+    }
+    else
+    {
+        m_SiteCheckEdit = false;
+        m_SiteCheckIter->set_value(m_Columns.loading, true);
+        m_SiteCheckThread = Glib::Threads::Thread::create([ this, name, url ]()
+        {
+            m_SiteCheckSite = Booru::Site::create(name, url);
+
+            if (m_SiteCheckSite)
+                update_edited_site_icon();
+
+            m_SignalSiteChecked();
+        });
+    }
+}
+
+void SiteEditor::update_edited_site_icon()
+{
+    m_SiteCheckSite->signal_icon_downloaded().connect([ this ]()
+    {
+        m_SiteCheckIter->set_value(m_Columns.icon, m_SiteCheckSite->get_icon_pixbuf());
+        m_SiteCheckIter->set_value(m_Columns.loading, false);
+    });
+
+    m_SiteCheckSite->get_icon_pixbuf(true);
+}
+
+void SiteEditor::on_site_checked()
+{
+    if (m_SiteCheckEdit)
+    {
+        if (!m_SiteCheckEditSuccess)
+        {
+            m_SiteCheckIter->set_value(m_Columns.icon, m_ErrorPixbuf);
+            m_SiteCheckIter->set_value(m_Columns.loading, false);
         }
     }
     else
     {
-        // FIXME: This locks up the ui for a second when
-        // get_type_from_url is called, mabye do it async
-        // as does the above Site::set_url call
-        site = Booru::Site::create(name, url);
-
-        if (site)
+        if (m_SiteCheckSite)
         {
-            m_Sites.push_back(site);
-            site->signal_icon_downloaded().connect([ this, iter, site ]()
-                    { iter->set_value(m_Columns.icon, site->get_icon_pixbuf()); });
-            iter->set_value(m_Columns.icon, site->get_icon_pixbuf());
-            iter->set_value(m_Columns.site, site);
+            m_Sites.push_back(m_SiteCheckSite);
+            m_SiteCheckIter->set_value(m_Columns.site, m_SiteCheckSite);
         }
         else
         {
-            iter->set_value(m_Columns.icon, m_ErrorPixbuf);
-            return;
+            m_SiteCheckIter->set_value(m_Columns.icon, m_ErrorPixbuf);
+            m_SiteCheckIter->set_value(m_Columns.loading, false);
+            goto join;
         }
     }
 
     Settings.update_sites();
     m_SignalEdited();
+
+join:
+    m_SiteCheckThread->join();
+    m_SiteCheckThread = nullptr;
 }

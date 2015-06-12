@@ -120,11 +120,11 @@ std::string Site::get_path()
     return m_Path;
 }
 
-Glib::RefPtr<Gdk::Pixbuf> Site::get_icon_pixbuf()
+Glib::RefPtr<Gdk::Pixbuf> Site::get_icon_pixbuf(const bool update)
 {
-    if (!m_IconPixbuf)
+    if (!m_IconPixbuf || update)
     {
-        if (Glib::file_test(m_IconPath, Glib::FILE_TEST_EXISTS))
+        if (!update && Glib::file_test(m_IconPath, Glib::FILE_TEST_EXISTS))
         {
             m_IconPixbuf = Gdk::Pixbuf::create_from_file(m_IconPath);
         }
@@ -176,8 +176,8 @@ void Site::save_tags() const
 
 void Site::set_row_values(Gtk::TreeRow row)
 {
-    if (!m_IconDownloadedConn)
-        m_IconDownloadedConn = m_SignalIconDownloaded.connect([ this, row ]() { row.set_value(0, m_IconPixbuf); });
+    m_IconDownloadedConn.disconnect();
+    m_IconDownloadedConn = m_SignalIconDownloaded.connect([ this, row ]() { row.set_value(0, m_IconPixbuf); });
 
     row.set_value(0, get_icon_pixbuf());
     row.set_value(1, m_Name);
