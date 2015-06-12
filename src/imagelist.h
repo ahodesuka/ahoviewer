@@ -41,9 +41,8 @@ namespace AhoViewer
             // When the widget's selected item changes it will emit this signal.
             typedef sigc::signal<void, const size_t> SignalSelectedChangedType;
 
-            class ModelColumns : public Gtk::TreeModel::ColumnRecord
+            struct ModelColumns : public Gtk::TreeModelColumnRecord
             {
-            public:
                 ModelColumns() { add(pixbuf_column); }
                 Gtk::TreeModelColumn<Glib::RefPtr<Gdk::Pixbuf>> pixbuf_column;
             };

@@ -44,9 +44,8 @@ namespace AhoViewer
         protected:
             virtual void on_realize();
         private:
-            class ComboBoxModelColumns : public Gtk::TreeModel::ColumnRecord
+            struct ComboBoxModelColumns : public Gtk::TreeModelColumnRecord
             {
-            public:
                 ComboBoxModelColumns() { add(pixbuf_column); add(text_column); }
                 Gtk::TreeModelColumn<Glib::RefPtr<Gdk::Pixbuf>> pixbuf_column;
                 Gtk::TreeModelColumn<std::string> text_column;

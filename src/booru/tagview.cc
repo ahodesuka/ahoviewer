@@ -24,7 +24,7 @@ bool TagView::on_button_press_event(GdkEventButton *e)
 {
     if (e->button == 1)
     {
-        Gtk::TreeModel::Path path;
+        Gtk::TreePath path;
         get_path_at_pos(e->x, e->y, path);
 
         if (path)

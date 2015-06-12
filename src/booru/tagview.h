@@ -20,9 +20,8 @@ namespace AhoViewer
         protected:
             virtual bool on_button_press_event(GdkEventButton *e);
         private:
-            class ModelColumns : public Gtk::TreeModel::ColumnRecord
+            struct ModelColumns : public Gtk::TreeModelColumnRecord
             {
-            public:
                 ModelColumns() { add(tag_column); }
                 Gtk::TreeModelColumn<std::string> tag_column;
             };

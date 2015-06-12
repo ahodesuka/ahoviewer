@@ -18,9 +18,8 @@ namespace AhoViewer
         SiteEditor* get_site_editor() const { return m_SiteEditor; }
         SignalBGColorSetType signal_bg_color_set() const { return m_SignalBGColorSet; }
     private:
-        class BooruMaxRatingModelColumns : public Gtk::TreeModel::ColumnRecord
+        struct BooruMaxRatingModelColumns : public Gtk::TreeModelColumnRecord
         {
-        public:
             BooruMaxRatingModelColumns() { add(text_column); }
             Gtk::TreeModelColumn<std::string> text_column;
         };

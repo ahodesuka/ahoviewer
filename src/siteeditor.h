@@ -17,9 +17,8 @@ namespace AhoViewer
 
         SignalEditedType signal_edited() const { return m_SignalEdited; }
     private:
-        class ModelColumns : public Gtk::TreeModel::ColumnRecord
+        struct ModelColumns : public Gtk::TreeModelColumnRecord
         {
-        public:
             ModelColumns() { add(icon); add(name); add(url); add(site); }
             Gtk::TreeModelColumn<Glib::RefPtr<Gdk::Pixbuf>> icon;
             Gtk::TreeModelColumn<std::string> name;

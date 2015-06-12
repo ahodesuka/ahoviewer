@@ -11,9 +11,8 @@ namespace AhoViewer
         class TagEntry : public Gtk::Entry
         {
         private:
-            class ModelColumns : public Gtk::TreeModel::ColumnRecord
+            struct ModelColumns : public Gtk::TreeModelColumnRecord
             {
-            public:
                 ModelColumns() { add(tag_column); }
                 Gtk::TreeModelColumn<std::string> tag_column;
             };
