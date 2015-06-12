@@ -26,6 +26,7 @@ namespace AhoViewer
             ~Curler();
 
             void set_url(const std::string &url);
+            void set_no_body(const bool n = true);
             std::string escape(const std::string &str) const;
             bool perform();
 

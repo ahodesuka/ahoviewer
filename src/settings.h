@@ -22,7 +22,8 @@ namespace AhoViewer
         int get_int(const std::string &key) const;
         std::string get_string(const std::string &key) const;
 
-        std::vector<std::shared_ptr<Booru::Site>> get_sites();
+        std::vector<std::shared_ptr<Booru::Site>>& get_sites();
+        void update_sites();
 
         std::string get_keybinding(const std::string &group, const std::string &name) const;
         void set_keybinding(const std::string &group, const std::string &name, const std::string &value);
@@ -72,7 +73,7 @@ namespace AhoViewer
         const Booru::Site::Rating DefaultBooruMaxRating = Booru::Site::Rating::EXPLICIT;
         const ImageBox::ZoomMode DefaultZoomMode = ImageBox::ZoomMode::MANUAL;
 
-        std::vector<std::shared_ptr<Booru::Site>> m_Sites, m_DefaultSites;
+        std::vector<std::shared_ptr<Booru::Site>> m_Sites;
 
         template<typename T>
         void set(const std::string &key, const T value, Setting::Type type)

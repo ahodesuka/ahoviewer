@@ -202,7 +202,7 @@ void Page::get_posts()
         }
     }
 
-    m_Curler.set_url(m_Site->get_url(tags, m_Page));
+    m_Curler.set_url(m_Site->get_posts_url(tags, m_Page));
 
     if (m_GetPostsThread)
         m_GetPostsThread->join();

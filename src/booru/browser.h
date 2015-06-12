@@ -31,6 +31,7 @@ namespace AhoViewer
             std::string get_last_save_path() const { return m_LastSavePath; }
 
             void set_statusbar(StatusBar *sb) { m_StatusBar = sb; }
+            void update_combobox_model();
 
             SignalPageChangedType signal_page_changed() const { return m_SignalPageChanged; }
 
@@ -82,7 +83,8 @@ namespace AhoViewer
             Glib::RefPtr<Gtk::Action> m_SaveImageAction,
                                       m_SaveImagesAction;
 
-            sigc::connection m_NoResultsConn,
+            sigc::connection m_ComboChangedConn,
+                             m_NoResultsConn,
                              m_ImageListConn,
                              m_ImageProgConn,
                              m_SaveProgConn;

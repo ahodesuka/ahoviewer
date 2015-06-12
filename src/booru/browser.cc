@@ -34,21 +34,9 @@ Browser::Browser(BaseObjectType *cobj, const Glib::RefPtr<Gtk::Builder> &bldr)
             sigc::mem_fun(*this, &Browser::on_entry_key_press_event), false);
     m_TagView->set_tag_entry(m_TagEntry);
 
-    m_ComboBox->signal_changed().connect([ this ]()
-    {
-        m_TagEntry->set_tags(get_active_site()->get_tags());
-    });
-
     m_ComboModel = Gtk::ListStore::create(m_ComboColumns);
     m_ComboBox->set_model(m_ComboModel);
-
-    // Fill the comboxbox model
-    for (std::shared_ptr<Site> site : Settings.get_sites())
-        site->set_row_values(*(m_ComboModel->append()));
-
-    int selected = std::min(Settings.get_int("SelectedBooru"),
-                           static_cast<int>(Settings.get_sites().size()) - 1);
-    m_ComboBox->set_active(selected);
+    update_combobox_model();
 
     m_ComboBox->pack_start(m_ComboColumns.pixbuf_column, false);
     m_ComboBox->pack_start(m_ComboColumns.text_column);
@@ -63,6 +51,24 @@ Browser::Browser(BaseObjectType *cobj, const Glib::RefPtr<Gtk::Builder> &bldr)
 Browser::~Browser()
 {
 
+}
+
+void Browser::update_combobox_model()
+{
+    m_ComboChangedConn.disconnect();
+    m_ComboModel->clear();
+
+    for (std::shared_ptr<Site> site : Settings.get_sites())
+        site->set_row_values(*(m_ComboModel->append()));
+
+    m_ComboChangedConn = m_ComboBox->signal_changed().connect([ this ]()
+    {
+        m_TagEntry->set_tags(get_active_site()->get_tags());
+    });
+
+    int selected = std::min(static_cast<size_t>(Settings.get_int("SelectedBooru")),
+                            Settings.get_sites().size() - 1);
+    m_ComboBox->set_active(selected);
 }
 
 void Browser::on_new_tab()

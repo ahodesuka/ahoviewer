@@ -33,7 +33,7 @@ bool TagView::on_button_press_event(GdkEventButton *e)
             std::istringstream ss(m_TagEntry->get_text());
             std::set<std::string> tags = { std::istream_iterator<std::string>(ss),
                                            std::istream_iterator<std::string>() };
-            Gtk::TreeModel::iterator iter = m_ListStore->get_iter(path);
+            Gtk::TreeIter iter = m_ListStore->get_iter(path);
 
             iter->get_value(0, tag);
 
@@ -51,7 +51,7 @@ bool TagView::on_button_press_event(GdkEventButton *e)
     return Gtk::TreeView::on_button_press_event(e);
 }
 
-void TagView::on_cell_data(Gtk::CellRenderer *c, const Gtk::TreeModel::iterator &iter)
+void TagView::on_cell_data(Gtk::CellRenderer *c, const Gtk::TreeIter &iter)
 {
     Gtk::CellRendererToggle *cell = static_cast<Gtk::CellRendererToggle*>(c);
     std::string tag;

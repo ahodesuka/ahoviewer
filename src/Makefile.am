@@ -23,7 +23,9 @@ ahoviewer_SOURCES =       \
 	imagelist.cc          \
 	main.cc               \
 	mainwindow.cc         \
+	preferences.cc        \
 	settings.cc           \
+	siteeditor.cc         \
 	statusbar.cc          \
 	thumbnailbar.cc       \
 	ui.cc

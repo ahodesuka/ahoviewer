@@ -5,6 +5,7 @@
 
 #include "imagebox.h"
 #include "imagelist.h"
+#include "preferences.h"
 #include "statusbar.h"
 #include "thumbnailbar.h"
 #include "booru/browser.h"
@@ -69,6 +70,7 @@ namespace AhoViewer
         Gtk::MenuBar *m_MenuBar;
         Gtk::RecentChooserMenu *m_RecentMenu;
 
+        PreferencesDialog *m_PreferencesDialog;
         ThumbnailBar *m_ThumbnailBar;
         ImageBox *m_ImageBox;
         StatusBar *m_StatusBar;

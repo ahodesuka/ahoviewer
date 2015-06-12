@@ -15,35 +15,45 @@ namespace AhoViewer
         public:
             enum class Rating
             {
-                SAFE,
+                SAFE = 0,
                 QUESTIONABLE,
                 EXPLICIT,
             };
 
             enum class Type
             {
-                DANBOORU,
+                DANBOORU = 0,
                 GELBOORU,
+                UNKNOWN,
             };
 
             Site(std::string name, std::string url, Type type);
             ~Site();
 
-            static Type string_to_type(std::string type);
+            static std::shared_ptr<Site> create(const std::string &name, const std::string &url);
 
-            std::string get_url(const std::string &tags, size_t page);
+            std::string get_posts_url(const std::string &tags, size_t page);
             void add_tags(const std::set<std::string> &tags);
 
             std::string get_name() const { return m_Name; }
+            void set_name(const std::string &name) { m_Name = name; }
+
             std::string get_url() const { return m_Url; }
-            Glib::RefPtr<Gdk::Pixbuf> get_icon_pixbuf() const { return m_IconPixbuf; }
+            bool set_url(const std::string &s);
+
+            Type get_type() const { return m_Type; }
             const std::set<std::string>& get_tags() const { return m_Tags; }
+
             std::string get_path();
+            Glib::RefPtr<Gdk::Pixbuf> get_icon_pixbuf();
 
             void save_tags() const;
-            void set_row_values(Gtk::TreeModel::Row row);
+            void set_row_values(Gtk::TreeRow row);
+
+            Glib::Dispatcher& signal_icon_downloaded() { return m_SignalIconDownloaded; }
         private:
             static const Glib::RefPtr<Gdk::Pixbuf>& get_missing_pixbuf();
+            static Type get_type_from_url(const std::string &url);
 
             static const std::map<Type, std::string> RequestURI;
 
@@ -55,6 +65,8 @@ namespace AhoViewer
             Glib::RefPtr<Gdk::Pixbuf> m_IconPixbuf;
             Glib::Threads::Thread *m_IconCurlerThread;
             Glib::Dispatcher m_SignalIconDownloaded;
+
+            sigc::connection m_IconDownloadedConn;
         };
     }
 }

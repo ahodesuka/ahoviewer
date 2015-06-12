@@ -81,6 +81,11 @@ void Curler::set_url(const std::string &url)
     curl_easy_setopt(m_EasyHandle, CURLOPT_URL, m_Url.c_str());
 }
 
+void Curler::set_no_body(const bool n)
+{
+    curl_easy_setopt(m_EasyHandle, CURLOPT_NOBODY, n);
+}
+
 std::string Curler::escape(const std::string &str) const
 {
     char *estr = curl_easy_escape(m_EasyHandle, str.c_str(), 0);

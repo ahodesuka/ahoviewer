@@ -27,7 +27,7 @@ namespace AhoViewer
                 Gtk::TreeModelColumn<std::string> tag_column;
             };
 
-            void on_cell_data(Gtk::CellRenderer *c, const Gtk::TreeModel::iterator &iter);
+            void on_cell_data(Gtk::CellRenderer *c, const Gtk::TreeIter &iter);
 
             Glib::RefPtr<Gtk::ListStore> m_ListStore;
             TagEntry *m_TagEntry;

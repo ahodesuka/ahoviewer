@@ -172,7 +172,7 @@ std::string SettingsManager::get_string(const std::string &key) const
     return "";
 }
 
-std::vector<std::shared_ptr<Booru::Site>> SettingsManager::get_sites()
+std::vector<std::shared_ptr<Booru::Site>>& SettingsManager::get_sites()
 {
     if (m_Sites.size())
     {
@@ -187,20 +187,34 @@ std::vector<std::shared_ptr<Booru::Site>> SettingsManager::get_sites()
             {
                 const Setting &s = sites[i];
                 m_Sites.push_back(std::make_shared<Booru::Site>(s["name"], s["url"],
-                            Booru::Site::string_to_type(s["type"])));
+                            static_cast<Booru::Site::Type>(static_cast<int>(s["type"]))));
             }
 
             return m_Sites;
         }
     }
-    else if (!m_DefaultSites.size())
+    else
     {
         for (const std::tuple<std::string, std::string, Booru::Site::Type> &s : DefaultSites)
-            m_DefaultSites.push_back(std::make_shared<Booru::Site>(
+            m_Sites.push_back(std::make_shared<Booru::Site>(
                         std::get<0>(s), std::get<1>(s), std::get<2>(s)));
     }
 
-    return m_DefaultSites;
+    return m_Sites;
+}
+
+void SettingsManager::update_sites()
+{
+    remove("Sites");
+    Setting &sites = Config.getRoot().add("Sites", Setting::TypeList);
+
+    for (const std::shared_ptr<Booru::Site> &s : m_Sites)
+    {
+        Setting &site = sites.add(Setting::TypeGroup);
+        set("name", s->get_name(), Setting::TypeString, site);
+        set("url", s->get_url(), Setting::TypeString, site);
+        set("type", static_cast<int>(s->get_type()), Setting::TypeInt, site);
+    }
 }
 
 bool SettingsManager::get_geometry(int &x, int &y, int &w, int &h) const

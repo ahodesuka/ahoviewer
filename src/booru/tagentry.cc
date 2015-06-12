@@ -53,7 +53,7 @@ void TagEntry::on_text_changed()
     if (key[0] == '-')
         key = key.substr(1);
 
-    Gtk::TreeModel::Row row;
+    Gtk::TreeRow row;
     m_Model->clear();
 
     if (key.length() >= static_cast<size_t>(m_TagCompletion->get_minimum_key_length()))
@@ -104,7 +104,7 @@ void TagEntry::on_cursor_on_match(const std::string &tag)
     select_region(spos, -1);
 }
 
-bool TagEntry::on_match_selected(const Gtk::TreeModel::iterator &iter)
+bool TagEntry::on_match_selected(const Gtk::TreeIter &iter)
 {
     std::string tag((*iter)->get_value(m_Columns.tag_column));
     size_t pos = get_text().find_last_of(' ');

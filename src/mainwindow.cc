@@ -16,10 +16,11 @@ MainWindow::MainWindow(BaseObjectType *cobj, const Glib::RefPtr<Gtk::Builder> &b
     m_HPanedMinPos(0),
     m_HPanedLastPos(0)
 {
-    m_Builder->get_widget_derived("ThumbnailBar",   m_ThumbnailBar);
-    m_Builder->get_widget_derived("Booru::Browser", m_BooruBrowser);
-    m_Builder->get_widget_derived("ImageBox",       m_ImageBox);
-    m_Builder->get_widget_derived("StatusBar",      m_StatusBar);
+    m_Builder->get_widget_derived("ThumbnailBar",       m_ThumbnailBar);
+    m_Builder->get_widget_derived("Booru::Browser",     m_BooruBrowser);
+    m_Builder->get_widget_derived("ImageBox",           m_ImageBox);
+    m_Builder->get_widget_derived("StatusBar",          m_StatusBar);
+    m_Builder->get_widget_derived("PreferencesDialog",  m_PreferencesDialog);
 
     m_BooruBrowser->set_statusbar(m_StatusBar);
     m_ImageBox->set_statusbar(m_StatusBar);
@@ -51,6 +52,11 @@ MainWindow::MainWindow(BaseObjectType *cobj, const Glib::RefPtr<Gtk::Builder> &b
             { set_active_imagelist(page ? page->get_imagelist() : m_LocalImageList); });
     m_BooruBrowser->signal_realize().connect([ this ]()
             { m_HPaned->set_position(Settings.get_int("BooruWidth")); });
+
+    m_PreferencesDialog->signal_bg_color_set().connect(
+            sigc::mem_fun(m_ImageBox, &ImageBox::update_background_color));
+    m_PreferencesDialog->get_site_editor()->signal_edited().connect(
+            sigc::mem_fun(m_BooruBrowser, &Booru::Browser::update_combobox_model));
 
     // Setup drag and drop
     std::vector<Gtk::TargetEntry> dropTargets = { Gtk::TargetEntry("text/uri-list") };
@@ -85,7 +91,7 @@ MainWindow::MainWindow(BaseObjectType *cobj, const Glib::RefPtr<Gtk::Builder> &b
 
 MainWindow::~MainWindow()
 {
-
+    delete m_PreferencesDialog;
 }
 
 void MainWindow::open_file(const std::string &path, const int index)
@@ -288,7 +294,7 @@ void MainWindow::create_actions()
     m_ActionGroup->add(Gtk::Action::create("Preferences", Gtk::Stock::PREFERENCES,
                 _("_Preferences"), _("Open the preferences dialog")),
             Gtk::AccelKey(Settings.get_keybinding("File", "Preferences")),
-            sigc::mem_fun(*this, &MainWindow::placeholder));
+            sigc::mem_fun(m_PreferencesDialog, &PreferencesDialog::show_all));
     m_ActionGroup->add(Gtk::Action::create("Close", Gtk::Stock::CLOSE,
                 _("_Close"), _("Close local image list or booru tab")),
             Gtk::AccelKey(Settings.get_keybinding("File", "Close")),
