@@ -188,10 +188,11 @@ void SiteEditor::add_edit_site(const Gtk::TreeIter &iter)
 
 void SiteEditor::update_edited_site_icon()
 {
-    m_SiteCheckSite->signal_icon_downloaded().connect([ this ]()
+    m_IconDownloadedConn = m_SiteCheckSite->signal_icon_downloaded().connect([ this ]()
     {
         m_SiteCheckIter->set_value(m_Columns.icon, m_SiteCheckSite->get_icon_pixbuf());
         m_SiteCheckIter->set_value(m_Columns.loading, false);
+        m_IconDownloadedConn.disconnect();
     });
 
     m_SiteCheckSite->get_icon_pixbuf(true);
