@@ -83,7 +83,7 @@
             <child>
               <object class="GtkLabel" id="ResolutionLabel">
                 <property name="can_focus">False</property>
-                <property name="width_chars">20</property>
+                <property name="width_chars">24</property>
               </object>
               <packing>
                 <property name="expand">False</property>
