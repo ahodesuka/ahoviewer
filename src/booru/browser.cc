@@ -53,6 +53,16 @@ Browser::~Browser()
 
 }
 
+std::vector<Page*> Browser::get_pages() const
+{
+    std::vector<Page*> pages;
+
+    for (size_t i = 0, n = m_Notebook->get_n_pages(); i < n; ++i)
+        pages.push_back(static_cast<Page*>(m_Notebook->get_nth_page(i)));
+
+    return pages;
+}
+
 void Browser::update_combobox_model()
 {
     m_ComboChangedConn.disconnect();

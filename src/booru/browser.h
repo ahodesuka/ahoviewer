@@ -23,6 +23,7 @@ namespace AhoViewer
             Browser(BaseObjectType *cobj, const Glib::RefPtr<Gtk::Builder> &bldr);
             virtual ~Browser();
 
+            std::vector<Page*> get_pages() const;
             Page* get_active_page() const
                 { return static_cast<Page*>(m_Notebook->get_nth_page(m_Notebook->get_current_page())); }
             int get_selected_booru() const { return m_ComboBox->get_active_row_number(); }

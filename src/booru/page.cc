@@ -16,6 +16,7 @@ Page::Page()
     m_TabIcon(Gtk::manage(new Gtk::Image(Gtk::Stock::NEW, Gtk::ICON_SIZE_MENU))),
     m_TabLabel(Gtk::manage(new Gtk::Label(_("New Tab")))),
     m_TabButton(Gtk::manage(new Gtk::Button())),
+    m_ImageList(std::make_shared<ImageList>(this)),
     m_Page(0),
     m_NumPosts(0),
     m_LastPage(false),
@@ -63,7 +64,6 @@ Page::Page()
     gtk_cell_layout_add_attribute(GTK_CELL_LAYOUT(m_IconView->gobj()),
             (GtkCellRenderer*)cell->gobj(), "pixbuf", 0);
 
-    m_ImageList = std::make_shared<ImageList>(this);
     m_SignalPostsDownloaded.connect(sigc::mem_fun(*this, &Page::on_posts_downloaded));
     m_SignalSaveProgressDisp.connect([ this ]()
     {

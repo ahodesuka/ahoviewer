@@ -260,6 +260,12 @@ bool ImageList::can_go_previous() const
     return false;
 }
 
+void ImageList::on_cache_size_changed()
+{
+    if (!empty())
+        update_cache();
+}
+
 std::vector<std::string> ImageList::get_image_entries(const std::string &path, int recurseCount)
 {
     Glib::Dir dir(path);

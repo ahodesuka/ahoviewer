@@ -66,6 +66,13 @@ PreferencesDialog::PreferencesDialog(BaseObjectType *cobj, const Glib::RefPtr<Gt
         spinButton->set_value(Settings.get_int(s));
         spinButton->signal_value_changed().connect([ this, s, spinButton ]()
                 { Settings.set(s, spinButton->get_value_as_int()); });
+
+        if (s == "CacheSize")
+            spinButton->signal_value_changed().connect(
+                    sigc::mem_fun(m_SignalCacheSizeChanged, &sigc::signal<void>::emit));
+        else if (s == "SlideshowDelay")
+            spinButton->signal_value_changed().connect(
+                    sigc::mem_fun(m_SignalSlideshowDelayChanged, &sigc::signal<void>::emit));
     }
     // }}}
 

@@ -55,6 +55,10 @@ MainWindow::MainWindow(BaseObjectType *cobj, const Glib::RefPtr<Gtk::Builder> &b
 
     m_PreferencesDialog->signal_bg_color_set().connect(
             sigc::mem_fun(m_ImageBox, &ImageBox::update_background_color));
+    m_PreferencesDialog->signal_cache_size_changed().connect(
+            sigc::mem_fun(*this, &MainWindow::on_cache_size_changed));
+    m_PreferencesDialog->signal_slideshow_delay_changed().connect(
+            sigc::mem_fun(m_ImageBox, &ImageBox::reset_slideshow));
     m_PreferencesDialog->get_site_editor()->signal_edited().connect(
             sigc::mem_fun(m_BooruBrowser, &Booru::Browser::update_combobox_model));
 
@@ -606,6 +610,13 @@ void MainWindow::on_imagelist_changed(const std::shared_ptr<Image> &image)
     m_ImageBox->set_image(image);
     update_title();
     set_sensitives();
+}
+
+void MainWindow::on_cache_size_changed()
+{
+    m_LocalImageList->on_cache_size_changed();
+    for (const Booru::Page *p : m_BooruBrowser->get_pages())
+        p->get_imagelist()->on_cache_size_changed();
 }
 
 void MainWindow::on_connect_proxy(const Glib::RefPtr<Gtk::Action> &action, Gtk::Widget *w)

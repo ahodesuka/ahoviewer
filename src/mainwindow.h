@@ -41,6 +41,7 @@ namespace AhoViewer
         bool is_fullscreen() const;
 
         void on_imagelist_changed(const std::shared_ptr<Image> &image);
+        void on_cache_size_changed();
 
         void on_connect_proxy(const Glib::RefPtr<Gtk::Action> &action, Gtk::Widget *w);
 

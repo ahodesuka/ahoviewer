@@ -95,6 +95,8 @@ namespace AhoViewer
         bool empty() const { return m_Images.empty(); }
         bool from_archive() const { return !!m_Archive; }
 
+        void on_cache_size_changed();
+
         SignalChangedType signal_changed() const { return m_SignalChanged; }
         SignalArchiveErrorType signal_archive_error() const { return m_SignalArchiveError; }
         SignalClearedType signal_cleared() const { return m_SignalCleared; }

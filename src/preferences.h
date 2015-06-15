@@ -10,13 +10,13 @@ namespace AhoViewer
     class PreferencesDialog : public Gtk::Dialog
     {
     public:
-        typedef sigc::signal<void> SignalBGColorSetType;
-
         PreferencesDialog(BaseObjectType *cobj, const Glib::RefPtr<Gtk::Builder> &bldr);
         virtual ~PreferencesDialog();
 
         SiteEditor* get_site_editor() const { return m_SiteEditor; }
-        SignalBGColorSetType signal_bg_color_set() const { return m_SignalBGColorSet; }
+        sigc::signal<void> signal_bg_color_set() const { return m_SignalBGColorSet; }
+        sigc::signal<void> signal_cache_size_changed() const { return m_SignalCacheSizeChanged; }
+        sigc::signal<void> signal_slideshow_delay_changed() const { return m_SignalSlideshowDelayChanged; }
     private:
         struct BooruMaxRatingModelColumns : public Gtk::TreeModelColumnRecord
         {
@@ -26,7 +26,9 @@ namespace AhoViewer
 
         SiteEditor *m_SiteEditor;
 
-        SignalBGColorSetType m_SignalBGColorSet;
+        sigc::signal<void> m_SignalBGColorSet,
+                           m_SignalCacheSizeChanged,
+                           m_SignalSlideshowDelayChanged;
     };
 }
 
