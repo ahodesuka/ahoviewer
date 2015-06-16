@@ -158,11 +158,6 @@ ImageBox::ImageBox(BaseObjectType *cobj, const Glib::RefPtr<Gtk::Builder> &bldr)
 #endif // HAVE_GSTREAMER
 }
 
-ImageBox::~ImageBox()
-{
-
-}
-
 void ImageBox::queue_draw_image(const bool scroll)
 {
     if (!get_realized() || !m_Image || (m_RedrawQueued && !(scroll || m_FirstDraw)))

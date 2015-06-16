@@ -47,7 +47,7 @@ namespace AhoViewer
                 Gtk::TreeModelColumn<Glib::RefPtr<Gdk::Pixbuf>> pixbuf_column;
             };
 
-            virtual ~Widget() { };
+            virtual ~Widget() = default;
 
             void clear() { m_ListStore->clear(); }
             void reserve(const size_t s)

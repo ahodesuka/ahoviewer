@@ -17,11 +17,6 @@ StatusBar::StatusBar(BaseObjectType *cobj, const Glib::RefPtr<Gtk::Builder> &bld
     bldr->get_widget("ProgressBar",      m_ProgressBar);
 }
 
-StatusBar::~StatusBar()
-{
-
-}
-
 void StatusBar::set_page_info(const size_t page, const size_t total)
 {
     m_PageInfo->set_text(std::to_string(page) + " / " + std::to_string(total));

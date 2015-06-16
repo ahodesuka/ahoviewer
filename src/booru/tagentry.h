@@ -18,7 +18,7 @@ namespace AhoViewer
             };
         public:
             TagEntry(BaseObjectType *cobj, const Glib::RefPtr<Gtk::Builder> &bldr);
-            ~TagEntry();
+            ~TagEntry() = default;
 
             void set_tags(const std::set<std::string> &tags);
         protected:

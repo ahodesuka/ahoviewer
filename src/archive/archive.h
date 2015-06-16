@@ -28,7 +28,7 @@ namespace AhoViewer
         class Extractor
         {
         public:
-            virtual ~Extractor() { }
+            virtual ~Extractor() = default;
             virtual std::string extract(const std::string&) const = 0;
 
             SignalProgressType signal_progress() const

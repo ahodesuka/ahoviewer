@@ -12,7 +12,7 @@ namespace AhoViewer
     {
     public:
         ThumbnailBar(BaseObjectType*, const Glib::RefPtr<Gtk::Builder>&);
-        virtual ~ThumbnailBar();
+        virtual ~ThumbnailBar() = default;
 
         virtual void on_thumbnails_loaded(const size_t index) { set_selected(index); }
         virtual void set_selected(const size_t index);

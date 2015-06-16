@@ -48,11 +48,6 @@ Browser::Browser(BaseObjectType *cobj, const Glib::RefPtr<Gtk::Builder> &bldr)
     m_Notebook->signal_page_removed().connect(sigc::mem_fun(*this, &Browser::on_page_removed));
 }
 
-Browser::~Browser()
-{
-
-}
-
 std::vector<Page*> Browser::get_pages() const
 {
     std::vector<Page*> pages;

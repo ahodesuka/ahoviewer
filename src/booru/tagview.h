@@ -11,7 +11,7 @@ namespace AhoViewer
         {
         public:
             TagView(BaseObjectType *cobj, const Glib::RefPtr<Gtk::Builder>&);
-            ~TagView();
+            ~TagView() = default;
 
             void clear() { m_ListStore->clear(); }
 

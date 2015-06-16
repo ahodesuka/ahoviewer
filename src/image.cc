@@ -46,11 +46,6 @@ Image::Image(const std::string &path, const std::string &thumb_path)
 
 }
 
-Image::~Image()
-{
-
-}
-
 std::string Image::get_filename() const
 {
     return Glib::build_filename(

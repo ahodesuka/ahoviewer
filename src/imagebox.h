@@ -27,7 +27,7 @@ namespace AhoViewer
         };
 
         ImageBox(BaseObjectType*, const Glib::RefPtr<Gtk::Builder>&);
-        virtual ~ImageBox();
+        virtual ~ImageBox() = default;
 
         void queue_draw_image(const bool scroll = false);
         void set_image(const std::shared_ptr<Image> &image);

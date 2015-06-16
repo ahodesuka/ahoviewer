@@ -21,11 +21,6 @@ TagEntry::TagEntry(BaseObjectType *cobj, const Glib::RefPtr<Gtk::Builder> &bldr)
     m_ChangedConn = signal_changed().connect(sigc::mem_fun(*this, &TagEntry::on_text_changed));
 }
 
-TagEntry::~TagEntry()
-{
-
-}
-
 void TagEntry::set_tags(const std::set<std::string> &tags)
 {
     m_Tags = &tags;

@@ -16,7 +16,7 @@ namespace AhoViewer
     {
     public:
         Image(const std::string &path, const std::string &thumb_path = "");
-        virtual ~Image();
+        virtual ~Image() = default;
 
         static bool is_valid(const std::string&);
         static const Glib::RefPtr<Gdk::Pixbuf>& get_missing_pixbuf();

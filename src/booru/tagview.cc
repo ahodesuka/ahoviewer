@@ -15,11 +15,6 @@ TagView::TagView(BaseObjectType *cobj, const Glib::RefPtr<Gtk::Builder>&)
     get_column(0)->set_cell_data_func(*cell, sigc::mem_fun(*this, &TagView::on_cell_data));
 }
 
-TagView::~TagView()
-{
-
-}
-
 bool TagView::on_button_press_event(GdkEventButton *e)
 {
     if (e->button == 1)

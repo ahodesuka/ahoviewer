@@ -21,7 +21,7 @@ namespace AhoViewer
             typedef sigc::signal<void, Page*> SignalPageChangedType;
 
             Browser(BaseObjectType *cobj, const Glib::RefPtr<Gtk::Builder> &bldr);
-            virtual ~Browser();
+            virtual ~Browser() = default;
 
             std::vector<Page*> get_pages() const;
             Page* get_active_page() const

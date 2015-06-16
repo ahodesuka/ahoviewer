@@ -11,7 +11,7 @@ namespace AhoViewer
     {
     public:
         PreferencesDialog(BaseObjectType *cobj, const Glib::RefPtr<Gtk::Builder> &bldr);
-        virtual ~PreferencesDialog();
+        virtual ~PreferencesDialog() = default;
 
         SiteEditor* get_site_editor() const { return m_SiteEditor; }
         sigc::signal<void> signal_bg_color_set() const { return m_SignalBGColorSet; }

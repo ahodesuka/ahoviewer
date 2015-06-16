@@ -46,7 +46,7 @@ namespace AhoViewer
                         });
                 m_SiteEditor->get_toplevel()->signal_hide().connect([ this ]() { m_SpinnerConn.disconnect(); });
             }
-            virtual ~CellRendererIcon() { }
+            virtual ~CellRendererIcon() = default;
 
             Glib::PropertyProxy<bool> property_loading()
                 { return m_LoadingProperty.get_proxy(); }

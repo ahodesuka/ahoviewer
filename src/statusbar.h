@@ -17,7 +17,7 @@ namespace AhoViewer
             TOOLTIP
         };
         StatusBar(BaseObjectType*, const Glib::RefPtr<Gtk::Builder>&);
-        virtual ~StatusBar();
+        virtual ~StatusBar() = default;
 
         void set_page_info(const size_t, const size_t);
         void set_resolution(const int, const int, const double, const ImageBox::ZoomMode);

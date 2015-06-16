@@ -99,8 +99,3 @@ PreferencesDialog::PreferencesDialog(BaseObjectType *cobj, const Glib::RefPtr<Gt
 
     bldr->get_widget_derived("BooruSiteEditor", m_SiteEditor);
 }
-
-PreferencesDialog::~PreferencesDialog()
-{
-
-}

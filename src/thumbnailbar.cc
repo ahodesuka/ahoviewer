@@ -21,11 +21,6 @@ ThumbnailBar::ThumbnailBar(BaseObjectType *cobj, const Glib::RefPtr<Gtk::Builder
     m_TreeView->signal_cursor_changed().connect(sigc::mem_fun(*this, &ThumbnailBar::on_cursor_changed));
 }
 
-ThumbnailBar::~ThumbnailBar()
-{
-
-}
-
 void ThumbnailBar::set_selected(const size_t index)
 {
     if (get_window())
