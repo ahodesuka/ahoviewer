@@ -158,8 +158,7 @@ void MainWindow::on_realize()
 {
     Gtk::Window::on_realize();
 
-    hide_widgets();
-    show_widgets();
+    update_widgets_visibility();
 
     set_sensitives();
 }
@@ -493,31 +492,17 @@ void MainWindow::create_actions()
     table->attach(*m_MenuBar, 0, 2, 0, 1, Gtk::EXPAND | Gtk::FILL, Gtk::SHRINK | Gtk::FILL);
 }
 
-void MainWindow::hide_widgets()
+void MainWindow::update_widgets_visibility()
 {
-    m_MenuBar->hide();
-    m_StatusBar->hide();
-    m_ThumbnailBar->hide();
-    m_BooruBrowser->hide();
+    bool hideAll = Settings.get_bool("HideAll");
 
-    m_ImageBox->queue_draw_image();
-}
+    m_MenuBar->set_visible(!hideAll && Settings.get_bool("MenuBarVisible"));
+    m_StatusBar->set_visible(!hideAll && Settings.get_bool("StatusBarVisible"));
+    m_BooruBrowser->set_visible(!hideAll && Settings.get_bool("BooruBrowserVisible"));
+    m_ThumbnailBar->set_visible(!hideAll && Settings.get_bool("ThumbnailBarVisible") && !m_BooruBrowser->get_visible());
 
-void MainWindow::show_widgets()
-{
-    if (Settings.get_bool("HideAll"))
-        return;
-
-    if (Settings.get_bool("MenuBarVisible"))
-        m_MenuBar->show();
-
-    if (Settings.get_bool("StatusBarVisible"))
-        m_StatusBar->show();
-
-    if (Settings.get_bool("BooruBrowserVisible"))
-        m_BooruBrowser->show();
-    else if (Settings.get_bool("ThumbnailBarVisible"))
-        m_ThumbnailBar->show();
+    while (Gtk::Main::events_pending())
+        Gtk::Main::iteration();
 
     m_ImageBox->queue_draw_image();
 }
@@ -788,12 +773,7 @@ void MainWindow::on_toggle_menu_bar()
 
     Settings.set("MenuBarVisible", a->get_active());
 
-    if (a->get_active())
-        m_MenuBar->show();
-    else
-        m_MenuBar->hide();
-
-    m_ImageBox->queue_draw_image();
+    update_widgets_visibility();
 }
 
 void MainWindow::on_toggle_status_bar()
@@ -803,12 +783,7 @@ void MainWindow::on_toggle_status_bar()
 
     Settings.set("StatusBarVisible", a->get_active());
 
-    if (a->get_active())
-        m_StatusBar->show();
-    else
-        m_StatusBar->hide();
-
-    m_ImageBox->queue_draw_image();
+    update_widgets_visibility();
 }
 
 void MainWindow::on_toggle_booru_browser()
@@ -822,7 +797,6 @@ void MainWindow::on_toggle_booru_browser()
 
     if (bbAction->get_active())
     {
-        m_BooruBrowser->show();
         m_BooruBrowser->get_tag_entry()->grab_focus();
 
         if (m_BooruBrowser->get_active_page() &&
@@ -832,15 +806,12 @@ void MainWindow::on_toggle_booru_browser()
         if (tbAction->get_active())
         {
             tbAction->set_active(false);
-            return; // let the above handle the draw request
+            return;
         }
-    }
-    else
-    {
-        m_BooruBrowser->hide();
+
     }
 
-    m_ImageBox->queue_draw_image();
+    update_widgets_visibility();
 }
 
 void MainWindow::on_toggle_thumbnail_bar()
@@ -854,23 +825,17 @@ void MainWindow::on_toggle_thumbnail_bar()
 
     if (tbAction->get_active())
     {
-        m_ThumbnailBar->show();
-
         if (m_ActiveImageList != m_LocalImageList)
             set_active_imagelist(m_LocalImageList);
 
         if (bbAction->get_active())
         {
             bbAction->set_active(false);
-            return; // let the above handle the draw request
+            return;
         }
     }
-    else
-    {
-        m_ThumbnailBar->hide();
-    }
 
-    m_ImageBox->queue_draw_image();
+    update_widgets_visibility();
 }
 
 void MainWindow::on_toggle_hide_all()
@@ -879,13 +844,9 @@ void MainWindow::on_toggle_hide_all()
         Glib::RefPtr<Gtk::ToggleAction>::cast_static(m_ActionGroup->get_action("ToggleHideAll"));
 
     Settings.set("HideAll", a->get_active());
-
-    if (a->get_active())
-        hide_widgets();
-    else
-        show_widgets();
-
     set_sensitives();
+
+    update_widgets_visibility();
 }
 
 void MainWindow::on_next_image()

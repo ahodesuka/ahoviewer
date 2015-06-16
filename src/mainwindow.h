@@ -31,8 +31,7 @@ namespace AhoViewer
         void set_active_imagelist(std::shared_ptr<ImageList> imageList);
         void save_window_geometry();
         void create_actions();
-        void hide_widgets();
-        void show_widgets();
+        void update_widgets_visibility();
         void set_sensitives();
         void set_booru_sensitives();
         void update_title();

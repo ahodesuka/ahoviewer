@@ -429,7 +429,10 @@ void ImageBox::set_scrollbar_dimensions(const Glib::RefPtr<Gtk::Style>&)
 void ImageBox::draw_image(bool scroll)
 {
     if ((!m_Image->is_webm() && !m_Image->get_pixbuf()) || (m_Image->is_webm() && m_Image->is_loading()))
+    {
+        m_RedrawQueued = false;
         return;
+    }
 
     m_WindowWidth  = get_allocation().get_width();
     m_WindowHeight = get_allocation().get_height();
@@ -546,7 +549,7 @@ void ImageBox::draw_image(bool scroll)
         if (Settings.get_bool("MangaMode"))
         {
             while (Gtk::Main::events_pending())
-                Gtk::Main::iteration(false);
+                Gtk::Main::iteration();
 
             // Start at the right side of the image
             m_HAdjust->set_value(m_HAdjust->get_upper() - m_HAdjust->get_page_size());
@@ -557,12 +560,12 @@ void ImageBox::draw_image(bool scroll)
         }
     }
 
+    get_window()->thaw_updates();
+    m_RedrawQueued = false;
+
     double scale = m_ZoomMode == ZoomMode::MANUAL ? m_ZoomPercent :
                         static_cast<double>(sWidth) / origWidth * 100;
     m_StatusBar->set_resolution(origWidth, origHeight, scale, m_ZoomMode);
-
-    get_window()->thaw_updates();
-    m_RedrawQueued = false;
 
 #ifdef HAVE_GSTREAMER
     if (start_playing)
