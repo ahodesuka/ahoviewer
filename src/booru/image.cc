@@ -45,7 +45,16 @@ const Glib::RefPtr<Gdk::Pixbuf>& Image::get_thumbnail()
         if (m_ThumbnailCurler.perform())
         {
             m_ThumbnailCurler.save_file(m_ThumbnailPath);
-            m_ThumbnailPixbuf = create_pixbuf_at_size(m_ThumbnailPath, 128, 128);
+
+            try
+            {
+                m_ThumbnailPixbuf = create_pixbuf_at_size(m_ThumbnailPath, 128, 128);
+            }
+            catch (const Gdk::PixbufError &ex)
+            {
+                std::cerr << ex.what() << std::endl;
+                m_ThumbnailPixbuf = get_missing_pixbuf();
+            }
         }
         else
         {
@@ -139,7 +148,7 @@ void Image::on_write(const unsigned char *d, size_t l)
     }
     catch (const Gdk::PixbufError &ex)
     {
-        std::cout << ex.what() << std::endl;
+        std::cerr << ex.what() << std::endl;
         cancel_download();
     }
 }
