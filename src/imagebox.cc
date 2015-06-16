@@ -101,16 +101,18 @@ gboolean ImageBox::draw_cb(void*, GLuint texture, GLuint w, GLuint h, void *user
 #endif // HAVE_GSTREAMER
 
 const double ImageBox::SmoothScrollStep = 1000.0 / 60.0;
+#include <iostream>
 
 ImageBox::ImageBox(BaseObjectType *cobj, const Glib::RefPtr<Gtk::Builder> &bldr)
   : Gtk::EventBox(cobj),
     m_LeftPtrCursor(Gdk::LEFT_PTR),
     m_FleurCursor(Gdk::FLEUR),
+    m_ScrollbarWidth(0),
+    m_ScrollbarHeight(0),
     m_WindowWidth(0),
     m_WindowHeight(0),
     m_LayoutWidth(0),
     m_LayoutHeight(0),
-    m_Scroll(false),
     m_RedrawQueued(false),
     m_HideScrollbars(false),
     m_ZoomMode(Settings.get_zoom_mode()),
@@ -124,6 +126,9 @@ ImageBox::ImageBox(BaseObjectType *cobj, const Glib::RefPtr<Gtk::Builder> &bldr)
     m_HAdjust = Glib::RefPtr<Gtk::Adjustment>::cast_static(bldr->get_object("ImageBox::HAdjust"));
     m_VAdjust = Glib::RefPtr<Gtk::Adjustment>::cast_static(bldr->get_object("ImageBox::VAdjust"));
     m_UIManager = Glib::RefPtr<Gtk::UIManager>::cast_static(bldr->get_object("UIManager"));
+
+    m_VScroll->signal_style_changed().connect(
+            sigc::mem_fun(*this, &ImageBox::set_scrollbar_dimensions));
 
 #ifdef HAVE_GSTREAMER
     m_Playbin   = gst_element_factory_make("playbin", "playbin"),
@@ -152,7 +157,6 @@ ImageBox::ImageBox(BaseObjectType *cobj, const Glib::RefPtr<Gtk::Builder> &bldr)
         gst_element_set_state(m_Playbin, GST_STATE_READY);
      });
 #endif // HAVE_GSTREAMER
-
 }
 
 ImageBox::~ImageBox()
@@ -162,13 +166,14 @@ ImageBox::~ImageBox()
 
 void ImageBox::queue_draw_image(const bool scroll)
 {
-    if (!get_realized() || !m_Image || m_RedrawQueued)
+    if (!get_realized() || !m_Image || (m_RedrawQueued && !(scroll || m_FirstDraw)))
         return;
 
     m_DrawConn.disconnect();
     m_RedrawQueued = true;
     m_DrawConn = Glib::signal_idle().connect(
-            sigc::bind_return(sigc::bind(sigc::mem_fun(*this, &ImageBox::draw_image), scroll), false));
+            sigc::bind_return(sigc::bind(sigc::mem_fun(*this, &ImageBox::draw_image), scroll), false),
+            Glib::PRIORITY_HIGH_IDLE);
 }
 
 void ImageBox::set_image(const std::shared_ptr<Image> &image)
@@ -182,10 +187,10 @@ void ImageBox::set_image(const std::shared_ptr<Image> &image)
 #endif // HAVE_GSTREAMER
 
     m_Image = image;
-    m_Scroll = true;
-    m_ImageConn = m_Image->signal_pixbuf_changed().connect([ this ]() { queue_draw_image(m_Scroll); });
-
+    m_FirstDraw = true;
     queue_draw_image(true);
+    m_ImageConn = m_Image->signal_pixbuf_changed().connect(
+            sigc::bind(sigc::mem_fun(*this, &ImageBox::queue_draw_image), false));
 }
 
 void ImageBox::clear_image()
@@ -406,23 +411,36 @@ bool ImageBox::on_scroll_event(GdkEventScroll *e)
     return Gtk::EventBox::on_scroll_event(e);
 }
 
-void ImageBox::draw_image(const bool _scroll)
+void ImageBox::set_scrollbar_dimensions(const Glib::RefPtr<Gtk::Style>&)
 {
-    m_RedrawQueued = false;
-    std::shared_ptr<Image> image = m_Image;
+    bool h = m_HScroll->get_visible(),
+         v = m_VScroll->get_visible();
 
     get_window()->freeze_updates();
     m_HScroll->show();
     m_VScroll->show();
 
-    // update to get the layout dimensions when the scrollbars are shown
     while (Gtk::Main::events_pending())
         Gtk::Main::iteration();
 
+    m_ScrollbarHeight = m_HScroll->get_allocation().get_height();
+    m_ScrollbarWidth  = m_VScroll->get_allocation().get_width();
+
+    if (!h) m_HScroll->hide();
+    if (!v) m_VScroll->hide();
+
+    get_window()->thaw_updates();
+}
+
+void ImageBox::draw_image(bool scroll)
+{
+    if ((!m_Image->is_webm() && !m_Image->get_pixbuf()) || (m_Image->is_webm() && m_Image->is_loading()))
+        return;
+
     m_WindowWidth  = get_allocation().get_width();
     m_WindowHeight = get_allocation().get_height();
-    m_LayoutWidth  = m_Layout->get_allocation().get_width();
-    m_LayoutHeight = m_Layout->get_allocation().get_height();
+    m_LayoutWidth  = m_WindowWidth - m_ScrollbarWidth;
+    m_LayoutHeight = m_WindowHeight - m_ScrollbarHeight;
 
     int w       = m_LayoutWidth,
         h       = m_LayoutHeight,
@@ -432,27 +450,20 @@ void ImageBox::draw_image(const bool _scroll)
 
     m_HideScrollbars = !Settings.get_bool("ScrollbarsVisible") || Settings.get_bool("HideAll");
 
-    // m_Scroll will be true if this is the first time the image is being drawn.
-    bool scroll = _scroll || m_Scroll;
-    m_Scroll = false;
-
-    // Make sure the image wasn't changed while handling events.
-    if (image != m_Image || (!image->is_webm() && !image->get_pixbuf()) ||
-        (image->is_webm() && image->is_loading()))
+    if (m_FirstDraw)
     {
-        m_HScroll->hide();
-        m_VScroll->hide();
-        get_window()->thaw_updates();
-        return;
+        scroll = true;
+        // if the image is still loading we want to draw all requests
+        m_FirstDraw = m_Image->is_loading();
     }
 
 #ifdef HAVE_GSTREAMER
     bool start_playing = false;
-    if (image->is_webm())
+    if (m_Image->is_webm())
     {
         if (!m_Playing)
         {
-            g_object_set(m_Playbin, "uri", Glib::filename_to_uri(image->get_path()).c_str(), NULL);
+            g_object_set(m_Playbin, "uri", Glib::filename_to_uri(m_Image->get_path()).c_str(), NULL);
             gst_element_set_state(m_Playbin, GST_STATE_PAUSED);
             gst_element_get_state(m_Playbin, NULL, NULL, GST_CLOCK_TIME_NONE);
             start_playing = m_Playing = true;
@@ -476,7 +487,7 @@ void ImageBox::draw_image(const bool _scroll)
     else
     {
 #endif // HAVE_GSTREAMER
-        Glib::RefPtr<Gdk::PixbufAnimation> pixbuf_anim = image->get_pixbuf();
+        Glib::RefPtr<Gdk::PixbufAnimation> pixbuf_anim = m_Image->get_pixbuf();
 
         if (m_PixbufAnim != pixbuf_anim)
         {
@@ -511,6 +522,10 @@ void ImageBox::draw_image(const bool _scroll)
 #ifdef HAVE_GSTREAMER
     }
 #endif // HAVE_GSTREAMER
+
+    get_window()->freeze_updates();
+    m_HScroll->show();
+    m_VScroll->show();
 
     if (m_HideScrollbars || sWidth <= m_LayoutWidth || (sWidth <= m_WindowWidth && sHeight <= m_WindowHeight))
     {
@@ -553,6 +568,7 @@ void ImageBox::draw_image(const bool _scroll)
     m_StatusBar->set_resolution(origWidth, origHeight, scale, m_ZoomMode);
 
     get_window()->thaw_updates();
+    m_RedrawQueued = false;
 
 #ifdef HAVE_GSTREAMER
     if (start_playing)

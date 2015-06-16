@@ -61,7 +61,8 @@ namespace AhoViewer
         virtual bool on_motion_notify_event(GdkEventMotion*);
         virtual bool on_scroll_event(GdkEventScroll*);
     private:
-        void draw_image(const bool _scroll);
+        void set_scrollbar_dimensions(const Glib::RefPtr<Gtk::Style>&);
+        void draw_image(bool scroll = false);
         bool get_scaled_size(int origWidth, int origHeight, int &w, int &h);
         bool update_animation();
         void scroll(const int x, const int y, const bool panning = false, const bool fromSlideshow = false);
@@ -102,11 +103,12 @@ namespace AhoViewer
         Glib::RefPtr<Gdk::PixbufAnimationIter> m_PixbufAnimIter;
         sigc::connection m_DrawConn, m_ImageConn, m_ScrollConn, m_SlideshowConn, m_AnimConn;
 
+        int m_ScrollbarWidth, m_ScrollbarHeight;
         std::atomic<int> m_WindowWidth,
                          m_WindowHeight,
                          m_LayoutWidth,
                          m_LayoutHeight;
-        bool m_Scroll, m_RedrawQueued, m_HideScrollbars;
+        bool m_FirstDraw, m_RedrawQueued, m_HideScrollbars;
         ZoomMode m_ZoomMode;
         uint32_t m_ZoomPercent;
         double m_PressX, m_PreviousX,
