@@ -79,8 +79,7 @@ bool ImageList::load(const std::string path, std::string &error, int index)
                 return false;
             }
 
-            m_Archive = archive;
-            dirPath = m_Archive->get_extracted_path();
+            dirPath = archive->get_extracted_path();
         }
         else
         {
@@ -94,20 +93,23 @@ bool ImageList::load(const std::string path, std::string &error, int index)
         return false;
     }
 
-    // Reset when going from archive to non archive.
-    if (!archive)
-        m_Archive.reset();
-    else
-        m_ArchiveEntries = get_archive_entries();
-
     std::vector<std::string> entries = get_image_entries(dirPath);
 
     // No valid images in this directory
     if (entries.empty())
     {
-        m_Archive.reset();
         error = "No valid image files found in '" + dirPath + "'.";
         return false;
+    }
+
+    if (!archive)
+    {
+        m_Archive = nullptr;
+    }
+    else
+    {
+        m_Archive = archive;
+        m_ArchiveEntries = get_archive_entries();
     }
 
     m_SignalLoadSuccess();
