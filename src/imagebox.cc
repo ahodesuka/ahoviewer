@@ -101,7 +101,6 @@ gboolean ImageBox::draw_cb(void*, GLuint texture, GLuint w, GLuint h, void *user
 #endif // HAVE_GSTREAMER
 
 const double ImageBox::SmoothScrollStep = 1000.0 / 60.0;
-#include <iostream>
 
 ImageBox::ImageBox(BaseObjectType *cobj, const Glib::RefPtr<Gtk::Builder> &bldr)
   : Gtk::EventBox(cobj),
