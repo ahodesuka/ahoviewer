@@ -55,8 +55,7 @@ void ImageList::clear()
  **/
 bool ImageList::load(const std::string path, std::string &error, int index)
 {
-    std::shared_ptr<Archive> archive;
-    const Archive::Extractor *extractor;
+    std::shared_ptr<Archive> archive = nullptr;
     std::string dirPath;
 
     if (Glib::file_test(path, Glib::FILE_TEST_EXISTS))
@@ -69,16 +68,8 @@ bool ImageList::load(const std::string path, std::string &error, int index)
         {
             dirPath = Glib::path_get_dirname(path);
         }
-        else if ((extractor = Archive::get_extractor(path)))
+        else if ((archive = Archive::create(path)))
         {
-            archive = std::make_shared<Archive>(path, extractor);
-
-            if (archive->get_extracted_path().empty())
-            {
-                error = "Failed to extract '" + path + "'";
-                return false;
-            }
-
             dirPath = archive->get_extracted_path();
         }
         else
@@ -93,7 +84,15 @@ bool ImageList::load(const std::string path, std::string &error, int index)
         return false;
     }
 
-    std::vector<std::string> entries = get_image_entries(dirPath);
+    std::vector<std::string> entries = get_image_entries(dirPath, !!archive), subEntries;
+
+    if (entries.empty() && archive && !(subEntries = get_archive_entries(dirPath, true)).empty())
+    {
+        for (const std::string &s : subEntries)
+            Archive::create(s, archive);
+
+        entries = get_image_entries(dirPath, true);
+    }
 
     // No valid images in this directory
     if (entries.empty())
@@ -109,7 +108,7 @@ bool ImageList::load(const std::string path, std::string &error, int index)
     else
     {
         m_Archive = archive;
-        m_ArchiveEntries = get_archive_entries();
+        m_ArchiveEntries = get_archive_entries(Glib::path_get_dirname(m_Archive->get_path()));
     }
 
     m_SignalLoadSuccess();
@@ -268,26 +267,30 @@ void ImageList::on_cache_size_changed()
         update_cache();
 }
 
-std::vector<std::string> ImageList::get_image_entries(const std::string &path, int recurseCount)
+std::vector<std::string> ImageList::get_image_entries(const std::string &path, const bool recursive)
 {
     Glib::Dir dir(path);
     std::vector<std::string> entries(dir.begin(), dir.end()), rEntries;
-
     std::vector<std::string>::iterator i = entries.begin();
+
     while (i != entries.end())
     {
         // Make path absolute
         *i = Glib::build_filename(path, *i);
 
         // Recurse if this is from an archive
-        if (m_Archive && Glib::file_test(*i, Glib::FILE_TEST_IS_DIR) && recurseCount < 10)
-            rEntries = get_image_entries(*i, ++recurseCount);
+        if (recursive && Glib::file_test(*i, Glib::FILE_TEST_IS_DIR))
+        {
+            std::vector<std::string> r = get_image_entries(*i, true);
+            if (r.size())
+                rEntries.insert(rEntries.end(), r.begin(), r.end());
+        }
 
         // Make sure it is a loadable image
-        if (!Image::is_valid(*i))
-            i = entries.erase(i);
-        else
+        if (Image::is_valid(*i))
             ++i;
+        else
+            i = entries.erase(i);
     }
 
     // combine the recured entries
@@ -297,22 +300,32 @@ std::vector<std::string> ImageList::get_image_entries(const std::string &path, i
     return entries;
 }
 
-std::vector<std::string> ImageList::get_archive_entries()
+std::vector<std::string> ImageList::get_archive_entries(const std::string &path, const bool recursive)
 {
-    const std::string path(Glib::path_get_dirname(m_Archive->get_path()));
-
     Glib::Dir dir(path);
-    std::vector<std::string> entries(dir.begin(), dir.end());
-
+    std::vector<std::string> entries(dir.begin(), dir.end()), rEntries;
     std::vector<std::string>::iterator i = entries.begin();
+
     while (i != entries.end())
     {
         *i = Glib::build_filename(path, *i);
+
+        if (recursive && Glib::file_test(*i, Glib::FILE_TEST_IS_DIR))
+        {
+            std::vector<std::string> r = get_archive_entries(*i, true);
+            if (r.size())
+                rEntries.insert(rEntries.end(), r.begin(), r.end());
+        }
+
         if (Archive::is_valid(*i))
             ++i;
         else
             i = entries.erase(i);
     }
+
+    if (rEntries.size())
+        entries.insert(entries.end(), rEntries.begin(), rEntries.end());
+
     std::sort(entries.begin(), entries.end(), NaturalSort());
 
     return entries;

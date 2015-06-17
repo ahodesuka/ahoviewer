@@ -10,7 +10,7 @@ namespace AhoViewer
     class Zip : public Archive::Extractor
     {
     public:
-        virtual std::string extract(const std::string&) const;
+        virtual std::string extract(const std::string&, const std::shared_ptr<Archive>&) const;
 
         static int const MagicSize = 4;
         static const char Magic[MagicSize];

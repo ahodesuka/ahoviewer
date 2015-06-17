@@ -11,7 +11,7 @@ namespace AhoViewer
     class Rar : public Archive::Extractor
     {
     public:
-        virtual std::string extract(const std::string&) const;
+        virtual std::string extract(const std::string&, const std::shared_ptr<Archive>&) const;
 
         static int const MagicSize = 6;
         static const char Magic[MagicSize];

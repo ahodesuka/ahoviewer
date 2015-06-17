@@ -102,8 +102,8 @@ namespace AhoViewer
         SignalClearedType signal_cleared() const { return m_SignalCleared; }
         SignalLoadSuccessType signal_load_success() const { return m_SignalLoadSuccess; }
     private:
-        std::vector<std::string> get_image_entries(const std::string &path, int recurseCount = 0);
-        std::vector<std::string> get_archive_entries();
+        std::vector<std::string> get_image_entries(const std::string &path, const bool recursive);
+        std::vector<std::string> get_archive_entries(const std::string &path, const bool recursive = false);
         void load_thumbnails();
 
         void on_thumbnail_loaded();

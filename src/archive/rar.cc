@@ -8,7 +8,7 @@ using namespace AhoViewer;
 
 const char Rar::Magic[Rar::MagicSize] = { 'R', 'a', 'r', '!', 0x1A, 0x07 };
 
-std::string Rar::extract(const std::string &path) const
+std::string Rar::extract(const std::string &path, const std::shared_ptr<Archive> &parent) const
 {
     std::string extractedPath;
     size_t nExtracted = 0,
@@ -37,7 +37,10 @@ std::string Rar::extract(const std::string &path) const
 
         if (rar)
         {
-            extractedPath = TempDir::get_instance().make_dir(Glib::path_get_basename(path));
+            extractedPath = TempDir::get_instance().make_dir(
+                    parent ? Glib::build_filename(Glib::path_get_basename(parent->get_extracted_path()),
+                                                  Glib::path_get_basename(path)) :
+                             Glib::path_get_basename(path));
 
             if (!extractedPath.empty())
             {
@@ -49,6 +52,9 @@ std::string Rar::extract(const std::string &path) const
             }
 
             RARCloseArchive(rar);
+
+            if (parent)
+                g_unlink(path.c_str());
         }
     }
 

@@ -12,7 +12,7 @@ using namespace AhoViewer;
 
 const char Zip::Magic[Zip::MagicSize] = { 'P', 'K', 0x03, 0x04 };
 
-std::string Zip::extract(const std::string &path) const
+std::string Zip::extract(const std::string &path, const std::shared_ptr<Archive> &parent) const
 {
     std::string extractedPath;
     zip *zip = zip_open(path.c_str(), 0, NULL);
@@ -20,7 +20,10 @@ std::string Zip::extract(const std::string &path) const
     if (zip)
     {
         const zip_int64_t nEntries = zip_get_num_entries(zip, 0);
-        extractedPath = TempDir::get_instance().make_dir(Glib::path_get_basename(path));
+        extractedPath = TempDir::get_instance().make_dir(
+                parent ? Glib::build_filename(Glib::path_get_basename(parent->get_extracted_path()),
+                                              Glib::path_get_basename(path)) :
+                         Glib::path_get_basename(path));
 
         // Failed to create temp dir
         if (!extractedPath.empty())
@@ -76,6 +79,9 @@ std::string Zip::extract(const std::string &path) const
         }
 
         zip_close(zip);
+
+        if (parent)
+            g_unlink(path.c_str());
     }
     else
     {

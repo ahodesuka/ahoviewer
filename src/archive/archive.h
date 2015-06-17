@@ -29,7 +29,7 @@ namespace AhoViewer
         {
         public:
             virtual ~Extractor() = default;
-            virtual std::string extract(const std::string&) const = 0;
+            virtual std::string extract(const std::string&, const std::shared_ptr<Archive>&) const = 0;
 
             SignalProgressType signal_progress() const
             {
@@ -50,23 +50,27 @@ namespace AhoViewer
             std::shared_ptr<Archive> m_Archive;
         };
 
-        Archive(const std::string&, const Extractor*);
+        // use ::create instead.
+        explicit Archive(const std::string &path, const std::string &extractedPath);
         ~Archive();
 
         static bool is_valid(const std::string &path);
-        static const Extractor* get_extractor(const std::string &path);
+        static std::shared_ptr<Archive> create(const std::string &path,
+                                               const std::shared_ptr<Archive> &parent = nullptr);
 
-        const std::string get_path() const;
-        const std::string get_extracted_path() const;
+        const std::string get_path() const { return m_Path; }
+        const std::string get_extracted_path() const { return m_ExtractedPath; }
 
         static const std::map<Type, const Extractor *const> Extractors;
         static const std::vector<std::string> MimeTypes;
     private:
         static Type get_type(const std::string &path);
+
         // Matches the largest extractor MagicSize
         static int const MagicSize = 6;
 
         std::string m_Path, m_ExtractedPath;
+        std::vector<std::shared_ptr<Archive>> m_Children;
     };
 }
 

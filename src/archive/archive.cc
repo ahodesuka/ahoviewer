@@ -47,14 +47,25 @@ bool Archive::is_valid(const std::string &path)
     return get_type(path) != Type::UNKNOWN;
 }
 
-const Archive::Extractor* Archive::get_extractor(const std::string &path)
+std::shared_ptr<Archive> Archive::create(const std::string &path, const std::shared_ptr<Archive> &parent)
 {
+    std::shared_ptr<Archive> archive = nullptr;
     Type type = get_type(path);
 
     if (Extractors.find(type) != Extractors.end())
-        return Extractors.at(type);
+    {
+        std::string extractedPath(Extractors.at(type)->extract(path, parent));
 
-    return nullptr;
+        if (!extractedPath.empty())
+        {
+            archive = std::make_shared<Archive>(path, extractedPath);
+
+            if (parent)
+                parent->m_Children.push_back(archive);
+        }
+    }
+
+    return archive;
 }
 
 Archive::Type Archive::get_type(const std::string &path)
@@ -77,24 +88,15 @@ Archive::Type Archive::get_type(const std::string &path)
     return Type::UNKNOWN;
 }
 
-Archive::Archive(const std::string &path, const Extractor *extractor)
-  : m_Path(path)
+Archive::Archive(const std::string &path, const std::string &extractedPath)
+  : m_Path(path),
+    m_ExtractedPath(extractedPath)
 {
-    m_ExtractedPath = extractor->extract(m_Path);
+
 }
 
 Archive::~Archive()
 {
-    if (!m_ExtractedPath.empty())
-        TempDir::get_instance().remove_dir(m_ExtractedPath);
-}
-
-const std::string Archive::get_path() const
-{
-    return m_Path;
-}
-
-const std::string Archive::get_extracted_path() const
-{
-    return m_ExtractedPath;
+    m_Children.clear();
+    TempDir::get_instance().remove_dir(m_ExtractedPath);
 }

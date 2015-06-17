@@ -19,13 +19,13 @@ namespace AhoViewer
             return i;
         }
 
-        std::string make_dir(const std::string &dirName)
+        std::string make_dir(const std::string &dirPath)
         {
-            std::string path(Glib::build_filename(m_Path, Glib::path_get_basename(dirName)));
+            std::string path(Glib::build_filename(m_Path, dirPath));
 
             // Lopp until we have a unique directory name
             for (size_t i = 1; Glib::file_test(path, Glib::FILE_TEST_EXISTS); ++i)
-                path = Glib::build_filename(m_Path, Glib::path_get_basename(dirName) + "-" + std::to_string(i));
+                path = Glib::build_filename(m_Path, dirPath + "-" + std::to_string(i));
 
             if (g_mkdir_with_parents(path.c_str(), 0755) == -1)
             {
