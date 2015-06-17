@@ -200,33 +200,23 @@ void SiteEditor::update_edited_site_icon()
 
 void SiteEditor::on_site_checked()
 {
-    if (m_SiteCheckEdit)
+    if ((m_SiteCheckEdit && !m_SiteCheckEditSuccess) || (!m_SiteCheckEdit && !m_SiteCheckSite))
     {
-        if (!m_SiteCheckEditSuccess)
-        {
-            m_SiteCheckIter->set_value(m_Columns.icon, m_ErrorPixbuf);
-            m_SiteCheckIter->set_value(m_Columns.loading, false);
-        }
+        m_SiteCheckIter->set_value(m_Columns.icon, m_ErrorPixbuf);
+        m_SiteCheckIter->set_value(m_Columns.loading, false);
     }
-    else
+    else if (m_SiteCheckSite && !m_SiteCheckEdit)
     {
-        if (m_SiteCheckSite)
-        {
-            m_Sites.push_back(m_SiteCheckSite);
-            m_SiteCheckIter->set_value(m_Columns.site, m_SiteCheckSite);
-        }
-        else
-        {
-            m_SiteCheckIter->set_value(m_Columns.icon, m_ErrorPixbuf);
-            m_SiteCheckIter->set_value(m_Columns.loading, false);
-            goto join;
-        }
+        m_Sites.push_back(m_SiteCheckSite);
+        m_SiteCheckIter->set_value(m_Columns.site, m_SiteCheckSite);
     }
 
-    Settings.update_sites();
-    m_SignalEdited();
+    if (m_SiteCheckEdit || m_SiteCheckSite)
+    {
+        Settings.update_sites();
+        m_SignalEdited();
+    }
 
-join:
     m_SiteCheckThread->join();
     m_SiteCheckThread = nullptr;
 }
