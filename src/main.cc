@@ -40,8 +40,6 @@ int main(int argc, char **argv)
     if (!window)
         return EXIT_FAILURE;
 
-    window->show_all();
-
     if (argc == 2)
         window->open_file(argv[1]);
     else

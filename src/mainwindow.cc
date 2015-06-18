@@ -93,6 +93,11 @@ MainWindow::MainWindow(BaseObjectType *cobj, const Glib::RefPtr<Gtk::Builder> &b
         move(x, y);
         set_default_size(w, h);
     }
+
+    show_all();
+
+    if (Settings.get_bool("StartFullscreen"))
+        m_ActionGroup->get_action("ToggleFullscreen")->activate();
 }
 
 MainWindow::~MainWindow()
@@ -589,8 +594,7 @@ void MainWindow::clear()
 
 bool MainWindow::is_fullscreen() const
 {
-    return get_window() &&
-        (get_window()->get_state() & Gdk::WINDOW_STATE_FULLSCREEN) == Gdk::WINDOW_STATE_FULLSCREEN;
+    return get_window() && (get_window()->get_state() & Gdk::WINDOW_STATE_FULLSCREEN) != 0;
 }
 
 void MainWindow::on_imagelist_changed(const std::shared_ptr<Image> &image)
