@@ -544,7 +544,7 @@ void ImageBox::draw_image(bool scroll)
     m_Layout->move(*m_GtkImage, x, y);
     m_Layout->set_size(sWidth, sHeight);
 
-    if (!m_Image->is_webm())
+    if (temp)
         m_GtkImage->set(temp);
 
     // Reset the scrollbar positions
