@@ -61,6 +61,8 @@ MainWindow::MainWindow(BaseObjectType *cobj, const Glib::RefPtr<Gtk::Builder> &b
             sigc::mem_fun(m_ImageBox, &ImageBox::reset_slideshow));
     m_PreferencesDialog->get_site_editor()->signal_edited().connect(
             sigc::mem_fun(m_BooruBrowser, &Booru::Browser::update_combobox_model));
+    m_PreferencesDialog->get_keybinding_editor()->signal_edited().connect(
+            sigc::mem_fun(*this, &MainWindow::on_accel_edited));
 
     // Setup drag and drop
     std::vector<Gtk::TargetEntry> dropTargets = { Gtk::TargetEntry("text/uri-list") };
@@ -354,13 +356,13 @@ void MainWindow::create_actions()
             sigc::mem_fun(m_ImageBox, &ImageBox::on_scroll_right));
 
     m_ActionGroup->add(Gtk::Action::create("NewTab", Gtk::Stock::ADD, _("New Tab"), _("New Tab")),
-            Gtk::AccelKey(Settings.get_keybinding("Booru Browser", "NewTab")),
+            Gtk::AccelKey(Settings.get_keybinding("BooruBrowser", "NewTab")),
             sigc::mem_fun(m_BooruBrowser, &Booru::Browser::on_new_tab));
     m_ActionGroup->add(Gtk::Action::create("SaveImage", Gtk::Stock::SAVE_AS, _("Save Image"), _("Save Image")),
-            Gtk::AccelKey(Settings.get_keybinding("Booru Browser", "SaveImage")),
+            Gtk::AccelKey(Settings.get_keybinding("BooruBrowser", "SaveImage")),
             sigc::mem_fun(m_BooruBrowser, &Booru::Browser::on_save_image));
     m_ActionGroup->add(Gtk::Action::create("SaveImages", Gtk::Stock::SAVE, _("Save Images"), _("Save Images")),
-            Gtk::AccelKey(Settings.get_keybinding("Booru Browser", "SaveImages")),
+            Gtk::AccelKey(Settings.get_keybinding("BooruBrowser", "SaveImages")),
             sigc::mem_fun(m_BooruBrowser, &Booru::Browser::on_save_images));
     // }}}
 
@@ -369,51 +371,51 @@ void MainWindow::create_actions()
     toggleAction = Gtk::ToggleAction::create("ToggleFullscreen",
             _("_Fullscreen"), _("Toggle fullscreen mode"));
     m_ActionGroup->add(toggleAction,
-            Gtk::AccelKey(Settings.get_keybinding("User Interface", "ToggleFullscreen")),
+            Gtk::AccelKey(Settings.get_keybinding("UserInterface", "ToggleFullscreen")),
             sigc::mem_fun(*this, &MainWindow::on_toggle_fullscreen));
 
     toggleAction = Gtk::ToggleAction::create("ToggleMangaMode",
             _("_Manga Mode"), _("Toggle manga mode"), Settings.get_bool("MangaMode"));
     m_ActionGroup->add(toggleAction,
-            Gtk::AccelKey(Settings.get_keybinding("View Mode", "ToggleMangaMode")),
+            Gtk::AccelKey(Settings.get_keybinding("ViewMode", "ToggleMangaMode")),
             sigc::mem_fun(*this, &MainWindow::on_toggle_manga_mode));
 
     toggleAction = Gtk::ToggleAction::create("ToggleMenuBar",
             _("_Menubar"), _("Toggle menubar visibility"), Settings.get_bool("MenuBarVisible"));
     m_ActionGroup->add(toggleAction,
-            Gtk::AccelKey(Settings.get_keybinding("User Interface", "ToggleMenuBar")),
+            Gtk::AccelKey(Settings.get_keybinding("UserInterface", "ToggleMenuBar")),
             sigc::mem_fun(*this, &MainWindow::on_toggle_menu_bar));
 
     toggleAction = Gtk::ToggleAction::create("ToggleStatusBar",
             _("_Statusbar"), _("Toggle statusbar visibility"), Settings.get_bool("StatusBarVisible"));
     m_ActionGroup->add(toggleAction,
-            Gtk::AccelKey(Settings.get_keybinding("User Interface", "ToggleStatusBar")),
+            Gtk::AccelKey(Settings.get_keybinding("UserInterface", "ToggleStatusBar")),
             sigc::mem_fun(*this, &MainWindow::on_toggle_status_bar));
 
     toggleAction = Gtk::ToggleAction::create("ToggleScrollbars",
             _("_Scrollbars"), _("Toggle scrollbar visibility"), Settings.get_bool("ScrollbarsVisible"));
     m_ActionGroup->add(toggleAction,
-            Gtk::AccelKey(Settings.get_keybinding("User Interface", "ToggleScrollbars")),
+            Gtk::AccelKey(Settings.get_keybinding("UserInterface", "ToggleScrollbars")),
             sigc::mem_fun(m_ImageBox, &ImageBox::on_toggle_scrollbars));
 
     toggleAction = Gtk::ToggleAction::create("ToggleBooruBrowser",
             _("_Booru Browser"), _("Toggle booru browser visibility"), Settings.get_bool("BooruBrowserVisible"));
     toggleAction->set_draw_as_radio(true);
     m_ActionGroup->add(toggleAction,
-            Gtk::AccelKey(Settings.get_keybinding("User Interface", "ToggleBooruBrowser")),
+            Gtk::AccelKey(Settings.get_keybinding("UserInterface", "ToggleBooruBrowser")),
             sigc::mem_fun(*this, &MainWindow::on_toggle_booru_browser));
 
     toggleAction = Gtk::ToggleAction::create("ToggleThumbnailBar",
             _("_Thumbnail Bar"), _("Toggle thumbnailbar visibility"), Settings.get_bool("ThumbnailBarVisible"));
     toggleAction->set_draw_as_radio(true);
     m_ActionGroup->add(toggleAction,
-            Gtk::AccelKey(Settings.get_keybinding("User Interface", "ToggleThumbnailBar")),
+            Gtk::AccelKey(Settings.get_keybinding("UserInterface", "ToggleThumbnailBar")),
             sigc::mem_fun(*this, &MainWindow::on_toggle_thumbnail_bar));
 
     toggleAction = Gtk::ToggleAction::create("ToggleHideAll",
             _("_Hide All"), _("Toggle visibility of all interface widgets"), Settings.get_bool("HideAll"));
     m_ActionGroup->add(toggleAction,
-            Gtk::AccelKey(Settings.get_keybinding("User Interface", "ToggleHideAll")),
+            Gtk::AccelKey(Settings.get_keybinding("UserInterface", "ToggleHideAll")),
             sigc::mem_fun(*this, &MainWindow::on_toggle_hide_all));
 
     toggleAction = Gtk::ToggleAction::create("ToggleSlideshow",
@@ -431,25 +433,25 @@ void MainWindow::create_actions()
             _("_Auto Fit Mode"), _("Fit the image to either the height or width of the window"));
     radioAction->property_value().set_value(static_cast<int>(ImageBox::ZoomMode::AUTO_FIT));
     m_ActionGroup->add(radioAction,
-            Gtk::AccelKey(Settings.get_keybinding("View Mode", "AutoFitMode")),
+            Gtk::AccelKey(Settings.get_keybinding("ViewMode", "AutoFitMode")),
             sigc::bind(sigc::mem_fun(m_ImageBox, &ImageBox::set_zoom_mode), ImageBox::ZoomMode::AUTO_FIT));
     radioAction = Gtk::RadioAction::create(zoomModeGroup, "FitWidthMode",
             _("Fit _Width Mode"), _("Fit the image to the width of the window"));
     radioAction->property_value().set_value(static_cast<int>(ImageBox::ZoomMode::FIT_WIDTH));
     m_ActionGroup->add(radioAction,
-            Gtk::AccelKey(Settings.get_keybinding("View Mode", "FitWidthMode")),
+            Gtk::AccelKey(Settings.get_keybinding("ViewMode", "FitWidthMode")),
             sigc::bind(sigc::mem_fun(m_ImageBox, &ImageBox::set_zoom_mode), ImageBox::ZoomMode::FIT_WIDTH));
     radioAction = Gtk::RadioAction::create(zoomModeGroup, "FitHeightMode",
             _("Fit _Height Mode"), _("Fit the image to the height of the window"));
     radioAction->property_value().set_value(static_cast<int>(ImageBox::ZoomMode::FIT_HEIGHT));
     m_ActionGroup->add(radioAction,
-            Gtk::AccelKey(Settings.get_keybinding("View Mode", "FitHeightMode")),
+            Gtk::AccelKey(Settings.get_keybinding("ViewMode", "FitHeightMode")),
             sigc::bind(sigc::mem_fun(m_ImageBox, &ImageBox::set_zoom_mode), ImageBox::ZoomMode::FIT_HEIGHT));
     radioAction = Gtk::RadioAction::create(zoomModeGroup, "ManualZoomMode",
             _("_Manual Zoom"), _("Display the image at it's original size, with the ability to zoom in and out"));
     radioAction->property_value().set_value(static_cast<int>(ImageBox::ZoomMode::MANUAL));
     m_ActionGroup->add(radioAction,
-            Gtk::AccelKey(Settings.get_keybinding("View Mode", "ManualZoomMode")),
+            Gtk::AccelKey(Settings.get_keybinding("ViewMode", "ManualZoomMode")),
             sigc::bind(sigc::mem_fun(m_ImageBox, &ImageBox::set_zoom_mode), ImageBox::ZoomMode::MANUAL));
 
     radioAction->set_current_value(static_cast<int>(m_ImageBox->get_zoom_mode()));
@@ -603,6 +605,13 @@ void MainWindow::on_cache_size_changed()
     m_LocalImageList->on_cache_size_changed();
     for (const Booru::Page *p : m_BooruBrowser->get_pages())
         p->get_imagelist()->on_cache_size_changed();
+}
+
+void MainWindow::on_accel_edited(const std::string &accelPath, const std::string &actionName)
+{
+    Glib::RefPtr<Gtk::Action> action = m_ActionGroup->get_action(actionName);
+    action->set_accel_path(accelPath);
+    action->connect_accelerator();
 }
 
 void MainWindow::on_connect_proxy(const Glib::RefPtr<Gtk::Action> &action, Gtk::Widget *w)

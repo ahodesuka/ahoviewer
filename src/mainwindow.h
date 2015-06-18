@@ -41,6 +41,7 @@ namespace AhoViewer
 
         void on_imagelist_changed(const std::shared_ptr<Image> &image);
         void on_cache_size_changed();
+        void on_accel_edited(const std::string &accelPath, const std::string &actionName);
 
         void on_connect_proxy(const Glib::RefPtr<Gtk::Action> &action, Gtk::Widget *w);
 

@@ -28,6 +28,11 @@ namespace AhoViewer
         std::string get_keybinding(const std::string &group, const std::string &name) const;
         void set_keybinding(const std::string &group, const std::string &name, const std::string &value);
 
+        std::map<std::string, std::map<std::string, std::string>> get_keybindings() const { return m_Keybindings; }
+
+        bool clear_keybinding(const std::string &value, std::string &group, std::string &name);
+        std::string reset_keybinding(const std::string &group, const std::string &name);
+
         bool get_geometry(int &x, int &y, int &w, int &h) const;
         void set_geometry(const int x, const int y, const int w, const int h);
 
@@ -60,6 +65,8 @@ namespace AhoViewer
                 set(key, value, Setting::TypeString);
         }
     private:
+        void load_keybindings();
+
         libconfig::Config Config;
 
         const std::string Path;
@@ -74,6 +81,7 @@ namespace AhoViewer
         const ImageBox::ZoomMode DefaultZoomMode = ImageBox::ZoomMode::MANUAL;
 
         std::vector<std::shared_ptr<Booru::Site>> m_Sites;
+        std::map<std::string, std::map<std::string, std::string>> m_Keybindings;
 
         template<typename T>
         void set(const std::string &key, const T value, Setting::Type type)

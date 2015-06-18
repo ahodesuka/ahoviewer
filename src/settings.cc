@@ -59,7 +59,7 @@ SettingsManager::SettingsManager()
             }
         },
         {
-            "View Mode",
+            "ViewMode",
             {
                 { "ToggleMangaMode",     "g" },
                 { "AutoFitMode",         "a" },
@@ -69,7 +69,7 @@ SettingsManager::SettingsManager()
             }
         },
         {
-            "User Interface",
+            "UserInterface",
             {
                 { "ToggleFullscreen",    "f"          },
                 { "ToggleMenuBar",       "<Primary>m" },
@@ -108,7 +108,7 @@ SettingsManager::SettingsManager()
             }
         },
         {
-            "Booru Browser",
+            "BooruBrowser",
             {
                 { "NewTab",              "<Primary>t"        },
                 { "SaveImage",           "<Primary><Shift>s" },
@@ -134,6 +134,8 @@ SettingsManager::SettingsManager()
 
     if (!Glib::file_test(BooruPath, Glib::FILE_TEST_EXISTS))
         g_mkdir_with_parents(BooruPath.c_str(), 0700);
+
+    load_keybindings();
 }
 
 SettingsManager::~SettingsManager()
@@ -243,7 +245,33 @@ void SettingsManager::set_geometry(const int x, const int y, const int w, const 
 
 std::string SettingsManager::get_keybinding(const std::string &group, const std::string &name) const
 {
-    return DefaultKeybindings.at(group).at(name);
+    return m_Keybindings.at(group).at(name);
+}
+
+/**
+ * Clears the first (only) binding that has the same value as value
+ * Sets the group and name parameters to those of the binding that was cleared
+ * Returns true if it actually cleared a binding
+ **/
+bool SettingsManager::clear_keybinding(const std::string &value, std::string &group, std::string &name)
+{
+    for (const std::pair<std::string, std::map<std::string, std::string>> &i : m_Keybindings)
+    {
+        for (const std::pair<std::string, std::string> &j : i.second)
+        {
+            if (j.second == value)
+            {
+                group = i.first;
+                name = j.first;
+
+                set_keybinding(group, name, "");
+
+                return true;
+            }
+        }
+    }
+
+    return false;
 }
 
 void SettingsManager::set_keybinding(const std::string &group, const std::string &name, const std::string &value)
@@ -257,6 +285,20 @@ void SettingsManager::set_keybinding(const std::string &group, const std::string
         keys.add(group, Setting::TypeGroup);
 
     set(name, value, Setting::TypeString, keys[group]);
+    m_Keybindings[group][name] = value;
+}
+
+std::string SettingsManager::reset_keybinding(const std::string &group, const std::string &name)
+{
+    if (Config.exists("Keybindings"))
+    {
+        Setting &keys = Config.lookup("Keybindings");
+
+        if (keys.exists(group) && keys[group].exists(name))
+            keys[group].remove(name);
+    }
+
+    return m_Keybindings[group][name] = DefaultKeybindings.at(group).at(name);
 }
 
 Gdk::Color SettingsManager::get_background_color() const
@@ -302,4 +344,38 @@ void SettingsManager::remove(const std::string &key)
 {
     if (Config.exists(key))
         Config.getRoot().remove(key);
+}
+
+void SettingsManager::load_keybindings()
+{
+    if (Config.exists("Keybindings"))
+    {
+        Setting &keys = Config.lookup("Keybindings");
+
+        for (const std::pair<std::string, std::map<std::string, std::string>> &i : DefaultKeybindings)
+        {
+            if (keys.exists(i.first))
+            {
+                for (const std::pair<std::string, std::string> &j : i.second)
+                {
+                    if (keys[i.first].exists(j.first))
+                    {
+                        m_Keybindings[i.first][j.first] = std::string(keys[i.first][j.first].c_str());
+                    }
+                    else
+                    {
+                        m_Keybindings[i.first][j.first] = DefaultKeybindings.at(i.first).at(j.first);
+                    }
+                }
+            }
+            else
+            {
+                m_Keybindings[i.first] = DefaultKeybindings.at(i.first);
+            }
+        }
+    }
+    else
+    {
+        m_Keybindings = DefaultKeybindings;
+    }
 }

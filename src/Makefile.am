@@ -21,6 +21,7 @@ ahoviewer_SOURCES =       \
 	image.cc              \
 	imagebox.cc           \
 	imagelist.cc          \
+	keybindingeditor.cc   \
 	main.cc               \
 	mainwindow.cc         \
 	preferences.cc        \

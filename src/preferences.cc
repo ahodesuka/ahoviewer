@@ -8,6 +8,9 @@ using namespace AhoViewer;
 PreferencesDialog::PreferencesDialog(BaseObjectType *cobj, const Glib::RefPtr<Gtk::Builder> &bldr)
   : Gtk::Dialog(cobj)
 {
+    bldr->get_widget_derived("BooruSiteEditor",  m_SiteEditor);
+    bldr->get_widget_derived("KeybindingEditor", m_KeybindingEditor);
+
     Gtk::Button *closeButton = nullptr;
     bldr->get_widget("PreferencesDialog::CloseButton", closeButton);
 
@@ -96,6 +99,4 @@ PreferencesDialog::PreferencesDialog(BaseObjectType *cobj, const Glib::RefPtr<Gt
     comboBox->set_active(static_cast<int>(Settings.get_booru_max_rating()));
     comboBox->signal_changed().connect([ this, comboBox ]()
             { Settings.set_booru_max_rating(static_cast<Booru::Site::Rating>(comboBox->get_active_row_number())); });
-
-    bldr->get_widget_derived("BooruSiteEditor", m_SiteEditor);
 }

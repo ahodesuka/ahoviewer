@@ -3,6 +3,7 @@
 
 #include <gtkmm.h>
 
+#include "keybindingeditor.h"
 #include "siteeditor.h"
 
 namespace AhoViewer
@@ -14,6 +15,8 @@ namespace AhoViewer
         virtual ~PreferencesDialog() = default;
 
         SiteEditor* get_site_editor() const { return m_SiteEditor; }
+        KeybindingEditor* get_keybinding_editor() const { return m_KeybindingEditor; }
+
         sigc::signal<void> signal_bg_color_set() const { return m_SignalBGColorSet; }
         sigc::signal<void> signal_cache_size_changed() const { return m_SignalCacheSizeChanged; }
         sigc::signal<void> signal_slideshow_delay_changed() const { return m_SignalSlideshowDelayChanged; }
@@ -25,6 +28,7 @@ namespace AhoViewer
         };
 
         SiteEditor *m_SiteEditor;
+        KeybindingEditor *m_KeybindingEditor;
 
         sigc::signal<void> m_SignalBGColorSet,
                            m_SignalCacheSizeChanged,
