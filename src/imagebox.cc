@@ -445,6 +445,8 @@ void ImageBox::draw_image(bool scroll)
         sHeight = 0,
         origWidth, origHeight;
 
+    Glib::RefPtr<Gdk::Pixbuf> temp;
+
     m_HideScrollbars = !Settings.get_bool("ScrollbarsVisible") || Settings.get_bool("HideAll");
 
     if (m_FirstDraw)
@@ -507,19 +509,19 @@ void ImageBox::draw_image(bool scroll)
                         m_PixbufAnimIter->get_delay_time());
         }
 
-        Glib::RefPtr<Gdk::Pixbuf> pixbuf = m_PixbufAnimIter->get_pixbuf()->copy(),
-                                  temp   = pixbuf;
+        Glib::RefPtr<Gdk::Pixbuf> pixbuf = m_PixbufAnimIter->get_pixbuf()->copy();
+        temp = pixbuf;
+
         origWidth  = pixbuf->get_width();
         origHeight = pixbuf->get_height();
 
         if (get_scaled_size(pixbuf->get_width(), pixbuf->get_height(), sWidth, sHeight))
             temp = pixbuf->scale_simple(sWidth, sHeight, Gdk::INTERP_BILINEAR);
-
-        m_GtkImage->set(temp);
 #ifdef HAVE_GSTREAMER
     }
 #endif // HAVE_GSTREAMER
 
+    m_GtkImage->get_window()->freeze_updates();
     get_window()->freeze_updates();
     m_HScroll->show();
     m_VScroll->show();
@@ -542,6 +544,9 @@ void ImageBox::draw_image(bool scroll)
     m_Layout->move(*m_GtkImage, x, y);
     m_Layout->set_size(sWidth, sHeight);
 
+    if (!m_Image->is_webm())
+        m_GtkImage->set(temp);
+
     // Reset the scrollbar positions
     if (scroll)
     {
@@ -561,6 +566,7 @@ void ImageBox::draw_image(bool scroll)
     }
 
     get_window()->thaw_updates();
+    m_GtkImage->get_window()->thaw_updates();
     m_RedrawQueued = false;
 
     double scale = m_ZoomMode == ZoomMode::MANUAL ? m_ZoomPercent :
