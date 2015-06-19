@@ -1,5 +1,5 @@
 AC_PREREQ([2.69])
-AC_INIT([ahoviewer], [0.1],
+AC_INIT([ahoviewer], [1.0.0],
         [https://github.com/ahodesuka/ahoviewer/issues],
         [ahoviewer],
         [https://github.com/ahodesuka/ahoviewer])
@@ -111,5 +111,10 @@ if test x$enable_zip != xno; then
     )
 fi
 
-AC_CONFIG_FILES([Makefile src/Makefile])
+AC_CONFIG_FILES([
+     Makefile
+     pixmaps/Makefile
+     po/Makefile
+     src/Makefile
+])
 AC_OUTPUT

@@ -1,1 +1,4 @@
-SUBDIRS = src
+SUBDIRS =         \
+		  pixmaps \
+		  po      \
+		  src

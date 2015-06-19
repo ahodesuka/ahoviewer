@@ -25,6 +25,7 @@ MainWindow::MainWindow(BaseObjectType *cobj, const Glib::RefPtr<Gtk::Builder> &b
     m_BooruBrowser->set_statusbar(m_StatusBar);
     m_ImageBox->set_statusbar(m_StatusBar);
 
+    m_Builder->get_widget("AboutDialog", m_AboutDialog);
     m_Builder->get_widget("MainWindow::HPaned", m_HPaned);
     m_HPaned->property_position().signal_changed().connect(
     [ this ]()
@@ -63,6 +64,23 @@ MainWindow::MainWindow(BaseObjectType *cobj, const Glib::RefPtr<Gtk::Builder> &b
             sigc::mem_fun(m_BooruBrowser, &Booru::Browser::update_combobox_model));
     m_PreferencesDialog->get_keybinding_editor()->signal_edited().connect(
             sigc::mem_fun(*this, &MainWindow::on_accel_edited));
+
+    // About Dialog {{{
+    m_AboutDialog->signal_response().connect([ this ](const int) { m_AboutDialog->hide(); });
+
+    try
+    {
+        Glib::RefPtr<Gdk::Pixbuf> logo =
+            Gdk::Pixbuf::create_from_file(DATADIR "/pixmaps/ahoviewer/ahoviewer-about-logo.png");
+        m_AboutDialog->set_logo(logo);
+    }
+    catch (...) { }
+
+    m_AboutDialog->set_name(PACKAGE);
+    m_AboutDialog->set_version(PACKAGE_VERSION);
+    m_AboutDialog->set_copyright("Copyright \302\251 2013-2015 ahoka");
+    m_AboutDialog->set_website(PACKAGE_URL);
+    // }}}
 
     // Setup drag and drop
     std::vector<Gtk::TargetEntry> dropTargets = { Gtk::TargetEntry("text/uri-list") };
@@ -345,7 +363,7 @@ void MainWindow::create_actions()
 
     m_ActionGroup->add(Gtk::Action::create("About", Gtk::Stock::ABOUT,
                 _("_About"), _("View information about " PACKAGE)),
-            sigc::mem_fun(*this, &MainWindow::placeholder));
+            sigc::mem_fun(m_AboutDialog, &Gtk::AboutDialog::show));
 
     m_ActionGroup->add(Gtk::Action::create("ScrollUp"),
             Gtk::AccelKey(Settings.get_keybinding("Scroll", "ScrollUp")),
@@ -891,9 +909,4 @@ void MainWindow::on_toggle_slideshow()
         m_ImageBox->start_slideshow();
 
     update_title();
-}
-
-void MainWindow::placeholder()
-{
-    std::cout << "TODO" << std::endl;
 }

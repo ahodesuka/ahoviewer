@@ -71,6 +71,7 @@ namespace AhoViewer
         Gtk::MenuBar *m_MenuBar;
         Gtk::RecentChooserMenu *m_RecentMenu;
 
+        Gtk::AboutDialog *m_AboutDialog;
         PreferencesDialog *m_PreferencesDialog;
         ThumbnailBar *m_ThumbnailBar;
         ImageBox *m_ImageBox;
