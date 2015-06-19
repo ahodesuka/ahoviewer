@@ -102,15 +102,20 @@ MainWindow::MainWindow(BaseObjectType *cobj, const Glib::RefPtr<Gtk::Builder> &b
     Image::get_missing_pixbuf();
 
     create_actions();
-    show_all();
 
     // Restore window geometry
     int x, y, w, h;
     if (Settings.get_geometry(x, y, w, h))
     {
         set_position(Gtk::WIN_POS_NONE);
-        move(x, y);
         set_default_size(w, h);
+
+        show_all();
+        move(x, y);
+    }
+    else
+    {
+        show_all();
     }
 
     if (Settings.get_bool("StartFullscreen"))
