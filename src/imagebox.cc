@@ -106,8 +106,6 @@ ImageBox::ImageBox(BaseObjectType *cobj, const Glib::RefPtr<Gtk::Builder> &bldr)
   : Gtk::EventBox(cobj),
     m_LeftPtrCursor(Gdk::LEFT_PTR),
     m_FleurCursor(Gdk::FLEUR),
-    m_ScrollbarWidth(0),
-    m_ScrollbarHeight(0),
     m_WindowWidth(0),
     m_WindowHeight(0),
     m_LayoutWidth(0),
@@ -126,9 +124,6 @@ ImageBox::ImageBox(BaseObjectType *cobj, const Glib::RefPtr<Gtk::Builder> &bldr)
     m_HAdjust = Glib::RefPtr<Gtk::Adjustment>::cast_static(bldr->get_object("ImageBox::HAdjust"));
     m_VAdjust = Glib::RefPtr<Gtk::Adjustment>::cast_static(bldr->get_object("ImageBox::VAdjust"));
     m_UIManager = Glib::RefPtr<Gtk::UIManager>::cast_static(bldr->get_object("UIManager"));
-
-    m_VScroll->signal_style_changed().connect(
-            sigc::mem_fun(*this, &ImageBox::set_scrollbar_dimensions));
 
 #ifdef HAVE_GSTREAMER
     m_Playbin   = gst_element_factory_make("playbin", "playbin"),
@@ -407,26 +402,6 @@ bool ImageBox::on_scroll_event(GdkEventScroll *e)
     return Gtk::EventBox::on_scroll_event(e);
 }
 
-void ImageBox::set_scrollbar_dimensions(const Glib::RefPtr<Gtk::Style>&)
-{
-    bool h = m_HScroll->get_visible(),
-         v = m_VScroll->get_visible();
-
-    get_window()->freeze_updates();
-    m_HScroll->show();
-    m_VScroll->show();
-
-    while (Gtk::Main::events_pending())
-        Gtk::Main::iteration();
-
-    m_ScrollbarHeight = m_HScroll->get_allocation().get_height();
-    m_ScrollbarWidth  = m_VScroll->get_allocation().get_width();
-
-    if (!h) m_HScroll->hide();
-    if (!v) m_VScroll->hide();
-    get_window()->thaw_updates();
-}
-
 void ImageBox::draw_image(bool scroll)
 {
     get_window()->freeze_updates();
@@ -443,8 +418,8 @@ void ImageBox::draw_image(bool scroll)
 
     m_WindowWidth  = get_allocation().get_width();
     m_WindowHeight = get_allocation().get_height();
-    m_LayoutWidth  = m_WindowWidth - m_ScrollbarWidth;
-    m_LayoutHeight = m_WindowHeight - m_ScrollbarHeight;
+    m_LayoutWidth  = m_Layout->get_allocation().get_width();
+    m_LayoutHeight = m_Layout->get_allocation().get_height();
 
     int w       = m_LayoutWidth,
         h       = m_LayoutHeight,
