@@ -117,10 +117,11 @@ ImageBox::ImageBox(BaseObjectType *cobj, const Glib::RefPtr<Gtk::Builder> &bldr)
     m_ZoomMode(Settings.get_zoom_mode()),
     m_ZoomPercent(100)
 {
-    bldr->get_widget("ImageBox::Layout",  m_Layout);
-    bldr->get_widget("ImageBox::HScroll", m_HScroll);
-    bldr->get_widget("ImageBox::VScroll", m_VScroll);
-    bldr->get_widget("ImageBox::Image",   m_GtkImage);
+    bldr->get_widget("ImageBox::Layout",       m_Layout);
+    bldr->get_widget("ImageBox::HScroll",      m_HScroll);
+    bldr->get_widget("ImageBox::VScroll",      m_VScroll);
+    bldr->get_widget("ImageBox::Image",        m_GtkImage);
+    bldr->get_widget("ImageBox::DrawingArea",  m_DrawingArea);
 
     m_HAdjust = Glib::RefPtr<Gtk::Adjustment>::cast_static(bldr->get_object("ImageBox::HAdjust"));
     m_VAdjust = Glib::RefPtr<Gtk::Adjustment>::cast_static(bldr->get_object("ImageBox::VAdjust"));
@@ -145,13 +146,13 @@ ImageBox::ImageBox(BaseObjectType *cobj, const Glib::RefPtr<Gtk::Builder> &bldr)
     gst_bus_set_sync_handler(bus, &ImageBox::create_window, this, NULL);
     g_object_unref(bus);
 
-    m_GtkImage->signal_realize().connect([ this ]()
+    m_DrawingArea->signal_realize().connect([ this ]()
     {
 #ifdef GDK_WINDOWING_X11
-        m_WindowHandle = GDK_WINDOW_XID(m_GtkImage->get_window()->gobj());
+        m_WindowHandle = GDK_WINDOW_XID(m_DrawingArea->get_window()->gobj());
 #endif // GDK_WINDOWING_X11
 #ifdef GDK_WINDOWING_WIN32
-        m_WindowHandle = (guintptr)GDK_WINDOW_HWND(m_GtkImage->get_window()->gobj());
+        m_WindowHandle = (guintptr)GDK_WINDOW_HWND(m_DrawingArea->get_window()->gobj());
 #endif // GDK_WINDOWING_WIN32
         gst_element_set_state(m_Playbin, GST_STATE_READY);
      });
@@ -193,6 +194,7 @@ void ImageBox::clear_image()
     m_DrawConn.disconnect();
     m_AnimConn.disconnect();
     m_GtkImage->clear();
+    m_DrawingArea->hide();
     m_Layout->set_size(0, 0);
 
 #ifdef HAVE_GSTREAMER
@@ -422,14 +424,19 @@ void ImageBox::set_scrollbar_dimensions(const Glib::RefPtr<Gtk::Style>&)
 
     if (!h) m_HScroll->hide();
     if (!v) m_VScroll->hide();
-
     get_window()->thaw_updates();
 }
 
 void ImageBox::draw_image(bool scroll)
 {
-    if ((!m_Image->is_webm() && !m_Image->get_pixbuf()) || (m_Image->is_webm() && m_Image->is_loading()))
+    get_window()->freeze_updates();
+    while (Gtk::Main::events_pending())
+        Gtk::Main::iteration();
+
+    if (!m_Image || (!m_Image->is_webm() && !m_Image->get_pixbuf()) ||
+        (m_Image->is_webm() && m_Image->is_loading()))
     {
+        get_window()->thaw_updates();
         m_RedrawQueued = false;
         return;
     }
@@ -521,8 +528,6 @@ void ImageBox::draw_image(bool scroll)
     }
 #endif // HAVE_GSTREAMER
 
-    m_GtkImage->get_window()->freeze_updates();
-    get_window()->freeze_updates();
     m_HScroll->show();
     m_VScroll->show();
 
@@ -541,11 +546,21 @@ void ImageBox::draw_image(bool scroll)
     int x = std::max(0, (w - sWidth) / 2),
         y = std::max(0, (h - sHeight) / 2);
 
-    m_Layout->move(*m_GtkImage, x, y);
     m_Layout->set_size(sWidth, sHeight);
 
     if (temp)
+    {
+        m_Layout->move(*m_GtkImage, x, y);
         m_GtkImage->set(temp);
+        m_DrawingArea->hide();
+    }
+    else
+    {
+        m_Layout->move(*m_DrawingArea, x, y);
+        m_GtkImage->clear();
+        m_DrawingArea->set_size_request(sWidth, sHeight);
+        m_DrawingArea->show();
+    }
 
     // Reset the scrollbar positions
     if (scroll)
@@ -566,7 +581,6 @@ void ImageBox::draw_image(bool scroll)
     }
 
     get_window()->thaw_updates();
-    m_GtkImage->get_window()->thaw_updates();
     m_RedrawQueued = false;
 
     double scale = m_ZoomMode == ZoomMode::MANUAL ? m_ZoomPercent :

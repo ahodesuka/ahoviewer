@@ -343,6 +343,10 @@
                             <property name="can_focus">False</property>
                           </object>
                         </child>
+                        <child>
+                          <object class="GtkDrawingArea" id="ImageBox::DrawingArea">
+                          </object>
+                        </child>
                       </object>
                     </child>
                   </object>

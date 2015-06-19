@@ -77,6 +77,7 @@ namespace AhoViewer
         Gtk::HScrollbar *m_HScroll;
         Gtk::VScrollbar *m_VScroll;
         Gtk::Image *m_GtkImage;
+        Gtk::DrawingArea *m_DrawingArea;
         Gtk::Menu *m_PopupMenu;
         Glib::RefPtr<Gtk::Adjustment> m_HAdjust, m_VAdjust, m_ScrollAdjust;
         Glib::RefPtr<Gtk::UIManager> m_UIManager;

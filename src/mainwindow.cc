@@ -526,9 +526,6 @@ void MainWindow::update_widgets_visibility()
     m_BooruBrowser->set_visible(!hideAll && Settings.get_bool("BooruBrowserVisible"));
     m_ThumbnailBar->set_visible(!hideAll && Settings.get_bool("ThumbnailBarVisible") && !m_BooruBrowser->get_visible());
 
-    while (Gtk::Main::events_pending())
-        Gtk::Main::iteration();
-
     m_ImageBox->queue_draw_image();
 }
 
