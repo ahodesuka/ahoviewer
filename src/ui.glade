@@ -345,6 +345,7 @@
                         </child>
                         <child>
                           <object class="GtkDrawingArea" id="ImageBox::DrawingArea">
+                            <property name="no_show_all">True</property>
                           </object>
                         </child>
                       </object>

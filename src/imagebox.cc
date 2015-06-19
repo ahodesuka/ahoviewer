@@ -41,63 +41,6 @@ gboolean ImageBox::bus_cb(GstBus*, GstMessage *message, void *userp)
 
     return TRUE;
 }
-
-gboolean ImageBox::draw_cb(void*, GLuint texture, GLuint w, GLuint h, void *userp)
-{
-    ImageBox *self = static_cast<ImageBox*>(userp);
-
-    int sWidth = 0,
-        sHeight = 0;
-    bool scaled = self->get_scaled_size(w, h, sWidth, sHeight);
-
-    GLfloat verts[8] =
-    {
-        1.0f, 1.0f,
-        -1.0f, 1.0f,
-        -1.0f, -1.0f,
-        1.0f, -1.0f
-    };
-    GLfloat texcoords[8] =
-    {
-        1.0f, 0.0f,
-        0.0f, 0.0f,
-        0.0f, 1.0f,
-        1.0f, 1.0f
-    };
-
-    glClearColor(self->m_BGColor.get_red_p(),
-                 self->m_BGColor.get_green_p(),
-                 self->m_BGColor.get_blue_p(),
-                 1.0);
-    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
-    glMatrixMode(GL_PROJECTION);
-    glLoadIdentity();
-
-    glEnable(GL_TEXTURE_2D);
-    glBindTexture(GL_TEXTURE_2D, texture);
-
-    glEnableClientState(GL_VERTEX_ARRAY);
-    glEnableClientState(GL_TEXTURE_COORD_ARRAY);
-    glVertexPointer(2, GL_FLOAT, 0, &verts);
-    glTexCoordPointer(2, GL_FLOAT, 0, &texcoords);
-
-    if ((sWidth < self->m_LayoutWidth && sHeight < self->m_LayoutHeight) || scaled)
-    {
-        double scale = std::max(static_cast<double>(sWidth) / self->m_LayoutWidth,
-                                static_cast<double>(sHeight) / self->m_LayoutHeight);
-        glScaled(scale, scale, 1.0);
-    }
-
-    glDrawArrays(GL_TRIANGLE_FAN, 0, 4);
-
-    glDisableClientState(GL_VERTEX_ARRAY);
-    glDisableClientState(GL_TEXTURE_COORD_ARRAY);
-
-    glDisable(GL_TEXTURE_2D);
-
-    return TRUE;
-}
 #endif // HAVE_GSTREAMER
 
 const double ImageBox::SmoothScrollStep = 1000.0 / 60.0;
@@ -133,8 +76,6 @@ ImageBox::ImageBox(BaseObjectType *cobj, const Glib::RefPtr<Gtk::Builder> &bldr)
             "audio-sink", gst_element_factory_make("fakesink", "audiosink"),
             "video-sink", m_VideoSink,
             NULL);
-    g_signal_connect(m_VideoSink,
-            "client-draw", G_CALLBACK(&ImageBox::draw_cb), this);
 
     GstBus *bus = gst_pipeline_get_bus(GST_PIPELINE(m_Playbin));
     gst_bus_add_watch(bus, &ImageBox::bus_cb, this);
@@ -174,6 +115,7 @@ void ImageBox::set_image(const std::shared_ptr<Image> &image)
 #ifdef HAVE_GSTREAMER
     gst_element_set_state(m_Playbin, GST_STATE_NULL);
     m_Playing = false;
+    m_DrawingArea->hide();
 #endif // HAVE_GSTREAMER
 
     m_Image = image;
@@ -405,6 +347,10 @@ bool ImageBox::on_scroll_event(GdkEventScroll *e)
 void ImageBox::draw_image(bool scroll)
 {
     get_window()->freeze_updates();
+
+    m_HScroll->show();
+    m_VScroll->show();
+
     while (Gtk::Main::events_pending())
         Gtk::Main::iteration();
 
@@ -444,6 +390,9 @@ void ImageBox::draw_image(bool scroll)
     {
         if (!m_Playing)
         {
+            m_GtkImage->clear();
+            m_DrawingArea->show();
+
             g_object_set(m_Playbin, "uri", Glib::filename_to_uri(m_Image->get_path()).c_str(), NULL);
             gst_element_set_state(m_Playbin, GST_STATE_PAUSED);
             gst_element_get_state(m_Playbin, NULL, NULL, GST_CLOCK_TIME_NONE);
@@ -503,9 +452,6 @@ void ImageBox::draw_image(bool scroll)
     }
 #endif // HAVE_GSTREAMER
 
-    m_HScroll->show();
-    m_VScroll->show();
-
     if (m_HideScrollbars || sWidth <= m_LayoutWidth || (sWidth <= m_WindowWidth && sHeight <= m_WindowHeight))
     {
         m_HScroll->hide();
@@ -527,14 +473,11 @@ void ImageBox::draw_image(bool scroll)
     {
         m_Layout->move(*m_GtkImage, x, y);
         m_GtkImage->set(temp);
-        m_DrawingArea->hide();
     }
     else
     {
         m_Layout->move(*m_DrawingArea, x, y);
-        m_GtkImage->clear();
         m_DrawingArea->set_size_request(sWidth, sHeight);
-        m_DrawingArea->show();
     }
 
     // Reset the scrollbar positions
