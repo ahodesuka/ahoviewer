@@ -576,14 +576,14 @@ bool ImageBox::get_scaled_size(int origWidth, int origHeight, int &w, int &h)
     if ((origWidth > m_WindowWidth || (origHeight > m_WindowHeight && origWidth > m_LayoutWidth)) &&
         (m_ZoomMode == ZoomMode::FIT_WIDTH || (m_ZoomMode == ZoomMode::AUTO_FIT && windowAspect <= imageAspect)))
     {
-        w = std::floor(m_WindowWidth / imageAspect) > m_WindowHeight && !m_HideScrollbars ? m_LayoutWidth : m_WindowWidth;
-        h = std::floor(w / imageAspect);
+        w = std::ceil(m_WindowWidth / imageAspect) > m_WindowHeight && !m_HideScrollbars ? m_LayoutWidth : m_WindowWidth;
+        h = std::ceil(w / imageAspect);
     }
     else if ((origHeight > m_WindowHeight || (origWidth > m_WindowWidth && origHeight > m_LayoutHeight)) &&
              (m_ZoomMode == ZoomMode::FIT_HEIGHT || (m_ZoomMode == ZoomMode::AUTO_FIT && windowAspect >= imageAspect)))
     {
-        h = std::floor(m_WindowHeight * imageAspect) > m_WindowWidth && !m_HideScrollbars ? m_LayoutHeight : m_WindowHeight;
-        w = std::floor(h * imageAspect);
+        h = std::ceil(m_WindowHeight * imageAspect) > m_WindowWidth && !m_HideScrollbars ? m_LayoutHeight : m_WindowHeight;
+        w = std::ceil(h * imageAspect);
     }
     else if (m_ZoomMode == ZoomMode::MANUAL && m_ZoomPercent != 100)
     {
