@@ -31,7 +31,7 @@ Page::Page()
     // Create page tab {{{
     GtkRcStyle *style = gtk_rc_style_new();
     style->xthickness = style->ythickness = 0;
-    gtk_widget_modify_style((GtkWidget*)m_TabButton->gobj(), style);
+    gtk_widget_modify_style(reinterpret_cast<GtkWidget*>(m_TabButton->gobj()), style);
     g_object_unref(G_OBJECT(style));
 
     m_TabButton->add(*(Gtk::manage(new Gtk::Image(Gtk::Stock::CLOSE, Gtk::ICON_SIZE_MENU))));
@@ -60,9 +60,9 @@ Page::Page()
     // Workaround to have fully centered pixbufs
     Gtk::CellRendererPixbuf *cell = Gtk::manage(new Gtk::CellRendererPixbuf());
     gtk_cell_layout_pack_start(GTK_CELL_LAYOUT(m_IconView->gobj()),
-            (GtkCellRenderer*)cell->gobj(), TRUE);
+            reinterpret_cast<GtkCellRenderer*>(cell->gobj()), TRUE);
     gtk_cell_layout_add_attribute(GTK_CELL_LAYOUT(m_IconView->gobj()),
-            (GtkCellRenderer*)cell->gobj(), "pixbuf", 0);
+            reinterpret_cast<GtkCellRenderer*>(cell->gobj()), "pixbuf", 0);
 
     m_SignalPostsDownloaded.connect(sigc::mem_fun(*this, &Page::on_posts_downloaded));
     m_SignalSaveProgressDisp.connect([ this ]()

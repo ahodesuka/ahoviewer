@@ -15,7 +15,7 @@ TagEntry::TagEntry(BaseObjectType *cobj, const Glib::RefPtr<Gtk::Builder> &bldr)
     m_TagCompletion->set_text_column(m_Columns.tag_column);
     m_TagCompletion->signal_match_selected().connect(sigc::mem_fun(*this, &TagEntry::on_match_selected), false);
 
-    // Gtkmm's cursor-on-match signal seems to be broken.
+    // XXX: gtkmm's cursor-on-match signal seems to be broken.
     g_signal_connect(m_TagCompletion->gobj(), "cursor-on-match", G_CALLBACK(on_cursor_on_match_c), this);
 
     m_ChangedConn = signal_changed().connect(sigc::mem_fun(*this, &TagEntry::on_text_changed));
@@ -76,7 +76,7 @@ gboolean TagEntry::on_cursor_on_match_c(GtkEntryCompletion*,
 {
     GValue value = G_VALUE_INIT;
     gtk_tree_model_get_value(model, iter, 0, &value);
-    entry->on_cursor_on_match((char*)g_value_get_string(&value));
+    entry->on_cursor_on_match(static_cast<const char*>(g_value_get_string(&value)));
     g_value_unset(&value);
 
     return TRUE;

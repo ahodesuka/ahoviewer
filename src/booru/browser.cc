@@ -86,7 +86,7 @@ void Browser::on_new_tab()
     m_Notebook->set_current_page(page_num);
     m_Notebook->set_tab_reorderable(*page, true);
     gtk_container_child_set(GTK_CONTAINER(m_Notebook->gobj()),
-                            (GtkWidget*)page->gobj(), "tab-expand", TRUE, NULL);
+                            reinterpret_cast<GtkWidget*>(page->gobj()), "tab-expand", TRUE, NULL);
     m_TagEntry->grab_focus();
 }
 
@@ -174,9 +174,9 @@ void Browser::on_realize()
     m_SaveImagesAction = actionGroup->get_action("SaveImages");
 
     // Gtkmm2 doesn't implement activatable completely
-    GtkActivatable *able = (GtkActivatable*)m_NewTabButton->gobj();
+    GtkActivatable *able = reinterpret_cast<GtkActivatable*>(m_NewTabButton->gobj());
     gtk_activatable_set_related_action(able, actionGroup->get_action("NewTab")->gobj());
-    able = (GtkActivatable*)m_SaveImagesButton->gobj();
+    able = reinterpret_cast<GtkActivatable*>(m_SaveImagesButton->gobj());
     gtk_activatable_set_related_action(able, m_SaveImagesAction->gobj());
 
     while (Gtk::Main::events_pending())
