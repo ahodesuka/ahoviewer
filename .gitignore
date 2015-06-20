@@ -1,5 +1,6 @@
 *.o
 *.swp
+.syntastic_cpp_config
 TAGS
 Makefile
 Makefile.in
@@ -13,7 +14,8 @@ install-sh
 libtool
 ltmain.sh
 missing
-src/.deps/
+src/**/.deps/
+src/**/.dirstamp
 src/ahoviewer
 src/file2string
 src/ui.cc
