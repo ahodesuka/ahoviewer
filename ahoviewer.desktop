@@ -1,0 +1,9 @@
+[Desktop Entry]
+Type=Application
+Name=ahoviewer
+Comment=An image viewer, manga reader, and booru browser
+Exec=ahoviewer %f
+Icon=ahoviewer
+Terminal=false
+Categories=Graphics;Viewer;
+MimeType=application/x-cbr;application/cbz;image/bmp;image/x-MS-bmp;image/x-bmp;image/gif;image/jpeg;image/png;image/tiff;image/x-portable-bitmap;image/x-portable-graymap;image/x-portable-pixmap;video/webm;
