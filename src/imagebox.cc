@@ -55,6 +55,7 @@ ImageBox::ImageBox(BaseObjectType *cobj, const Glib::RefPtr<Gtk::Builder> &bldr)
     m_LayoutHeight(0),
     m_RedrawQueued(false),
     m_HideScrollbars(false),
+    m_ZoomScroll(false),
     m_ZoomMode(Settings.get_zoom_mode()),
     m_ZoomPercent(100)
 {
@@ -475,6 +476,13 @@ void ImageBox::draw_image(bool scroll)
 
     int x = std::max(0, (w - sWidth) / 2),
         y = std::max(0, (h - sHeight) / 2);
+    double hAdjustVal, vAdjustVal;
+
+    if (m_ZoomScroll)
+    {
+        hAdjustVal = m_HAdjust->get_value() / std::max(m_HAdjust->get_upper() - m_HAdjust->get_page_size(), 1.0);
+        vAdjustVal = m_VAdjust->get_value() / std::max(m_VAdjust->get_upper() - m_VAdjust->get_page_size(), 1.0);
+    }
 
     m_Layout->set_size(sWidth, sHeight);
 
@@ -495,9 +503,6 @@ void ImageBox::draw_image(bool scroll)
         m_VAdjust->set_value(0);
         if (Settings.get_bool("MangaMode"))
         {
-            while (Gtk::Main::events_pending())
-                Gtk::Main::iteration();
-
             // Start at the right side of the image
             m_HAdjust->set_value(m_HAdjust->get_upper() - m_HAdjust->get_page_size());
         }
@@ -505,6 +510,12 @@ void ImageBox::draw_image(bool scroll)
         {
             m_HAdjust->set_value(0);
         }
+    }
+    else if (m_ZoomScroll)
+    {
+        m_HAdjust->set_value(std::max(hAdjustVal * (m_HAdjust->get_upper() - m_HAdjust->get_page_size()), 0.0));
+        m_VAdjust->set_value(std::max(vAdjustVal * (m_VAdjust->get_upper() - m_VAdjust->get_page_size()), 0.0));
+        m_ZoomScroll = false;
     }
 
     get_window()->thaw_updates();
@@ -667,6 +678,7 @@ void ImageBox::zoom(const std::uint32_t percent)
     if (m_ZoomMode != ZoomMode::MANUAL || percent < 10 || percent > 400)
         return;
 
+    m_ZoomScroll = m_ZoomPercent != percent;
     m_ZoomPercent = percent;
     queue_draw_image();
 }
