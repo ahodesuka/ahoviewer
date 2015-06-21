@@ -9,7 +9,6 @@
 
 #ifdef HAVE_GSTREAMER
 #include <gst/gst.h>
-#include <GL/glu.h>
 #endif // HAVE_GSTREAMER
 
 namespace AhoViewer
@@ -85,7 +84,6 @@ namespace AhoViewer
 #ifdef HAVE_GSTREAMER
         static GstBusSyncReply create_window(GstBus*, GstMessage *message, void *userp);
         static gboolean bus_cb(GstBus*, GstMessage *message, void *userp);
-        static gboolean draw_cb(void*, GLuint texture, GLuint w, GLuint h, void *userp);
 
         GstElement *m_Playbin,
                    *m_VideoSink;

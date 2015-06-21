@@ -5,7 +5,6 @@ using namespace AhoViewer;
 #include "statusbar.h"
 
 #ifdef HAVE_GSTREAMER
-#include <GL/gl.h>
 #include <gst/video/videooverlay.h>
 #ifdef GDK_WINDOWING_X11
 #include <gdk/gdkx.h>
