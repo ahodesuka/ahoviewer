@@ -68,6 +68,7 @@ namespace AhoViewer
         bool update_smooth_scroll();
         void zoom(const uint32_t percent);
         bool advance_slideshow();
+        bool cursor_timeout();
 
         static const double SmoothScrollStep;
 
@@ -94,12 +95,17 @@ namespace AhoViewer
         StatusBar *m_StatusBar;
 
         Gdk::Color m_BGColor;
-        const Gdk::Cursor m_LeftPtrCursor, m_FleurCursor;
+        const Gdk::Cursor m_LeftPtrCursor, m_FleurCursor, m_BlankCursor;
 
         std::shared_ptr<Image> m_Image;
         Glib::RefPtr<Gdk::PixbufAnimation> m_PixbufAnim;
         Glib::RefPtr<Gdk::PixbufAnimationIter> m_PixbufAnimIter;
-        sigc::connection m_DrawConn, m_ImageConn, m_ScrollConn, m_SlideshowConn, m_AnimConn;
+        sigc::connection m_AnimConn,
+                         m_CursorConn,
+                         m_DrawConn,
+                         m_ImageConn,
+                         m_ScrollConn,
+                         m_SlideshowConn;
 
         std::atomic<int> m_WindowWidth,
                          m_WindowHeight,

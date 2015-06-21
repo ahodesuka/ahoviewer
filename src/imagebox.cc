@@ -48,6 +48,7 @@ ImageBox::ImageBox(BaseObjectType *cobj, const Glib::RefPtr<Gtk::Builder> &bldr)
   : Gtk::EventBox(cobj),
     m_LeftPtrCursor(Gdk::LEFT_PTR),
     m_FleurCursor(Gdk::FLEUR),
+    m_BlankCursor(Gdk::BLANK_CURSOR),
     m_WindowWidth(0),
     m_WindowHeight(0),
     m_LayoutWidth(0),
@@ -309,6 +310,15 @@ bool ImageBox::on_motion_notify_event(GdkEventMotion *e)
         m_PreviousY = e->y_root;
 
         return true;
+    }
+    else
+    {
+        // TODO: Maybe put the time in the settings,
+        // with 0 = never hide cursor
+        m_CursorConn.disconnect();
+        m_Layout->get_window()->set_cursor(m_LeftPtrCursor);
+        m_CursorConn = Glib::signal_timeout().connect(
+                sigc::mem_fun(*this, &ImageBox::cursor_timeout), 2000);
     }
 
     return Gtk::EventBox::on_motion_notify_event(e);
@@ -668,4 +678,10 @@ bool ImageBox::advance_slideshow()
     scroll(0, 300, false, true);
 
     return true;
+}
+
+bool ImageBox::cursor_timeout()
+{
+    m_Layout->get_window()->set_cursor(m_BlankCursor);
+    return false;
 }
