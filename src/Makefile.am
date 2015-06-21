@@ -1,10 +1,11 @@
 bin_PROGRAMS = ahoviewer
 noinst_PROGRAMS = file2string
 
-CLEANFILES = ui.cc
+CLEANFILES = ui.cc version.h
 
 file2string_SOURCES = file2string.cc
 
+BUILT_SOURCES = version.h
 ahoviewer_SOURCES =       \
 	archive/archive.cc    \
 	archive/image.cc      \
@@ -33,6 +34,11 @@ ahoviewer_SOURCES =       \
 
 ui.cc: ui.glade file2string
 	@./file2string $< $@ ahoviewer_ui
+
+.PHONY: version.h
+
+version.h:
+	@cd .. && ./version.sh > /dev/null 2>&1
 
 ahoviewer_CPPFLAGS = @CPPFLAGS@ @LIBCURL_CPPFLAGS@ -DDATADIR=\"$(datadir)\"
 ahoviewer_CXXFLAGS = @CXXFLAGS@ @gtkmm_CFLAGS@ @gstreamer_CFLAGS@ @libzip_CFLAGS@

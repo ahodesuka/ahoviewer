@@ -14,9 +14,11 @@ install-sh
 libtool
 ltmain.sh
 missing
+release.sh
 src/**/.deps/
 src/**/.dirstamp
 src/ahoviewer
 src/file2string
 src/ui.cc
+src/version.h
 stamp-h1
