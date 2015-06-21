@@ -111,8 +111,8 @@ SettingsManager::SettingsManager()
             "BooruBrowser",
             {
                 { "NewTab",              "<Primary>t"        },
-                { "SaveImage",           "<Primary><Shift>s" },
-                { "SaveImages",          "<Primary>s"        },
+                { "SaveImage",           "<Primary>s"        },
+                { "SaveImages",          "<Primary><Shift>s" },
             }
         }
     }),
