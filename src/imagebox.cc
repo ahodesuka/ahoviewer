@@ -258,6 +258,7 @@ void ImageBox::on_realize()
 bool ImageBox::on_button_press_event(GdkEventButton *e)
 {
     grab_focus();
+    cursor_timeout();
 
     // Ignore double/triple clicks
     if (e->type == GDK_BUTTON_PRESS)
@@ -271,6 +272,7 @@ bool ImageBox::on_button_press_event(GdkEventButton *e)
                 return true;
             case 3:
                 m_PopupMenu->popup(e->button, e->time);
+                m_CursorConn.disconnect();
                 return true;
             case 8: // Back
                 m_PreviousAction->activate();
@@ -314,12 +316,7 @@ bool ImageBox::on_motion_notify_event(GdkEventMotion *e)
     }
     else
     {
-        // TODO: Maybe put the time in the settings,
-        // with 0 = never hide cursor
-        m_CursorConn.disconnect();
-        m_Layout->get_window()->set_cursor(m_LeftPtrCursor);
-        m_CursorConn = Glib::signal_timeout().connect(
-                sigc::mem_fun(*this, &ImageBox::cursor_timeout), 2000);
+        cursor_timeout();
     }
 
     return Gtk::EventBox::on_motion_notify_event(e);
@@ -692,8 +689,12 @@ bool ImageBox::advance_slideshow()
     return true;
 }
 
-bool ImageBox::cursor_timeout()
+void ImageBox::cursor_timeout()
 {
-    m_Layout->get_window()->set_cursor(m_BlankCursor);
-    return false;
+    // TODO: Maybe put the time in the settings,
+    // with 0 = never hide cursor
+    m_CursorConn.disconnect();
+    m_Layout->get_window()->set_cursor(m_LeftPtrCursor);
+    m_CursorConn = Glib::signal_timeout().connect(sigc::bind_return([ this ]()
+                { m_Layout->get_window()->set_cursor(m_BlankCursor); }, false), 2000);
 }

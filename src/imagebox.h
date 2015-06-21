@@ -68,7 +68,7 @@ namespace AhoViewer
         bool update_smooth_scroll();
         void zoom(const uint32_t percent);
         bool advance_slideshow();
-        bool cursor_timeout();
+        void cursor_timeout();
 
         static const double SmoothScrollStep;
 
