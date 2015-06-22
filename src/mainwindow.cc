@@ -55,6 +55,9 @@ MainWindow::MainWindow(BaseObjectType *cobj, const Glib::RefPtr<Gtk::Builder> &b
     m_BooruBrowser->signal_realize().connect([ this ]()
             { m_HPaned->set_position(Settings.get_int("BooruWidth")); });
 
+    m_ImageBox->signal_slideshow_ended().connect(
+            sigc::mem_fun(*this, &MainWindow::on_toggle_slideshow));
+
     m_PreferencesDialog->signal_bg_color_set().connect(
             sigc::mem_fun(m_ImageBox, &ImageBox::update_background_color));
     m_PreferencesDialog->signal_cache_size_changed().connect(
@@ -905,10 +908,6 @@ void MainWindow::on_last_image()
 
 void MainWindow::on_toggle_slideshow()
 {
-    if (m_ImageBox->is_slideshow_running())
-        m_ImageBox->stop_slideshow();
-    else
-        m_ImageBox->start_slideshow();
-
+    m_ImageBox->toggle_slideshow();
     update_title();
 }

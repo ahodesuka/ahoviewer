@@ -33,15 +33,16 @@ namespace AhoViewer
         void clear_image();
         void update_background_color();
 
-        bool is_slideshow_running();
+        bool is_slideshow_running() { return !!m_SlideshowConn; }
         void reset_slideshow();
-        void start_slideshow();
-        void stop_slideshow();
+        void toggle_slideshow();
 
         ZoomMode get_zoom_mode() const;
         void set_zoom_mode(const ZoomMode);
 
         void set_statusbar(StatusBar *sb);
+
+        sigc::signal<void> signal_slideshow_ended() const { return m_SlideshowEndedSignal; }
 
         // Action callbacks {{{
         void on_zoom_in();
@@ -60,7 +61,7 @@ namespace AhoViewer
         virtual bool on_motion_notify_event(GdkEventMotion*);
         virtual bool on_scroll_event(GdkEventScroll*);
     private:
-        void draw_image(bool scroll = false);
+        void draw_image(bool scroll);
         bool get_scaled_size(int origWidth, int origHeight, int &w, int &h);
         bool update_animation();
         void scroll(const int x, const int y, const bool panning = false, const bool fromSlideshow = false);
@@ -118,6 +119,8 @@ namespace AhoViewer
                m_PressY, m_PreviousY,
                m_ScrollTime, m_ScrollDuration,
                m_ScrollStart, m_ScrollTarget;
+
+        sigc::signal<void> m_SlideshowEndedSignal;
     };
 }
 

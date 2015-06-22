@@ -128,6 +128,7 @@ void ImageBox::set_image(const std::shared_ptr<Image> &image)
 
 void ImageBox::clear_image()
 {
+    m_SlideshowConn.disconnect();
     m_ImageConn.disconnect();
     m_DrawConn.disconnect();
     m_AnimConn.disconnect();
@@ -145,7 +146,6 @@ void ImageBox::clear_image()
 
     m_StatusBar->clear_resolution();
     m_Image = nullptr;
-    stop_slideshow();
 }
 
 void ImageBox::update_background_color()
@@ -154,29 +154,26 @@ void ImageBox::update_background_color()
     m_Layout->modify_bg(Gtk::STATE_NORMAL, m_BGColor);
 }
 
-bool ImageBox::is_slideshow_running()
-{
-    return !!m_SlideshowConn;
-}
-
 void ImageBox::reset_slideshow()
 {
     if (m_SlideshowConn)
     {
-        stop_slideshow();
-        start_slideshow();
+        m_SlideshowConn.disconnect();
+        toggle_slideshow();
     }
 }
 
-void ImageBox::start_slideshow()
+void ImageBox::toggle_slideshow()
 {
-    m_SlideshowConn = Glib::signal_timeout().connect_seconds(
-            sigc::mem_fun(*this, &ImageBox::advance_slideshow), Settings.get_int("SlideshowDelay"));
-}
-
-void ImageBox::stop_slideshow()
-{
-    m_SlideshowConn.disconnect();
+    if (!m_SlideshowConn)
+    {
+        m_SlideshowConn = Glib::signal_timeout().connect_seconds(
+                sigc::mem_fun(*this, &ImageBox::advance_slideshow), Settings.get_int("SlideshowDelay"));
+    }
+    else
+    {
+        m_SlideshowConn.disconnect();
+    }
 }
 
 ImageBox::ZoomMode ImageBox::get_zoom_mode() const
@@ -603,22 +600,26 @@ void ImageBox::scroll(const int x, const int y, const bool panning, const bool f
             (m_VAdjust->get_value() == adjustUpperY && y > 0))
         {
             m_ScrollConn.disconnect();
-            m_NextAction->activate();
-            return;
-        }
 
-        if ((m_HAdjust->get_value() == 0 && x < 0) ||
+            if (m_SlideshowConn && !m_NextAction->is_sensitive())
+                m_SlideshowEndedSignal();
+            else
+                m_NextAction->activate();
+        }
+        else if ((m_HAdjust->get_value() == 0 && x < 0) ||
                  (m_VAdjust->get_value() == 0 && y < 0))
         {
             m_ScrollConn.disconnect();
             m_PreviousAction->activate();
-            return;
         }
-
-        if (x != 0)
+        else if (x != 0)
+        {
             smooth_scroll(x, m_HAdjust);
+        }
         else if (y != 0)
+        {
             smooth_scroll(y, m_VAdjust);
+        }
     }
 }
 void ImageBox::smooth_scroll(const int amount, const Glib::RefPtr<Gtk::Adjustment> &adj)
