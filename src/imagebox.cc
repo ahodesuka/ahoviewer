@@ -580,6 +580,9 @@ void ImageBox::scroll(const int x, const int y, const bool panning, const bool f
     int adjustUpperX = std::max(0, static_cast<int>((m_HAdjust->get_upper()) - m_HAdjust->get_page_size())),
         adjustUpperY = std::max(0, static_cast<int>((m_VAdjust->get_upper()) - m_VAdjust->get_page_size()));
 
+    if (!fromSlideshow)
+        reset_slideshow();
+
     if (panning)
     {
         int nX = m_HAdjust->get_value() + x,
@@ -593,9 +596,6 @@ void ImageBox::scroll(const int x, const int y, const bool panning, const bool f
     }
     else
     {
-        if (!fromSlideshow)
-            reset_slideshow();
-
         if ((m_HAdjust->get_value() == adjustUpperX && x > 0) ||
             (m_VAdjust->get_value() == adjustUpperY && y > 0))
         {
