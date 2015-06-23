@@ -17,6 +17,14 @@ MainWindow::MainWindow(BaseObjectType *cobj, const Glib::RefPtr<Gtk::Builder> &b
     m_HPanedMinPos(0),
     m_HPanedLastPos(0)
 {
+    try
+    {
+        Glib::RefPtr<Gdk::Pixbuf> icon =
+            Gdk::Pixbuf::create_from_file(DATADIR "/icons/hicolor/64x64/apps/ahoviewer.png");
+        set_icon(icon);
+    }
+    catch (...) { }
+
     m_Builder->get_widget_derived("ThumbnailBar",       m_ThumbnailBar);
     m_Builder->get_widget_derived("Booru::Browser",     m_BooruBrowser);
     m_Builder->get_widget_derived("ImageBox",           m_ImageBox);
