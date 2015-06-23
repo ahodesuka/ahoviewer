@@ -5,7 +5,6 @@ CLEANFILES = ui.cc version.h
 
 file2string_SOURCES = file2string.cc
 
-BUILT_SOURCES = version.h
 ahoviewer_SOURCES =       \
 	archive/archive.cc    \
 	archive/image.cc      \
@@ -30,7 +29,8 @@ ahoviewer_SOURCES =       \
 	siteeditor.cc         \
 	statusbar.cc          \
 	thumbnailbar.cc       \
-	ui.cc
+	ui.cc                 \
+	version.h
 
 ui.cc: ui.glade file2string
 	@./file2string $< $@ ahoviewer_ui
@@ -38,7 +38,7 @@ ui.cc: ui.glade file2string
 .PHONY: version.h
 
 version.h:
-	@cd .. && ./version.sh > /dev/null 2>&1
+	cd .. && ./version.sh > /dev/null 2>&1
 
 ahoviewer_CPPFLAGS = @CPPFLAGS@ @LIBCURL_CPPFLAGS@ -DDATADIR=\"$(datadir)\"
 ahoviewer_CXXFLAGS = @CXXFLAGS@ @gtkmm_CFLAGS@ @gstreamer_CFLAGS@ @libzip_CFLAGS@

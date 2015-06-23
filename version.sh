@@ -6,7 +6,7 @@ then
 elif [ -d '.git' ]
 then
     git update-index --refresh > /dev/null 2>&1
-    VERSION=$(git describe --abbrev=4 --match='[0-9]*' --dirty 2>/dev/null)
+    VERSION=$(git describe --match='[0-9]*' --dirty 2> /dev/null)
 fi
 
 [ -n "$VERSION" ] && echo -n "$VERSION" > VERSION
