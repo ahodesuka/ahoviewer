@@ -322,6 +322,7 @@ bool ImageBox::on_motion_notify_event(GdkEventMotion *e)
 bool ImageBox::on_scroll_event(GdkEventScroll *e)
 {
     grab_focus();
+    cursor_timeout();
 
     switch (e->direction)
     {
