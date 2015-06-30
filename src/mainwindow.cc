@@ -175,10 +175,8 @@ void MainWindow::open_file(const std::string &path, const int index)
         if (Settings.get_bool("StoreRecentFiles"))
             Gtk::RecentManager::get_default()->add_item(Glib::filename_to_uri(absolutePath));
 
-        if (!Settings.get_bool("HideAll") &&
-            !(is_fullscreen() && Settings.get_bool("HideAllFullscreen")))
-            Glib::RefPtr<Gtk::ToggleAction>::cast_static(
-                    m_ActionGroup->get_action("ToggleThumbnailBar"))->set_active();
+        Glib::RefPtr<Gtk::ToggleAction>::cast_static(m_ActionGroup->
+                get_action("ToggleThumbnailBar"))->set_active();
 
         present();
         set_sensitives();
@@ -720,6 +718,8 @@ void MainWindow::on_close()
 
         if (page && !page->get_imagelist()->empty())
         {
+            Glib::RefPtr<Gtk::ToggleAction>::cast_static(m_ActionGroup->
+                    get_action("ToggleBooruBrowser"))->set_active();
             set_active_imagelist(page->get_imagelist());
         }
         else
