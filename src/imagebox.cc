@@ -382,12 +382,8 @@ void ImageBox::draw_image(bool scroll)
 
     m_HideScrollbars = !Settings.get_bool("ScrollbarsVisible") || Settings.get_bool("HideAll");
 
-    if (m_FirstDraw)
-    {
-        scroll = true;
-        // if the image is still loading we want to draw all requests
-        m_FirstDraw = m_Image->is_loading();
-    }
+    // if the image is still loading we want to draw all requests
+    m_FirstDraw = m_Image->is_loading();
 
 #ifdef HAVE_GSTREAMER
     bool start_playing = false;
