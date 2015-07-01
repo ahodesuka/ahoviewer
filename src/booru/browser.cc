@@ -200,7 +200,7 @@ bool Browser::on_entry_key_press_event(GdkEventKey *e)
 {
     // we only care if enter/return was pressed while shift or no modifier was down
     if ((e->keyval == GDK_Return || e->keyval == GDK_ISO_Enter || e->keyval == GDK_KP_Enter) &&
-        ((e->state & GDK_SHIFT_MASK) == GDK_SHIFT_MASK || e->state == 0))
+        ((e->state & GDK_SHIFT_MASK) == GDK_SHIFT_MASK || (e->state & Gtk::AccelGroup::get_default_mod_mask()) == 0))
     {
         bool new_tab = (e->state & GDK_SHIFT_MASK) == GDK_SHIFT_MASK;
         if (new_tab || m_Notebook->get_n_pages() == 0)
