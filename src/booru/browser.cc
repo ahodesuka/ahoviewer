@@ -307,13 +307,13 @@ void Browser::on_imagelist_changed(const std::shared_ptr<AhoViewer::Image> &imag
         {
             ss << "Downloading " << readable_file_size(c) << " / " << readable_file_size(t) << " @ "
                << readable_file_size(speed) << "/s";
-            m_StatusBar->set_progress(c / t, StatusBar::Priority::NORMAL, 2);
+            m_StatusBar->set_progress(c / t, StatusBar::Priority::NORMAL, c == t ? 2 : 0);
         }
         else
         {
              ss << "Downloading " << readable_file_size(c) << " / ?? @ "
                 << readable_file_size(speed) << "/s";
         }
-        m_StatusBar->set_message(ss.str(), StatusBar::Priority::NORMAL, 2);
+        m_StatusBar->set_message(ss.str(), StatusBar::Priority::NORMAL, c == t ? 2 : 0);
     });
 }
