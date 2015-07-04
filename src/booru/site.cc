@@ -40,7 +40,7 @@ Site::Type Site::get_type_from_url(const std::string &url)
     for (const Type &type : { Type::GELBOORU, Type::DANBOORU })
     {
         std::string uri(RequestURI.at(type));
-        std::string s(url + uri.substr(0, uri.find("%")));
+        std::string s(url + uri.substr(0, uri.find("?")));
 
         curler.set_url(s);
         if (curler.perform())
