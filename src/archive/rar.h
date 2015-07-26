@@ -1,8 +1,15 @@
 #ifndef _RAR_H_
 #define _RAR_H_
 
-#include <libunrar/raros.hpp>
+#if defined(__linux__) || defined(_APPLE)
+  #define _UNIX
+#endif
+
+#if defined(HAVE_LIBUNRAR_DLL_HPP)
 #include <libunrar/dll.hpp>
+#elif defined(HAVE_UNRAR_DLL_HPP)
+#include <unrar/dll.hpp>
+#endif
 
 #include "archive.h"
 

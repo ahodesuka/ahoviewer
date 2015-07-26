@@ -48,13 +48,13 @@ AC_ARG_ENABLE([gst],
     [enable_gst=auto]
 )
 
-if test x$enable_gst != xno; then
+if test x"$enable_gst" != xno; then
     PKG_CHECK_MODULES([gstreamer], [gstreamer-1.0 gstreamer-video-1.0 gstreamer-gl-1.0],
         [
             AC_DEFINE(HAVE_GSTREAMER, 1, [Define to have webm support through GStreamer])
         ],
         [
-            if test x$enable_gst = xyes; then
+            if test x"$enable_gst" = xyes; then
                 AC_MSG_ERROR([gstreamer not found, but --enable-gst=yes])
             fi
         ]
@@ -69,25 +69,33 @@ AC_ARG_ENABLE([rar],
     [enable_rar=auto]
 )
 
-if test x$enable_rar != xno; then
-    AC_CHECK_HEADER([libunrar/rar.hpp],,
+if test x"$enable_rar" != xno; then
+    AC_CHECK_HEADERS([unrar/dll.hpp libunrar/dll.hpp], [break], [],
         [
-            if test x$enable_rar = xyes; then
-                AC_MSG_ERROR([libunrar/rar.hpp not found, but --enable-rar=yes])
-            fi
+        #if defined(__linux__) || defined(_APPLE)
+          #define _UNIX
+        #endif
         ]
     )
-    AC_CHECK_LIB([unrar], [RARGetDllVersion],
-        [
-            AC_DEFINE(HAVE_LIBUNRAR, 1, [Define to have rar archive support])
-            libunrar_LIBS="-lunrar"
-        ],
-        [
-            if test x$enable_rar = xyes; then
-                AC_MSG_ERROR([libunrar not found, but --enable-rar=yes])
-            fi
-        ]
-    )
+    if test x"$ac_cv_header_unrar_dll_hpp" != xyes -a x"$ac_cv_header_libunrar_dll_hpp" != xyes
+    then
+        if test x"$enable_rar" = xyes
+        then
+            AC_MSG_ERROR([libunrar's dll.hpp not found, but --enable-rar=yes])
+        fi
+    else
+        AC_CHECK_LIB([unrar], [RARGetDllVersion],
+            [
+                AC_DEFINE(HAVE_LIBUNRAR, 1, [Define to have rar archive support])
+                libunrar_LIBS="-lunrar"
+            ],
+            [
+                if test x"$enable_rar" = xyes; then
+                    AC_MSG_ERROR([libunrar not found, but --enable-rar=yes])
+                fi
+            ]
+        )
+    fi
 fi
 
 AC_ARG_ENABLE([zip],
@@ -98,13 +106,13 @@ AC_ARG_ENABLE([zip],
     [enable_zip=auto]
 )
 
-if test x$enable_zip != xno; then
+if test x"$enable_zip" != xno; then
     PKG_CHECK_MODULES([libzip], [libzip],
         [
             AC_DEFINE(HAVE_LIBZIP, 1, [Define to have zip archive support])
         ],
         [
-            if test x$enable_zip = xyes; then
+            if test x"$enable_zip" = xyes; then
                 AC_MSG_ERROR([libzip not found, but --enable-zip=yes])
             fi
         ]
