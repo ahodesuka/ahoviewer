@@ -284,7 +284,7 @@ void SettingsManager::set_keybinding(const std::string &group, const std::string
     if (!keys.exists(group))
         keys.add(group, Setting::TypeGroup);
 
-    set(name, value, Setting::TypeString, keys[group]);
+    set(name, value, Setting::TypeString, keys[group.c_str()]);
     m_Keybindings[group][name] = value;
 }
 
@@ -294,8 +294,8 @@ std::string SettingsManager::reset_keybinding(const std::string &group, const st
     {
         Setting &keys = Config.lookup("Keybindings");
 
-        if (keys.exists(group) && keys[group].exists(name))
-            keys[group].remove(name);
+        if (keys.exists(group) && keys[group.c_str()].exists(name))
+            keys[group.c_str()].remove(name);
     }
 
     return m_Keybindings[group][name] = DefaultKeybindings.at(group).at(name);
@@ -358,9 +358,9 @@ void SettingsManager::load_keybindings()
             {
                 for (const std::pair<std::string, std::string> &j : i.second)
                 {
-                    if (keys[i.first].exists(j.first))
+                    if (keys[i.first.c_str()].exists(j.first))
                     {
-                        m_Keybindings[i.first][j.first] = std::string(keys[i.first][j.first].c_str());
+                        m_Keybindings[i.first][j.first] = std::string(keys[i.first.c_str()][j.first.c_str()].c_str());
                     }
                     else
                     {

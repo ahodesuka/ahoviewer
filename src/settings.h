@@ -94,7 +94,7 @@ namespace AhoViewer
             if (!s.exists(key))
                 s.add(key, type);
 
-            s[key] = value;
+            s[key.c_str()] = value;
         }
     };
 
