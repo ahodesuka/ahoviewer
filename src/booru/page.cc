@@ -218,6 +218,7 @@ void Page::get_posts()
         }
         else
         {
+            m_NumPosts = 0;
             std::cerr << "Error while downloading posts on " << m_Curler.get_url() << std::endl
                       << "  " << m_Curler.get_error() << std::endl;
         }
