@@ -1,5 +1,7 @@
 #!/bin/sh
 
+[ -f "VERSION" ] && OLD_VERSION=$(cat VERSION)
+
 if [ -n "$1" ]
 then
     VERSION="$1"
@@ -18,10 +20,7 @@ else
     VERSION="UNKNOWN"
 fi
 
-cat <<EOF > src/version.h
-#ifndef _VERSION_
-#define _VERSION_ "$VERSION"
-#endif
-EOF
+[ -d '.git' -a $VERSION != $OLD_VERSION -a $VERSION != "UNKNOWN" ] &&
+    sed -i "s/\(\(PACKAGE_\)\?VERSION\) \".*\"/\1 \"$VERSION\"/" src/config.h
 
 echo $VERSION

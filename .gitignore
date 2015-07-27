@@ -20,6 +20,5 @@ src/**/.dirstamp
 src/ahoviewer
 src/file2string
 src/ui.cc
-src/version.h
 stamp-h1
 vgdump

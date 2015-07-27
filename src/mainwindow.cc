@@ -7,7 +7,6 @@ using namespace AhoViewer;
 #include "config.h"
 #include "settings.h"
 #include "tempdir.h"
-#include "version.h"
 
 MainWindow::MainWindow(BaseObjectType *cobj, const Glib::RefPtr<Gtk::Builder> &bldr)
   : Gtk::Window(cobj),
@@ -89,7 +88,7 @@ MainWindow::MainWindow(BaseObjectType *cobj, const Glib::RefPtr<Gtk::Builder> &b
     catch (...) { }
 
     m_AboutDialog->set_name(PACKAGE);
-    m_AboutDialog->set_version(_VERSION_);
+    m_AboutDialog->set_version(PACKAGE_VERSION);
     m_AboutDialog->set_copyright("Copyright \302\251 2013-2015 ahoka");
     m_AboutDialog->set_website(PACKAGE_URL);
     // }}}
