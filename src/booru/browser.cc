@@ -46,6 +46,8 @@ Browser::Browser(BaseObjectType *cobj, const Glib::RefPtr<Gtk::Builder> &bldr)
 
     m_Notebook->signal_switch_page().connect(sigc::mem_fun(*this, &Browser::on_switch_page));
     m_Notebook->signal_page_removed().connect(sigc::mem_fun(*this, &Browser::on_page_removed));
+
+    set_focus_chain(std::vector<Gtk::Widget*>{ m_TagEntry });
 }
 
 std::vector<Page*> Browser::get_pages() const
