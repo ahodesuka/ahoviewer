@@ -84,7 +84,7 @@ namespace AhoViewer
                                       m_SaveImagesAction;
 
             sigc::connection m_ComboChangedConn,
-                             m_NoResultsConn,
+                             m_DownloadErrorConn,
                              m_ImageListConn,
                              m_ImageProgConn,
                              m_SaveProgConn;

@@ -253,14 +253,18 @@ bool Page::get_next_page()
  **/
 void Page::on_posts_downloaded()
 {
-    if (m_NumPosts > 0)
+    if (m_Posts.attribute("success") && !m_Posts.attribute("success").as_bool() && m_Posts.attribute("reason"))
+    {
+        m_SignalDownloadError(m_Posts.attribute("reason").value());
+    }
+    else if (m_NumPosts > 0)
     {
         reserve(m_NumPosts);
         m_ImageList->load(m_Posts, this);
     }
     else if (m_Page == 1)
     {
-        m_SignalNoResults();
+        m_SignalDownloadError(_("No results found"));
     }
 
     if (m_NumPosts < static_cast<size_t>(Settings.get_int("BooruLimit")))

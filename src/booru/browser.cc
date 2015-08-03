@@ -245,14 +245,10 @@ void Browser::on_switch_page(void*, guint)
 {
     Page *page = get_active_page();
 
-    m_NoResultsConn.disconnect();
-    m_NoResultsConn = page->signal_no_results().connect([ this, page ]()
+    m_DownloadErrorConn.disconnect();
+    m_DownloadErrorConn = page->signal_no_results().connect([ this ](const std::string msg)
     {
-        std::ostringstream ss;
-        ss << "No results found"
-           << (!page->get_tags().empty() ? " for '" + page->get_tags() + "'" : "")
-           << " on " << page->get_site()->get_name();
-        m_StatusBar->set_message(ss.str());
+        m_StatusBar->set_message(msg);
     });
 
     m_ImageListConn.disconnect();

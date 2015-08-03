@@ -19,7 +19,7 @@ namespace AhoViewer
         {
         public:
             typedef sigc::signal<void> SignalClosedType;
-            typedef sigc::signal<void> SignalNoResultsType;
+            typedef sigc::signal<void, const std::string> SignalDownloadErrorType;
             typedef sigc::signal<void, size_t, size_t> SignalSaveProgressType;
 
             Page();
@@ -40,7 +40,7 @@ namespace AhoViewer
             bool is_saving() const { return m_Saving; }
 
             SignalClosedType signal_closed() const { return m_SignalClosed; }
-            SignalNoResultsType signal_no_results() const { return m_SignalNoResults; }
+            SignalDownloadErrorType signal_no_results() const { return m_SignalDownloadError; }
             SignalSaveProgressType signal_save_progress() const { return m_SignalSaveProgress; }
         private:
             void cancel_save();
@@ -77,7 +77,7 @@ namespace AhoViewer
             sigc::connection m_GetNextPageConn;
 
             SignalClosedType m_SignalClosed;
-            SignalNoResultsType m_SignalNoResults;
+            SignalDownloadErrorType m_SignalDownloadError;
             SignalSaveProgressType m_SignalSaveProgress;
         };
     }
