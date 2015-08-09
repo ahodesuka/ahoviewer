@@ -98,11 +98,16 @@ std::string Curler::escape(const std::string &str) const
 
 bool Curler::perform()
 {
+    int retry = 0;
+
     if (m_Cancel)
         m_Cancel->reset();
 
     clear();
-    m_Response = curl_easy_perform(m_EasyHandle);
+
+    do {
+        m_Response = curl_easy_perform(m_EasyHandle);
+    } while (m_Response == CURLE_OPERATION_TIMEDOUT && ++retry <= 5);
 
     return m_Response == CURLE_OK ||
            m_Response == CURLE_ABORTED_BY_CALLBACK ||
