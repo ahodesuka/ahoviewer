@@ -112,7 +112,7 @@ namespace AhoViewer
                          m_WindowHeight,
                          m_LayoutWidth,
                          m_LayoutHeight;
-        bool m_FirstDraw, m_RedrawQueued, m_HideScrollbars, m_ZoomScroll;
+        bool m_FirstDraw, m_RedrawQueued, m_Loading, m_HideScrollbars, m_ZoomScroll;
         ZoomMode m_ZoomMode;
         uint32_t m_ZoomPercent;
         double m_PressX, m_PreviousX,

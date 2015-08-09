@@ -98,7 +98,7 @@ ImageBox::ImageBox(BaseObjectType *cobj, const Glib::RefPtr<Gtk::Builder> &bldr)
 
 void ImageBox::queue_draw_image(const bool scroll)
 {
-    if (!get_realized() || !m_Image || (m_RedrawQueued && !(scroll || m_FirstDraw)))
+    if (!get_realized() || !m_Image || (m_RedrawQueued && !(scroll || m_Loading)))
         return;
 
     m_DrawConn.disconnect();
@@ -120,7 +120,7 @@ void ImageBox::set_image(const std::shared_ptr<Image> &image)
 #endif // HAVE_GSTREAMER
 
     m_Image = image;
-    m_FirstDraw = true;
+    m_FirstDraw = m_Loading = true;
     queue_draw_image(true);
     m_ImageConn = m_Image->signal_pixbuf_changed().connect(
             sigc::bind(sigc::mem_fun(*this, &ImageBox::queue_draw_image), false));
@@ -383,7 +383,7 @@ void ImageBox::draw_image(bool scroll)
     m_HideScrollbars = !Settings.get_bool("ScrollbarsVisible") || Settings.get_bool("HideAll");
 
     // if the image is still loading we want to draw all requests
-    m_FirstDraw = m_Image->is_loading();
+    m_Loading = m_Image->is_loading();
 
 #ifdef HAVE_GSTREAMER
     bool start_playing = false;
@@ -489,7 +489,7 @@ void ImageBox::draw_image(bool scroll)
     }
 
     // Reset the scrollbar positions
-    if (scroll)
+    if (scroll || m_FirstDraw)
     {
         m_VAdjust->set_value(0);
         if (Settings.get_bool("MangaMode"))
@@ -501,6 +501,8 @@ void ImageBox::draw_image(bool scroll)
         {
             m_HAdjust->set_value(0);
         }
+
+        m_FirstDraw = false;
     }
     else if (m_ZoomScroll)
     {
