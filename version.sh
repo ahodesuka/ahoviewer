@@ -20,7 +20,9 @@ else
     VERSION="UNKNOWN"
 fi
 
-[ -d '.git' -a $VERSION != $OLD_VERSION -a $VERSION != "UNKNOWN" ] &&
-    sed -i "s/\(\(PACKAGE_\)\?VERSION\) \".*\"/\1 \"$VERSION\"/" src/config.h
+cat <<EOF > src/version.h
+#define AHOVIEWER_VERSION "$VERSION"
+extern const char *const ahoviewer_version;
+EOF
 
 echo $VERSION
