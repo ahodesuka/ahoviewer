@@ -154,6 +154,18 @@ void ImageBox::update_background_color()
     m_Layout->modify_bg(Gtk::STATE_NORMAL, m_BGColor);
 }
 
+void ImageBox::cursor_timeout()
+{
+    m_CursorConn.disconnect();
+    m_Layout->get_window()->set_cursor(m_LeftPtrCursor);
+
+    if (Settings.get_int("CursorHideDelay") <= 0)
+        return;
+
+    m_CursorConn = Glib::signal_timeout().connect_seconds(sigc::bind_return([ this ]()
+                { m_Layout->get_window()->set_cursor(m_BlankCursor); }, false), Settings.get_int("CursorHideDelay"));
+}
+
 void ImageBox::reset_slideshow()
 {
     if (m_SlideshowConn)
@@ -687,14 +699,4 @@ bool ImageBox::advance_slideshow()
     scroll(0, 300, false, true);
 
     return true;
-}
-
-void ImageBox::cursor_timeout()
-{
-    // TODO: Maybe put the time in the settings,
-    // with 0 = never hide cursor
-    m_CursorConn.disconnect();
-    m_Layout->get_window()->set_cursor(m_LeftPtrCursor);
-    m_CursorConn = Glib::signal_timeout().connect(sigc::bind_return([ this ]()
-                { m_Layout->get_window()->set_cursor(m_BlankCursor); }, false), 2000);
 }

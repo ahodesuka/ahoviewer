@@ -34,6 +34,7 @@ SettingsManager::SettingsManager()
         { "ArchiveIndex",     -1  },
         { "CacheSize",        2   },
         { "SlideshowDelay",   5   },
+        { "CursorHideDelay",  2   },
         { "TagViewPosition",  560 },
         { "SelectedBooru",    0   },
         { "BooruLimit",       50  },

@@ -32,6 +32,7 @@ namespace AhoViewer
         void set_image(const std::shared_ptr<Image> &image);
         void clear_image();
         void update_background_color();
+        void cursor_timeout();
 
         bool is_slideshow_running() { return !!m_SlideshowConn; }
         void reset_slideshow();
@@ -69,7 +70,6 @@ namespace AhoViewer
         bool update_smooth_scroll();
         void zoom(const uint32_t percent);
         bool advance_slideshow();
-        void cursor_timeout();
 
         static const double SmoothScrollStep;
 

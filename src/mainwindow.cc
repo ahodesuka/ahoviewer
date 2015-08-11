@@ -69,6 +69,8 @@ MainWindow::MainWindow(BaseObjectType *cobj, const Glib::RefPtr<Gtk::Builder> &b
 
     m_PreferencesDialog->signal_bg_color_set().connect(
             sigc::mem_fun(m_ImageBox, &ImageBox::update_background_color));
+    m_PreferencesDialog->signal_cursor_hide_delay_changed().connect(
+            sigc::mem_fun(m_ImageBox, &ImageBox::cursor_timeout));
     m_PreferencesDialog->signal_cache_size_changed().connect(
             sigc::mem_fun(*this, &MainWindow::on_cache_size_changed));
     m_PreferencesDialog->signal_slideshow_delay_changed().connect(

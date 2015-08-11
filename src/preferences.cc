@@ -5,6 +5,13 @@ using namespace AhoViewer;
 
 #include "settings.h"
 
+const std::map<std::string, sigc::signal<void>*> PreferencesDialog::SpinSignals =
+{
+    { "CursorHideDelay",  new sigc::signal<void>() },
+    { "CacheSize",        new sigc::signal<void>() },
+    { "SlideshowDelay",   new sigc::signal<void>() },
+};
+
 PreferencesDialog::PreferencesDialog(BaseObjectType *cobj, const Glib::RefPtr<Gtk::Builder> &bldr)
   : Gtk::Dialog(cobj)
 {
@@ -57,6 +64,7 @@ PreferencesDialog::PreferencesDialog(BaseObjectType *cobj, const Glib::RefPtr<Gt
     // {{{ Spin Buttons
     std::vector<std::string> spinSettings =
     {
+        "CursorHideDelay",
         "CacheSize",
         "SlideshowDelay",
         "BooruLimit",
@@ -68,14 +76,13 @@ PreferencesDialog::PreferencesDialog(BaseObjectType *cobj, const Glib::RefPtr<Gt
         bldr->get_widget(s, spinButton);
         spinButton->set_value(Settings.get_int(s));
         spinButton->signal_value_changed().connect([ this, s, spinButton ]()
-                { Settings.set(s, spinButton->get_value_as_int()); });
+        {
+            Settings.set(s, spinButton->get_value_as_int());
 
-        if (s == "CacheSize")
-            spinButton->signal_value_changed().connect(
-                    sigc::mem_fun(m_SignalCacheSizeChanged, &sigc::signal<void>::emit));
-        else if (s == "SlideshowDelay")
-            spinButton->signal_value_changed().connect(
-                    sigc::mem_fun(m_SignalSlideshowDelayChanged, &sigc::signal<void>::emit));
+            if (SpinSignals.find(s) != SpinSignals.end())
+                SpinSignals.at(s)->emit();
+        });
+
     }
     // }}}
 
