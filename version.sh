@@ -20,9 +20,12 @@ else
     VERSION="UNKNOWN"
 fi
 
-cat <<EOF > src/version.h
+if [ -d ".git" -a $VERSION != $OLD_VERSION -a $VERSION != "UNKNOWN" ]
+then
+    cat <<EOF > src/version.h
 #define AHOVIEWER_VERSION "$VERSION"
 extern const char *const ahoviewer_version;
 EOF
+fi
 
 echo $VERSION
