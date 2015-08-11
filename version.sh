@@ -20,7 +20,7 @@ else
     VERSION="UNKNOWN"
 fi
 
-if [ $VERSION != $OLD_VERSION -a $VERSION != "UNKNOWN" -o ! -f "src/version.h" ]
+if [ $VERSION != $OLD_VERSION -o ! -f "src/version.h" ]
 then
     cat <<EOF > src/version.h
 #define AHOVIEWER_VERSION "$VERSION"
