@@ -588,6 +588,7 @@ void MainWindow::set_sensitives()
          booru = page && (m_BooruBrowser->get_visible() || page->get_imagelist() == m_ActiveImageList);
 
     m_ActionGroup->get_action("Close")->set_sensitive(local || booru);
+    m_ActionGroup->get_action("NewTab")->set_sensitive(m_BooruBrowser->get_visible());
     m_ActionGroup->get_action("SaveImage")->set_sensitive(booru && !page->get_imagelist()->empty());
     m_ActionGroup->get_action("SaveImages")->set_sensitive(booru && !page->get_imagelist()->empty());
 }
@@ -860,6 +861,7 @@ void MainWindow::on_toggle_booru_browser()
     }
 
     update_widgets_visibility();
+    set_sensitives();
 }
 
 void MainWindow::on_toggle_thumbnail_bar()
@@ -884,6 +886,7 @@ void MainWindow::on_toggle_thumbnail_bar()
     }
 
     update_widgets_visibility();
+    set_sensitives();
 }
 
 void MainWindow::on_toggle_hide_all()
