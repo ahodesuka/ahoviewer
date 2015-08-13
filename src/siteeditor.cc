@@ -111,8 +111,12 @@ void SiteEditor::on_url_edited(const std::string &p, const std::string &text)
 {
     Gtk::TreePath path(p);
     Gtk::TreeIter iter = m_Model->get_iter(path);
+    std::string url(text);
 
-    iter->set_value(m_Columns.url, text);
+    if (url.back() == '/')
+        url = text.substr(0, text.size() - 1);
+
+    iter->set_value(m_Columns.url, url);
     add_edit_site(iter);
 }
 
