@@ -71,7 +71,7 @@ namespace AhoViewer
         void zoom(const uint32_t percent);
         bool advance_slideshow();
 
-        static const double SmoothScrollStep;
+        static constexpr double SmoothScrollStep = 1000.0 / 60.0;
 
         Gtk::Layout *m_Layout;
         Gtk::HScrollbar *m_HScroll;

@@ -61,7 +61,7 @@ namespace AhoViewer
                                                 int &oWidth, int &oHeight) const;
         bool is_pixbuf_interesting(Glib::RefPtr<Gdk::Pixbuf> &pixbuf) const;
 
-        static double constexpr BoringImageVariance = 256.0;
+        static constexpr double BoringImageVariance = 256.0;
 #endif // HAVE_GSTREAMER
         void create_save_thumbnail();
         void save_thumbnail(Glib::RefPtr<Gdk::Pixbuf> &pixbuf,

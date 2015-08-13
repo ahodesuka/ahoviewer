@@ -42,8 +42,6 @@ gboolean ImageBox::bus_cb(GstBus*, GstMessage *message, void *userp)
 }
 #endif // HAVE_GSTREAMER
 
-const double ImageBox::SmoothScrollStep = 1000.0 / 60.0;
-
 ImageBox::ImageBox(BaseObjectType *cobj, const Glib::RefPtr<Gtk::Builder> &bldr)
   : Gtk::EventBox(cobj),
     m_LeftPtrCursor(Gdk::LEFT_PTR),
