@@ -160,6 +160,12 @@ Glib::RefPtr<Gdk::Pixbuf> Site::get_icon_pixbuf(const bool update)
                     }
                 }
             });
+
+            if (update)
+            {
+                m_IconCurlerThread->join();
+                m_IconCurlerThread = nullptr;
+            }
         }
     }
 

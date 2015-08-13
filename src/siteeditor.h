@@ -149,7 +149,6 @@ namespace AhoViewer
         Glib::Dispatcher m_SignalSiteChecked;
 
         SignalEditedType m_SignalEdited;
-        sigc::connection m_IconDownloadedConn;
     };
 }
 
