@@ -122,7 +122,7 @@ void Browser::on_save_image()
     {
         std::string path = dialog.get_filename();
         m_LastSavePath = Glib::path_get_dirname(path);
-        image->save(path);
+        get_active_page()->save_image(path, image);
     }
 }
 

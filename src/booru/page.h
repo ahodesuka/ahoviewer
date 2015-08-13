@@ -28,6 +28,7 @@ namespace AhoViewer
             virtual void set_selected(const size_t index);
 
             void search(std::shared_ptr<Site> site, const std::string &tags);
+            void save_image(const std::string &path, const std::shared_ptr<Image> &img);
             void save_images(const std::string &path);
             bool ask_cancel_save();
 

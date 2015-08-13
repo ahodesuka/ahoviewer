@@ -121,6 +121,18 @@ void Page::search(std::shared_ptr<Site> site, const std::string &tags)
     get_posts();
 }
 
+void Page::save_image(const std::string &path, const std::shared_ptr<Image> &img)
+{
+    m_SaveCancel->reset();
+
+    m_Saving            = true;
+    m_SaveImagesThread  = Glib::Threads::Thread::create([ this, path, img ]()
+    {
+        img->save(path);
+        m_Saving = false;
+    });
+}
+
 void Page::save_images(const std::string &path)
 {
     m_SaveCancel->reset();
