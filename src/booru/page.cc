@@ -8,8 +8,9 @@ using namespace AhoViewer::Booru;
 #include "image.h"
 #include "settings.h"
 
-Page::Page()
+Page::Page(Gtk::Menu *menu)
   : Gtk::ScrolledWindow(),
+    m_PopupMenu(menu),
     m_ImageFetcher(new ImageFetcher()),
     m_IconView(Gtk::manage(new Gtk::IconView())),
     m_Tab(Gtk::manage(new Gtk::HBox())),
@@ -56,6 +57,7 @@ Page::Page()
     m_IconView->set_model(m_ListStore);
     m_IconView->set_selection_mode(Gtk::SELECTION_BROWSE);
     m_IconView->signal_selection_changed().connect(sigc::mem_fun(*this, &Page::on_selection_changed));
+    m_IconView->signal_button_press_event().connect(sigc::mem_fun(*this, &Page::on_button_press_event));
 
     // Workaround to have fully centered pixbufs
     Gtk::CellRendererPixbuf *cell = Gtk::manage(new Gtk::CellRendererPixbuf());
@@ -318,4 +320,24 @@ void Page::on_value_changed()
 
     if (value >= limit)
         get_next_page();
+}
+
+bool Page::on_button_press_event(GdkEventButton *e)
+{
+    if (e->type == GDK_BUTTON_PRESS && e->button == 3)
+    {
+        Gtk::TreePath path = m_IconView->get_path_at_pos(e->x, e->y);
+
+        if (path)
+        {
+            m_IconView->select_path(path);
+            m_IconView->scroll_to_path(path, false, 0, 0);
+
+            m_PopupMenu->popup(e->button, e->time);
+
+            return true;
+        }
+    }
+
+    return false;
 }

@@ -27,6 +27,7 @@ namespace AhoViewer
 
             void set_url(const std::string &url);
             void set_no_body(const bool n = true);
+            void set_follow_location(const bool n = true);
             std::string escape(const std::string &str) const;
             bool perform();
 
@@ -42,6 +43,7 @@ namespace AhoViewer
             size_t get_data_size() const { return m_Buffer.size(); }
 
             std::string get_error() const  { return curl_easy_strerror(m_Response); }
+            long get_response_code() const;
             time_point_t get_start_time() const { return m_StartTime; }
 
             void cancel() { m_Cancel->cancel(); }

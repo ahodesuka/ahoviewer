@@ -22,7 +22,7 @@ namespace AhoViewer
             typedef sigc::signal<void, const std::string> SignalDownloadErrorType;
             typedef sigc::signal<void, size_t, size_t> SignalSaveProgressType;
 
-            Page();
+            Page(Gtk::Menu *menu);
             virtual ~Page();
 
             virtual void set_selected(const size_t index);
@@ -50,7 +50,9 @@ namespace AhoViewer
             void on_posts_downloaded();
             void on_selection_changed();
             void on_value_changed();
+            bool on_button_press_event(GdkEventButton *e);
 
+            Gtk::Menu *m_PopupMenu;
             ImageFetcher *m_ImageFetcher;
             Gtk::IconView *m_IconView;
             Gtk::HBox *m_Tab;

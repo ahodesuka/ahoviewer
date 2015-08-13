@@ -177,7 +177,9 @@ void ImageList::load(const pugi::xml_node &posts, Booru::Page *const page)
         if (imageUrl[0] == '/')
             imageUrl = page->get_site()->get_url() + imageUrl;
 
-        m_Images.push_back(std::make_shared<Booru::Image>(imagePath, imageUrl, thumbPath, thumbUrl, tags, page));
+        std::string postUrl = page->get_site()->get_post_url(post.attribute("id").value());
+
+        m_Images.push_back(std::make_shared<Booru::Image>(imagePath, imageUrl, thumbPath, thumbUrl, postUrl, tags, page));
     }
 
     m_ThumbnailThread = Glib::Threads::Thread::create(sigc::mem_fun(*this, &ImageList::load_thumbnails));

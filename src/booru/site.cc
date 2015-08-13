@@ -12,6 +12,15 @@ const std::map<Site::Type, std::string> Site::RequestURI =
 {
     { Type::DANBOORU, "/post/index.xml?page=%1&limit=%2&tags=%3" },
     { Type::GELBOORU, "/index.php?page=dapi&s=post&q=index&pid=%1&limit=%2&tags=%3" },
+    { Type::MOEBOORU, "/post.xml?page=%1&limit=%2&tags=%3" },
+};
+
+// 1: id
+const std::map<Site::Type, std::string> Site::PostURI =
+{
+    { Type::DANBOORU, "/posts/%1" },
+    { Type::GELBOORU, "/index.php?page=post&s=view&id=%1" },
+    { Type::MOEBOORU, "/post/show/%1" },
 };
 
 std::shared_ptr<Site> Site::create(const std::string &name, const std::string &url)
@@ -36,14 +45,21 @@ Site::Type Site::get_type_from_url(const std::string &url)
 {
     Curler curler;
     curler.set_no_body();
+    curler.set_follow_location(false);
 
-    for (const Type &type : { Type::GELBOORU, Type::DANBOORU })
+    for (const Type &type : { Type::GELBOORU, Type::MOEBOORU, Type::DANBOORU })
     {
         std::string uri(RequestURI.at(type));
-        std::string s(url + uri.substr(0, uri.find("?")));
+
+        if (type == Type::GELBOORU)
+            uri = uri.substr(0, uri.find("&pid"));
+        else
+            uri = uri.substr(0, uri.find("?"));
+
+        std::string s(url + uri);
 
         curler.set_url(s);
-        if (curler.perform())
+        if (curler.perform() && curler.get_response_code() == 200)
             return type;
     }
 
@@ -86,6 +102,11 @@ std::string Site::get_posts_url(const std::string &tags, size_t page)
     return Glib::ustring::compose(m_Url + RequestURI.at(m_Type),
                                   (m_Type == Type::GELBOORU ? page - 1 : page),
                                   Settings.get_int("BooruLimit"), m_Curler.escape(tags));
+}
+
+std::string Site::get_post_url(const std::string &id)
+{
+    return Glib::ustring::compose(m_Url + PostURI.at(m_Type), id);
 }
 
 void Site::add_tags(const std::set<std::string> &tags)

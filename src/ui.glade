@@ -1535,6 +1535,13 @@
         <separator/>
         <menuitem action="Quit"/>
       </popup>
+
+      <popup name="BooruPopupMenu">
+        <menuitem action="SaveImage"/>
+        <separator/>
+        <menuitem action="ViewPost"/>
+        <menuitem action="CopyImageURL"/>
+      </popup>
     </ui>
   </object>
 </interface>

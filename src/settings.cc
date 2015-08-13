@@ -44,8 +44,8 @@ SettingsManager::SettingsManager()
     {
         std::make_tuple("Gelbooru",   "http://gelbooru.com",        Booru::Site::Type::GELBOORU),
         std::make_tuple("Danbooru",   "http://danbooru.donmai.us",  Booru::Site::Type::DANBOORU),
-        std::make_tuple("Konachan",   "http://konachan.com",        Booru::Site::Type::DANBOORU),
-        std::make_tuple("yande.re",   "https://yande.re",           Booru::Site::Type::DANBOORU),
+        std::make_tuple("Konachan",   "http://konachan.com",        Booru::Site::Type::MOEBOORU),
+        std::make_tuple("yande.re",   "https://yande.re",           Booru::Site::Type::MOEBOORU),
         std::make_tuple("Safebooru",  "http://safebooru.org",       Booru::Site::Type::GELBOORU),
     }),
     DefaultKeybindings(
@@ -114,6 +114,8 @@ SettingsManager::SettingsManager()
                 { "NewTab",              "<Primary>t"        },
                 { "SaveImage",           "<Primary>s"        },
                 { "SaveImages",          "<Primary><Shift>s" },
+                { "ViewPost",            "<Primary><Shift>o" },
+                { "CopyImageURL",        "y"                 },
             }
         }
     }),

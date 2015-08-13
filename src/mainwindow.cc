@@ -398,12 +398,22 @@ void MainWindow::create_actions()
     m_ActionGroup->add(Gtk::Action::create("NewTab", Gtk::Stock::ADD, _("New Tab"), _("New Tab")),
             Gtk::AccelKey(Settings.get_keybinding("BooruBrowser", "NewTab")),
             sigc::mem_fun(m_BooruBrowser, &Booru::Browser::on_new_tab));
-    m_ActionGroup->add(Gtk::Action::create("SaveImage", Gtk::Stock::SAVE_AS, _("Save Image"), _("Save Image")),
+    m_ActionGroup->add(Gtk::Action::create("SaveImage", Gtk::Stock::SAVE_AS,
+            _("Save Image as..."), _("Save the selected image")),
             Gtk::AccelKey(Settings.get_keybinding("BooruBrowser", "SaveImage")),
             sigc::mem_fun(m_BooruBrowser, &Booru::Browser::on_save_image));
     m_ActionGroup->add(Gtk::Action::create("SaveImages", Gtk::Stock::SAVE, _("Save Images"), _("Save Images")),
             Gtk::AccelKey(Settings.get_keybinding("BooruBrowser", "SaveImages")),
             sigc::mem_fun(m_BooruBrowser, &Booru::Browser::on_save_images));
+
+    m_ActionGroup->add(Gtk::Action::create("ViewPost", Gtk::Stock::PROPERTIES,
+            _("View Post"), _("View the selected image's post in your default web browser")),
+            Gtk::AccelKey(Settings.get_keybinding("BooruBrowser", "ViewPost")),
+            sigc::mem_fun(m_BooruBrowser, &Booru::Browser::on_view_post));
+    m_ActionGroup->add(Gtk::Action::create("CopyImageURL", Gtk::Stock::COPY,
+            _("Copy Image URL"), _("Copy the select image to your clipboard")),
+            Gtk::AccelKey(Settings.get_keybinding("BooruBrowser", "CopyImageURL")),
+            sigc::mem_fun(m_BooruBrowser, &Booru::Browser::on_copy_image_url));
     // }}}
 
     // Toggle actions {{{
@@ -591,6 +601,8 @@ void MainWindow::set_sensitives()
     m_ActionGroup->get_action("NewTab")->set_sensitive(m_BooruBrowser->get_visible());
     m_ActionGroup->get_action("SaveImage")->set_sensitive(booru && !page->get_imagelist()->empty());
     m_ActionGroup->get_action("SaveImages")->set_sensitive(booru && !page->get_imagelist()->empty());
+    m_ActionGroup->get_action("ViewPost")->set_sensitive(booru && !page->get_imagelist()->empty());
+    m_ActionGroup->get_action("CopyImageURL")->set_sensitive(booru && !page->get_imagelist()->empty());
 }
 
 void MainWindow::update_title()

@@ -86,6 +86,11 @@ void Curler::set_no_body(const bool n)
     curl_easy_setopt(m_EasyHandle, CURLOPT_NOBODY, n);
 }
 
+void Curler::set_follow_location(const bool n)
+{
+    curl_easy_setopt(m_EasyHandle, CURLOPT_FOLLOWLOCATION, n);
+}
+
 std::string Curler::escape(const std::string &str) const
 {
     char *estr = curl_easy_escape(m_EasyHandle, str.c_str(), 0);
@@ -118,6 +123,14 @@ void Curler::get_progress(double &current, double &total)
 {
     current = m_DownloadCurrent;
     total   = m_DownloadTotal;
+}
+
+long Curler::get_response_code() const
+{
+    long c;
+    curl_easy_getinfo(m_EasyHandle, CURLINFO_RESPONSE_CODE, &c);
+
+    return c;
 }
 
 void Curler::save_file(const std::string &path) const

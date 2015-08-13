@@ -41,6 +41,8 @@ namespace AhoViewer
             void on_close_tab();
             void on_save_image();
             void on_save_images();
+            void on_view_post();
+            void on_copy_image_url();
             // }}}
         protected:
             virtual void on_realize();
@@ -68,6 +70,7 @@ namespace AhoViewer
                             *m_SaveImagesButton;
             Gtk::ComboBox *m_ComboBox;
             Gtk::Notebook *m_Notebook;
+            Gtk::Menu *m_PopupMenu;
 
             ComboBoxModelColumns m_ComboColumns;
             Glib::RefPtr<Gtk::ListStore> m_ComboModel;

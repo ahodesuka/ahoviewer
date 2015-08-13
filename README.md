@@ -14,13 +14,19 @@ A GTK2 image viewer, manga reader, and booru browser.
 * libunrar `optional`
 * libzip `optional`
 
+```
+./bootstrap
+make
+sudo make install
+```
+
 ## Usage
 
-    $ ahoviewer
+    ahoviewer
 
 or
 
-    $ ahoviewer file
+    ahoviewer file[.zip|.rar|.webm|.*]
 
 #### Default Keybindings
 | Function                                  | Key             |
@@ -52,3 +58,5 @@ or
 | New Booru Browser Tab                     | Control+t       |
 | Save Booru Browser Tab                    | Control+Shift+s |
 | Save Current Booru Image                  | Control+s       |
+| Open Booru Post in Web Browser            | Control+Shift+o |
+| Copy Booru Image URL to Clipboard         | y               |

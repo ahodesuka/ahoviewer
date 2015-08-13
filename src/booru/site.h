@@ -24,6 +24,7 @@ namespace AhoViewer
             {
                 DANBOORU = 0,
                 GELBOORU,
+                MOEBOORU,
                 UNKNOWN,
             };
 
@@ -34,6 +35,7 @@ namespace AhoViewer
             static const Glib::RefPtr<Gdk::Pixbuf>& get_missing_pixbuf();
 
             std::string get_posts_url(const std::string &tags, size_t page);
+            std::string get_post_url(const std::string &id);
             void add_tags(const std::set<std::string> &tags);
 
             std::string get_name() const { return m_Name; }
@@ -55,7 +57,8 @@ namespace AhoViewer
         private:
             static Type get_type_from_url(const std::string &url);
 
-            static const std::map<Type, std::string> RequestURI;
+            static const std::map<Type, std::string> RequestURI,
+                                                     PostURI;
 
             std::string m_Name, m_Url, m_IconPath, m_TagsPath, m_Path;
             Type m_Type;

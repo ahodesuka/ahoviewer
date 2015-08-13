@@ -80,7 +80,7 @@ void Browser::update_combobox_model()
 
 void Browser::on_new_tab()
 {
-    Page *page = Gtk::manage(new Page());
+    Page *page = Gtk::manage(new Page(m_PopupMenu));
     page->signal_closed().connect([ this, page ]() { close_page(page); });
 
     int page_num = m_Notebook->append_page(*page, *page->get_tab());
@@ -164,9 +164,28 @@ void Browser::on_save_images()
     }
 }
 
+void Browser::on_view_post()
+{
+    const std::shared_ptr<Image> image =
+        std::static_pointer_cast<Image>(get_active_page()->get_imagelist()->get_current());
+
+    Gio::AppInfo::launch_default_for_uri(image->get_post_url());
+}
+
+void Browser::on_copy_image_url()
+{
+    const std::shared_ptr<Image> image =
+        std::static_pointer_cast<Image>(get_active_page()->get_imagelist()->get_current());
+
+    Gtk::Clipboard::get()->set_text(image->get_url());
+    m_StatusBar->set_message(_("Copied image URL to clipboard"));
+}
+
 void Browser::on_realize()
 {
     Gtk::VPaned::on_realize();
+
+    m_PopupMenu = static_cast<Gtk::Menu*>(m_UIManager->get_widget("/BooruPopupMenu"));
 
     // Connect buttons to their actions
     Glib::RefPtr<Gtk::ActionGroup> actionGroup =
