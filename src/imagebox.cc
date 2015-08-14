@@ -363,6 +363,9 @@ void ImageBox::draw_image(bool scroll)
 {
     get_window()->freeze_updates();
 
+    bool hScroll = m_HScroll->get_visible(),
+         vScroll = m_VScroll->get_visible();
+
     m_HScroll->show();
     m_VScroll->show();
 
@@ -372,6 +375,9 @@ void ImageBox::draw_image(bool scroll)
     if (!m_Image || (!m_Image->is_webm() && !m_Image->get_pixbuf()) ||
         (m_Image->is_webm() && m_Image->is_loading()))
     {
+        if (!hScroll) m_HScroll->hide();
+        if (!vScroll) m_VScroll->hide();
+
         get_window()->thaw_updates();
         m_RedrawQueued = false;
         return;
