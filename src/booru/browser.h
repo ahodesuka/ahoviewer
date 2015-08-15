@@ -35,6 +35,7 @@ namespace AhoViewer
             void update_combobox_model();
 
             SignalPageChangedType signal_page_changed() const { return m_SignalPageChanged; }
+            sigc::signal<void> signal_entry_blur() const { return m_SignalEntryBlur; }
 
             // Action callbacks {{{
             void on_new_tab();
@@ -93,6 +94,7 @@ namespace AhoViewer
                              m_SaveProgConn;
 
             SignalPageChangedType m_SignalPageChanged;
+            sigc::signal<void> m_SignalEntryBlur;
         };
     }
 }

@@ -237,6 +237,10 @@ bool Browser::on_entry_key_press_event(GdkEventKey *e)
         get_active_page()->search(get_active_site(), m_TagEntry->get_text());
         m_SignalPageChanged(get_active_page());
     }
+    else if (e->keyval == GDK_Escape)
+    {
+        m_SignalEntryBlur();
+    }
 
     return false;
 }

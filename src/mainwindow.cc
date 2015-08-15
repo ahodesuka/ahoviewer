@@ -63,6 +63,8 @@ MainWindow::MainWindow(BaseObjectType *cobj, const Glib::RefPtr<Gtk::Builder> &b
             { set_active_imagelist(page ? page->get_imagelist() : m_LocalImageList); });
     m_BooruBrowser->signal_realize().connect([ this ]()
             { m_HPaned->set_position(Settings.get_int("BooruWidth")); });
+    m_BooruBrowser->signal_entry_blur().connect([ this ]()
+            { m_ImageBox->grab_focus(); });
 
     m_ImageBox->signal_slideshow_ended().connect(
             sigc::mem_fun(*this, &MainWindow::on_toggle_slideshow));
