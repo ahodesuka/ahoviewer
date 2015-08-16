@@ -17,6 +17,12 @@ int main(int argc, char **argv)
 {
     curl_global_init(CURL_GLOBAL_ALL);
 
+#ifdef __linux__
+    // Fixes issue caused by liboverlay-scrollbar
+    // see: https://bugs.launchpad.net/ubuntu/+source/overlay-scrollbar/+bug/1397814
+    setenv("LIBOVERLAY_SCROLLBAR", "0", 1);
+#endif // __linux__
+
     Gtk::Main main(argc, argv);
 #ifdef HAVE_GSTREAMER
     gst_init(&argc, &argv);
