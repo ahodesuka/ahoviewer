@@ -74,7 +74,7 @@
               </packing>
             </child>
             <child>
-              <object class="GtkVSeparator" id="vseparator1">
+              <object class="GtkVSeparator" id="ResolutionSeparator">
                 <property name="visible">True</property>
                 <property name="can_focus">False</property>
               </object>
@@ -98,7 +98,7 @@
               </packing>
             </child>
             <child>
-              <object class="GtkVSeparator" id="vseparator2">
+              <object class="GtkVSeparator" id="FilenameSeparator">
                 <property name="visible">True</property>
                 <property name="can_focus">False</property>
               </object>
@@ -113,7 +113,7 @@
               <object class="GtkLabel" id="FilenameLabel">
                 <property name="can_focus">False</property>
                 <property name="xalign">0</property>
-                <property name="ellipsize">end</property>
+                <property name="ellipsize">middle</property>
               </object>
               <packing>
                 <property name="expand">True</property>
@@ -123,31 +123,22 @@
               </packing>
             </child>
             <child>
-              <object class="GtkVSeparator" id="MessageSeparator">
+              <object class="GtkLabel" id="MessageLabel">
                 <property name="can_focus">False</property>
                 <property name="no_show_all">True</property>
+                <property name="xalign">1</property>
+                <property name="ellipsize">end</property>
               </object>
               <packing>
-                <property name="expand">False</property>
-                <property name="fill">False</property>
-                <property name="padding">2</property>
+                <property name="expand">True</property>
+                <property name="fill">True</property>
+                <property name="padding">8</property>
                 <property name="position">5</property>
               </packing>
             </child>
             <child>
-              <object class="GtkLabel" id="MessageLabel">
-                <property name="can_focus">False</property>
-                <property name="xalign">1</property>
-              </object>
-              <packing>
-                <property name="expand">False</property>
-                <property name="fill">False</property>
-                <property name="position">6</property>
-              </packing>
-            </child>
-            <child>
               <object class="GtkProgressBar" id="ProgressBar">
-                <property name="width_request">100</property>
+                <property name="width_request">80</property>
                 <property name="height_request">1</property>
                 <property name="can_focus">False</property>
                 <property name="no_show_all">True</property>
@@ -155,7 +146,7 @@
               <packing>
                 <property name="expand">False</property>
                 <property name="fill">False</property>
-                <property name="position">7</property>
+                <property name="position">6</property>
               </packing>
             </child>
           </object>
@@ -1501,16 +1492,13 @@
           <menuitem action="About"/>
         </menu>
       </menubar>
-
       <accelerator action="ScrollUp"/>
       <accelerator action="ScrollDown"/>
       <accelerator action="ScrollLeft"/>
       <accelerator action="ScrollRight"/>
-
       <accelerator action="NewTab"/>
       <accelerator action="SaveImage"/>
       <accelerator action="SaveImages"/>
-
       <popup name="PopupMenu">
         <menuitem action="NextImage"/>
         <menuitem action="PreviousImage"/>
@@ -1535,7 +1523,6 @@
         <separator/>
         <menuitem action="Quit"/>
       </popup>
-
       <popup name="BooruPopupMenu">
         <menuitem action="SaveImage"/>
         <separator/>

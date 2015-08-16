@@ -9,12 +9,12 @@ StatusBar::StatusBar(BaseObjectType *cobj, const Glib::RefPtr<Gtk::Builder> &bld
     m_MessagePriority(Priority::NORMAL),
     m_ProgressPriority(Priority::NORMAL)
 {
-    bldr->get_widget("PageInfoLabel",    m_PageInfo);
-    bldr->get_widget("ResolutionLabel",  m_Resolution);
-    bldr->get_widget("FilenameLabel",    m_Filename);
-    bldr->get_widget("MessageLabel",     m_Message);
-    bldr->get_widget("MessageSeparator", m_MessageSeparator);
-    bldr->get_widget("ProgressBar",      m_ProgressBar);
+    bldr->get_widget("PageInfoLabel",      m_PageInfo);
+    bldr->get_widget("ResolutionLabel",    m_Resolution);
+    bldr->get_widget("FilenameSeparator",  m_FilenameSeparator);
+    bldr->get_widget("FilenameLabel",      m_Filename);
+    bldr->get_widget("MessageLabel",       m_Message);
+    bldr->get_widget("ProgressBar",        m_ProgressBar);
 }
 
 void StatusBar::set_page_info(const size_t page, const size_t total)
@@ -43,8 +43,11 @@ void StatusBar::set_message(const std::string &msg, const Priority priority, con
 
     m_MessageConn.disconnect();
     m_MessagePriority = priority;
+
+    m_Filename->hide();
+
     m_Message->set_text(msg);
-    m_MessageSeparator->show();
+    m_Message->show();
 
     // Tooltip messages are manually cleared.
     if (priority != Priority::TOOLTIP && delay > 0)
@@ -85,9 +88,11 @@ void StatusBar::clear_filename()
 void StatusBar::clear_message()
 {
     m_MessageConn.disconnect();
-    m_MessageSeparator->hide();
+    m_Message->hide();
     m_Message->set_text("");
     m_MessagePriority = Priority::NORMAL;
+
+    m_Filename->show();
 }
 
 void StatusBar::clear_progress()
