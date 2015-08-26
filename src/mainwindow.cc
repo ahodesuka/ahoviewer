@@ -895,7 +895,8 @@ void MainWindow::on_toggle_booru_browser()
 
     if (bbAction->get_active())
     {
-        m_BooruBrowser->get_tag_entry()->grab_focus();
+        if (!Settings.get_bool("HideAll"))
+            m_BooruBrowser->get_tag_entry()->grab_focus();
 
         if (m_BooruBrowser->get_active_page() &&
             m_BooruBrowser->get_active_page()->get_imagelist() != m_ActiveImageList)
