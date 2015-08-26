@@ -69,6 +69,7 @@ namespace AhoViewer
                    m_SaveImagesTotal;
             std::atomic<size_t> m_SaveImagesCurrent;
             bool m_LastPage, m_Saving;
+            pugi::xml_document m_PostsDocument;
             pugi::xml_node m_Posts;
 
             Glib::RefPtr<Gio::Cancellable> m_SaveCancel;

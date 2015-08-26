@@ -225,9 +225,8 @@ void Page::get_posts()
     {
         if (m_Curler.perform())
         {
-            pugi::xml_document doc;
-            doc.load_buffer(m_Curler.get_data(), m_Curler.get_data_size());
-            m_Posts = doc.document_element();
+            m_PostsDocument.load_buffer(m_Curler.get_data(), m_Curler.get_data_size());
+            m_Posts = m_PostsDocument.document_element();
             m_NumPosts = std::distance(m_Posts.begin(), m_Posts.end());
         }
         else

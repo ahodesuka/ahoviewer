@@ -5,6 +5,11 @@ using namespace AhoViewer;
 
 #include "settings.h"
 
+// Fixes issue with winnt.h
+#ifdef DELETE
+#undef DELETE
+#endif
+
 SiteEditor::SiteEditor(BaseObjectType *cobj, const Glib::RefPtr<Gtk::Builder> &bldr)
   : Gtk::TreeView(cobj),
     m_Model(Gtk::ListStore::create(m_Columns)),

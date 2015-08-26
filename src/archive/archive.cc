@@ -42,6 +42,19 @@ const std::vector<std::string> Archive::MimeTypes =
 #endif // HAVE_LIBUNRAR
 };
 
+const std::vector<std::string> Archive::FileExtensions =
+{
+#ifdef HAVE_LIBZIP
+    "zip",
+    "cbz",
+#endif // HAVE_LIBZIP
+
+#ifdef HAVE_LIBUNRAR
+    "rar",
+    "cbr",
+#endif // HAVE_LIBUNRAR
+};
+
 bool Archive::is_valid(const std::string &path)
 {
     return get_type(path) != Type::UNKNOWN;

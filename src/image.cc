@@ -20,7 +20,7 @@ bool Image::is_webm(const std::string&)
 {
 #ifdef HAVE_GSTREAMER
     bool uncertain;
-    std::string ct       = Gio::content_type_guess(path, "", uncertain);
+    std::string ct       = Gio::content_type_guess(path, NULL, 0, uncertain);
     std::string mimeType = Gio::content_type_get_mime_type(ct);
 
     return mimeType == "video/webm";

@@ -62,7 +62,7 @@ namespace AhoViewer
         const std::string get_extracted_path() const { return m_ExtractedPath; }
 
         static const std::map<Type, const Extractor *const> Extractors;
-        static const std::vector<std::string> MimeTypes;
+        static const std::vector<std::string> MimeTypes, FileExtensions;
     private:
         static Type get_type(const std::string &path);
 

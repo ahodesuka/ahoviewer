@@ -29,6 +29,7 @@ Browser::Browser(BaseObjectType *cobj, const Glib::RefPtr<Gtk::Builder> &bldr)
     bldr->get_widget("Booru::Browser::ComboBox",          m_ComboBox);
     bldr->get_widget_derived("Booru::Browser::TagEntry",  m_TagEntry);
     bldr->get_widget_derived("Booru::Browser::TagView",   m_TagView);
+    bldr->get_widget_derived("StatusBar",                 m_StatusBar);
 
     m_TagEntry->signal_key_press_event().connect(
             sigc::mem_fun(*this, &Browser::on_entry_key_press_event), false);
@@ -200,6 +201,8 @@ void Browser::on_realize()
     able = reinterpret_cast<GtkActivatable*>(m_SaveImagesButton->gobj());
     gtk_activatable_set_related_action(able, m_SaveImagesAction->gobj());
 
+    get_window()->freeze_updates();
+
     while (Gtk::Main::events_pending())
         Gtk::Main::iteration();
 
@@ -209,6 +212,8 @@ void Browser::on_realize()
     m_MinWidth = get_allocation().get_width() + 10;
     set_size_request(std::max(Settings.get_int("BooruWidth"), m_MinWidth), -1);
     set_position(Settings.get_int("TagViewPosition"));
+
+    get_window()->thaw_updates();
 }
 
 void Browser::close_page(Page *page)

@@ -18,8 +18,9 @@ namespace AhoViewer
         MainWindow(BaseObjectType *cobj, const Glib::RefPtr<Gtk::Builder> &bldr);
         virtual ~MainWindow();
 
-        void open_file(const std::string &path, const int index = 0);
+        void open_file(const std::string &path, const int index = 0, const bool restore = false);
         void restore_last_file();
+        void get_drawable_area_size(int &w, int &h);
     protected:
         virtual void on_realize();
         virtual void on_check_resize();

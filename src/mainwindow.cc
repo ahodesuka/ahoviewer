@@ -18,6 +18,7 @@ MainWindow::MainWindow(BaseObjectType *cobj, const Glib::RefPtr<Gtk::Builder> &b
     m_HPanedMinPos(0),
     m_HPanedLastPos(0)
 {
+#ifndef _WIN32
     try
     {
         Glib::RefPtr<Gdk::Pixbuf> icon =
@@ -25,15 +26,13 @@ MainWindow::MainWindow(BaseObjectType *cobj, const Glib::RefPtr<Gtk::Builder> &b
         set_icon(icon);
     }
     catch (...) { }
+#endif // !_WIN32
 
     m_Builder->get_widget_derived("ThumbnailBar",       m_ThumbnailBar);
     m_Builder->get_widget_derived("Booru::Browser",     m_BooruBrowser);
     m_Builder->get_widget_derived("ImageBox",           m_ImageBox);
     m_Builder->get_widget_derived("StatusBar",          m_StatusBar);
     m_Builder->get_widget_derived("PreferencesDialog",  m_PreferencesDialog);
-
-    m_BooruBrowser->set_statusbar(m_StatusBar);
-    m_ImageBox->set_statusbar(m_StatusBar);
 
     m_Builder->get_widget("AboutDialog", m_AboutDialog);
     m_Builder->get_widget("MainWindow::HPaned", m_HPaned);
@@ -88,7 +87,11 @@ MainWindow::MainWindow(BaseObjectType *cobj, const Glib::RefPtr<Gtk::Builder> &b
     try
     {
         Glib::RefPtr<Gdk::Pixbuf> logo =
+#ifdef _WIN32
+            Gdk::Pixbuf::create_from_file("share/pixmaps/ahoviewer/ahoviewer-about-logo.png");
+#else
             Gdk::Pixbuf::create_from_file(DATADIR "/pixmaps/ahoviewer/ahoviewer-about-logo.png");
+#endif // _WIN32
         m_AboutDialog->set_logo(logo);
     }
     catch (...) { }
@@ -144,7 +147,7 @@ MainWindow::~MainWindow()
     delete m_PreferencesDialog;
 }
 
-void MainWindow::open_file(const std::string &path, const int index)
+void MainWindow::open_file(const std::string &path, const int index, const bool restore)
 {
     if (path.empty())
         return;
@@ -180,11 +183,17 @@ void MainWindow::open_file(const std::string &path, const int index)
         if (Settings.get_bool("StoreRecentFiles"))
             Gtk::RecentManager::get_default()->add_item(Glib::filename_to_uri(absolutePath));
 
-        Glib::RefPtr<Gtk::ToggleAction>::cast_static(m_ActionGroup->
-                get_action("ToggleThumbnailBar"))->set_active();
+        if (!restore && !Glib::RefPtr<Gtk::ToggleAction>::cast_static(m_ActionGroup->
+                    get_action("ToggleThumbnailBar"))->get_active())
+        {
+            on_toggle_thumbnail_bar();
+        }
+        else
+        {
+            update_widgets_visibility();
+        }
 
         present();
-        set_sensitives();
     }
 }
 
@@ -195,8 +204,25 @@ void MainWindow::restore_last_file()
         std::string path = Settings.get_string("LastOpenFile");
 
         if (!path.empty())
-            open_file(path, Settings.get_int("ArchiveIndex"));
+            open_file(path, Settings.get_int("ArchiveIndex"), true);
     }
+}
+
+void MainWindow::get_drawable_area_size(int &w, int &h)
+{
+    get_size(w, h);
+
+    if (m_ThumbnailBar->get_visible())
+        w -= m_ThumbnailBar->size_request().width;
+
+    if (m_BooruBrowser->get_visible())
+        w -= m_HPaned->get_position() + m_HPaned->get_handle_window()->get_width();
+
+    if (m_MenuBar->get_visible())
+        h -= m_MenuBar->size_request().height;
+
+    if (m_StatusBar->get_visible())
+        h -= m_StatusBar->size_request().height;
 }
 
 void MainWindow::on_realize()
@@ -204,8 +230,6 @@ void MainWindow::on_realize()
     Gtk::Window::on_realize();
 
     update_widgets_visibility();
-
-    set_sensitives();
 }
 
 void MainWindow::on_check_resize()
@@ -526,6 +550,9 @@ void MainWindow::create_actions()
     for (const std::string &mimeType : Archive::MimeTypes)
         filter.add_mime_type(mimeType);
 
+    for (const std::string &ext : Archive::FileExtensions)
+        filter.add_pattern("*." + ext);
+
 #ifdef HAVE_GSTREAMER
     filter.add_mime_type("video/webm");
 #endif // HAVE_GSTREAMER
@@ -554,9 +581,11 @@ void MainWindow::update_widgets_visibility()
     m_MenuBar->set_visible(!hideAll && Settings.get_bool("MenuBarVisible"));
     m_StatusBar->set_visible(!hideAll && Settings.get_bool("StatusBarVisible"));
     m_BooruBrowser->set_visible(!hideAll && Settings.get_bool("BooruBrowserVisible"));
-    m_ThumbnailBar->set_visible(!hideAll && Settings.get_bool("ThumbnailBarVisible") && !m_BooruBrowser->get_visible());
+    m_ThumbnailBar->set_visible(!hideAll && Settings.get_bool("ThumbnailBarVisible") &&
+                                !m_BooruBrowser->get_visible() && !m_LocalImageList->empty());
 
     m_ImageBox->queue_draw_image();
+    set_sensitives();
 }
 
 void MainWindow::set_sensitives()
@@ -703,6 +732,12 @@ void MainWindow::on_open_file_dialog()
         archiveFilter.add_mime_type(mimeType);
     }
 
+    for (const std::string &ext : Archive::FileExtensions)
+    {
+        filter.add_pattern("*." + ext);
+        archiveFilter.add_pattern("*." + ext);
+    }
+
     dialog.add_filter(filter);
     dialog.add_filter(imageFilter);
     dialog.add_filter(archiveFilter);
@@ -742,8 +777,8 @@ void MainWindow::on_close()
         }
         else
         {
-            set_sensitives();
             update_title();
+            update_widgets_visibility();
         }
     }
     else
@@ -875,7 +910,6 @@ void MainWindow::on_toggle_booru_browser()
     }
 
     update_widgets_visibility();
-    set_sensitives();
 }
 
 void MainWindow::on_toggle_thumbnail_bar()
@@ -900,7 +934,6 @@ void MainWindow::on_toggle_thumbnail_bar()
     }
 
     update_widgets_visibility();
-    set_sensitives();
 }
 
 void MainWindow::on_toggle_hide_all()
@@ -909,7 +942,6 @@ void MainWindow::on_toggle_hide_all()
         Glib::RefPtr<Gtk::ToggleAction>::cast_static(m_ActionGroup->get_action("ToggleHideAll"));
 
     Settings.set("HideAll", a->get_active());
-    set_sensitives();
 
     update_widgets_visibility();
 }

@@ -1,7 +1,7 @@
 #ifndef _RAR_H_
 #define _RAR_H_
 
-#if defined(__linux__) || defined(_APPLE)
+#if defined(__linux__) || defined(_APPLE) || defined(__MINGW32__)
   #define _UNIX
 #endif
 

@@ -13,6 +13,7 @@
 
 namespace AhoViewer
 {
+    class MainWindow;
     class StatusBar;
     class ImageBox : public Gtk::EventBox
     {
@@ -41,8 +42,6 @@ namespace AhoViewer
         ZoomMode get_zoom_mode() const;
         void set_zoom_mode(const ZoomMode);
 
-        void set_statusbar(StatusBar *sb);
-
         sigc::signal<void> signal_slideshow_ended() const { return m_SlideshowEndedSignal; }
 
         // Action callbacks {{{
@@ -63,7 +62,6 @@ namespace AhoViewer
         virtual bool on_scroll_event(GdkEventScroll*);
     private:
         void draw_image(bool scroll);
-        bool get_scaled_size(int origWidth, int origHeight, int &w, int &h);
         bool update_animation();
         void scroll(const int x, const int y, const bool panning = false, const bool fromSlideshow = false);
         void smooth_scroll(const int, const Glib::RefPtr<Gtk::Adjustment>&);
@@ -94,6 +92,7 @@ namespace AhoViewer
 #endif // HAVE_GSTREAMER
 
         StatusBar *m_StatusBar;
+        MainWindow *m_MainWindow;
 
         Gdk::Color m_BGColor;
         const Gdk::Cursor m_LeftPtrCursor, m_FleurCursor, m_BlankCursor;
@@ -108,11 +107,7 @@ namespace AhoViewer
                          m_ScrollConn,
                          m_SlideshowConn;
 
-        std::atomic<int> m_WindowWidth,
-                         m_WindowHeight,
-                         m_LayoutWidth,
-                         m_LayoutHeight;
-        bool m_FirstDraw, m_RedrawQueued, m_Loading, m_HideScrollbars, m_ZoomScroll;
+        bool m_FirstDraw, m_RedrawQueued, m_Loading, m_ZoomScroll;
         ZoomMode m_ZoomMode;
         uint32_t m_ZoomPercent;
         double m_PressX, m_PreviousX,

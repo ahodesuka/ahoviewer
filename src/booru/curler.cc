@@ -66,6 +66,10 @@ Curler::Curler(const std::string &url)
     curl_easy_setopt(m_EasyHandle, CURLOPT_CONNECTTIMEOUT, 10);
     curl_easy_setopt(m_EasyHandle, CURLOPT_NOSIGNAL, 1);
 
+#ifdef _WIN32
+    curl_easy_setopt(m_EasyHandle, CURLOPT_CAINFO, "curl-ca-bundle.crt");
+#endif // _WIN32
+
     if (!url.empty())
         set_url(url);
 }

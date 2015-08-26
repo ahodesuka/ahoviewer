@@ -5,7 +5,7 @@
 using namespace AhoViewer;
 
 StatusBar::StatusBar(BaseObjectType *cobj, const Glib::RefPtr<Gtk::Builder> &bldr)
-  : Gtk::HBox(cobj),
+  : Gtk::Frame(cobj),
     m_MessagePriority(Priority::NORMAL),
     m_ProgressPriority(Priority::NORMAL)
 {
@@ -82,7 +82,9 @@ void StatusBar::clear_resolution()
 
 void StatusBar::clear_filename()
 {
-    m_Filename->set_text("");
+    // This whitespace is to keep the statusbar's height
+    // consistant when there is nothing shown
+    m_Filename->set_text(" ");
 }
 
 void StatusBar::clear_message()

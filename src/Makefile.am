@@ -1,11 +1,13 @@
 bin_PROGRAMS = ahoviewer
-noinst_PROGRAMS = file2string
+
+if !WINDOWS
+noinst_PROGRAM = file2string
+endif
 
 CLEANFILES = ui.cc version.h
 
-file2string_SOURCES = file2string.cc
-
 BUILT_SOURCES = version
+
 ahoviewer_SOURCES =       \
 	archive/archive.cc    \
 	archive/image.cc      \
@@ -33,8 +35,18 @@ ahoviewer_SOURCES =       \
 	ui.cc                 \
 	version.cc
 
+if WINDOWS
+ahoviewer_SOURCES += ahoviewer.rc
+SUFFIXES: .rc
+.rc.o:
+	$(target)-windres $^ -o $@
+
+ui.cc: ui.glade
+	@./file2string $< $@ ahoviewer_ui
+else
 ui.cc: ui.glade file2string
 	@./file2string $< $@ ahoviewer_ui
+endif
 
 PHONY: version
 
@@ -43,5 +55,5 @@ version:
 
 ahoviewer_CPPFLAGS = @CPPFLAGS@ @LIBCURL_CPPFLAGS@ -DDATADIR=\"$(datadir)\"
 ahoviewer_CXXFLAGS = @CXXFLAGS@ @gtkmm_CFLAGS@ @gstreamer_CFLAGS@ @libzip_CFLAGS@
-ahoviewer_LDADD = @LIBS@ @gtkmm_LIBS@ @libconfig_LIBS@ @LIBCURL@ \
-				@pugixml_LIBS@ @gstreamer_LIBS@ @libunrar_LIBS@ @libzip_LIBS@
+ahoviewer_LDADD = @LIBS@ @gtkmm_LIBS@ @libconfig_LIBS@ @pugixml_LIBS@ @LIBCURL@ \
+				@gstreamer_LIBS@ @libunrar_LIBS@ @libzip_LIBS@

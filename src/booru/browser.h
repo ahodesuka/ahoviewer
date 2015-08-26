@@ -31,7 +31,6 @@ namespace AhoViewer
             int get_min_width() const { return m_MinWidth; }
             std::string get_last_save_path() const { return m_LastSavePath; }
 
-            void set_statusbar(StatusBar *sb) { m_StatusBar = sb; }
             void update_combobox_model();
 
             SignalPageChangedType signal_page_changed() const { return m_SignalPageChanged; }

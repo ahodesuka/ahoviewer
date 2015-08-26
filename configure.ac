@@ -3,19 +3,18 @@ AC_INIT([ahoviewer], m4_esyscmd_s([./version.sh]),
         [https://github.com/ahodesuka/ahoviewer/issues],
         [ahoviewer],
         [https://github.com/ahodesuka/ahoviewer])
+AC_CANONICAL_TARGET
 AM_INIT_AUTOMAKE([foreign subdir-objects])
 AC_CONFIG_MACRO_DIR([m4])
 AC_CONFIG_SRCDIR([src/main.cc])
 AC_CONFIG_HEADER([src/config.h])
 AM_SILENT_RULES([yes])
 
-AC_SUBST(gtkmm_CFLAGS)
-AC_SUBST(gtkmm_LIBS)
+AC_SUBST(pugixml_LIBS)
 AC_SUBST(LIBCURL_CPPFLAGS)
 AC_SUBST(LIBCURL)
 AC_SUBST(gstreamer_CFLAGS)
 AC_SUBST(gstreamer_LIBS)
-AC_SUBST(pugixml_LIBS)
 AC_SUBST(libunrar_LIBS)
 AC_SUBST(libzip_CFLAGS)
 AC_SUBST(libzip_LIBS)
@@ -40,25 +39,39 @@ AC_CHECK_LIB([pugixml], [main], [pugixml_LIBS="-lpugixml"],
     [AC_MSG_ERROR([pugixml not found])]
 )
 
-AC_ARG_ENABLE([gst],
-    AS_HELP_STRING([--enable-gst],
-        [enable webm support through GStreamer @<:@default=auto@:>@]
-    ),
-    [enable_gst=$enableval],
-    [enable_gst=auto]
-)
+# Windows specific
+case "$target" in
+    *-*-cygwin* | *-*-mingw*)
+        CXXFLAGS+=" -mwindows"
+        AM_CONDITIONAL([WINDOWS], [true])
+        windows="true"
+    ;;
+    *)
+        AM_CONDITIONAL([WINDOWS], [false])
+    ;;
+esac
 
-if test x"$enable_gst" != xno; then
-    PKG_CHECK_MODULES([gstreamer], [gstreamer-1.0 gstreamer-video-1.0 gstreamer-gl-1.0],
-        [
-            AC_DEFINE(HAVE_GSTREAMER, 1, [Define to have webm support through GStreamer])
-        ],
-        [
-            if test x"$enable_gst" = xyes; then
-                AC_MSG_ERROR([gstreamer not found, but --enable-gst=yes])
-            fi
-        ]
+if test x"$windows" != xtrue; then
+    AC_ARG_ENABLE([gst],
+        AS_HELP_STRING([--enable-gst],
+            [enable webm support through GStreamer @<:@default=auto@:>@]
+        ),
+        [enable_gst=$enableval],
+        [enable_gst=auto]
     )
+
+    if test x"$enable_gst" != xno; then
+            PKG_CHECK_MODULES([gstreamer], [gstreamer-1.0 gstreamer-video-1.0 gstreamer-gl-1.0],
+                [
+                    AC_DEFINE(HAVE_GSTREAMER, 1, [Define to have webm support through GStreamer])
+                ],
+                [
+                    if test x"$enable_gst" = xyes; then
+                        AC_MSG_ERROR([gstreamer not found, but --enable-gst=yes])
+                    fi
+                ]
+            )
+    fi
 fi
 
 AC_ARG_ENABLE([rar],
@@ -72,7 +85,7 @@ AC_ARG_ENABLE([rar],
 if test x"$enable_rar" != xno; then
     AC_CHECK_HEADERS([unrar/dll.hpp libunrar/dll.hpp], [break], [],
         [
-        #if defined(__linux__) || defined(_APPLE)
+        #if defined(__linux__) || defined(_APPLE) || defined(__MINGW32__)
           #define _UNIX
         #endif
         ]
