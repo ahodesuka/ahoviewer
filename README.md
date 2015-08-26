@@ -28,6 +28,9 @@ or
 
     ahoviewer file[.zip|.rar|.webm|.*]
 
+### Screenshot
+![Booru Browser](https://camo.githubusercontent.com/ad37a28fc1f47a41d1c79409ab31e3e01a1507e9/68747470733a2f2f692e696d6775722e636f6d2f486e47656368662e676966)
+
 #### Default Keybindings
 | Function                                  | Key             |
 | ----------------------------------------- | --------------- |
