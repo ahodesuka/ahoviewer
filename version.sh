@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 
 [ -f "VERSION" ] && OLD_VERSION=$(cat VERSION)
 
