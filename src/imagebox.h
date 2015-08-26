@@ -92,7 +92,7 @@ namespace AhoViewer
 #endif // HAVE_GSTREAMER
 
         StatusBar *m_StatusBar;
-        MainWindow *m_MainWindow;
+        const MainWindow *m_MainWindow;
 
         Gdk::Color m_BGColor;
         const Gdk::Cursor m_LeftPtrCursor, m_FleurCursor, m_BlankCursor;

@@ -208,7 +208,7 @@ void MainWindow::restore_last_file()
     }
 }
 
-void MainWindow::get_drawable_area_size(int &w, int &h)
+void MainWindow::get_drawable_area_size(int &w, int &h) const
 {
     get_size(w, h);
 
