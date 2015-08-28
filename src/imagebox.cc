@@ -293,7 +293,27 @@ bool ImageBox::on_button_release_event(GdkEventButton *e)
         m_Layout->get_window()->set_cursor(m_LeftPtrCursor);
 
         if (e->button == 1 && m_PressX == m_PreviousX && m_PressY == m_PreviousY)
+        {
+            if (Settings.get_bool("SmartNavigation"))
+            {
+                int w, h, x, y;
+                m_MainWindow->get_drawable_area_size(w, h);
+
+                if (m_VScroll->get_visible())
+                    w -= m_VScroll->size_request().width;
+
+                m_MainWindow->get_position(x, y);
+
+                if (e->x_root - x < w / 2)
+                {
+                    m_PreviousAction->activate();
+                    return true;
+                }
+            }
+
             m_NextAction->activate();
+
+        }
 
         return true;
     }

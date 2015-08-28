@@ -20,6 +20,7 @@ SettingsManager::SettingsManager()
         { "SaveThumbnails",       true  },
         { "StartFullscreen",      false },
         { "StoreRecentFiles",     true  },
+        { "SmartNavigation",      false },
 
         { "BooruBrowserVisible",  true  },
         { "MenuBarVisible",       true  },
