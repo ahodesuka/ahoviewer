@@ -74,7 +74,7 @@ void KeybindingEditor::action_data_func(Gtk::CellRenderer *c, const Gtk::TreeIte
 
     for (std::string::iterator i = action.begin(); i != action.end(); ++i)
     {
-        if (i != action.begin() && isupper(*i))
+        if (i != action.begin() && isupper(*i) && !isupper(*(i-1)))
             val += ' ';
         val += *i;
     }
