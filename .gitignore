@@ -6,6 +6,8 @@ Makefile
 Makefile.in
 aclocal.m4
 autom4te.cache/
+build/
+build-mingw.sh
 bump.sh
 config.*
 configure
