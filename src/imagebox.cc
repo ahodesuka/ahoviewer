@@ -296,13 +296,15 @@ bool ImageBox::on_button_release_event(GdkEventButton *e)
         {
             if (Settings.get_bool("SmartNavigation"))
             {
-                int w, h, x, y;
+                int w, h, x, y, ww, wh;
                 m_MainWindow->get_drawable_area_size(w, h);
+                m_MainWindow->get_size(ww, wh);
 
                 if (m_VScroll->get_visible())
                     w -= m_VScroll->size_request().width;
 
                 m_MainWindow->get_position(x, y);
+                x += ww - w;
 
                 if (e->x_root - x < w / 2)
                 {
