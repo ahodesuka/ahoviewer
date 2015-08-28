@@ -334,8 +334,11 @@ void MainWindow::save_window_geometry()
     if (is_fullscreen())
         return;
 
-    int x, y, w, h, d;
-    get_window()->get_geometry(x, y, w, h, d);
+    int x, y, w, h;
+
+    get_size(w, h);
+    get_position(x, y);
+
     Settings.set_geometry(x, y, w, h);
 }
 
