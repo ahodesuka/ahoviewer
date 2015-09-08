@@ -63,7 +63,6 @@ namespace AhoViewer
         void on_last_image();
         void on_first_image();
         void on_toggle_slideshow();
-        void placeholder();
         // }}}
 
         Glib::RefPtr<Gtk::Builder> m_Builder;
