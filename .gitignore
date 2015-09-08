@@ -20,6 +20,7 @@ missing
 src/**/.deps/
 src/**/.dirstamp
 src/ahoviewer
+src/ahoviewer.exe
 src/file2string
 src/ui.cc
 src/version.h
