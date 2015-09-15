@@ -8,7 +8,6 @@ aclocal.m4
 autom4te.cache/
 build/
 build-mingw.sh
-bump.sh
 config.*
 configure
 depcomp
@@ -17,6 +16,7 @@ install-sh
 libtool
 ltmain.sh
 missing
+release.sh
 src/**/.deps/
 src/**/.dirstamp
 src/ahoviewer
