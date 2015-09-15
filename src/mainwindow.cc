@@ -631,6 +631,7 @@ void MainWindow::set_sensitives()
     bool local = !m_LocalImageList->empty() && m_LocalImageList == m_ActiveImageList,
          booru = page && (m_BooruBrowser->get_visible() || page->get_imagelist() == m_ActiveImageList);
 
+    m_ActionGroup->get_action("ToggleThumbnailBar")->set_sensitive(!m_LocalImageList->empty());
     m_ActionGroup->get_action("Close")->set_sensitive(local || booru);
     m_ActionGroup->get_action("NewTab")->set_sensitive(m_BooruBrowser->get_visible());
     m_ActionGroup->get_action("SaveImage")->set_sensitive(booru && !page->get_imagelist()->empty());
