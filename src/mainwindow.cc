@@ -183,15 +183,14 @@ void MainWindow::open_file(const std::string &path, const int index, const bool 
         if (Settings.get_bool("StoreRecentFiles"))
             Gtk::RecentManager::get_default()->add_item(Glib::filename_to_uri(absolutePath));
 
-        if (!restore && !Glib::RefPtr<Gtk::ToggleAction>::cast_static(m_ActionGroup->
-                    get_action("ToggleThumbnailBar"))->get_active())
-        {
-            on_toggle_thumbnail_bar();
-        }
+        Glib::RefPtr<Gtk::ToggleAction> tbAction =
+            Glib::RefPtr<Gtk::ToggleAction>::cast_static(m_ActionGroup->get_action("ToggleThumbnailBar"));
+
+        // Show the thumbnail bar when opening a new file
+        if (!restore && !tbAction->get_active())
+            tbAction->set_active(true);
         else
-        {
             update_widgets_visibility();
-        }
 
         present();
     }
