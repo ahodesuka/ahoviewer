@@ -440,7 +440,7 @@ void MainWindow::create_actions()
             Gtk::AccelKey(Settings.get_keybinding("BooruBrowser", "ViewPost")),
             sigc::mem_fun(m_BooruBrowser, &Booru::Browser::on_view_post));
     m_ActionGroup->add(Gtk::Action::create("CopyImageURL", Gtk::Stock::COPY,
-            _("Copy Image URL"), _("Copy the select image to your clipboard")),
+            _("Copy Image URL"), _("Copy the selected image's URL to your clipboard")),
             Gtk::AccelKey(Settings.get_keybinding("BooruBrowser", "CopyImageURL")),
             sigc::mem_fun(m_BooruBrowser, &Booru::Browser::on_copy_image_url));
     // }}}
