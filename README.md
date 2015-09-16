@@ -11,6 +11,8 @@ A GTK2 image viewer, manga reader, and booru browser.
 * pugixml
 * gstreamer-1.0 `optional`
     * gst-plugins-bad (opengl)
+    * gst-plugins-good
+    * gst-plugins-libav
 * libunrar `optional`
 * libzip `optional`
 
