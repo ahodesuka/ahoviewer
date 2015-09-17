@@ -146,6 +146,7 @@ void Image::on_write(const unsigned char *d, size_t l)
 {
     try
     {
+        Glib::Threads::Mutex::Lock lock(m_DownloadMutex);
         m_Loader->write(d, l);
     }
     catch (const Gdk::PixbufError &ex)
