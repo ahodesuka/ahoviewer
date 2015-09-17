@@ -42,7 +42,12 @@ void ImageList::clear()
     }
 
     m_Images.clear();
-    m_Widget->clear();
+
+    {
+        Glib::Threads::Mutex::Lock lock(m_ThumbnailMutex);
+        m_Widget->clear();
+    }
+
     m_Archive.reset();
 
     m_Index = 0;
