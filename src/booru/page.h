@@ -18,7 +18,7 @@ namespace AhoViewer
                      public ImageList::Widget
         {
         public:
-            typedef sigc::signal<void> SignalClosedType;
+            typedef sigc::signal<void, Page*> SignalClosedType;
             typedef sigc::signal<void, const std::string> SignalDownloadErrorType;
             typedef sigc::signal<void, size_t, size_t> SignalSaveProgressType;
 

@@ -82,7 +82,7 @@ void Browser::update_combobox_model()
 void Browser::on_new_tab()
 {
     Page *page = Gtk::manage(new Page(m_PopupMenu));
-    page->signal_closed().connect([ this, page ]() { close_page(page); });
+    page->signal_closed().connect(sigc::mem_fun(*this, &Browser::close_page));
 
     int page_num = m_Notebook->append_page(*page, *page->get_tab());
 
