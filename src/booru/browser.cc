@@ -33,7 +33,16 @@ Browser::Browser(BaseObjectType *cobj, const Glib::RefPtr<Gtk::Builder> &bldr)
 
     m_TagEntry->signal_key_press_event().connect(
             sigc::mem_fun(*this, &Browser::on_entry_key_press_event), false);
-    m_TagView->set_tag_entry(m_TagEntry);
+    m_TagView->signal_new_tab_tag().connect([ this ](const std::string tag)
+    {
+        m_IgnorePageSwitch = true;
+        on_new_tab();
+
+        m_TagEntry->set_text(tag);
+        get_active_page()->search(get_active_site(), m_TagEntry->get_text());
+        m_TagView->clear();
+        m_SignalPageChanged(get_active_page());
+    });
 
     m_ComboModel = Gtk::ListStore::create(m_ComboColumns);
     m_ComboBox->set_model(m_ComboModel);
@@ -255,7 +264,7 @@ void Browser::on_page_removed(Gtk::Widget*, guint)
     if (m_Notebook->get_n_pages() == 0)
     {
         m_TagEntry->set_text("");
-        m_TagView->clear();
+        m_TagView->show_favorite_tags();
         m_SaveImagesButton->set_sensitive(false);
 
         if (m_ImageProgConn)
@@ -302,6 +311,17 @@ void Browser::on_switch_page(void*, guint)
             index = it - sites.begin();
 
         m_ComboBox->set_active(index);
+
+        if (!page->get_imagelist()->empty())
+        {
+            std::shared_ptr<Image> bimage =
+                std::static_pointer_cast<Image>(page->get_imagelist()->get_current());
+            m_TagView->set_tags(bimage->get_tags());
+        }
+    }
+    else
+    {
+        m_TagView->show_favorite_tags();
     }
 
     m_SignalPageChanged(page);

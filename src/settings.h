@@ -6,6 +6,7 @@
 using libconfig::Setting;
 
 #include <map>
+#include <set>
 
 #include "booru/site.h"
 #include "imagebox.h"
@@ -32,6 +33,10 @@ namespace AhoViewer
 
         bool clear_keybinding(const std::string &value, std::string &group, std::string &name);
         std::string reset_keybinding(const std::string &group, const std::string &name);
+
+        void add_favorite_tag(const std::string &tag) { m_FavoriteTags.insert(tag); }
+        void remove_favorite_tag(const std::string &tag) { m_FavoriteTags.erase(tag); }
+        const std::set<std::string>& get_favorite_tags() const { return m_FavoriteTags; }
 
         bool get_geometry(int &x, int &y, int &w, int &h) const;
         void set_geometry(const int x, const int y, const int w, const int h);
@@ -69,8 +74,10 @@ namespace AhoViewer
 
         libconfig::Config Config;
 
-        const std::string Path;
-        const std::string BooruPath;
+        const std::string ConfigPath,
+                          ConfigFilePath,
+                          BooruPath,
+                          FavoriteTagsPath;
 
         const std::map<std::string, bool> DefaultBools;
         const std::map<std::string, int> DefaultInts;
@@ -82,6 +89,7 @@ namespace AhoViewer
 
         std::vector<std::shared_ptr<Booru::Site>> m_Sites;
         std::map<std::string, std::map<std::string, std::string>> m_Keybindings;
+        std::set<std::string> m_FavoriteTags;
 
         template<typename T>
         void set(const std::string &key, const T value, Setting::Type type)

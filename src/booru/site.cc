@@ -78,12 +78,11 @@ Site::Site(std::string name, std::string url, Type type)
     if (Glib::file_test(m_TagsPath, Glib::FILE_TEST_EXISTS))
     {
         std::ifstream ifs(m_TagsPath);
+
         if (ifs)
-        {
             std::copy(std::istream_iterator<std::string>(ifs),
                       std::istream_iterator<std::string>(),
                       std::inserter(m_Tags, m_Tags.begin()));
-        }
     }
 }
 

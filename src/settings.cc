@@ -1,3 +1,6 @@
+#include <glib/gstdio.h>
+
+#include <fstream>
 #include <iostream>
 
 #include "settings.h"
@@ -8,8 +11,10 @@ using namespace AhoViewer;
 SettingsManager AhoViewer::Settings;
 
 SettingsManager::SettingsManager()
-  : Path(Glib::build_filename(Glib::get_user_config_dir(), PACKAGE, PACKAGE ".cfg")),
-    BooruPath(Glib::build_filename(Glib::get_user_config_dir(), PACKAGE, "booru")),
+  : ConfigPath(Glib::build_filename(Glib::get_user_config_dir(), PACKAGE)),
+    ConfigFilePath(Glib::build_filename(ConfigPath, PACKAGE ".cfg")),
+    BooruPath(Glib::build_filename(ConfigPath, "booru")),
+    FavoriteTagsPath(Glib::build_filename(ConfigPath, "favorite-tags")),
 // Defaults {{{
     DefaultBools(
     {
@@ -124,11 +129,11 @@ SettingsManager::SettingsManager()
 // }}}
 {
     Config.setTabWidth(4); // this is very important
-    if (Glib::file_test(Path, Glib::FILE_TEST_EXISTS))
+    if (Glib::file_test(ConfigFilePath, Glib::FILE_TEST_EXISTS))
     {
         try
         {
-            Config.readFile(Path.c_str());
+            Config.readFile(ConfigFilePath.c_str());
         }
         catch (const libconfig::ParseException &ex)
         {
@@ -139,6 +144,16 @@ SettingsManager::SettingsManager()
     if (!Glib::file_test(BooruPath, Glib::FILE_TEST_EXISTS))
         g_mkdir_with_parents(BooruPath.c_str(), 0700);
 
+    if (Glib::file_test(FavoriteTagsPath, Glib::FILE_TEST_EXISTS))
+    {
+        std::ifstream ifs(FavoriteTagsPath);
+
+        if (ifs)
+            std::copy(std::istream_iterator<std::string>(ifs),
+                      std::istream_iterator<std::string>(),
+                      std::inserter(m_FavoriteTags, m_FavoriteTags.begin()));
+    }
+
     load_keybindings();
 }
 
@@ -146,11 +161,24 @@ SettingsManager::~SettingsManager()
 {
     try
     {
-        Config.writeFile(Path.c_str());
+        Config.writeFile(ConfigFilePath.c_str());
     }
     catch (const libconfig::FileIOException &ex)
     {
         std::cerr << "libconfig::Config.writeFile: " << ex.what() << std::endl;
+    }
+
+    if (!m_FavoriteTags.empty())
+    {
+        std::ofstream ofs(FavoriteTagsPath);
+
+        if (ofs)
+            std::copy(m_FavoriteTags.begin(), m_FavoriteTags.end(),
+                    std::ostream_iterator<std::string>(ofs, "\n"));
+    }
+    else if (Glib::file_test(FavoriteTagsPath, Glib::FILE_TEST_EXISTS))
+    {
+        g_unlink(FavoriteTagsPath.c_str());
     }
 }
 
