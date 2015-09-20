@@ -17,7 +17,8 @@ Image::Image(const std::string &path, const std::string &url,
     m_Tags(tags),
     m_Page(page),
     m_Curler(m_Url),
-    m_ThumbnailCurler(m_ThumbnailUrl)
+    m_ThumbnailCurler(m_ThumbnailUrl),
+    m_PixbufError(false)
 {
     if (!m_isWebM)
         m_Curler.signal_write().connect(sigc::mem_fun(*this, &Image::on_write));
@@ -72,7 +73,7 @@ const Glib::RefPtr<Gdk::Pixbuf>& Image::get_thumbnail()
 
 void Image::load_pixbuf()
 {
-    if (!m_Pixbuf)
+    if (!m_Pixbuf && !m_PixbufError)
     {
         if (Glib::file_test(m_Path, Glib::FILE_TEST_EXISTS))
         {
@@ -112,7 +113,7 @@ void Image::cancel_download()
     if (m_Loader)
     {
         try { m_Loader->close(); }
-        catch (Gdk::PixbufError) { }
+        catch (...) { }
         m_Loader.reset();
     }
 
@@ -153,6 +154,7 @@ void Image::on_write(const unsigned char *d, size_t l)
     {
         std::cerr << ex.what() << std::endl;
         cancel_download();
+        m_PixbufError = true;
     }
 }
 

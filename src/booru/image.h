@@ -53,6 +53,7 @@ namespace AhoViewer
 
             Curler m_Curler, m_ThumbnailCurler;
             Glib::RefPtr<Gdk::PixbufLoader> m_Loader;
+            bool m_PixbufError;
             Glib::Threads::RWLock m_ThumbnailLock;
 
             Glib::Threads::Cond m_DownloadCond;
