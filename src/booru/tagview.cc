@@ -176,13 +176,13 @@ void TagView::update_favorite_icons()
 
     loader = Gdk::PixbufLoader::create("svg");
     vgdata = Glib::ustring::compose(StarSVG, color);
-    loader->write((unsigned char*)vgdata.c_str(), vgdata.size());
+    loader->write(reinterpret_cast<const unsigned char*>(vgdata.c_str()), vgdata.size());
     loader->close();
     m_StarPixbuf = loader->get_pixbuf();
 
     loader = Gdk::PixbufLoader::create("svg");
     vgdata = Glib::ustring::compose(StarOutlineSVG, color);
-    loader->write((unsigned char*)vgdata.c_str(), vgdata.size());
+    loader->write(reinterpret_cast<const unsigned char*>(vgdata.c_str()), vgdata.size());
     loader->close();
     m_StarOutlinePixbuf = loader->get_pixbuf();
 
