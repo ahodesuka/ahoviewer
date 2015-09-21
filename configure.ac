@@ -10,7 +10,6 @@ AC_CONFIG_SRCDIR([src/main.cc])
 AC_CONFIG_HEADER([src/config.h])
 AM_SILENT_RULES([yes])
 
-AC_SUBST(pugixml_LIBS)
 AC_SUBST(LIBCURL_CPPFLAGS)
 AC_SUBST(LIBCURL)
 AC_SUBST(gstreamer_CFLAGS)
@@ -34,10 +33,7 @@ PKG_CHECK_MODULES([libconfig], [libconfig++ >= 1.4])
 
 LIBCURL_CHECK_CONFIG(, 7.16.0,, [AC_MSG_ERROR([libcurl >= 7.16.0 not found])])
 
-AC_CHECK_HEADER([pugixml.hpp],, AC_MSG_ERROR([pugixml.hpp not found]))
-AC_CHECK_LIB([pugixml], [main], [pugixml_LIBS="-lpugixml"],
-    [AC_MSG_ERROR([pugixml not found])]
-)
+PKG_CHECK_MODULES([libxml2], [libxml-2.0])
 
 # Windows specific
 case "$target" in

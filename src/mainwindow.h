@@ -3,12 +3,12 @@
 
 #include <gtkmm.h>
 
+#include "booru/browser.h"
 #include "imagebox.h"
 #include "imagelist.h"
 #include "preferences.h"
 #include "statusbar.h"
 #include "thumbnailbar.h"
-#include "booru/browser.h"
 
 namespace AhoViewer
 {

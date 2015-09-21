@@ -225,9 +225,9 @@ void Page::get_posts()
     {
         if (m_Curler.perform())
         {
-            m_PostsDocument.load_buffer(m_Curler.get_data(), m_Curler.get_data_size());
-            m_Posts = m_PostsDocument.document_element();
-            m_NumPosts = std::distance(m_Posts.begin(), m_Posts.end());
+            m_Posts = std::make_shared<xmlDocument>(
+                    reinterpret_cast<char*>(m_Curler.get_data()), m_Curler.get_data_size());
+            m_NumPosts = m_Posts->get_n_nodes();
         }
         else
         {
@@ -266,9 +266,9 @@ bool Page::get_next_page()
  **/
 void Page::on_posts_downloaded()
 {
-    if (m_Posts.attribute("success") && !m_Posts.attribute("success").as_bool() && m_Posts.attribute("reason"))
+    if (m_Posts->get_attribute("success") == "false" && !m_Posts->get_attribute("reason").empty())
     {
-        m_SignalDownloadError(m_Posts.attribute("reason").value());
+        m_SignalDownloadError(m_Posts->get_attribute("reason"));
     }
     else if (m_NumPosts > 0)
     {
@@ -283,6 +283,7 @@ void Page::on_posts_downloaded()
     if (m_NumPosts < static_cast<size_t>(Settings.get_int("BooruLimit")))
         m_LastPage = true;
 
+    m_Posts = nullptr;
     m_GetPostsThread->join();
     m_GetPostsThread = nullptr;
 }

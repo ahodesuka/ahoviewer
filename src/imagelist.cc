@@ -1,9 +1,9 @@
 #include "imagelist.h"
 using namespace AhoViewer;
 
+#include "booru/image.h"
 #include "naturalsort.h"
 #include "settings.h"
-#include "booru/image.h"
 
 ImageList::ImageList(Widget *w)
   : m_Widget(w),
@@ -160,18 +160,18 @@ bool ImageList::load(const std::string path, std::string &error, int index)
     return true;
 }
 
-void ImageList::load(const pugi::xml_node &posts, Booru::Page *const page)
+void ImageList::load(const std::shared_ptr<xmlDocument> posts, Booru::Page *const page)
 {
-    for (const pugi::xml_node &post : posts.children("post"))
+    for (const xmlDocument::Node &post : posts->get_children())
     {
-        std::string thumbUrl(post.attribute("preview_url").value()),
+        std::string thumbUrl(post.get_attribute("preview_url")),
                     thumbPath(Glib::build_filename(page->get_site()->get_path(), "thumbnails",
                                                    Glib::uri_unescape_string(Glib::path_get_basename(thumbUrl)))),
-                    imageUrl(post.attribute("file_url").value()),
+                    imageUrl(post.get_attribute("file_url")),
                     imagePath(Glib::build_filename(page->get_site()->get_path(),
                                                    Glib::uri_unescape_string(Glib::path_get_basename(imageUrl))));
 
-        std::istringstream ss(post.attribute("tags").value());
+        std::istringstream ss(post.get_attribute("tags"));
         std::set<std::string> tags { std::istream_iterator<std::string>(ss),
                                      std::istream_iterator<std::string>() };
         page->get_site()->add_tags(tags);
@@ -182,7 +182,7 @@ void ImageList::load(const pugi::xml_node &posts, Booru::Page *const page)
         if (imageUrl[0] == '/')
             imageUrl = page->get_site()->get_url() + imageUrl;
 
-        std::string postUrl = page->get_site()->get_post_url(post.attribute("id").value());
+        std::string postUrl = page->get_site()->get_post_url(post.get_attribute("id"));
 
         m_Images.push_back(std::make_shared<Booru::Image>(imagePath, imageUrl, thumbPath, thumbUrl, postUrl, tags, page));
     }

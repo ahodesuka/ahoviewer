@@ -2,6 +2,7 @@
 #include <gtkmm.h>
 #include <iostream>
 #include <cstdlib>
+#include <libxml/parser.h>
 
 #include "config.h"
 #include "mainwindow.h"
@@ -15,6 +16,8 @@ extern const unsigned long ahoviewer_ui_size;
 
 int main(int argc, char **argv)
 {
+    LIBXML_TEST_VERSION
+
     curl_global_init(CURL_GLOBAL_ALL);
 
     Gtk::Main main(argc, argv);
@@ -47,6 +50,7 @@ int main(int argc, char **argv)
 
     main.run(*window);
     curl_global_cleanup();
+    xmlCleanupParser();
 
     return EXIT_SUCCESS;
 }

@@ -6,9 +6,9 @@
 #include <queue>
 #include <string>
 #include <vector>
-#include <pugixml.hpp>
 
 #include "archive/archive.h"
+#include "booru/xml.h"
 #include "image.h"
 
 namespace AhoViewer
@@ -75,7 +75,7 @@ namespace AhoViewer
 
         void clear();
         bool load(const std::string path, std::string &error, int index = 0);
-        void load(const pugi::xml_node &posts, Booru::Page *const page);
+        void load(const std::shared_ptr<xmlDocument> posts, Booru::Page *const page);
 
         // Action callbacks {{{
         void go_next();
