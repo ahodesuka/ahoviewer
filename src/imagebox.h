@@ -94,7 +94,6 @@ namespace AhoViewer
         StatusBar *m_StatusBar;
         const MainWindow *m_MainWindow;
 
-        Gdk::Color m_BGColor;
         const Gdk::Cursor m_LeftPtrCursor, m_FleurCursor, m_BlankCursor;
 
         std::shared_ptr<Image> m_Image;

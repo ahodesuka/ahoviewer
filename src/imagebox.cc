@@ -33,6 +33,7 @@ gboolean ImageBox::bus_cb(GstBus*, GstMessage *message, void *userp)
 
     switch (GST_MESSAGE_TYPE(message))
     {
+        // Loop WebM files
         case GST_MESSAGE_EOS:
             gst_element_seek_simple(self->m_Playbin, GST_FORMAT_TIME, GST_SEEK_FLAG_FLUSH, 0);
         default:
@@ -146,8 +147,7 @@ void ImageBox::clear_image()
 
 void ImageBox::update_background_color()
 {
-    m_BGColor = Settings.get_background_color();
-    m_Layout->modify_bg(Gtk::STATE_NORMAL, m_BGColor);
+    m_Layout->modify_bg(Gtk::STATE_NORMAL, Settings.get_background_color());
 }
 
 void ImageBox::cursor_timeout()
@@ -490,11 +490,10 @@ void ImageBox::draw_image(bool scroll)
         scaledHeight = origHeight * static_cast<double>(m_ZoomPercent) / 100;
     }
 
-    // scale the pixbuf if needed
     if (!m_Image->is_webm() && (scaledWidth != origWidth || scaledHeight != origHeight))
         tempPixbuf = origPixbuf->scale_simple(scaledWidth, scaledHeight, Gdk::INTERP_BILINEAR);
 
-    // show scrollbars if scrollable scrollable
+    // Show scrollbars if image is scrollable
     // or needed for padding in FIT_[WIDTH|HEIGHT]
     if (!hideScrollbars && (scaledWidth > windowWidth ||
         (m_ZoomMode == ZoomMode::FIT_HEIGHT && scaledHeight == layoutHeight) ||
@@ -641,6 +640,7 @@ void ImageBox::scroll(const int x, const int y, const bool panning, const bool f
         }
     }
 }
+
 void ImageBox::smooth_scroll(const int amount, const Glib::RefPtr<Gtk::Adjustment> &adj)
 {
     // Cancel current animation if we changed direction
@@ -681,6 +681,7 @@ bool ImageBox::update_smooth_scroll()
 {
     m_ScrollTime += SmoothScrollStep;
 
+    // atan(1) * 4 = pi
     double val = m_ScrollTarget * std::sin(m_ScrollTime / m_ScrollDuration * (std::atan(1) * 4 / 2)) + m_ScrollStart;
     val = m_ScrollTarget < 0 ? std::floor(val) : std::ceil(val);
 
