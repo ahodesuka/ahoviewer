@@ -1538,18 +1538,21 @@
       <accelerator action="SaveImage"/>
       <accelerator action="SaveImages"/>
       <popup name="PopupMenu">
+        <menuitem action="OpenFile"/>
+        <menuitem action="RecentMenu"/>
+        <separator/>
         <menuitem action="NextImage"/>
         <menuitem action="PreviousImage"/>
         <separator/>
-        <menuitem action="ToggleFullscreen"/>
-        <menuitem action="ToggleMangaMode"/>
-        <separator/>
-        <menuitem action="AutoFitMode"/>
-        <menuitem action="FitWidthMode"/>
-        <menuitem action="FitHeightMode"/>
-        <menuitem action="ManualZoomMode"/>
-        <separator/>
         <menu action="ViewMenu">
+          <menuitem action="ToggleFullscreen"/>
+          <menuitem action="ToggleMangaMode"/>
+          <separator/>
+          <menuitem action="AutoFitMode"/>
+          <menuitem action="FitWidthMode"/>
+          <menuitem action="FitHeightMode"/>
+          <menuitem action="ManualZoomMode"/>
+          <separator/>
           <menuitem action="ToggleMenuBar"/>
           <menuitem action="ToggleStatusBar"/>
           <menuitem action="ToggleScrollbars"/>
@@ -1559,6 +1562,9 @@
           <menuitem action="ToggleHideAll"/>
         </menu>
         <separator/>
+        <menuitem action="Preferences"/>
+        <separator/>
+        <menuitem action="Close"/>
         <menuitem action="Quit"/>
       </popup>
       <popup name="BooruPopupMenu">

@@ -69,7 +69,7 @@ namespace AhoViewer
         Glib::RefPtr<Gtk::ActionGroup> m_ActionGroup;
         Glib::RefPtr<Gtk::UIManager> m_UIManager;
         Gtk::MenuBar *m_MenuBar;
-        Gtk::RecentChooserMenu *m_RecentMenu;
+        Glib::RefPtr<Gtk::RecentAction> m_RecentAction;
 
         Gtk::AboutDialog *m_AboutDialog;
         PreferencesDialog *m_PreferencesDialog;

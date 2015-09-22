@@ -352,8 +352,10 @@ void MainWindow::create_actions()
 
     // Menu actions {{{
     m_ActionGroup->add(Gtk::Action::create("FileMenu", _("_File")));
-    m_ActionGroup->add(Gtk::Action::create("RecentMenu",
-                Gtk::Stock::DND_MULTIPLE, _("_Open Recent")));
+    m_RecentAction = Gtk::RecentAction::create("RecentMenu", Gtk::Stock::DND_MULTIPLE,
+                _("_Open Recent"), "", Gtk::RecentManager::get_default());
+    m_RecentAction->signal_item_activated().connect(sigc::mem_fun(*this, &MainWindow::on_open_recent_file));
+    m_ActionGroup->add(m_RecentAction);
     m_ActionGroup->add(Gtk::Action::create("ViewMenu", _("_View")));
     m_ActionGroup->add(Gtk::Action::create("ZoomMenu", _("_Zoom")));
     m_ActionGroup->add(Gtk::Action::create("GoMenu", _("_Go")));
@@ -540,11 +542,9 @@ void MainWindow::create_actions()
     // Setup tooltip handling
     m_UIManager->signal_connect_proxy().connect(sigc::mem_fun(*this, &MainWindow::on_connect_proxy));
 
-    // Create the recent menu
-    m_RecentMenu = Gtk::manage(new Gtk::RecentChooserMenu(Gtk::RecentManager::get_default()));
-    m_RecentMenu->set_local_only();
-    m_RecentMenu->set_show_tips();
-    m_RecentMenu->set_sort_type(Gtk::RECENT_SORT_MRU);
+    // Create the recent menu filter
+    m_RecentAction->set_show_tips();
+    m_RecentAction->set_sort_type(Gtk::RECENT_SORT_MRU);
 
     Gtk::RecentFilter filter;
     filter.add_pixbuf_formats();
@@ -559,11 +559,7 @@ void MainWindow::create_actions()
     filter.add_mime_type("video/webm");
 #endif // HAVE_GSTREAMER
 
-    m_RecentMenu->add_filter(filter);
-
-    Gtk::MenuItem *menuItem = static_cast<Gtk::MenuItem*>(m_UIManager->get_widget("/MenuBar/FileMenu/RecentMenu"));
-    menuItem->set_submenu(static_cast<Gtk::Menu&>(*m_RecentMenu));
-    m_RecentMenu->signal_item_activated().connect(sigc::mem_fun(*this, &MainWindow::on_open_recent_file));
+    m_RecentAction->add_filter(filter);
 
     // Add the accel group to the window.
     add_accel_group(m_UIManager->get_accel_group());
@@ -758,7 +754,7 @@ void MainWindow::on_open_file_dialog()
 
 void MainWindow::on_open_recent_file()
 {
-    Glib::ustring uri = m_RecentMenu->get_current_uri();
+    Glib::ustring uri = m_RecentAction->get_current_uri();
 
     if (!uri.empty())
         open_file(Glib::filename_from_uri(uri));
