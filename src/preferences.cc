@@ -5,15 +5,14 @@ using namespace AhoViewer;
 
 #include "settings.h"
 
-const std::map<std::string, sigc::signal<void>*> PreferencesDialog::SpinSignals =
-{
-    { "CursorHideDelay",  new sigc::signal<void>() },
-    { "CacheSize",        new sigc::signal<void>() },
-    { "SlideshowDelay",   new sigc::signal<void>() },
-};
-
 PreferencesDialog::PreferencesDialog(BaseObjectType *cobj, const Glib::RefPtr<Gtk::Builder> &bldr)
-  : Gtk::Dialog(cobj)
+  : Gtk::Dialog(cobj),
+    m_SpinSignals(
+    {
+        { "CursorHideDelay",  sigc::signal<void>() },
+        { "CacheSize",        sigc::signal<void>() },
+        { "SlideshowDelay",   sigc::signal<void>() },
+    })
 {
     bldr->get_widget_derived("BooruSiteEditor",  m_SiteEditor);
     bldr->get_widget_derived("KeybindingEditor", m_KeybindingEditor);
@@ -80,8 +79,8 @@ PreferencesDialog::PreferencesDialog(BaseObjectType *cobj, const Glib::RefPtr<Gt
         {
             Settings.set(s, spinButton->get_value_as_int());
 
-            if (SpinSignals.find(s) != SpinSignals.end())
-                SpinSignals.at(s)->emit();
+            if (m_SpinSignals.find(s) != m_SpinSignals.end())
+                m_SpinSignals.at(s).emit();
         });
 
     }

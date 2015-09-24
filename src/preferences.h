@@ -18,9 +18,9 @@ namespace AhoViewer
         KeybindingEditor* get_keybinding_editor() const { return m_KeybindingEditor; }
 
         sigc::signal<void> signal_bg_color_set() const { return m_SignalBGColorSet; }
-        sigc::signal<void> signal_cursor_hide_delay_changed() const { return *SpinSignals.at("CursorHideDelay"); }
-        sigc::signal<void> signal_cache_size_changed() const { return *SpinSignals.at("CacheSize"); }
-        sigc::signal<void> signal_slideshow_delay_changed() const { return *SpinSignals.at("SlideshowDelay"); }
+        sigc::signal<void> signal_cursor_hide_delay_changed() const { return m_SpinSignals.at("CursorHideDelay"); }
+        sigc::signal<void> signal_cache_size_changed() const { return m_SpinSignals.at("CacheSize"); }
+        sigc::signal<void> signal_slideshow_delay_changed() const { return m_SpinSignals.at("SlideshowDelay"); }
     private:
         struct BooruMaxRatingModelColumns : public Gtk::TreeModelColumnRecord
         {
@@ -31,7 +31,7 @@ namespace AhoViewer
         SiteEditor *m_SiteEditor;
         KeybindingEditor *m_KeybindingEditor;
 
-        static const std::map<std::string, sigc::signal<void>*> SpinSignals;
+        const std::map<std::string, sigc::signal<void>> m_SpinSignals;
         sigc::signal<void> m_SignalBGColorSet;
     };
 }
