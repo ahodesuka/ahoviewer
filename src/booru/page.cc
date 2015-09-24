@@ -96,7 +96,6 @@ void Page::set_selected(const size_t index)
 
     Gtk::TreePath path(std::to_string(index));
     m_IconView->select_path(path);
-    m_IconView->scroll_to_path(path, false, 0, 0);
     gtk_icon_view_set_cursor(m_IconView->gobj(), path.gobj(), NULL, FALSE);
 
     get_window()->thaw_updates();
