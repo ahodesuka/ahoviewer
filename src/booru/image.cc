@@ -32,7 +32,7 @@ Image::~Image()
     cancel_download();
 
     if (m_Curler.is_active())
-        m_Page->get_image_fetcher()->remove_handle(&m_Curler);
+        m_Page->get_image_fetcher().remove_handle(&m_Curler);
 }
 
 std::string Image::get_filename() const
@@ -127,7 +127,7 @@ bool Image::start_download()
 {
     if (!m_Curler.is_active())
     {
-        m_Page->get_image_fetcher()->add_handle(&m_Curler);
+        m_Page->get_image_fetcher().add_handle(&m_Curler);
         m_Loading = true;
 
         if (!m_isWebM)

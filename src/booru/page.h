@@ -32,7 +32,7 @@ namespace AhoViewer
             void save_images(const std::string &path);
             bool ask_cancel_save();
 
-            ImageFetcher* get_image_fetcher() const { return m_ImageFetcher; }
+            ImageFetcher& get_image_fetcher() const { return *m_ImageFetcher; }
             Gtk::Widget* get_tab() const { return m_Tab; }
             std::shared_ptr<Site> get_site() const { return m_Site; }
             std::shared_ptr<ImageList> get_imagelist() const { return m_ImageList; }
@@ -53,7 +53,7 @@ namespace AhoViewer
             bool on_button_press_event(GdkEventButton *e);
 
             Gtk::Menu *m_PopupMenu;
-            ImageFetcher *m_ImageFetcher;
+            std::unique_ptr<ImageFetcher> m_ImageFetcher;
             Gtk::IconView *m_IconView;
             Gtk::HBox *m_Tab;
             Gtk::Image *m_TabIcon;

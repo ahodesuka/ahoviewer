@@ -11,7 +11,7 @@ using namespace AhoViewer::Booru;
 Page::Page(Gtk::Menu *menu)
   : Gtk::ScrolledWindow(),
     m_PopupMenu(menu),
-    m_ImageFetcher(new ImageFetcher()),
+    m_ImageFetcher(std::unique_ptr<ImageFetcher>(new ImageFetcher())),
     m_IconView(Gtk::manage(new Gtk::IconView())),
     m_Tab(Gtk::manage(new Gtk::HBox())),
     m_TabIcon(Gtk::manage(new Gtk::Image(Gtk::Stock::NEW, Gtk::ICON_SIZE_MENU))),
@@ -88,8 +88,6 @@ Page::~Page()
 
     cancel_save();
     m_ImageList->clear();
-
-    delete m_ImageFetcher;
 }
 
 void Page::set_selected(const size_t index)
