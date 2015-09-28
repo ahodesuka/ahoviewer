@@ -87,7 +87,6 @@ Page::~Page()
     }
 
     cancel_save();
-    m_ImageList->clear();
 }
 
 void Page::set_selected(const size_t index)
