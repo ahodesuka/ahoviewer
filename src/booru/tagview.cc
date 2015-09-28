@@ -116,6 +116,8 @@ bool TagView::on_button_press_event(GdkEventButton *e)
                     Settings.remove_favorite_tag(tag);
                 else
                     Settings.add_favorite_tag(tag);
+
+                queue_draw();
             }
             else
             {
@@ -141,8 +143,6 @@ bool TagView::on_button_press_event(GdkEventButton *e)
                     m_TagEntry->set_position(-1);
                 }
             }
-
-            queue_draw();
         }
     }
 
