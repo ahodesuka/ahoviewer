@@ -81,6 +81,9 @@ void TagView::set_tags(const std::set<std::string> &tags)
     clear();
     for (const std::string &tag : tags)
         m_ListStore->append()->set_value(m_Columns.tag, tag);
+
+    if (get_realized())
+        scroll_to_point(0, 0);
 }
 
 void TagView::on_style_changed(const Glib::RefPtr<Gtk::Style> &s)
