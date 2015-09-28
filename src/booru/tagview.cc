@@ -134,6 +134,7 @@ bool TagView::on_button_press_event(GdkEventButton *e)
                     std::ostringstream oss;
                     std::copy(tags.begin(), tags.end(), std::ostream_iterator<std::string>(oss, " "));
                     m_TagEntry->set_text(oss.str());
+                    m_TagEntry->set_position(-1);
                 }
             }
 
