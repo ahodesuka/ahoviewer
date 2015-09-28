@@ -56,6 +56,7 @@ TagView::TagView(BaseObjectType *cobj, const Glib::RefPtr<Gtk::Builder> &bldr)
   : Gtk::TreeView(cobj)
 {
     bldr->get_widget_derived("Booru::Browser::TagEntry", m_TagEntry);
+    m_TagEntry->signal_changed().connect([ this ]() { queue_draw(); });
 
     m_ListStore = Gtk::ListStore::create(m_Columns);
 

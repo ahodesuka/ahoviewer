@@ -32,7 +32,6 @@ namespace AhoViewer
             };
 
             void on_favorite_cell_data(Gtk::CellRenderer *c, const Gtk::TreeIter &iter);
-
             void on_toggle_cell_data(Gtk::CellRenderer *c, const Gtk::TreeIter &iter);
             void update_favorite_icons();
 
