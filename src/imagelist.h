@@ -13,7 +13,6 @@
 
 namespace AhoViewer
 {
-    namespace Booru { class Page; }
     class ImageList : public sigc::trackable
     {
     public:
@@ -73,9 +72,8 @@ namespace AhoViewer
         ImageList(Widget*);
         virtual ~ImageList();
 
-        void clear();
+        virtual void clear();
         bool load(const std::string path, std::string &error, int index = 0);
-        void load(const std::shared_ptr<xmlDocument> posts, Booru::Page *const page);
 
         // Action callbacks {{{
         void go_next();
@@ -87,8 +85,9 @@ namespace AhoViewer
         bool can_go_next() const;
         bool can_go_previous() const;
 
+        virtual size_t get_size() const { return m_Images.size(); }
+
         size_t get_index() const { return m_Index; }
-        size_t get_size() const { return m_Images.size(); }
         const std::shared_ptr<Image>& get_current() const { return m_Images.at(m_Index); }
         const std::vector<std::shared_ptr<Image>>& get_images() const { return m_Images; }
         const std::shared_ptr<Archive>& get_archive() const { return m_Archive; }
@@ -101,37 +100,40 @@ namespace AhoViewer
         SignalArchiveErrorType signal_archive_error() const { return m_SignalArchiveError; }
         SignalClearedType signal_cleared() const { return m_SignalCleared; }
         SignalLoadSuccessType signal_load_success() const { return m_SignalLoadSuccess; }
+    protected:
+        virtual void set_current(const size_t index, const bool fromWidget = false);
+        virtual void load_thumbnails();
+
+        Widget *const m_Widget;
+        std::vector<std::shared_ptr<Image>> m_Images;
+        size_t m_Index;
+
+        Glib::Threads::Thread *m_ThumbnailThread;
+
+        SignalChangedType m_SignalChanged;
     private:
         std::vector<std::string> get_image_entries(const std::string &path, const bool recursive);
         std::vector<std::string> get_archive_entries(const std::string &path, const bool recursive = false);
-        void load_thumbnails();
 
         void on_thumbnail_loaded();
         void on_thumbnails_loaded();
 
-        void set_current(const size_t index, const bool fromWidget = false);
-
         void update_cache();
         void cancel_cache();
 
-        Widget *const m_Widget;
-        std::vector<std::shared_ptr<Image>> m_Images;
         std::vector<size_t> m_Cache;
         std::shared_ptr<Archive> m_Archive;
         std::vector<std::string> m_ArchiveEntries;
         std::queue<PixbufPair> m_ThumbnailQueue;
-        size_t m_Index;
 
         Glib::RefPtr<Gio::Cancellable> m_CacheCancel,
                                        m_ThumbnailCancel;
         Glib::Threads::Mutex m_ThumbnailMutex;
-        Glib::Threads::Thread *m_CacheThread,
-                              *m_ThumbnailThread;
+        Glib::Threads::Thread *m_CacheThread;
 
         Glib::Dispatcher m_SignalThumbnailLoaded,
                          m_SignalThumbnailsLoaded;
 
-        SignalChangedType m_SignalChanged;
         SignalArchiveErrorType m_SignalArchiveError;
         SignalClearedType m_SignalCleared;
         SignalLoadSuccessType m_SignalLoadSuccess;

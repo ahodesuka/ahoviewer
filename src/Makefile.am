@@ -17,6 +17,7 @@ ahoviewer_SOURCES =       \
 	booru/curler.cc       \
 	booru/image.cc        \
 	booru/imagefetcher.cc \
+	booru/imagelist.cc    \
 	booru/page.cc         \
 	booru/site.cc         \
 	booru/tagentry.cc     \

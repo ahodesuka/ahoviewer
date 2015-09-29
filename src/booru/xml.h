@@ -28,6 +28,31 @@ namespace AhoViewer
 
                 return attr;
             }
+
+            void set_attribute(const std::string &_name, const std::string &_value)
+            {
+                const xmlChar *name  = reinterpret_cast<const xmlChar*>(_name.c_str()),
+                              *value = reinterpret_cast<const xmlChar*>(_value.c_str());
+
+                if (!xmlHasProp(m_xmlNode, name))
+                    xmlNewProp(m_xmlNode, name, value);
+                else
+                    xmlSetProp(m_xmlNode, name, value);
+            }
+
+            std::string get_value() const
+            {
+                std::string val;
+                xmlChar *content = xmlNodeGetContent(m_xmlNode);
+
+                if (content)
+                {
+                    val = reinterpret_cast<char*>(content);
+                    xmlFree(content);
+                }
+
+                return val;
+            }
         private:
             xmlNodePtr m_xmlNode;
         };
@@ -49,6 +74,11 @@ namespace AhoViewer
         std::string get_attribute(const std::string &name) const
         {
             return xmlDocument::Node(xmlDocGetRootElement(m_xmlDoc)).get_attribute(name);
+        }
+
+        void set_attribute(const std::string &name, const std::string &value)
+        {
+            xmlDocument::Node(xmlDocGetRootElement(m_xmlDoc)).set_attribute(name, value);
         }
 
         const std::vector<xmlDocument::Node> get_children() const

@@ -8,10 +8,10 @@ using namespace AhoViewer;
 ImageList::ImageList(Widget *w)
   : m_Widget(w),
     m_Index(0),
+    m_ThumbnailThread(nullptr),
     m_CacheCancel(Gio::Cancellable::create()),
     m_ThumbnailCancel(Gio::Cancellable::create()),
-    m_CacheThread(nullptr),
-    m_ThumbnailThread(nullptr)
+    m_CacheThread(nullptr)
 {
     m_Widget->signal_selected_changed().connect(
             sigc::bind<1>(sigc::mem_fun(*this, &ImageList::set_current), true));
@@ -160,42 +160,6 @@ bool ImageList::load(const std::string path, std::string &error, int index)
     return true;
 }
 
-void ImageList::load(const std::shared_ptr<xmlDocument> posts, Booru::Page *const page)
-{
-    for (const xmlDocument::Node &post : posts->get_children())
-    {
-        std::string thumbUrl(post.get_attribute("preview_url")),
-                    thumbPath(Glib::build_filename(page->get_site()->get_path(), "thumbnails",
-                                                   Glib::uri_unescape_string(Glib::path_get_basename(thumbUrl)))),
-                    imageUrl(post.get_attribute("file_url")),
-                    imagePath(Glib::build_filename(page->get_site()->get_path(),
-                                                   Glib::uri_unescape_string(Glib::path_get_basename(imageUrl))));
-
-        std::istringstream ss(post.get_attribute("tags"));
-        std::set<std::string> tags { std::istream_iterator<std::string>(ss),
-                                     std::istream_iterator<std::string>() };
-        page->get_site()->add_tags(tags);
-
-        if (thumbUrl[0] == '/')
-            thumbUrl = page->get_site()->get_url() + thumbUrl;
-
-        if (imageUrl[0] == '/')
-            imageUrl = page->get_site()->get_url() + imageUrl;
-
-        std::string postUrl = page->get_site()->get_post_url(post.get_attribute("id"));
-
-        m_Images.push_back(std::make_shared<Booru::Image>(imagePath, imageUrl, thumbPath, thumbUrl, postUrl, tags, page));
-    }
-
-    m_ThumbnailThread = Glib::Threads::Thread::create(sigc::mem_fun(*this, &ImageList::load_thumbnails));
-
-    // only call set_current if this is the first page
-    if (page->get_page_num() == 1)
-        set_current(m_Index);
-    else
-        m_SignalChanged(m_Images[m_Index]);
-}
-
 void ImageList::go_next()
 {
     if (m_Index + 1 < m_Images.size())
@@ -274,6 +238,50 @@ void ImageList::on_cache_size_changed()
         update_cache();
 }
 
+void ImageList::set_current(const size_t index, const bool fromWidget)
+{
+    // Ignore clicking
+    if (index == m_Index && fromWidget)
+        return;
+
+    m_Index = index;
+    m_SignalChanged(m_Images[m_Index]);
+    update_cache();
+
+    // Do not call this if this was called from a selected_changed signal.
+    if (!fromWidget)
+        m_Widget->set_selected(m_Index);
+}
+
+void ImageList::load_thumbnails()
+{
+    Glib::ThreadPool pool(4);
+    m_ThumbnailCancel->reset();
+
+    for (size_t i = 0; i < m_Images.size(); ++i)
+    {
+        pool.push([ this, i ]()
+        {
+            if (m_ThumbnailCancel->is_cancelled())
+                return;
+
+            const Glib::RefPtr<Gdk::Pixbuf> &thumb = m_Images[i]->get_thumbnail();
+            {
+                Glib::Threads::Mutex::Lock lock(m_ThumbnailMutex);
+                m_ThumbnailQueue.push(PixbufPair(i, thumb));
+            }
+
+            if (!m_ThumbnailCancel->is_cancelled())
+                m_SignalThumbnailLoaded();
+        });
+    }
+
+    pool.shutdown(m_ThumbnailCancel->is_cancelled());
+
+    if (!m_ThumbnailCancel->is_cancelled())
+        m_SignalThumbnailsLoaded();
+}
+
 std::vector<std::string> ImageList::get_image_entries(const std::string &path, const bool recursive)
 {
     Glib::Dir dir(path);
@@ -338,35 +346,6 @@ std::vector<std::string> ImageList::get_archive_entries(const std::string &path,
     return entries;
 }
 
-void ImageList::load_thumbnails()
-{
-    Glib::ThreadPool pool(4);
-    m_ThumbnailCancel->reset();
-
-    for (size_t i = 0; i < m_Images.size(); ++i)
-    {
-        pool.push([ this, i ]()
-        {
-            if (m_ThumbnailCancel->is_cancelled())
-                return;
-
-            const Glib::RefPtr<Gdk::Pixbuf> &thumb = m_Images[i]->get_thumbnail();
-            {
-                Glib::Threads::Mutex::Lock lock(m_ThumbnailMutex);
-                m_ThumbnailQueue.push(PixbufPair(i, thumb));
-            }
-
-            if (!m_ThumbnailCancel->is_cancelled())
-                m_SignalThumbnailLoaded();
-        });
-    }
-
-    pool.shutdown(m_ThumbnailCancel->is_cancelled());
-
-    if (!m_ThumbnailCancel->is_cancelled())
-        m_SignalThumbnailsLoaded();
-}
-
 void ImageList::on_thumbnail_loaded()
 {
     Glib::Threads::Mutex::Lock lock(m_ThumbnailMutex);
@@ -384,21 +363,6 @@ void ImageList::on_thumbnails_loaded()
     m_ThumbnailThread = nullptr;
 
     m_Widget->on_thumbnails_loaded(m_Index);
-}
-
-void ImageList::set_current(const size_t index, const bool fromWidget)
-{
-    // Ignore clicking
-    if (index == m_Index && fromWidget)
-        return;
-
-    m_Index = index;
-    m_SignalChanged(m_Images[m_Index]);
-    update_cache();
-
-    // Do not call this if this was called from a selected_changed signal.
-    if (!fromWidget)
-        m_Widget->set_selected(m_Index);
 }
 
 void ImageList::update_cache()

@@ -62,10 +62,11 @@ namespace AhoViewer
 
             std::shared_ptr<ImageList> m_ImageList;
             std::shared_ptr<Site> m_Site;
-            Curler m_Curler;
+            Curler m_Curler, m_CountsCurler;
 
             std::string m_Tags, m_Path;
             size_t m_Page, m_NumPosts,
+                   m_PostsCount,
                    m_SaveImagesTotal;
             std::atomic<size_t> m_SaveImagesCurrent;
             bool m_LastPage, m_Saving;
