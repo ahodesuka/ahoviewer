@@ -4,6 +4,13 @@ using namespace AhoViewer::Booru;
 #include "image.h"
 #include "page.h"
 
+ImageList::ImageList(Widget *w)
+  : AhoViewer::ImageList(w),
+    m_Size(0)
+{
+
+}
+
 void ImageList::clear()
 {
     AhoViewer::ImageList::clear();
