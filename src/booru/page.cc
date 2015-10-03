@@ -20,7 +20,6 @@ Page::Page(Gtk::Menu *menu)
     m_ImageList(std::make_shared<ImageList>(this)),
     m_Page(0),
     m_NumPosts(0),
-    m_PostsCount(0),
     m_LastPage(false),
     m_Saving(false),
     m_SaveCancel(Gio::Cancellable::create()),
@@ -107,6 +106,9 @@ void Page::search(std::shared_ptr<Site> site, const std::string &tags)
     if (!ask_cancel_save())
         return;
 
+    m_Curler.cancel();
+    m_CountsCurler.cancel();
+
     cancel_save();
     m_ImageList->clear();
 
@@ -114,7 +116,6 @@ void Page::search(std::shared_ptr<Site> site, const std::string &tags)
     m_Tags = tags;
     m_Page = 1;
     m_LastPage = false;
-    m_PostsCount = 0;
 
     m_TabLabel->set_text(site->get_name() + (!tags.empty() ? " - " + tags : ""));
     m_TabIcon->set(site->get_icon_pixbuf());
@@ -215,27 +216,23 @@ void Page::get_posts()
         }
     }
 
-    m_Curler.set_url(m_Site->get_posts_url(tags, m_Page));
-
-    if (m_ImageList->get_size() == 0 && m_Site->get_type() == Site::Type::DANBOORU)
-        m_CountsCurler.set_url(m_Site->get_url() + "/counts/posts.xml?tags=" + tags);
-
     if (m_GetPostsThread)
         m_GetPostsThread->join();
 
-    m_GetPostsThread = Glib::Threads::Thread::create([ this ]()
+    m_Curler.set_url(m_Site->get_posts_url(tags, m_Page));
+
+    m_GetPostsThread = Glib::Threads::Thread::create([ this, tags ]()
     {
+        size_t postsCount = 0;
         // Danbooru doesn't give the post count with the posts
-        if (m_ImageList->get_size() == 0 && m_Site->get_type() == Site::Type::DANBOORU)
+        // Get it from thier counts api
+        if (m_Page == 1 && m_Site->get_type() == Site::Type::DANBOORU)
         {
+            m_CountsCurler.set_url(m_Site->get_url() + "/counts/posts.xml?tags=" + tags);
             if (m_CountsCurler.perform())
             {
                 xmlDocument doc(reinterpret_cast<char*>(m_CountsCurler.get_data()), m_CountsCurler.get_data_size());
-                m_PostsCount = std::stoul(doc.get_children()[0].get_value());
-            }
-            else
-            {
-                m_PostsCount = 0;
+                postsCount = std::stoul(doc.get_children()[0].get_value());
             }
         }
 
@@ -245,8 +242,8 @@ void Page::get_posts()
                     reinterpret_cast<char*>(m_Curler.get_data()), m_Curler.get_data_size());
             m_NumPosts = m_Posts->get_n_nodes();
 
-            if (m_PostsCount)
-                m_Posts->set_attribute("count", std::to_string(m_PostsCount));
+            if (postsCount)
+                m_Posts->set_attribute("count", std::to_string(postsCount));
         }
         else
         {

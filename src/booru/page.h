@@ -66,7 +66,6 @@ namespace AhoViewer
 
             std::string m_Tags, m_Path;
             size_t m_Page, m_NumPosts,
-                   m_PostsCount,
                    m_SaveImagesTotal;
             std::atomic<size_t> m_SaveImagesCurrent;
             bool m_LastPage, m_Saving;
