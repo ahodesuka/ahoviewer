@@ -57,9 +57,11 @@ namespace AhoViewer
             void close_page(Page *page);
 
             bool on_entry_key_press_event(GdkEventKey *e);
+            void on_entry_value_changed();
             void on_page_removed(Gtk::Widget*, guint);
             void on_switch_page(void*, guint);
             void on_imagelist_changed(const std::shared_ptr<AhoViewer::Image> &image);
+            void on_new_tab_tag(const std::string &tag);
 
             std::shared_ptr<Site> get_active_site() const
                 { return Settings.get_sites()[m_ComboBox->get_active_row_number()]; }
@@ -78,7 +80,6 @@ namespace AhoViewer
             TagEntry *m_TagEntry;
             TagView *m_TagView;
 
-            bool m_IgnorePageSwitch;
             int m_MinWidth;
             std::string m_LastSavePath;
 

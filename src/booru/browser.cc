@@ -19,7 +19,6 @@ static std::string readable_file_size(double s)
 
 Browser::Browser(BaseObjectType *cobj, const Glib::RefPtr<Gtk::Builder> &bldr)
   : Gtk::VPaned(cobj),
-    m_IgnorePageSwitch(false),
     m_MinWidth(0),
     m_LastSavePath(Settings.get_string("LastSavePath"))
 {
@@ -33,16 +32,9 @@ Browser::Browser(BaseObjectType *cobj, const Glib::RefPtr<Gtk::Builder> &bldr)
 
     m_TagEntry->signal_key_press_event().connect(
             sigc::mem_fun(*this, &Browser::on_entry_key_press_event), false);
-    m_TagView->signal_new_tab_tag().connect([ this ](const std::string tag)
-    {
-        m_IgnorePageSwitch = true;
-        on_new_tab();
+    m_TagEntry->signal_changed().connect(sigc::mem_fun(*this, &Browser::on_entry_value_changed));
 
-        m_TagEntry->set_text(tag);
-        get_active_page()->search(get_active_site(), m_TagEntry->get_text());
-        m_TagView->clear();
-        m_SignalPageChanged(get_active_page());
-    });
+    m_TagView->signal_new_tab_tag().connect(sigc::mem_fun(*this, &Browser::on_new_tab_tag));
 
     m_ComboModel = Gtk::ListStore::create(m_ComboColumns);
     m_ComboBox->set_model(m_ComboModel);
@@ -92,6 +84,12 @@ void Browser::on_new_tab()
 {
     Page *page = Gtk::manage(new Page(m_PopupMenu));
     page->signal_closed().connect(sigc::mem_fun(*this, &Browser::close_page));
+
+    // If you type into the entry when no tab exists and hit
+    // enter it will create a new tab for you
+    // The tags need to be manually set in this case
+    if (m_Notebook->get_n_pages() == 0)
+        page->set_tags(m_TagEntry->get_text());
 
     int page_num = m_Notebook->append_page(*page, *page->get_tab());
 
@@ -239,17 +237,15 @@ bool Browser::on_entry_key_press_event(GdkEventKey *e)
     {
         bool new_tab = (e->state & GDK_SHIFT_MASK) == GDK_SHIFT_MASK;
         if (new_tab || m_Notebook->get_n_pages() == 0)
-        {
-            m_IgnorePageSwitch = true;
             on_new_tab();
-        }
 
+        // This is needed to close gtk's entry completion popup
+        // and deselect the completed text
         if (new_tab)
             m_TagEntry->activate();
 
         m_TagView->clear();
-        get_active_page()->search(get_active_site(), m_TagEntry->get_text());
-        m_SignalPageChanged(get_active_page());
+        get_active_page()->search(get_active_site());
     }
     else if (e->keyval == GDK_Escape)
     {
@@ -257,6 +253,12 @@ bool Browser::on_entry_key_press_event(GdkEventKey *e)
     }
 
     return false;
+}
+
+void Browser::on_entry_value_changed()
+{
+    if (get_active_page())
+        get_active_page()->set_tags(m_TagEntry->get_text());
 }
 
 void Browser::on_page_removed(Gtk::Widget*, guint)
@@ -291,12 +293,6 @@ void Browser::on_switch_page(void*, guint)
     m_ImageListConn.disconnect();
     m_ImageListConn = page->get_imagelist()->signal_changed().connect(
             sigc::mem_fun(*this, &Browser::on_imagelist_changed));
-
-    if (m_IgnorePageSwitch)
-    {
-        m_IgnorePageSwitch = false;
-        return;
-    }
 
     m_TagEntry->set_text(page->get_tags());
 
@@ -362,4 +358,14 @@ void Browser::on_imagelist_changed(const std::shared_ptr<AhoViewer::Image> &imag
         }
         m_StatusBar->set_message(ss.str(), StatusBar::Priority::NORMAL, c == t ? 2 : 0);
     });
+}
+
+void Browser::on_new_tab_tag(const std::string &tag)
+{
+    on_new_tab();
+
+    m_TagEntry->set_text(tag);
+    m_TagView->clear();
+
+    get_active_page()->search(get_active_site());
 }

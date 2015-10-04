@@ -10,7 +10,7 @@ namespace AhoViewer
         class TagView : public Gtk::TreeView
         {
         public:
-            typedef sigc::signal<void, const std::string> SignalNewTabTag;
+            typedef sigc::signal<void, const std::string&> SignalNewTabTag;
 
             TagView(BaseObjectType *cobj, const Glib::RefPtr<Gtk::Builder> &bldr);
             virtual ~TagView() = default;

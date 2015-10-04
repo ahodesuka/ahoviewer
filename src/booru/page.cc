@@ -105,7 +105,7 @@ void Page::set_selected(const size_t index)
     get_window()->thaw_updates();
 }
 
-void Page::search(std::shared_ptr<Site> site, const std::string &tags)
+void Page::search(const std::shared_ptr<Site> &site)
 {
     if (!ask_cancel_save())
         return;
@@ -117,11 +117,20 @@ void Page::search(std::shared_ptr<Site> site, const std::string &tags)
     m_ImageList->clear();
 
     m_Site = site;
-    m_Tags = tags;
     m_Page = 1;
     m_LastPage = false;
 
-    m_TabLabel->set_text(site->get_name() + (!tags.empty() ? " - " + tags : ""));
+    std::string tags = m_Tags;
+
+    // Trim whitespace for the tab label text
+    if (!tags.empty())
+    {
+        size_t f = tags.find_first_not_of(' '),
+               l = tags.find_last_not_of(' ');
+        tags = f == std::string::npos ? "" : " - " + tags.substr(f, l - f + 1);
+    }
+
+    m_TabLabel->set_text(site->get_name() + tags);
     m_TabIcon->set(site->get_icon_pixbuf());
 
     get_posts();

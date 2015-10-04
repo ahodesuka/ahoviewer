@@ -124,7 +124,7 @@ bool TagView::on_button_press_event(GdkEventButton *e)
                 // Open tag alone in new tab
                 if ((e->state & GDK_SHIFT_MASK) == GDK_SHIFT_MASK)
                 {
-                    m_SignalNewTabTag(tag);
+                    m_SignalNewTabTag(tag + " ");
                 }
                 else
                 {
@@ -140,8 +140,9 @@ bool TagView::on_button_press_event(GdkEventButton *e)
                     std::ostringstream oss;
                     std::copy(tags.begin(), tags.end(), std::ostream_iterator<std::string>(oss, " "));
                     m_TagEntry->set_text(oss.str());
-                    m_TagEntry->set_position(-1);
                 }
+
+                m_TagEntry->set_position(-1);
             }
         }
     }
