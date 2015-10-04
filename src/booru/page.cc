@@ -30,11 +30,11 @@ Page::Page(Gtk::Menu *menu)
     set_shadow_type(Gtk::SHADOW_ETCHED_IN);
 
     // Create page tab {{{
-    GtkRcStyle *style = gtk_rc_style_new();
-    style->xthickness = style->ythickness = 0;
-    gtk_widget_modify_style(GTK_WIDGET(m_TabButton->gobj()), style);
-    g_object_unref(G_OBJECT(style));
+    Glib::RefPtr<Gtk::RcStyle> style = m_TabButton->get_modifier_style();
+    style->set_ythickness(0);
+    style->set_xthickness(0);
 
+    m_TabButton->modify_style(style);
     m_TabButton->add(*(Gtk::manage(new Gtk::Image(Gtk::Stock::CLOSE, Gtk::ICON_SIZE_MENU))));
     m_TabButton->property_relief() = Gtk::RELIEF_NONE;
     m_TabButton->set_focus_on_click(false);
