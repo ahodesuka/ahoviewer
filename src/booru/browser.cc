@@ -9,10 +9,13 @@ using namespace AhoViewer::Booru;
 static std::string readable_file_size(double s)
 {
     gchar *fsize = g_format_size(s);
-    std::string str(fsize);
+    std::string str;
 
     if (fsize)
+    {
+        str = fsize;
         g_free(fsize);
+    }
 
     return str;
 }
