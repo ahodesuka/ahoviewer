@@ -13,7 +13,7 @@ Page::Page(Gtk::Menu *menu)
     m_PopupMenu(menu),
     m_ImageFetcher(std::unique_ptr<ImageFetcher>(new ImageFetcher())),
     m_IconView(Gtk::manage(new Gtk::IconView())),
-    m_Tab(Gtk::manage(new Gtk::HBox())),
+    m_Tab(Gtk::manage(new Gtk::EventBox())),
     m_TabIcon(Gtk::manage(new Gtk::Image(Gtk::Stock::NEW, Gtk::ICON_SIZE_MENU))),
     m_TabLabel(Gtk::manage(new Gtk::Label(_("New Tab")))),
     m_TabButton(Gtk::manage(new Gtk::Button())),
@@ -44,10 +44,14 @@ Page::Page(Gtk::Menu *menu)
     m_TabLabel->set_alignment(0.0, 0.5);
     m_TabLabel->set_ellipsize(Pango::ELLIPSIZE_END);
 
-    m_Tab->pack_start(*m_TabIcon, false, false);
-    m_Tab->pack_start(*m_TabLabel, true, true, 2);
-    m_Tab->pack_start(*m_TabButton, false, false);
-    m_Tab->show_all();
+    Gtk::HBox *hbox = Gtk::manage(new Gtk::HBox());
+    hbox->pack_start(*m_TabIcon, false, false);
+    hbox->pack_start(*m_TabLabel, true, true, 2);
+    hbox->pack_start(*m_TabButton, false, false);
+    hbox->show_all();
+
+    m_Tab->add(*hbox);
+    m_Tab->signal_button_press_event().connect(sigc::mem_fun(*this, &Page::on_tab_button_press_event));
     // }}}
 
     get_vadjustment()->signal_value_changed().connect(sigc::mem_fun(*this, &Page::on_value_changed));
@@ -354,6 +358,14 @@ bool Page::on_button_press_event(GdkEventButton *e)
             return true;
         }
     }
+
+    return false;
+}
+
+bool Page::on_tab_button_press_event(GdkEventButton *e)
+{
+    if (e->type == GDK_BUTTON_PRESS && e->button == 2)
+        m_SignalClosed(this);
 
     return false;
 }

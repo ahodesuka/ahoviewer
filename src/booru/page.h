@@ -51,11 +51,12 @@ namespace AhoViewer
             void on_selection_changed();
             void on_value_changed();
             bool on_button_press_event(GdkEventButton *e);
+            bool on_tab_button_press_event(GdkEventButton *e);
 
             Gtk::Menu *m_PopupMenu;
             std::unique_ptr<ImageFetcher> m_ImageFetcher;
             Gtk::IconView *m_IconView;
-            Gtk::HBox *m_Tab;
+            Gtk::EventBox *m_Tab;
             Gtk::Image *m_TabIcon;
             Gtk::Label *m_TabLabel;
             Gtk::Button *m_TabButton;
