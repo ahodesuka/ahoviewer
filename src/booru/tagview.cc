@@ -100,7 +100,7 @@ void TagView::on_style_changed(const Glib::RefPtr<Gtk::Style> &s)
 
 bool TagView::on_button_press_event(GdkEventButton *e)
 {
-    if (e->button == 1)
+    if (e->type == GDK_BUTTON_PRESS && (e->button == 1 || e->button == 2))
     {
         Gtk::TreePath path;
         get_path_at_pos(e->x, e->y, path);
@@ -109,8 +109,8 @@ bool TagView::on_button_press_event(GdkEventButton *e)
         {
             std::string tag = m_ListStore->get_iter(path)->get_value(m_Columns.tag);
 
-            // The favorite column was clicked
-            if (e->x < get_column(0)->get_width())
+            // The favorite column was left clicked
+            if (e->button == 1 && e->x < get_column(0)->get_width())
             {
                 if (m_FavoriteTags->find(tag) != m_FavoriteTags->end())
                     Settings.remove_favorite_tag(tag);
@@ -119,10 +119,10 @@ bool TagView::on_button_press_event(GdkEventButton *e)
 
                 queue_draw();
             }
-            else
+            else if (e->x >= get_column(0)->get_width())
             {
                 // Open tag alone in new tab
-                if ((e->state & GDK_SHIFT_MASK) == GDK_SHIFT_MASK)
+                if ((e->state & GDK_SHIFT_MASK) == GDK_SHIFT_MASK || e->button == 2)
                 {
                     m_SignalNewTabTag(tag + " ");
                 }
