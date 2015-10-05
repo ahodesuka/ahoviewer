@@ -52,7 +52,7 @@ Page::Page(Gtk::Menu *menu)
 
     m_Tab->set_visible_window(false);
     m_Tab->add(*hbox);
-    m_Tab->signal_button_press_event().connect(sigc::mem_fun(*this, &Page::on_tab_button_press_event));
+    m_Tab->signal_button_release_event().connect(sigc::mem_fun(*this, &Page::on_tab_button_release_event));
     // }}}
 
     get_vadjustment()->signal_value_changed().connect(sigc::mem_fun(*this, &Page::on_value_changed));
@@ -372,9 +372,9 @@ bool Page::on_button_press_event(GdkEventButton *e)
     return false;
 }
 
-bool Page::on_tab_button_press_event(GdkEventButton *e)
+bool Page::on_tab_button_release_event(GdkEventButton *e)
 {
-    if (e->type == GDK_BUTTON_PRESS && e->button == 2)
+    if (e->type == GDK_BUTTON_RELEASE && e->button == 2)
         m_SignalClosed(this);
 
     return false;
