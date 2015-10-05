@@ -143,6 +143,7 @@ void ImageBox::clear_image()
 
     m_StatusBar->clear_resolution();
     m_Image = nullptr;
+    m_PixbufAnim.reset();
 }
 
 void ImageBox::update_background_color()
