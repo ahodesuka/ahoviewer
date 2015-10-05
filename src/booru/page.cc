@@ -50,6 +50,7 @@ Page::Page(Gtk::Menu *menu)
     hbox->pack_start(*m_TabButton, false, false);
     hbox->show_all();
 
+    m_Tab->set_visible_window(false);
     m_Tab->add(*hbox);
     m_Tab->signal_button_press_event().connect(sigc::mem_fun(*this, &Page::on_tab_button_press_event));
     // }}}
