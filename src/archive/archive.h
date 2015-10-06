@@ -8,12 +8,12 @@
 
 namespace AhoViewer
 {
+    // Progress signal to show extractor progress in the status bar
+    typedef sigc::signal<void, size_t, size_t> SignalExtractorProgressType;
+
     class Archive
     {
     public:
-        // Progress signal to show the progress in the status bar
-        typedef sigc::signal<void, size_t, size_t> SignalProgressType;
-
         enum class Type
         {
             UNKNOWN,
@@ -21,56 +21,54 @@ namespace AhoViewer
             RAR,
         };
 
-        // An interface for archive extractors.
-        // Extractors implement the extract method which extracts all files
-        // from the archive while emitting the progress signal, and
-        // returns the path to the extracted files.
-        class Extractor
+        enum FileType
         {
-        public:
-            virtual ~Extractor() = default;
-            virtual std::string extract(const std::string&, const std::shared_ptr<Archive>&) const = 0;
-
-            SignalProgressType signal_progress() const
-            {
-                return m_SignalProgress;
-            }
-        protected:
-            SignalProgressType m_SignalProgress;
+            IMAGES   = (1u << 0),
+            ARCHIVES = (1u << 1),
         };
 
         // Simple Image class that overrides get_filename and get_thumbnail
         class Image : public AhoViewer::Image
         {
         public:
-            Image(const std::string &path, const std::shared_ptr<Archive> archive);
+            Image(const std::string &path, const Archive &archive);
             virtual std::string get_filename() const;
             virtual const Glib::RefPtr<Gdk::Pixbuf>& get_thumbnail();
         private:
-            std::shared_ptr<Archive> m_Archive;
+            const Archive &m_Archive;
         };
 
         // use ::create instead.
-        explicit Archive(const std::string &path, const std::string &extractedPath);
-        ~Archive();
+        explicit Archive(const std::string &path, const std::string &exDir, const std::string &parentDir);
+        virtual ~Archive();
+
+        virtual void extract() = 0;
+        virtual bool has_valid_files(const FileType t = static_cast<FileType>(IMAGES | ARCHIVES)) const = 0;
+        virtual size_t get_n_valid_files(const FileType t = static_cast<FileType>(IMAGES | ARCHIVES)) const = 0;
 
         static bool is_valid(const std::string &path);
-        static std::shared_ptr<Archive> create(const std::string &path,
-                                               const std::shared_ptr<Archive> &parent = nullptr);
+        static bool is_valid_extension(const std::string &path);
+        static std::unique_ptr<Archive> create(const std::string &path, const std::string &parentDir = "");
 
         const std::string get_path() const { return m_Path; }
         const std::string get_extracted_path() const { return m_ExtractedPath; }
+        SignalExtractorProgressType signal_progress() { return m_SignalProgress; }
 
-        static const std::map<Type, const Extractor *const> Extractors;
+        void add_child(std::unique_ptr<Archive> &c) { m_Children.push_back(std::move(c)); }
+
         static const std::vector<std::string> MimeTypes, FileExtensions;
+    protected:
+        std::string m_Path, m_ExtractedPath;
+        bool m_Child, m_Extracted;
+
+        SignalExtractorProgressType m_SignalProgress;
     private:
         static Type get_type(const std::string &path);
 
-        // Matches the largest extractor MagicSize
-        static int const MagicSize = 6;
+        // Matches the largest archive MagicSize
+        static const int MagicSize = 6;
 
-        std::string m_Path, m_ExtractedPath;
-        std::vector<std::shared_ptr<Archive>> m_Children;
+        std::vector<std::unique_ptr<Archive>> m_Children;
     };
 }
 

@@ -57,6 +57,13 @@ MainWindow::MainWindow(BaseObjectType *cobj, const Glib::RefPtr<Gtk::Builder> &b
     m_LocalImageList = std::make_shared<ImageList>(m_ThumbnailBar);
     m_LocalImageList->signal_archive_error().connect([ this ](const std::string e) { m_StatusBar->set_message(e); });
     m_LocalImageList->signal_load_success().connect([ this ]() { set_active_imagelist(m_LocalImageList); });
+    m_LocalImageList->signal_extractor_progress().connect([ this ](size_t c, size_t t)
+    {
+        m_StatusBar->set_message("Extracting");
+        m_StatusBar->set_progress(static_cast<double>(c) / t);
+        while (Gtk::Main::events_pending())
+            Gtk::Main::iteration();
+    });
 
     m_BooruBrowser->signal_page_changed().connect([ this ](Booru::Page *page)
             { set_active_imagelist(page ? page->get_imagelist() : m_LocalImageList); });
@@ -105,18 +112,6 @@ MainWindow::MainWindow(BaseObjectType *cobj, const Glib::RefPtr<Gtk::Builder> &b
     // Setup drag and drop
     std::vector<Gtk::TargetEntry> dropTargets = { Gtk::TargetEntry("text/uri-list") };
     drag_dest_set(dropTargets, Gtk::DEST_DEFAULT_ALL, Gdk::ACTION_COPY | Gdk::ACTION_MOVE);
-
-    // Connect archive extractors progress signals
-    for (const std::pair<Archive::Type, const Archive::Extractor*> &kv : Archive::Extractors)
-    {
-        kv.second->signal_progress().connect([ this ](size_t e, size_t t)
-        {
-            m_StatusBar->set_message("Extracting");
-            m_StatusBar->set_progress(static_cast<double>(e) / t);
-            while (Gtk::Main::events_pending())
-                Gtk::Main::iteration();
-        });
-    }
 
     // Call this to make sure it is rendered in the main thread.
     Image::get_missing_pixbuf();
@@ -745,7 +740,7 @@ void MainWindow::on_open_file_dialog()
     if (!m_LocalImageList->empty())
     {
         std::string path = m_LocalImageList->from_archive() ?
-            m_LocalImageList->get_archive()->get_path() : m_LocalImageList->get_current()->get_path();
+            m_LocalImageList->get_archive().get_path() : m_LocalImageList->get_current()->get_path();
         dialog.set_filename(path);
     }
 
@@ -808,7 +803,7 @@ void MainWindow::on_quit()
 
         if (m_LocalImageList->from_archive())
         {
-            path = m_LocalImageList->get_archive()->get_path();
+            path = m_LocalImageList->get_archive().get_path();
             Settings.set("ArchiveIndex", static_cast<int>(m_LocalImageList->get_index()));
         }
         else

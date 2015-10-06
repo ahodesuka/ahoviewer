@@ -18,7 +18,8 @@ namespace AhoViewer
         Image(const std::string &path, const std::string &thumb_path = "");
         virtual ~Image() = default;
 
-        static bool is_valid(const std::string&);
+        static bool is_valid(const std::string &path);
+        static bool is_valid_extension(const std::string &path);
         static const Glib::RefPtr<Gdk::Pixbuf>& get_missing_pixbuf();
 
         const std::string get_path() const { return m_Path; }

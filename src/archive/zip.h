@@ -1,18 +1,21 @@
 #ifndef _ZIP_H_
 #define _ZIP_H_
 
-#include <zip.h>
-
 #include "archive.h"
 
 namespace AhoViewer
 {
-    class Zip : public Archive::Extractor
+    class Zip : public Archive
     {
     public:
-        virtual std::string extract(const std::string&, const std::shared_ptr<Archive>&) const;
+        Zip(const std::string &path, const std::string &exDir, const std::string &parentDir);
+        virtual ~Zip() = default;
 
-        static int const MagicSize = 4;
+        virtual void extract();
+        virtual bool has_valid_files(const FileType t) const;
+        virtual size_t get_n_valid_files(const FileType t) const;
+
+        static const int MagicSize = 4;
         static const char Magic[MagicSize];
     };
 }

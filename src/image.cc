@@ -1,3 +1,4 @@
+#include <cctype>
 #include <iostream>
 
 #include "image.h"
@@ -10,6 +11,19 @@ std::string Image::ThumbnailDir = Glib::build_filename(Glib::get_user_cache_dir(
 bool Image::is_valid(const std::string &path)
 {
     return gdk_pixbuf_get_file_info(path.c_str(), 0, 0) != NULL || is_webm(path);
+}
+
+bool Image::is_valid_extension(const std::string &path)
+{
+    std::string ext = path.substr(path.find_last_of('.') + 1);
+    std::transform(ext.begin(), ext.end(), ext.begin(), ::tolower);
+
+    for (const Gdk::PixbufFormat &i : Gdk::Pixbuf::get_formats())
+        for (const std::string &j : i.get_extensions())
+            if (ext == j)
+                return true;
+
+    return false;
 }
 
 #ifdef HAVE_GSTREAMER

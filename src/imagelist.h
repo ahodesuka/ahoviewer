@@ -90,7 +90,7 @@ namespace AhoViewer
         size_t get_index() const { return m_Index; }
         const std::shared_ptr<Image>& get_current() const { return m_Images.at(m_Index); }
         const std::vector<std::shared_ptr<Image>>& get_images() const { return m_Images; }
-        const std::shared_ptr<Archive>& get_archive() const { return m_Archive; }
+        const Archive& get_archive() const { return *m_Archive; }
         bool empty() const { return m_Images.empty(); }
         bool from_archive() const { return !!m_Archive; }
 
@@ -100,6 +100,7 @@ namespace AhoViewer
         SignalArchiveErrorType signal_archive_error() const { return m_SignalArchiveError; }
         SignalClearedType signal_cleared() const { return m_SignalCleared; }
         SignalLoadSuccessType signal_load_success() const { return m_SignalLoadSuccess; }
+        SignalExtractorProgressType signal_extractor_progress() const { return m_SignalExtractorProgress; }
     protected:
         virtual void set_current(const size_t index, const bool fromWidget = false);
         virtual void load_thumbnails();
@@ -122,7 +123,7 @@ namespace AhoViewer
         void cancel_cache();
 
         std::vector<size_t> m_Cache;
-        std::shared_ptr<Archive> m_Archive;
+        std::unique_ptr<Archive> m_Archive;
         std::vector<std::string> m_ArchiveEntries;
         std::queue<PixbufPair> m_ThumbnailQueue;
 
@@ -134,9 +135,10 @@ namespace AhoViewer
         Glib::Dispatcher m_SignalThumbnailLoaded,
                          m_SignalThumbnailsLoaded;
 
-        SignalArchiveErrorType m_SignalArchiveError;
-        SignalClearedType m_SignalCleared;
-        SignalLoadSuccessType m_SignalLoadSuccess;
+        SignalArchiveErrorType      m_SignalArchiveError;
+        SignalClearedType           m_SignalCleared;
+        SignalLoadSuccessType       m_SignalLoadSuccess;
+        SignalExtractorProgressType m_SignalExtractorProgress;
     };
 }
 

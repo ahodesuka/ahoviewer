@@ -1,26 +1,21 @@
 #ifndef _RAR_H_
 #define _RAR_H_
 
-#if defined(__linux__) || defined(_APPLE) || defined(__MINGW32__)
-  #define _UNIX
-#endif
-
-#if defined(HAVE_LIBUNRAR_DLL_HPP)
-#include <libunrar/dll.hpp>
-#elif defined(HAVE_UNRAR_DLL_HPP)
-#include <unrar/dll.hpp>
-#endif
-
 #include "archive.h"
 
 namespace AhoViewer
 {
-    class Rar : public Archive::Extractor
+    class Rar : public Archive
     {
     public:
-        virtual std::string extract(const std::string&, const std::shared_ptr<Archive>&) const;
+        Rar(const std::string &path, const std::string &exDir, const std::string &parentDir);
+        virtual ~Rar() = default;
 
-        static int const MagicSize = 6;
+        virtual void extract();
+        virtual bool has_valid_files(const FileType t) const;
+        virtual size_t get_n_valid_files(const FileType t = static_cast<FileType>(IMAGES | ARCHIVES)) const;
+
+        static const int MagicSize = 6;
         static const char Magic[MagicSize];
     };
 }

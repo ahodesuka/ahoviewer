@@ -1,3 +1,4 @@
+#include <cctype>
 #include <cstring>
 #include <fstream>
 
@@ -6,25 +7,8 @@ using namespace AhoViewer;
 
 #include "config.h"
 #include "tempdir.h"
-
-#ifdef HAVE_LIBUNRAR
 #include "rar.h"
-#endif // HAVE_LIBUNRAR
-
-#ifdef HAVE_LIBZIP
 #include "zip.h"
-#endif // HAVE_LIBZIP
-
-const std::map<Archive::Type, const Archive::Extractor *const> Archive::Extractors =
-{
-#ifdef HAVE_LIBZIP
-    { Type::ZIP, new Zip },
-#endif // HAVE_LIBZIP
-
-#ifdef HAVE_LIBUNRAR
-    { Type::RAR, new Rar },
-#endif // HAVE_LIBUNRAR
-};
 
 const std::vector<std::string> Archive::MimeTypes =
 {
@@ -60,25 +44,44 @@ bool Archive::is_valid(const std::string &path)
     return get_type(path) != Type::UNKNOWN;
 }
 
-std::shared_ptr<Archive> Archive::create(const std::string &path, const std::shared_ptr<Archive> &parent)
+bool Archive::is_valid_extension(const std::string &path)
 {
-    std::shared_ptr<Archive> archive = nullptr;
+    std::string ext = path.substr(path.find_last_of('.') + 1);
+    std::transform(ext.begin(), ext.end(), ext.begin(), ::tolower);
+
+    for (const std::string &e : FileExtensions)
+        if (ext == e)
+            return true;
+
+    return false;
+}
+
+std::unique_ptr<Archive> Archive::create(const std::string &path, const std::string &parentDir)
+{
+    std::string dir;
     Type type = get_type(path);
 
-    if (Extractors.find(type) != Extractors.end())
+    if (type != Type::UNKNOWN)
     {
-        std::string extractedPath(Extractors.at(type)->extract(path, parent));
+        dir = TempDir::get_instance().make_dir(
+            !parentDir.empty() ? Glib::build_filename(Glib::path_get_basename(parentDir),
+                                                      Glib::path_get_basename(path)) :
+                                 Glib::path_get_basename(path));
+    }
 
-        if (!extractedPath.empty())
+    if (!dir.empty())
+    {
+        if (type == Type::ZIP)
         {
-            archive = std::make_shared<Archive>(path, extractedPath);
-
-            if (parent)
-                parent->m_Children.push_back(archive);
+            return std::unique_ptr<Archive>(new Zip(path, dir, parentDir));
+        }
+        else if (type == Type::RAR)
+        {
+            return std::unique_ptr<Archive>(new Rar(path, dir, parentDir));
         }
     }
 
-    return archive;
+    return nullptr;
 }
 
 Archive::Type Archive::get_type(const std::string &path)
@@ -101,9 +104,11 @@ Archive::Type Archive::get_type(const std::string &path)
     return Type::UNKNOWN;
 }
 
-Archive::Archive(const std::string &path, const std::string &extractedPath)
+Archive::Archive(const std::string &path, const std::string &exDir, const std::string &parentDir)
   : m_Path(path),
-    m_ExtractedPath(extractedPath)
+    m_ExtractedPath(exDir),
+    m_Child(!parentDir.empty()),
+    m_Extracted(false)
 {
 
 }

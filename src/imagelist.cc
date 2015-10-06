@@ -1,6 +1,8 @@
 #include "imagelist.h"
 using namespace AhoViewer;
 
+#include <glib/gstdio.h>
+
 #include "booru/image.h"
 #include "naturalsort.h"
 #include "settings.h"
@@ -48,8 +50,7 @@ void ImageList::clear()
         m_Widget->clear();
     }
 
-    m_Archive.reset();
-
+    m_Archive = nullptr;
     m_Index = 0;
     m_SignalCleared();
 }
@@ -60,7 +61,7 @@ void ImageList::clear()
  **/
 bool ImageList::load(const std::string path, std::string &error, int index)
 {
-    std::shared_ptr<Archive> archive = nullptr;
+    std::unique_ptr<Archive> archive = nullptr;
     std::string dirPath;
 
     if (Glib::file_test(path, Glib::FILE_TEST_EXISTS))
@@ -75,6 +76,9 @@ bool ImageList::load(const std::string path, std::string &error, int index)
         }
         else if ((archive = Archive::create(path)))
         {
+            archive->signal_progress().connect(
+                sigc::mem_fun(m_SignalExtractorProgress, &SignalExtractorProgressType::emit));
+            archive->extract();
             dirPath = archive->get_extracted_path();
         }
         else
@@ -94,7 +98,19 @@ bool ImageList::load(const std::string path, std::string &error, int index)
     if (entries.empty() && archive && !(subEntries = get_archive_entries(dirPath, true)).empty())
     {
         for (const std::string &s : subEntries)
-            Archive::create(s, archive);
+        {
+            std::unique_ptr<Archive> arc = Archive::create(s, archive->get_extracted_path());
+
+            if (arc->has_valid_files(Archive::IMAGES))
+            {
+                arc->signal_progress().connect(
+                    sigc::mem_fun(m_SignalExtractorProgress, &SignalExtractorProgressType::emit));
+                arc->extract();
+                archive->add_child(arc);
+            }
+
+            g_unlink(s.c_str());
+        }
 
         entries = get_image_entries(dirPath, true);
     }
@@ -106,17 +122,17 @@ bool ImageList::load(const std::string path, std::string &error, int index)
         return false;
     }
 
+    m_SignalLoadSuccess();
+
     if (!archive)
     {
         m_Archive = nullptr;
     }
     else
     {
-        m_Archive = archive;
+        m_Archive = std::move(archive);
         m_ArchiveEntries = get_archive_entries(Glib::path_get_dirname(m_Archive->get_path()));
     }
-
-    m_SignalLoadSuccess();
 
     // Sort entries alphanumerically
     std::sort(entries.begin(), entries.end(), NaturalSort());
@@ -148,7 +164,7 @@ bool ImageList::load(const std::string path, std::string &error, int index)
     {
         std::shared_ptr<Image> img;
         if (m_Archive)
-            img = std::make_shared<Archive::Image>(e, m_Archive);
+            img = std::make_shared<Archive::Image>(e, *m_Archive);
         else
             img = std::make_shared<Image>(e);
         m_Images.push_back(img);
