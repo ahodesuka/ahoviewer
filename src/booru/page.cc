@@ -320,8 +320,7 @@ void Page::on_posts_downloaded()
 
 void Page::on_selection_changed()
 {
-    std::vector<Gtk::TreePath> paths =
-        static_cast<std::vector<Gtk::TreePath>>(m_IconView->get_selected_items());
+    std::vector<Gtk::TreePath> paths = m_IconView->get_selected_items();
 
     if (!paths.empty())
     {
