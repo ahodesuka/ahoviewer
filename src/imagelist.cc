@@ -101,7 +101,7 @@ bool ImageList::load(const std::string path, std::string &error, int index)
         {
             std::unique_ptr<Archive> arc = Archive::create(s, archive->get_extracted_path());
 
-            if (arc->has_valid_files(Archive::IMAGES))
+            if (arc && arc->has_valid_files(Archive::IMAGES))
             {
                 arc->signal_progress().connect(
                     sigc::mem_fun(m_SignalExtractorProgress, &SignalExtractorProgressType::emit));
