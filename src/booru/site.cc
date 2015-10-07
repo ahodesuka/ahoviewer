@@ -100,7 +100,7 @@ std::string Site::get_posts_url(const std::string &tags, size_t page)
 {
     return Glib::ustring::compose(m_Url + RequestURI.at(m_Type),
                                   (m_Type == Type::GELBOORU ? page - 1 : page),
-                                  Settings.get_int("BooruLimit"), m_Curler.escape(tags));
+                                  Settings.get_int("BooruLimit"), tags);
 }
 
 std::string Site::get_post_url(const std::string &id)

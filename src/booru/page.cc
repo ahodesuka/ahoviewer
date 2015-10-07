@@ -233,6 +233,7 @@ void Page::get_posts()
         }
     }
 
+    tags = m_Curler.escape(tags);
     m_Curler.set_url(m_Site->get_posts_url(tags, m_Page));
 
     m_GetPostsThread = Glib::Threads::Thread::create([ this, tags ]()
