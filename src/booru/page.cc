@@ -252,8 +252,9 @@ void Page::get_posts()
 
         if (m_Curler.perform())
         {
-            m_Posts = std::make_shared<xmlDocument>(
-                    reinterpret_cast<char*>(m_Curler.get_data()), m_Curler.get_data_size());
+            m_Posts = std::unique_ptr<xmlDocument>(
+                    new xmlDocument(reinterpret_cast<char*>(m_Curler.get_data()),
+                                    m_Curler.get_data_size()));
             m_NumPosts = m_Posts->get_n_nodes();
 
             if (postsCount)
@@ -303,7 +304,7 @@ void Page::on_posts_downloaded()
     else if (m_NumPosts > 0)
     {
         reserve(m_NumPosts);
-        m_ImageList->load(m_Posts, this);
+        m_ImageList->load(*m_Posts, this);
     }
     else if (m_Page == 1)
     {

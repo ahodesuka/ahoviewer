@@ -17,13 +17,13 @@ void ImageList::clear()
     m_Size = 0;
 }
 
-void ImageList::load(const std::shared_ptr<xmlDocument> posts, Booru::Page *const page)
+void ImageList::load(const xmlDocument &posts, Booru::Page *const page)
 {
-    std::string c = posts->get_attribute("count");
+    std::string c = posts.get_attribute("count");
     if (!c.empty())
        m_Size = std::stoul(c);
 
-    for (const xmlDocument::Node &post : posts->get_children())
+    for (const xmlDocument::Node &post : posts.get_children())
     {
         std::string thumbUrl(post.get_attribute("preview_url")),
                     thumbPath(Glib::build_filename(page->get_site()->get_path(), "thumbnails",
