@@ -1,7 +1,7 @@
 #ifndef _SITE_H_
 #define _SITE_H_
 
-#include <gtkmm.h>
+#include <gdkmm.h>
 #include <set>
 
 #include "curler.h"
@@ -51,7 +51,6 @@ namespace AhoViewer
             Glib::RefPtr<Gdk::Pixbuf> get_icon_pixbuf(const bool update = false);
 
             void save_tags() const;
-            void set_row_values(Gtk::TreeRow row);
 
             Glib::Dispatcher& signal_icon_downloaded() { return m_SignalIconDownloaded; }
         private:
@@ -68,8 +67,6 @@ namespace AhoViewer
             Glib::RefPtr<Gdk::Pixbuf> m_IconPixbuf;
             Glib::Threads::Thread *m_IconCurlerThread;
             Glib::Dispatcher m_SignalIconDownloaded;
-
-            sigc::connection m_IconDownloadedConn;
         };
     }
 }

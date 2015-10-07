@@ -43,8 +43,8 @@ Browser::Browser(BaseObjectType *cobj, const Glib::RefPtr<Gtk::Builder> &bldr)
     m_ComboBox->set_model(m_ComboModel);
     update_combobox_model();
 
-    m_ComboBox->pack_start(m_ComboColumns.pixbuf_column, false);
-    m_ComboBox->pack_start(m_ComboColumns.text_column);
+    m_ComboBox->pack_start(m_ComboColumns.icon, false);
+    m_ComboBox->pack_start(m_ComboColumns.name);
     static_cast<std::vector<Gtk::CellRenderer*>>(m_ComboBox->get_cells())[0]->set_fixed_size(20, 16);
 
     m_UIManager = Glib::RefPtr<Gtk::UIManager>::cast_static(bldr->get_object("UIManager"));
@@ -67,11 +67,23 @@ std::vector<Page*> Browser::get_pages() const
 
 void Browser::update_combobox_model()
 {
+    for (sigc::connection conn : m_SiteIconConns)
+        conn.disconnect();
+
     m_ComboChangedConn.disconnect();
     m_ComboModel->clear();
 
     for (std::shared_ptr<Site> site : Settings.get_sites())
-        site->set_row_values(*(m_ComboModel->append()));
+    {
+        Gtk::TreeIter it = m_ComboModel->append();
+        sigc::connection c = site->signal_icon_downloaded().connect([ this, site, it ]
+                { it->set_value(m_ComboColumns.icon, site->get_icon_pixbuf()); });
+        m_SiteIconConns.push_back(c);
+
+        it->set_value(m_ComboColumns.icon, site->get_icon_pixbuf());
+        it->set_value(m_ComboColumns.name, site->get_name());
+
+    }
 
     m_ComboChangedConn = m_ComboBox->signal_changed().connect([ this ]()
     {

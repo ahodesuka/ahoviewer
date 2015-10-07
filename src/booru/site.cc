@@ -199,12 +199,3 @@ void Site::save_tags() const
     if (ofs)
         std::copy(m_Tags.begin(), m_Tags.end(), std::ostream_iterator<std::string>(ofs, "\n"));
 }
-
-void Site::set_row_values(Gtk::TreeRow row)
-{
-    m_IconDownloadedConn.disconnect();
-    m_IconDownloadedConn = m_SignalIconDownloaded.connect([ this, row ]() { row.set_value(0, m_IconPixbuf); });
-
-    row.set_value(0, get_icon_pixbuf());
-    row.set_value(1, m_Name);
-}

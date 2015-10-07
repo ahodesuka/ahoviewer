@@ -49,9 +49,9 @@ namespace AhoViewer
         private:
             struct ComboBoxModelColumns : public Gtk::TreeModelColumnRecord
             {
-                ComboBoxModelColumns() { add(pixbuf_column); add(text_column); }
-                Gtk::TreeModelColumn<Glib::RefPtr<Gdk::Pixbuf>> pixbuf_column;
-                Gtk::TreeModelColumn<std::string> text_column;
+                ComboBoxModelColumns() { add(icon); add(name); }
+                Gtk::TreeModelColumn<Glib::RefPtr<Gdk::Pixbuf>> icon;
+                Gtk::TreeModelColumn<std::string> name;
             };
 
             void close_page(Page *page);
@@ -87,6 +87,7 @@ namespace AhoViewer
             Glib::RefPtr<Gtk::Action> m_SaveImageAction,
                                       m_SaveImagesAction;
 
+            std::vector<sigc::connection> m_SiteIconConns;
             sigc::connection m_ComboChangedConn,
                              m_DownloadErrorConn,
                              m_ImageListConn,
