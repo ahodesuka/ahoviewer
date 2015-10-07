@@ -10,9 +10,9 @@ using namespace AhoViewer;
 ImageList::ImageList(Widget *w)
   : m_Widget(w),
     m_Index(0),
+    m_ThumbnailCancel(Gio::Cancellable::create()),
     m_ThumbnailThread(nullptr),
     m_CacheCancel(Gio::Cancellable::create()),
-    m_ThumbnailCancel(Gio::Cancellable::create()),
     m_CacheThread(nullptr)
 {
     m_Widget->signal_selected_changed().connect(

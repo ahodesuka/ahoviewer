@@ -48,6 +48,15 @@ void ImageList::load(const xmlDocument &posts, const Page &page)
         m_Images.push_back(std::make_shared<Booru::Image>(imagePath, imageUrl, thumbPath, thumbUrl, postUrl, tags, page));
     }
 
+    // If thumbnails are still loading from the last page
+    // the operation needs to be cancelled, all the
+    // thumbnails will be loaded in the new thread
+    if (m_ThumbnailThread)
+    {
+        m_ThumbnailCancel->cancel();
+        m_ThumbnailThread->join();
+    }
+
     m_ThumbnailThread = Glib::Threads::Thread::create(sigc::mem_fun(*this, &ImageList::load_thumbnails));
 
     // only call set_current if this is the first page

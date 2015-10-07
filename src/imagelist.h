@@ -109,6 +109,7 @@ namespace AhoViewer
         std::vector<std::shared_ptr<Image>> m_Images;
         size_t m_Index;
 
+        Glib::RefPtr<Gio::Cancellable> m_ThumbnailCancel;
         Glib::Threads::Thread *m_ThumbnailThread;
 
         SignalChangedType m_SignalChanged;
@@ -127,8 +128,7 @@ namespace AhoViewer
         std::vector<std::string> m_ArchiveEntries;
         std::queue<PixbufPair> m_ThumbnailQueue;
 
-        Glib::RefPtr<Gio::Cancellable> m_CacheCancel,
-                                       m_ThumbnailCancel;
+        Glib::RefPtr<Gio::Cancellable> m_CacheCancel;
         Glib::Threads::Mutex m_ThumbnailMutex;
         Glib::Threads::Thread *m_CacheThread;
 

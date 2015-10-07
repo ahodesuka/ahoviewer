@@ -117,6 +117,9 @@ void Page::search(const std::shared_ptr<Site> &site)
     cancel_save();
     m_ImageList->clear();
 
+    if (m_GetPostsThread)
+        m_GetPostsThread->join();
+
     m_Site = site;
     m_Page = 1;
     m_LastPage = false;
@@ -230,9 +233,6 @@ void Page::get_posts()
         }
     }
 
-    if (m_GetPostsThread)
-        m_GetPostsThread->join();
-
     m_Curler.set_url(m_Site->get_posts_url(tags, m_Page));
 
     m_GetPostsThread = Glib::Threads::Thread::create([ this, tags ]()
@@ -274,6 +274,8 @@ void Page::get_posts()
 
 bool Page::get_next_page()
 {
+    // Do not fetch the next page if this is the last
+    // or the current page is still loading
     if (m_LastPage || m_GetPostsThread)
         return false;
 
