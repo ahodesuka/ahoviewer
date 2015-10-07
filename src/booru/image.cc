@@ -9,7 +9,7 @@ using namespace AhoViewer::Booru;
 Image::Image(const std::string &path, const std::string &url,
              const std::string &thumbPath, const std::string &thumbUrl,
              const std::string &postUrl,
-             std::set<std::string> tags, Page *const page)
+             std::set<std::string> tags, const Page &page)
   : AhoViewer::Image(path, thumbPath),
     m_Url(url),
     m_ThumbnailUrl(thumbUrl),
@@ -32,12 +32,12 @@ Image::~Image()
     cancel_download();
 
     if (m_Curler.is_active())
-        m_Page->get_image_fetcher().remove_handle(&m_Curler);
+        m_Page.get_image_fetcher().remove_handle(&m_Curler);
 }
 
 std::string Image::get_filename() const
 {
-    return Glib::build_filename(m_Page->get_site()->get_name(), Glib::path_get_basename(m_Path));
+    return Glib::build_filename(m_Page.get_site()->get_name(), Glib::path_get_basename(m_Path));
 }
 
 const Glib::RefPtr<Gdk::Pixbuf>& Image::get_thumbnail()
@@ -127,7 +127,7 @@ bool Image::start_download()
 {
     if (!m_Curler.is_active())
     {
-        m_Page->get_image_fetcher().add_handle(&m_Curler);
+        m_Page.get_image_fetcher().add_handle(&m_Curler);
         m_Loading = true;
 
         if (!m_isWebM)

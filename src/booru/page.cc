@@ -304,7 +304,7 @@ void Page::on_posts_downloaded()
     else if (m_NumPosts > 0)
     {
         reserve(m_NumPosts);
-        m_ImageList->load(*m_Posts, this);
+        m_ImageList->load(*m_Posts, *this);
     }
     else if (m_Page == 1)
     {

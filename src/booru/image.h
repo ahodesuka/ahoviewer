@@ -18,7 +18,7 @@ namespace AhoViewer
             Image(const std::string &path, const std::string &url,
                   const std::string &thumbPath, const std::string &thumbUrl,
                   const std::string &postUrl,
-                  std::set<std::string> tags, Page *const page);
+                  std::set<std::string> tags, const Page &page);
             virtual ~Image();
 
             time_point_t get_start_time() const { return m_Curler.get_start_time(); }
@@ -47,7 +47,7 @@ namespace AhoViewer
 
             std::string m_Url, m_ThumbnailUrl, m_PostUrl;
             std::set<std::string> m_Tags;
-            Page *const m_Page;
+            const Page &m_Page;
 
             time_point_t m_LastDraw;
 

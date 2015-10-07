@@ -17,7 +17,7 @@ namespace AhoViewer
             size_t get_vector_size() const { return m_Images.size(); }
 
             virtual void clear();
-            void load(const xmlDocument &posts, Booru::Page *const page);
+            void load(const xmlDocument &posts, const Page &page);
         private:
             size_t m_Size;
         };
