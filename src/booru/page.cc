@@ -163,7 +163,7 @@ void Page::save_images(const std::string &path)
     {
         // 2 if cachesize is 0, 8 if cachesize > 2
         Glib::ThreadPool pool(std::max(std::min(Settings.get_int("CacheSize") * 4, 8), 2));
-        for (const std::shared_ptr<AhoViewer::Image> &img : m_ImageList->get_images())
+        for (const std::shared_ptr<AhoViewer::Image> &img : *m_ImageList)
         {
             pool.push([ this, path, img ]()
             {
@@ -204,7 +204,7 @@ void Page::cancel_save()
 {
     m_SaveCancel->cancel();
 
-    for (const std::shared_ptr<AhoViewer::Image> &img : m_ImageList->get_images())
+    for (const std::shared_ptr<AhoViewer::Image> &img : *m_ImageList)
     {
         std::shared_ptr<Image> bimage = std::static_pointer_cast<Image>(img);
         bimage->cancel_download();

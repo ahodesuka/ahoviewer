@@ -15,6 +15,8 @@ namespace AhoViewer
 {
     class ImageList : public sigc::trackable
     {
+        typedef std::vector<std::shared_ptr<Image>> ImageVector;
+        typedef std::vector<std::shared_ptr<Image>>::iterator ImageVectorIter;
     public:
         // This signal is emitted when m_Index is changed.
         // It is connected by the MainWindow which tells the ImageBox to draw the new image.
@@ -89,10 +91,12 @@ namespace AhoViewer
 
         size_t get_index() const { return m_Index; }
         const std::shared_ptr<Image>& get_current() const { return m_Images.at(m_Index); }
-        const std::vector<std::shared_ptr<Image>>& get_images() const { return m_Images; }
         const Archive& get_archive() const { return *m_Archive; }
         bool empty() const { return m_Images.empty(); }
         bool from_archive() const { return !!m_Archive; }
+
+        ImageVectorIter begin() { return m_Images.begin(); }
+        ImageVectorIter end() { return m_Images.end(); }
 
         void on_cache_size_changed();
 
@@ -106,7 +110,7 @@ namespace AhoViewer
         virtual void load_thumbnails();
 
         Widget *const m_Widget;
-        std::vector<std::shared_ptr<Image>> m_Images;
+        ImageVector m_Images;
         size_t m_Index;
 
         Glib::RefPtr<Gio::Cancellable> m_ThumbnailCancel;
