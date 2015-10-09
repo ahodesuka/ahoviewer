@@ -36,11 +36,11 @@ namespace AhoViewer
         void set_sensitives();
         void set_booru_sensitives();
         void update_title();
-        void clear();
 
         bool is_fullscreen() const;
 
         void on_imagelist_changed(const std::shared_ptr<Image> &image);
+        void on_imagelist_cleared();
         void on_cache_size_changed();
         void on_accel_edited(const std::string &accelPath, const std::string &actionName);
 

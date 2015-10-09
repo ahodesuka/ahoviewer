@@ -64,6 +64,14 @@ MainWindow::MainWindow(BaseObjectType *cobj, const Glib::RefPtr<Gtk::Builder> &b
         while (Gtk::Main::events_pending())
             Gtk::Main::iteration();
     });
+    m_LocalImageList->signal_size_changed().connect([ this ]()
+    {
+        if (m_LocalImageList == m_ActiveImageList)
+        {
+            update_title();
+            set_sensitives();
+        }
+    });
 
     m_BooruBrowser->signal_page_changed().connect([ this ](Booru::Page *page)
             { set_active_imagelist(page ? page->get_imagelist() : m_LocalImageList); });
@@ -312,15 +320,19 @@ void MainWindow::set_active_imagelist(std::shared_ptr<ImageList> imageList)
     m_ImageListConn = m_ActiveImageList->signal_changed().connect(
             sigc::mem_fun(*this, &MainWindow::on_imagelist_changed));
     m_ImageListClearedConn = m_ActiveImageList->signal_cleared().connect(
-            sigc::mem_fun(*this, &MainWindow::clear));
+            sigc::mem_fun(*this, &MainWindow::on_imagelist_cleared));
 
     if (!m_ActiveImageList->empty())
+    {
         m_ImageBox->set_image(m_ActiveImageList->get_current());
-    else
-        clear();
 
-    update_title();
-    set_sensitives();
+        update_title();
+        set_sensitives();
+    }
+    else
+    {
+        on_imagelist_cleared();
+    }
 }
 
 void MainWindow::save_window_geometry()
@@ -656,13 +668,6 @@ void MainWindow::update_title()
     }
 }
 
-void MainWindow::clear()
-{
-    m_ImageBox->clear_image();
-    m_StatusBar->clear_page_info();
-    m_StatusBar->clear_filename();
-}
-
 bool MainWindow::is_fullscreen() const
 {
     return get_window() && (get_window()->get_state() & Gdk::WINDOW_STATE_FULLSCREEN) != 0;
@@ -673,6 +678,30 @@ void MainWindow::on_imagelist_changed(const std::shared_ptr<Image> &image)
     m_ImageBox->set_image(image);
     update_title();
     set_sensitives();
+}
+
+void MainWindow::on_imagelist_cleared()
+{
+    if (m_LocalImageList == m_ActiveImageList)
+    {
+        Booru::Page *page = m_BooruBrowser->get_active_page();
+
+        if (page && !page->get_imagelist()->empty())
+        {
+            Glib::RefPtr<Gtk::ToggleAction>::cast_static(m_ActionGroup->
+                    get_action("ToggleBooruBrowser"))->set_active();
+            set_active_imagelist(page->get_imagelist());
+
+            return;
+        }
+    }
+
+    m_ImageBox->clear_image();
+    m_StatusBar->clear_page_info();
+    m_StatusBar->clear_filename();
+
+    update_title();
+    update_widgets_visibility();
 }
 
 void MainWindow::on_cache_size_changed()
@@ -758,28 +787,10 @@ void MainWindow::on_open_recent_file()
 
 void MainWindow::on_close()
 {
-    if (m_ActiveImageList == m_LocalImageList)
-    {
+    if (m_LocalImageList == m_ActiveImageList)
         m_LocalImageList->clear();
-
-        Booru::Page *page = m_BooruBrowser->get_active_page();
-
-        if (page && !page->get_imagelist()->empty())
-        {
-            Glib::RefPtr<Gtk::ToggleAction>::cast_static(m_ActionGroup->
-                    get_action("ToggleBooruBrowser"))->set_active();
-            set_active_imagelist(page->get_imagelist());
-        }
-        else
-        {
-            update_title();
-            update_widgets_visibility();
-        }
-    }
     else
-    {
         m_BooruBrowser->on_close_tab();
-    }
 }
 
 void MainWindow::on_quit()

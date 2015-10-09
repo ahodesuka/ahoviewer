@@ -1,7 +1,7 @@
+#include <glib/gstdio.h>
+
 #include "imagelist.h"
 using namespace AhoViewer;
-
-#include <glib/gstdio.h>
 
 #include "booru/image.h"
 #include "naturalsort.h"
@@ -16,7 +16,7 @@ ImageList::ImageList(Widget *w)
     m_CacheThread(nullptr)
 {
     m_Widget->signal_selected_changed().connect(
-            sigc::bind<1>(sigc::mem_fun(*this, &ImageList::set_current), true));
+            sigc::bind(sigc::mem_fun(*this, &ImageList::set_current), true, false));
 
     m_SignalThumbnailLoaded.connect(sigc::mem_fun(*this, &ImageList::on_thumbnail_loaded));
     m_SignalThumbnailsLoaded.connect(sigc::mem_fun(*this, &ImageList::on_thumbnails_loaded));
@@ -24,34 +24,12 @@ ImageList::ImageList(Widget *w)
 
 ImageList::~ImageList()
 {
-    clear();
+    reset();
 }
 
 void ImageList::clear()
 {
-    cancel_cache();
-    m_ThumbnailCancel->cancel();
-
-    {
-        Glib::Threads::Mutex::Lock lock(m_ThumbnailMutex);
-        m_ThumbnailQueue = std::queue<PixbufPair>();
-    }
-
-    if (m_ThumbnailThread)
-    {
-        m_ThumbnailThread->join();
-        m_ThumbnailThread = nullptr;
-    }
-
-    m_Images.clear();
-
-    {
-        Glib::Threads::Mutex::Lock lock(m_ThumbnailMutex);
-        m_Widget->clear();
-    }
-
-    m_Archive = nullptr;
-    m_Index = 0;
+    reset();
     m_SignalCleared();
 }
 
@@ -118,11 +96,16 @@ bool ImageList::load(const std::string path, std::string &error, int index)
     // No valid images in this directory
     if (entries.empty())
     {
-        error = "No valid image files found in '" + dirPath + "'.";
+        error = "No valid image files found in '" + (archive ? archive->get_path() : dirPath) + "'.";
         return false;
     }
 
     m_SignalLoadSuccess();
+    reset();
+
+    // Create the actual vector of images
+    m_Images.reserve(entries.size());
+    m_Widget->reserve(entries.size());
 
     if (!archive)
     {
@@ -134,31 +117,26 @@ bool ImageList::load(const std::string path, std::string &error, int index)
         m_ArchiveEntries = get_archive_entries(Glib::path_get_dirname(m_Archive->get_path()));
     }
 
+    // Set up the file monitor
+    if (!m_Archive)
+    {
+        Glib::RefPtr<Gio::File> dir = Gio::File::create_for_path(dirPath);
+        m_FileMonitor = dir->monitor_directory();
+        m_FileMonitor->signal_changed().connect(sigc::mem_fun(*this, &ImageList::on_directory_changed));
+    }
+
     // Sort entries alphanumerically
     std::sort(entries.begin(), entries.end(), NaturalSort());
 
     if (path != dirPath && !m_Archive)
     {
         std::vector<std::string>::iterator iter = std::find(entries.begin(), entries.end(), path);
-        m_Index = iter == entries.end() ? 0 : iter - entries.begin();
+        index = iter == entries.end() ? 0 : iter - entries.begin();
     }
     else if (index == -1)
     {
-        m_Index = entries.size() - 1;
+        index = entries.size() - 1;
     }
-    else
-    {
-        m_Index = index;
-    }
-
-    cancel_cache();
-
-    // Create the actual vector of images
-    m_Images.clear();
-    m_Images.reserve(entries.size());
-
-    m_Widget->clear();
-    m_Widget->reserve(entries.size());
 
     for (const std::string &e : entries)
     {
@@ -171,7 +149,7 @@ bool ImageList::load(const std::string path, std::string &error, int index)
     }
 
     m_ThumbnailThread = Glib::Threads::Thread::create(sigc::mem_fun(*this, &ImageList::load_thumbnails));
-    set_current(m_Index);
+    set_current(index, false, true);
 
     return true;
 }
@@ -254,10 +232,9 @@ void ImageList::on_cache_size_changed()
         update_cache();
 }
 
-void ImageList::set_current(const size_t index, const bool fromWidget)
+void ImageList::set_current(const size_t index, const bool fromWidget, const bool force)
 {
-    // Ignore clicking
-    if (index == m_Index && fromWidget)
+    if (index == m_Index && !force)
         return;
 
     m_Index = index;
@@ -296,6 +273,38 @@ void ImageList::load_thumbnails()
 
     if (!m_ThumbnailCancel->is_cancelled())
         m_SignalThumbnailsLoaded();
+}
+
+// Resets the image list to it's initial state
+void ImageList::reset()
+{
+    cancel_cache();
+    m_ThumbnailCancel->cancel();
+
+    if (m_FileMonitor)
+        m_FileMonitor->cancel();
+
+    {
+        Glib::Threads::Mutex::Lock lock(m_ThumbnailMutex);
+        m_ThumbnailQueue = std::queue<PixbufPair>();
+    }
+
+    if (m_ThumbnailThread)
+    {
+        m_ThumbnailThread->join();
+        m_ThumbnailThread = nullptr;
+    }
+
+    m_Images.clear();
+
+    {
+        Glib::Threads::Mutex::Lock lock(m_ThumbnailMutex);
+        m_Widget->clear();
+    }
+
+    m_Archive = nullptr;
+    m_ArchiveEntries.clear();
+    m_Index = 0;
 }
 
 std::vector<std::string> ImageList::get_image_entries(const std::string &path, const bool recursive)
@@ -381,6 +390,79 @@ void ImageList::on_thumbnails_loaded()
     m_Widget->on_thumbnails_loaded(m_Index);
 }
 
+void ImageList::on_directory_changed(const Glib::RefPtr<Gio::File> &file,
+                                     const Glib::RefPtr<Gio::File>&,
+                                     Gio::FileMonitorEvent event)
+{
+    if (!file) return;
+
+    ImageVectorIter it;
+    auto comp = [ file ](const std::shared_ptr<Image> &i) { return i->get_path() == file->get_path(); };
+
+    if (event == Gio::FILE_MONITOR_EVENT_DELETED)
+    {
+        if ((it = std::find_if(m_Images.begin(), m_Images.end(), comp)) != m_Images.end())
+        {
+            size_t index = it - m_Images.begin();
+            bool current = index == m_Index;
+
+            // Adjust m_Index if the deleted file before it
+            if (index < m_Index)
+                --m_Index;
+
+            m_Widget->erase(index);
+            m_Images.erase(std::remove_if(m_Images.begin(), m_Images.end(), comp));
+
+            if (current)
+            {
+                if (m_Images.empty())
+                {
+                    clear();
+                    return;
+                }
+                else
+                {
+                    set_current(index == 0 ? 0 : index - 1, false, true);
+                }
+            }
+            else
+            {
+                update_cache();
+            }
+
+            m_SignalSizeChanged();
+        }
+        else if (file->get_path() == Glib::path_get_dirname(get_current()->get_path()))
+        {
+            clear();
+        }
+    }
+    // The changed event is used in case the created event was too quick,
+    // and the file was invalid while still being written
+    else if ((event == Gio::FILE_MONITOR_EVENT_CREATED ||
+              event == Gio::FILE_MONITOR_EVENT_CHANGES_DONE_HINT) &&
+            Image::is_valid(file->get_path()))
+    {
+        // Make sure the image wasn't already added
+        if (event == Gio::FILE_MONITOR_EVENT_CHANGES_DONE_HINT &&
+            std::find_if(m_Images.begin(), m_Images.end(), comp) != m_Images.end())
+            return;
+
+        std::shared_ptr<Image> img = std::make_shared<Image>(file->get_path());
+        it = std::lower_bound(m_Images.begin(), m_Images.end(), img, NaturalSort());
+        size_t index = it - m_Images.begin();
+
+        if (index <= m_Index)
+            ++m_Index;
+
+        m_Widget->insert(index, img->get_thumbnail());
+        m_Images.insert(it, img);
+
+        update_cache();
+        m_SignalSizeChanged();
+    }
+}
+
 void ImageList::update_cache()
 {
     std::vector<size_t> cache = { m_Index }, diff;
@@ -434,12 +516,14 @@ void ImageList::update_cache()
     cancel_cache();
 
     for (const size_t i : diff)
-        m_Images[i]->reset_pixbuf();
+        if (i < m_Images.size() - 1)
+            m_Images[i]->reset_pixbuf();
 
     // Start the cache loading thread
-    m_CacheThread = Glib::Threads::Thread::create([ this, cache ]()
+    m_Cache = cache;
+    m_CacheThread = Glib::Threads::Thread::create([ this ]()
     {
-        for (const size_t i : cache)
+        for (const size_t i : m_Cache)
         {
             if (m_CacheCancel->is_cancelled())
                 break;
@@ -447,8 +531,6 @@ void ImageList::update_cache()
             m_Images[i]->load_pixbuf();
         }
     });
-
-    m_Cache = cache;
 }
 
 void ImageList::cancel_cache()

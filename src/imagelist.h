@@ -17,7 +17,7 @@ namespace AhoViewer
     {
         typedef std::vector<std::shared_ptr<Image>> ImageVector;
         typedef std::vector<std::shared_ptr<Image>>::iterator ImageVectorIter;
-    public:
+
         // This signal is emitted when m_Index is changed.
         // It is connected by the MainWindow which tells the ImageBox to draw the new image.
         typedef sigc::signal<void, const std::shared_ptr<Image>&> SignalChangedType;
@@ -25,15 +25,9 @@ namespace AhoViewer
         // Emitted when AutoOpenArchive is true and loading an archive fails.
         typedef sigc::signal<void, const std::string> SignalArchiveErrorType;
 
-        // Emitted when clear() is called.
-        typedef sigc::signal<void> SignalClearedType;
-
-        // Emitted when load() is successful
-        typedef sigc::signal<void> SignalLoadSuccessType;
-
         // Used for async thumbnail pixbuf loading
         typedef std::pair<size_t, const Glib::RefPtr<Gdk::Pixbuf>> PixbufPair;
-
+    public:
         // ImageList::Widget {{{
         // This is used by ThumbnailBar and Booru::Page.
         class Widget
@@ -56,9 +50,20 @@ namespace AhoViewer
                 for (size_t i = 0; i < s; ++i)
                     m_ListStore->append();
             }
-            void set_pixbuf(const size_t index, const Glib::RefPtr<Gdk::Pixbuf> pixbuf)
+            void set_pixbuf(const size_t index, const Glib::RefPtr<Gdk::Pixbuf> &pixbuf)
             {
                 m_ListStore->children()[index]->set_value(0, pixbuf);
+            }
+            void erase(const size_t i)
+            {
+                Gtk::TreeIter it = m_ListStore->get_iter(std::to_string(i));
+                if (it) m_ListStore->erase(it);
+            }
+            void insert(const size_t i, const Glib::RefPtr<Gdk::Pixbuf> &pixbuf)
+            {
+                Gtk::TreeIter it = m_ListStore->get_iter(std::to_string(i));
+                it = it ? m_ListStore->insert(it) : m_ListStore->append();
+                it->set_value(0, pixbuf);
             }
 
             virtual void on_thumbnails_loaded(const size_t) { }
@@ -90,7 +95,7 @@ namespace AhoViewer
         virtual size_t get_size() const { return m_Images.size(); }
 
         size_t get_index() const { return m_Index; }
-        const std::shared_ptr<Image>& get_current() const { return m_Images.at(m_Index); }
+        const std::shared_ptr<Image>& get_current() const { return m_Images[m_Index]; }
         const Archive& get_archive() const { return *m_Archive; }
         bool empty() const { return m_Images.empty(); }
         bool from_archive() const { return !!m_Archive; }
@@ -102,11 +107,12 @@ namespace AhoViewer
 
         SignalChangedType signal_changed() const { return m_SignalChanged; }
         SignalArchiveErrorType signal_archive_error() const { return m_SignalArchiveError; }
-        SignalClearedType signal_cleared() const { return m_SignalCleared; }
-        SignalLoadSuccessType signal_load_success() const { return m_SignalLoadSuccess; }
+        sigc::signal<void> signal_cleared() const { return m_SignalCleared; }
+        sigc::signal<void> signal_load_success() const { return m_SignalLoadSuccess; }
+        sigc::signal<void> signal_size_changed() const { return m_SignalSizeChanged; }
         SignalExtractorProgressType signal_extractor_progress() const { return m_SignalExtractorProgress; }
     protected:
-        virtual void set_current(const size_t index, const bool fromWidget = false);
+        virtual void set_current(const size_t index, const bool fromWidget = false, const bool force = false);
         virtual void load_thumbnails();
 
         Widget *const m_Widget;
@@ -118,11 +124,15 @@ namespace AhoViewer
 
         SignalChangedType m_SignalChanged;
     private:
+        void reset();
         std::vector<std::string> get_image_entries(const std::string &path, const bool recursive);
         std::vector<std::string> get_archive_entries(const std::string &path, const bool recursive = false);
 
         void on_thumbnail_loaded();
         void on_thumbnails_loaded();
+        void on_directory_changed(const Glib::RefPtr<Gio::File> &file,
+                                  const Glib::RefPtr<Gio::File>&,
+                                  Gio::FileMonitorEvent event);
 
         void update_cache();
         void cancel_cache();
@@ -135,14 +145,16 @@ namespace AhoViewer
         Glib::RefPtr<Gio::Cancellable> m_CacheCancel;
         Glib::Threads::Mutex m_ThumbnailMutex;
         Glib::Threads::Thread *m_CacheThread;
+        Glib::RefPtr<Gio::FileMonitor> m_FileMonitor;
 
         Glib::Dispatcher m_SignalThumbnailLoaded,
                          m_SignalThumbnailsLoaded;
 
         SignalArchiveErrorType      m_SignalArchiveError;
-        SignalClearedType           m_SignalCleared;
-        SignalLoadSuccessType       m_SignalLoadSuccess;
         SignalExtractorProgressType m_SignalExtractorProgress;
+        sigc::signal<void>          m_SignalCleared,
+                                    m_SignalLoadSuccess,
+                                    m_SignalSizeChanged;
     };
 }
 

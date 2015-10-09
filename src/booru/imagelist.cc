@@ -61,7 +61,7 @@ void ImageList::load(const xmlDocument &posts, const Page &page)
 
     // only call set_current if this is the first page
     if (page.get_page_num() == 1)
-        set_current(m_Index);
+        set_current(m_Index, false, true);
     else
         m_SignalChanged(m_Images[m_Index]);
 }

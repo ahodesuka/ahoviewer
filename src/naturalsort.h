@@ -5,6 +5,8 @@
 #include <cstdlib>
 #include <functional>
 
+#include "image.h"
+
 namespace AhoViewer
 {
     class NaturalSort : public std::binary_function<std::string, std::string, bool>
@@ -13,6 +15,10 @@ namespace AhoViewer
         bool operator()(const std::string &a, const std::string &b)
         {
             return compare_natural(a.c_str(), b.c_str());
+        }
+        bool operator()(const std::shared_ptr<Image> &a, const std::shared_ptr<Image> &b)
+        {
+            return compare_natural(a->get_path().c_str(), b->get_path().c_str());
         }
     private:
         bool compare_natural(const char *a, const char *b)
