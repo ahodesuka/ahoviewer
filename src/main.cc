@@ -31,9 +31,9 @@ int main(int argc, char **argv)
         builder->add_from_string(reinterpret_cast<const char*>(ahoviewer_ui),
                                  ahoviewer_ui_size);
     }
-    catch (Gtk::BuilderError &ex)
+    catch (const Glib::Error &ex)
     {
-        std::cerr << "Gtk::BuilderError: " << ex.what() << std::endl;
+        std::cerr << "Gtk::Builder::add_from_string: " << ex.what() << std::endl;
         return EXIT_FAILURE;
     }
 
