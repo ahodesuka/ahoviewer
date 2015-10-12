@@ -246,7 +246,7 @@ Glib::RefPtr<Gdk::Pixbuf> Image::create_webm_thumbnail(const int, const int,
 
 #ifdef HAVE_GSTREAMER
 Glib::RefPtr<Gdk::Pixbuf> Image::capture_frame(GstElement *playbin, const int w,
-                                               int &oWidth, int &oHeight) const
+                                               int &oWidth, int &oHeight)
 {
     Glib::RefPtr<Gdk::Pixbuf> pixbuf;
 
@@ -295,7 +295,7 @@ Glib::RefPtr<Gdk::Pixbuf> Image::capture_frame(GstElement *playbin, const int w,
     return pixbuf;
 }
 
-bool Image::is_pixbuf_interesting(Glib::RefPtr<Gdk::Pixbuf> &pixbuf) const
+bool Image::is_pixbuf_interesting(Glib::RefPtr<Gdk::Pixbuf> &pixbuf)
 {
     size_t len      = pixbuf->get_rowstride() * pixbuf->get_height();
     guint8 *buf     = pixbuf->get_pixels();

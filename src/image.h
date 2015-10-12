@@ -58,9 +58,9 @@ namespace AhoViewer
         Glib::RefPtr<Gdk::Pixbuf> create_webm_thumbnail(const int w, const int h,
                                                         int &oWidth, int &oHeight) const;
 #ifdef HAVE_GSTREAMER
-        Glib::RefPtr<Gdk::Pixbuf> capture_frame(GstElement *playbin, const int w,
-                                                int &oWidth, int &oHeight) const;
-        bool is_pixbuf_interesting(Glib::RefPtr<Gdk::Pixbuf> &pixbuf) const;
+        static Glib::RefPtr<Gdk::Pixbuf> capture_frame(GstElement *playbin, const int w,
+                                                       int &oWidth, int &oHeight);
+        static bool is_pixbuf_interesting(Glib::RefPtr<Gdk::Pixbuf> &pixbuf);
 
         static constexpr double BoringImageVariance = 256.0;
 #endif // HAVE_GSTREAMER
