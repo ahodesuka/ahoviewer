@@ -17,9 +17,8 @@ namespace AhoViewer
     {
         class Browser : public Gtk::VPaned
         {
-        public:
             typedef sigc::signal<void, Page*> SignalPageChangedType;
-
+        public:
             Browser(BaseObjectType *cobj, const Glib::RefPtr<Gtk::Builder> &bldr);
             virtual ~Browser() = default;
 

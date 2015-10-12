@@ -10,12 +10,6 @@ namespace AhoViewer
     {
         class TagEntry : public Gtk::Entry
         {
-        private:
-            struct ModelColumns : public Gtk::TreeModelColumnRecord
-            {
-                ModelColumns() { add(tag_column); }
-                Gtk::TreeModelColumn<std::string> tag_column;
-            };
         public:
             TagEntry(BaseObjectType *cobj, const Glib::RefPtr<Gtk::Builder> &bldr);
             ~TagEntry() = default;
@@ -24,6 +18,12 @@ namespace AhoViewer
         protected:
             virtual void on_grab_focus();
         private:
+            struct ModelColumns : public Gtk::TreeModelColumnRecord
+            {
+                ModelColumns() { add(tag_column); }
+                Gtk::TreeModelColumn<std::string> tag_column;
+            };
+
             inline bool match_func(const std::string&,
                                    const Gtk::TreeModel::const_iterator&) { return true; }
 

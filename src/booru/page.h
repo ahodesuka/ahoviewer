@@ -17,11 +17,10 @@ namespace AhoViewer
         class Page : public Gtk::ScrolledWindow,
                      public ImageList::Widget
         {
-        public:
             typedef sigc::signal<void, Page*> SignalClosedType;
             typedef sigc::signal<void, const std::string> SignalDownloadErrorType;
             typedef sigc::signal<void, size_t, size_t> SignalSaveProgressType;
-
+        public:
             Page(Gtk::Menu *menu);
             virtual ~Page();
 

@@ -12,12 +12,10 @@ namespace AhoViewer
     public:
         friend class CellRendererIcon;
 
-        typedef sigc::signal<void> SignalEditedType;
-
         SiteEditor(BaseObjectType *cobj, const Glib::RefPtr<Gtk::Builder> &bldr);
         virtual ~SiteEditor();
 
-        SignalEditedType signal_edited() const { return m_SignalEdited; }
+        sigc::signal<void> signal_edited() const { return m_SignalEdited; }
     private:
         class CellRendererIcon : public Gtk::CellRenderer/*{{{*/
         {
@@ -148,7 +146,7 @@ namespace AhoViewer
         Glib::Threads::Thread *m_SiteCheckThread;
         Glib::Dispatcher m_SignalSiteChecked;
 
-        SignalEditedType m_SignalEdited;
+        sigc::signal<void> m_SignalEdited;
     };
 }
 

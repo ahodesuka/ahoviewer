@@ -7,10 +7,9 @@ namespace AhoViewer
 {
     class KeybindingEditor : public Gtk::TreeView
     {
-    public:
         // accelPath, actionName
         typedef sigc::signal<void, const std::string&, const std::string&> SignalEditedType;
-
+    public:
         KeybindingEditor(BaseObjectType *cobj, const Glib::RefPtr<Gtk::Builder> &bldr);
         virtual ~KeybindingEditor() = default;
 

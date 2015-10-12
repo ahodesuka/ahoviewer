@@ -16,7 +16,7 @@ namespace AhoViewer
     class ImageList : public sigc::trackable
     {
         typedef std::vector<std::shared_ptr<Image>> ImageVector;
-        typedef std::vector<std::shared_ptr<Image>>::iterator ImageVectorIter;
+        typedef ImageVector::iterator ImageVectorIter;
 
         // This signal is emitted when m_Index is changed.
         // It is connected by the MainWindow which tells the ImageBox to draw the new image.
@@ -32,21 +32,20 @@ namespace AhoViewer
         // This is used by ThumbnailBar and Booru::Page.
         class Widget
         {
-        public:
             friend class ImageList;
 
             // When the widget's selected item changes it will emit this signal.
             typedef sigc::signal<void, const size_t> SignalSelectedChangedType;
+        public:
+            virtual ~Widget() = default;
 
+        protected:
             struct ModelColumns : public Gtk::TreeModelColumnRecord
             {
                 ModelColumns() { add(pixbuf_column); }
                 Gtk::TreeModelColumn<Glib::RefPtr<Gdk::Pixbuf>> pixbuf_column;
             };
 
-            virtual ~Widget() = default;
-
-        protected:
             virtual void clear()
             {
                 m_ListStore->clear();

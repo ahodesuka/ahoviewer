@@ -12,9 +12,8 @@ namespace AhoViewer
         class Image : public AhoViewer::Image,
                       public sigc::trackable
         {
-        public:
             typedef sigc::signal<void, double, double> SignalProgressType;
-
+        public:
             Image(const std::string &path, const std::string &url,
                   const std::string &thumbPath, const std::string &thumbUrl,
                   const std::string &postUrl,
