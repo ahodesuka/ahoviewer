@@ -738,9 +738,9 @@ void MainWindow::on_open_file_dialog()
     dialog.add_button(Gtk::Stock::CANCEL, Gtk::RESPONSE_CANCEL);
     dialog.add_button("Open", Gtk::RESPONSE_OK);
 
-    filter.set_name("All Files");
-    imageFilter.set_name("All Images");
-    archiveFilter.set_name("All Archives");
+    filter.set_name(_("All Files"));
+    imageFilter.set_name(_("All Images"));
+    archiveFilter.set_name(_("All Archives"));
 
     filter.add_pixbuf_formats();
     imageFilter.add_pixbuf_formats();
@@ -764,7 +764,9 @@ void MainWindow::on_open_file_dialog()
 
     dialog.add_filter(filter);
     dialog.add_filter(imageFilter);
+#if defined(HAVE_LIBZIP) || defined(HAVE_LIBUNRAR)
     dialog.add_filter(archiveFilter);
+#endif
 
     if (!m_LocalImageList->empty())
     {
