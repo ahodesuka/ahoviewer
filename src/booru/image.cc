@@ -10,7 +10,7 @@ Image::Image(const std::string &path, const std::string &url,
              const std::string &thumbPath, const std::string &thumbUrl,
              const std::string &postUrl,
              std::set<std::string> tags, const Page &page)
-  : AhoViewer::Image(path, thumbPath),
+  : AhoViewer::Image(path),
     m_Url(url),
     m_ThumbnailUrl(thumbUrl),
     m_PostUrl(postUrl),
@@ -20,6 +20,8 @@ Image::Image(const std::string &path, const std::string &url,
     m_ThumbnailCurler(m_ThumbnailUrl),
     m_PixbufError(false)
 {
+    m_ThumbnailPath = thumbPath;
+
     if (!m_isWebM)
         m_Curler.signal_write().connect(sigc::mem_fun(*this, &Image::on_write));
 

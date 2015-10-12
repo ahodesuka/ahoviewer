@@ -14,13 +14,19 @@ namespace AhoViewer
         ThumbnailBar(BaseObjectType*, const Glib::RefPtr<Gtk::Builder>&);
         virtual ~ThumbnailBar() = default;
 
-        virtual void on_thumbnails_loaded(const size_t index) { set_selected(index); }
+        virtual void clear();
+        virtual void set_pixbuf(const size_t index, const Glib::RefPtr<Gdk::Pixbuf> &pixbuf);
         virtual void set_selected(const size_t index);
+    protected:
+        virtual void on_show();
     private:
+        void scroll_to_selected();
         void on_cursor_changed();
 
         Gtk::TreeView *m_TreeView;
         Glib::RefPtr<Gtk::Adjustment> m_VAdjust;
+        bool m_KeepAligned;
+        sigc::connection m_ScrollConn;
     };
 }
 

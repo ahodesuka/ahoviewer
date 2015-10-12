@@ -15,10 +15,18 @@ ImageList::ImageList(Widget *w)
     m_CacheCancel(Gio::Cancellable::create()),
     m_CacheThread(nullptr)
 {
+    // Sorts indices based on how close they are to m_Index
+    m_IndexSort = [ this ](size_t a, size_t b)
+    {
+        size_t adiff = std::abs(static_cast<int>(a - m_Index)),
+               bdiff = std::abs(static_cast<int>(b - m_Index));
+        return adiff == bdiff ? a > b : adiff < bdiff;
+    };
+
     m_Widget->signal_selected_changed().connect(
             sigc::bind(sigc::mem_fun(*this, &ImageList::set_current), true, false));
 
-    m_SignalThumbnailLoaded.connect(sigc::mem_fun(*this, &ImageList::on_thumbnail_loaded));
+    m_ThumbnailLoadedConn = m_SignalThumbnailLoaded.connect(sigc::mem_fun(*this, &ImageList::on_thumbnail_loaded));
     m_SignalThumbnailsLoaded.connect(sigc::mem_fun(*this, &ImageList::on_thumbnails_loaded));
 }
 
@@ -54,9 +62,6 @@ bool ImageList::load(const std::string path, std::string &error, int index)
         }
         else if ((archive = Archive::create(path)))
         {
-            archive->signal_progress().connect(
-                sigc::mem_fun(m_SignalExtractorProgress, &SignalExtractorProgressType::emit));
-            archive->extract();
             dirPath = archive->get_extracted_path();
         }
         else
@@ -71,27 +76,8 @@ bool ImageList::load(const std::string path, std::string &error, int index)
         return false;
     }
 
-    std::vector<std::string> entries = get_image_entries(dirPath, !!archive), subEntries;
-
-    if (entries.empty() && archive && !(subEntries = get_archive_entries(dirPath, true)).empty())
-    {
-        for (const std::string &s : subEntries)
-        {
-            std::unique_ptr<Archive> arc = Archive::create(s, archive->get_extracted_path());
-
-            if (arc && arc->has_valid_files(Archive::IMAGES))
-            {
-                arc->signal_progress().connect(
-                    sigc::mem_fun(m_SignalExtractorProgress, &SignalExtractorProgressType::emit));
-                arc->extract();
-                archive->add_child(arc);
-            }
-
-            g_unlink(s.c_str());
-        }
-
-        entries = get_image_entries(dirPath, true);
-    }
+    std::vector<std::string> entries =
+        archive ? archive->get_entries(Archive::IMAGES) : get_entries<Image>(dirPath);
 
     // No valid images in this directory
     if (entries.empty())
@@ -107,25 +93,19 @@ bool ImageList::load(const std::string path, std::string &error, int index)
     m_Images.reserve(entries.size());
     m_Widget->reserve(entries.size());
 
-    if (!archive)
-    {
-        m_Archive = nullptr;
-    }
-    else
+    if (archive)
     {
         m_Archive = std::move(archive);
-        m_ArchiveEntries = get_archive_entries(Glib::path_get_dirname(m_Archive->get_path()));
+        m_ArchiveEntries = get_entries<Archive>(Glib::path_get_dirname(m_Archive->get_path()));
+        std::sort(m_ArchiveEntries.begin(), m_ArchiveEntries.end(), NaturalSort());
     }
-
-    // Set up the file monitor
-    if (!m_Archive)
+    else
     {
         Glib::RefPtr<Gio::File> dir = Gio::File::create_for_path(dirPath);
         m_FileMonitor = dir->monitor_directory();
         m_FileMonitor->signal_changed().connect(sigc::mem_fun(*this, &ImageList::on_directory_changed));
     }
 
-    // Sort entries alphanumerically
     std::sort(entries.begin(), entries.end(), NaturalSort());
 
     if (path != dirPath && !m_Archive)
@@ -241,7 +221,6 @@ void ImageList::set_current(const size_t index, const bool fromWidget, const boo
     m_SignalChanged(m_Images[m_Index]);
     update_cache();
 
-    // Do not call this if this was called from a selected_changed signal.
     if (!fromWidget)
         m_Widget->set_selected(m_Index);
 }
@@ -251,7 +230,11 @@ void ImageList::load_thumbnails()
     Glib::ThreadPool pool(4);
     m_ThumbnailCancel->reset();
 
-    for (size_t i = 0; i < m_Images.size(); ++i)
+    std::vector<size_t> indices(m_Images.size());
+    std::iota(indices.begin(), indices.end(), 0);
+    std::sort(indices.begin(), indices.end(), m_IndexSort);
+
+    for (const size_t i : indices)
     {
         pool.push([ this, i ]()
         {
@@ -296,21 +279,22 @@ void ImageList::reset()
     }
 
     m_Images.clear();
-
-    {
-        Glib::Threads::Mutex::Lock lock(m_ThumbnailMutex);
-        m_Widget->clear();
-    }
+    m_Widget->clear();
 
     m_Archive = nullptr;
     m_ArchiveEntries.clear();
     m_Index = 0;
 }
 
-std::vector<std::string> ImageList::get_image_entries(const std::string &path, const bool recursive)
+/**
+ * Returns an unsorted vector of the paths to valid T's.
+ * T must have a static method ::is_valid, ie Image and Archive
+ **/
+template <typename T>
+std::vector<std::string> ImageList::get_entries(const std::string &path)
 {
     Glib::Dir dir(path);
-    std::vector<std::string> entries(dir.begin(), dir.end()), rEntries;
+    std::vector<std::string> entries(dir.begin(), dir.end());
     std::vector<std::string>::iterator i = entries.begin();
 
     while (i != entries.end())
@@ -318,76 +302,36 @@ std::vector<std::string> ImageList::get_image_entries(const std::string &path, c
         // Make path absolute
         *i = Glib::build_filename(path, *i);
 
-        // Recurse if this is from an archive
-        if (recursive && Glib::file_test(*i, Glib::FILE_TEST_IS_DIR))
-        {
-            std::vector<std::string> r = get_image_entries(*i, true);
-            if (r.size())
-                rEntries.insert(rEntries.end(), r.begin(), r.end());
-        }
-
-        // Make sure it is a loadable image
-        if (Image::is_valid(*i))
+        // Make sure it is a loadable image/archive
+        if (T::is_valid(*i))
             ++i;
         else
             i = entries.erase(i);
     }
-
-    // combine the recured entries
-    if (rEntries.size())
-        entries.insert(entries.end(), rEntries.begin(), rEntries.end());
-
-    return entries;
-}
-
-std::vector<std::string> ImageList::get_archive_entries(const std::string &path, const bool recursive)
-{
-    Glib::Dir dir(path);
-    std::vector<std::string> entries(dir.begin(), dir.end()), rEntries;
-    std::vector<std::string>::iterator i = entries.begin();
-
-    while (i != entries.end())
-    {
-        *i = Glib::build_filename(path, *i);
-
-        if (recursive && Glib::file_test(*i, Glib::FILE_TEST_IS_DIR))
-        {
-            std::vector<std::string> r = get_archive_entries(*i, true);
-            if (r.size())
-                rEntries.insert(rEntries.end(), r.begin(), r.end());
-        }
-
-        if (Archive::is_valid(*i))
-            ++i;
-        else
-            i = entries.erase(i);
-    }
-
-    if (rEntries.size())
-        entries.insert(entries.end(), rEntries.begin(), rEntries.end());
-
-    std::sort(entries.begin(), entries.end(), NaturalSort());
 
     return entries;
 }
 
 void ImageList::on_thumbnail_loaded()
 {
-    Glib::Threads::Mutex::Lock lock(m_ThumbnailMutex);
-    while (!m_ThumbnailQueue.empty())
+    m_ThumbnailLoadedConn.block();
+
+    while (!m_ThumbnailQueue.empty() && !m_ThumbnailCancel->is_cancelled())
     {
+        Glib::Threads::Mutex::Lock lock(m_ThumbnailMutex);
+
         PixbufPair p = m_ThumbnailQueue.front();
         m_Widget->set_pixbuf(p.first, p.second);
         m_ThumbnailQueue.pop();
     }
+
+    m_ThumbnailLoadedConn.unblock();
 }
 
 void ImageList::on_thumbnails_loaded()
 {
     m_ThumbnailThread->join();
     m_ThumbnailThread = nullptr;
-
-    m_Widget->on_thumbnails_loaded(m_Index);
 }
 
 void ImageList::on_directory_changed(const Glib::RefPtr<Gio::File> &file,
@@ -406,7 +350,7 @@ void ImageList::on_directory_changed(const Glib::RefPtr<Gio::File> &file,
             size_t index = it - m_Images.begin();
             bool current = index == m_Index;
 
-            // Adjust m_Index if the deleted file before it
+            // Adjust m_Index if the deleted file was before it
             if (index < m_Index)
                 --m_Index;
 
@@ -465,37 +409,11 @@ void ImageList::on_directory_changed(const Glib::RefPtr<Gio::File> &file,
 
 void ImageList::update_cache()
 {
-    std::vector<size_t> cache = { m_Index }, diff;
-    size_t ncount = 0, pcount = 0;
+    std::vector<size_t> cache(m_Images.size()), diff;
+    std::iota(cache.begin(), cache.end(), 0);
+    std::sort(cache.begin(), cache.end(), m_IndexSort);
 
-    // example: cacheSize = 2, index = 0
-    // cache = { 0, 1, 2, 3, 4 }
-    // example: cacheSize = 3, index = 4
-    // cache = { 4, 5, 6, 7, 3, 2, 1 }
-    // example: cacheSize = 2, index = 9, size = 11
-    // cache = { 9, 10, 8, 7, 6 }
-    for (size_t i = 1, cacheSize = Settings.get_int("CacheSize"); i < cacheSize + 1; ++i)
-    {
-        if (m_Index + i < m_Images.size())
-        {
-            cache.push_back(m_Index + i);
-            ++ncount;
-        }
-        else if (static_cast<int>(m_Index - i - cacheSize) >= 0)
-        {
-            cache.push_back(m_Index - i - cacheSize + ncount);
-        }
-
-        if (static_cast<int>(m_Index - i) >= 0)
-        {
-            cache.push_back(m_Index - i);
-            ++pcount;
-        }
-        else if (m_Index + i + cacheSize < m_Images.size())
-        {
-            cache.push_back(m_Index + i + cacheSize - pcount);
-        }
-    }
+    cache.resize(Settings.get_int("CacheSize") * 2 + 1);
 
     // Get the indices of the images no longer in the cache
     if (!m_Cache.empty())
@@ -505,13 +423,6 @@ void ImageList::update_cache()
         std::set_difference(m_Cache.begin(), m_Cache.end(),
                 cache.begin(), cache.end(), std::back_inserter(diff));
     }
-
-    // Sort by how close a/b is to the current index
-    std::sort(cache.begin(), cache.end(), [ this ](size_t a, size_t b)
-    {
-        return (a < m_Index ? std::abs(static_cast<int>(a - m_Index)) + 1e18 : a) <
-               (b < m_Index ? std::abs(static_cast<int>(b - m_Index)) + 1e18 : b);
-    });
 
     cancel_cache();
 

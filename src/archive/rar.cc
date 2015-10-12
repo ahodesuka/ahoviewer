@@ -16,16 +16,15 @@ using namespace AhoViewer;
 
 const char Rar::Magic[Rar::MagicSize] = { 'R', 'a', 'r', '!', 0x1A, 0x07 };
 
-Rar::Rar(const std::string &path, const std::string &exDir, const std::string &parentDir)
-  : Archive::Archive(path, exDir, parentDir)
+Rar::Rar(const std::string &path, const std::string &exDir)
+  : Archive::Archive(path, exDir)
 {
 
 }
 
-void Rar::extract()
+bool Rar::extract(const std::string &file) const
 {
-    if (m_Extracted) return;
-
+    bool found = false;
     RAROpenArchiveData archive;
     RARHeaderData header;
     memset(&archive, 0, sizeof(archive));
@@ -37,15 +36,13 @@ void Rar::extract()
 
     if (rar)
     {
-        size_t nFiles = get_n_valid_files(),
-               nExtracted = 0;
-
         while (RARReadHeader(rar, &header) == 0)
         {
-            if (Image::is_valid_extension(header.FileName) || (!m_Child && Archive::is_valid_extension(header.FileName)))
+            if (header.FileName == file)
             {
                 RARProcessFile(rar, RAR_EXTRACT, const_cast<char*>(m_ExtractedPath.c_str()), NULL);
-                m_SignalProgress(++nExtracted, nFiles);
+                found = true;
+                break;
             }
             else
             {
@@ -56,17 +53,17 @@ void Rar::extract()
         RARCloseArchive(rar);
     }
 
-    m_Extracted = true;
+    return found;
 }
 
 bool Rar::has_valid_files(const FileType t) const
 {
-    return get_n_valid_files(t) > 0;
+    return !get_entries(t).empty();
 }
 
-size_t Rar::get_n_valid_files(const FileType t) const
+std::vector<std::string> Rar::get_entries(const FileType t) const
 {
-    size_t num = 0;
+    std::vector<std::string> entries;
     RAROpenArchiveData archive;
     RARHeaderData header;
     memset(&archive, 0, sizeof(archive));
@@ -82,7 +79,7 @@ size_t Rar::get_n_valid_files(const FileType t) const
         {
             if (((t & IMAGES)  && Image::is_valid_extension(header.FileName)) ||
                 ((t & ARCHIVES) && Archive::is_valid_extension(header.FileName)))
-                ++num;
+                entries.push_back(header.FileName);
 
             RARProcessFile(rar, RAR_SKIP, NULL, NULL);
         }
@@ -90,6 +87,6 @@ size_t Rar::get_n_valid_files(const FileType t) const
         RARCloseArchive(rar);
     }
 
-    return num;
+    return entries;
 }
 #endif // HAVE_LIBUNRAR

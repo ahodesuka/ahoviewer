@@ -57,13 +57,6 @@ MainWindow::MainWindow(BaseObjectType *cobj, const Glib::RefPtr<Gtk::Builder> &b
     m_LocalImageList = std::make_shared<ImageList>(m_ThumbnailBar);
     m_LocalImageList->signal_archive_error().connect([ this ](const std::string e) { m_StatusBar->set_message(e); });
     m_LocalImageList->signal_load_success().connect([ this ]() { set_active_imagelist(m_LocalImageList); });
-    m_LocalImageList->signal_extractor_progress().connect([ this ](size_t c, size_t t)
-    {
-        m_StatusBar->set_message("Extracting");
-        m_StatusBar->set_progress(static_cast<double>(c) / t);
-        while (Gtk::Main::events_pending())
-            Gtk::Main::iteration();
-    });
     m_LocalImageList->signal_size_changed().connect([ this ]()
     {
         if (m_LocalImageList == m_ActiveImageList)

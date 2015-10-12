@@ -23,6 +23,11 @@ bool Image::is_valid_extension(const std::string &path)
             if (ext == j)
                 return true;
 
+#ifdef HAVE_GSTREAMER
+    if (ext == "webm")
+        return true;
+#endif // HAVE_GSTREAMER
+
     return false;
 }
 
@@ -51,11 +56,10 @@ const Glib::RefPtr<Gdk::Pixbuf>& Image::get_missing_pixbuf()
     return pixbuf;
 }
 
-Image::Image(const std::string &path, const std::string &thumb_path)
+Image::Image(const std::string &path)
   : m_Loading(false),
     m_isWebM(Image::is_webm(path)),
-    m_Path(path),
-    m_ThumbnailPath(thumb_path)
+    m_Path(path)
 {
 
 }

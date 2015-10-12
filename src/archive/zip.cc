@@ -10,16 +10,15 @@ using namespace AhoViewer;
 
 const char Zip::Magic[Zip::MagicSize] = { 'P', 'K', 0x03, 0x04 };
 
-Zip::Zip(const std::string &path, const std::string &exDir, const std::string &parentDir)
-  : Archive::Archive(path, exDir, parentDir)
+Zip::Zip(const std::string &path, const std::string &exDir)
+  : Archive::Archive(path, exDir)
 {
 
 }
 
-void Zip::extract()
+bool Zip::extract(const std::string &file) const
 {
-    if (m_Extracted) return;
-
+    bool found = false;
     zip *zip = zip_open(m_Path.c_str(), 0, NULL);
 
     if (zip)
@@ -36,16 +35,16 @@ void Zip::extract()
                 break;
             }
 
-            std::string fPath(Glib::build_filename(m_ExtractedPath, st.name));
+            if (st.name == file)
+            {
+                std::string fPath(Glib::build_filename(m_ExtractedPath, st.name));
 
-            if (fPath.back() == '/')
-            {
-                g_mkdir_with_parents(fPath.c_str(), 0755);
-            }
-            else if (Image::is_valid_extension(fPath) || (!m_Child && Archive::is_valid_extension(fPath)))
-            {
-                zip_file *file = zip_fopen_index(zip, i, 0);
-                if (!file)
+                if (!Glib::file_test(Glib::path_get_dirname(fPath), Glib::FILE_TEST_EXISTS))
+                    g_mkdir_with_parents(Glib::path_get_dirname(fPath).c_str(), 0755);
+
+
+                zip_file *zfile = zip_fopen_index(zip, i, 0);
+                if (!zfile)
                 {
                     std::cerr << "zip_fopen_index: Failed to open file #" << i
                               << " (" << st.name << ") in '" + m_Path + "'" << std::endl;
@@ -54,7 +53,7 @@ void Zip::extract()
 
                 char *buf = new char[st.size];
                 int bufSize;
-                if ((bufSize = zip_fread(file, buf, st.size)) != -1)
+                if ((bufSize = zip_fread(zfile, buf, st.size)) != -1)
                 {
                     try
                     {
@@ -67,10 +66,10 @@ void Zip::extract()
                 }
 
                 delete[] buf;
-                zip_fclose(file);
+                zip_fclose(zfile);
+                found = true;
+                break;
             }
-
-            m_SignalProgress(i + 1, n);
         }
 
         zip_close(zip);
@@ -80,17 +79,17 @@ void Zip::extract()
         std::cerr << "zip_open: Failed to open '" + m_Path + "'" << std::endl;
     }
 
-    m_Extracted = true;
+    return found;
 }
 
 bool Zip::has_valid_files(const FileType t) const
 {
-    return get_n_valid_files(t) > 0;
+    return !get_entries(t).empty();
 }
 
-size_t Zip::get_n_valid_files(const FileType t) const
+std::vector<std::string> Zip::get_entries(const FileType t) const
 {
-    size_t num = 0;
+    std::vector<std::string> entries;
     zip *zip = zip_open(m_Path.c_str(), 0, NULL);
 
     if (zip)
@@ -103,12 +102,12 @@ size_t Zip::get_n_valid_files(const FileType t) const
             if (zip_stat_index(zip, i, 0, &st) != -1 &&
                  (((t & IMAGES)   && Image::is_valid_extension(st.name)) ||
                   ((t & ARCHIVES) && Archive::is_valid_extension(st.name))))
-                ++num;
+                entries.push_back(st.name);
         }
 
         zip_close(zip);
     }
 
-    return num;
+    return entries;
 }
 #endif // HAVE_LIBZIP

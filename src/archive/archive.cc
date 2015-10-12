@@ -7,8 +7,12 @@ using namespace AhoViewer;
 
 #include "config.h"
 #include "tempdir.h"
+#ifdef HAVE_LIBUNRAR
 #include "rar.h"
+#endif // HAVE_LIBUNRAR
+#ifdef HAVE_LIBZIP
 #include "zip.h"
+#endif // HAVE_LIBZIP
 
 const std::vector<std::string> Archive::MimeTypes =
 {
@@ -69,16 +73,18 @@ std::unique_ptr<Archive> Archive::create(const std::string &path, const std::str
                                  Glib::path_get_basename(path));
     }
 
+    // Failed to create temp directory
     if (!dir.empty())
     {
+#ifdef HAVE_LIBZIP
         if (type == Type::ZIP)
-        {
-            return std::unique_ptr<Archive>(new Zip(path, dir, parentDir));
-        }
-        else if (type == Type::RAR)
-        {
-            return std::unique_ptr<Archive>(new Rar(path, dir, parentDir));
-        }
+            return std::unique_ptr<Archive>(new Zip(path, dir));
+#endif // HAVE_LIBZIP
+
+#ifdef HAVE_LIBUNRAR
+        if (type == Type::RAR)
+            return std::unique_ptr<Archive>(new Rar(path, dir));
+#endif // HAVE_LIBUNRAR
     }
 
     return nullptr;
@@ -88,7 +94,7 @@ Archive::Type Archive::get_type(const std::string &path)
 {
     std::ifstream ifs(path, std::ios::binary);
 
-    char magic[MagicSize];
+    char magic[MagicSize] = { };
     ifs.read(magic, sizeof(magic) / sizeof(*magic));
 
 #ifdef HAVE_LIBZIP
@@ -104,17 +110,14 @@ Archive::Type Archive::get_type(const std::string &path)
     return Type::UNKNOWN;
 }
 
-Archive::Archive(const std::string &path, const std::string &exDir, const std::string &parentDir)
+Archive::Archive(const std::string &path, const std::string &exDir)
   : m_Path(path),
-    m_ExtractedPath(exDir),
-    m_Child(!parentDir.empty()),
-    m_Extracted(false)
+    m_ExtractedPath(exDir)
 {
 
 }
 
 Archive::~Archive()
 {
-    m_Children.clear();
     TempDir::get_instance().remove_dir(m_ExtractedPath);
 }
