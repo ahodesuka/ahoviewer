@@ -158,7 +158,12 @@ void SiteEditor::add_edit_site(const Gtk::TreeIter &iter)
     if (site)
     {
         if (name == site->get_name() && url == site->get_url())
+        {
+            if (iter->get_value(m_Columns.icon) == m_ErrorPixbuf)
+                iter->set_value(m_Columns.icon, site->get_icon_pixbuf());
+
             return;
+        }
 
         m_SiteCheckEdit = true;
         m_SiteCheckSite = site;
