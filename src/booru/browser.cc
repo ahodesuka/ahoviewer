@@ -46,6 +46,7 @@ Browser::Browser(BaseObjectType *cobj, const Glib::RefPtr<Gtk::Builder> &bldr)
     m_ComboBox->pack_start(m_ComboColumns.icon, false);
     m_ComboBox->pack_start(m_ComboColumns.name);
     (*m_ComboBox->get_cells().begin())->set_fixed_size(20, 16);
+    m_ComboBox->signal_changed().connect(sigc::mem_fun(*this, &Browser::on_site_changed));
 
     m_UIManager = Glib::RefPtr<Gtk::UIManager>::cast_static(bldr->get_object("UIManager"));
 
@@ -269,7 +270,7 @@ bool Browser::on_entry_key_press_event(GdkEventKey *e)
             m_TagEntry->activate();
 
         m_TagView->clear();
-        get_active_page()->search(get_active_site());
+        get_active_page()->search();
     }
     else if (e->keyval == GDK_Escape)
     {
@@ -302,6 +303,14 @@ void Browser::on_page_removed(Gtk::Widget*, guint)
 
         m_SignalPageChanged(nullptr);
     }
+}
+
+void Browser::on_site_changed()
+{
+    Page *page = get_active_page();
+
+    if (page)
+        page->set_site(get_active_site());
 }
 
 void Browser::on_switch_page(void*, guint)
