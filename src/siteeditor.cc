@@ -127,14 +127,9 @@ void SiteEditor::on_url_edited(const std::string &p, const std::string &text)
 
 bool SiteEditor::is_name_unique(const Gtk::TreeIter &iter, const std::string &name) const
 {
-    Gtk::TreeModel::Children children = m_Model->children();
-    for (Gtk::TreeIter i = children.begin(); i != children.end(); ++i)
-    {
-        if (name == i->get_value(m_Columns.name) && iter != i)
-        {
+    for (const Gtk::TreeIter &i : m_Model->children())
+        if (i->get_value(m_Columns.name) == name && iter != i)
             return false;
-        }
-    }
 
     return true;
 }
