@@ -45,7 +45,7 @@ Browser::Browser(BaseObjectType *cobj, const Glib::RefPtr<Gtk::Builder> &bldr)
 
     m_ComboBox->pack_start(m_ComboColumns.icon, false);
     m_ComboBox->pack_start(m_ComboColumns.name);
-    static_cast<std::vector<Gtk::CellRenderer*>>(m_ComboBox->get_cells())[0]->set_fixed_size(20, 16);
+    (*m_ComboBox->get_cells().begin())->set_fixed_size(20, 16);
 
     m_UIManager = Glib::RefPtr<Gtk::UIManager>::cast_static(bldr->get_object("UIManager"));
 
