@@ -26,8 +26,6 @@ namespace AhoViewer
             Page(Gtk::Menu *menu);
             virtual ~Page();
 
-            virtual void set_selected(const size_t index);
-
             ImageFetcher& get_image_fetcher() const { return *m_ImageFetcher; }
             std::shared_ptr<Site> get_site() const { return m_Site; }
             std::shared_ptr<ImageList> get_imagelist() const { return m_ImageList; }
@@ -36,6 +34,9 @@ namespace AhoViewer
             SignalClosedType signal_closed() const { return m_SignalClosed; }
             SignalDownloadErrorType signal_no_results() const { return m_SignalDownloadError; }
             SignalSaveProgressType signal_save_progress() const { return m_SignalSaveProgress; }
+        protected:
+            virtual void set_selected(const size_t index);
+            virtual void scroll_to_selected();
         private:
             void set_tags(const std::string &tags) { m_Tags = tags; }
             void search(const std::shared_ptr<Site> &site);

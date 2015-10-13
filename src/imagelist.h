@@ -46,6 +46,9 @@ namespace AhoViewer
                 Gtk::TreeModelColumn<Glib::RefPtr<Gdk::Pixbuf>> pixbuf_column;
             };
 
+            virtual void set_selected(const size_t) = 0;
+            virtual void scroll_to_selected() = 0;
+
             virtual void clear()
             {
                 m_ListStore->clear();
@@ -55,8 +58,6 @@ namespace AhoViewer
                 Gtk::TreeIter it = m_ListStore->get_iter(std::to_string(index));
                 if (it) it->set_value(0, pixbuf);
             }
-            virtual void set_selected(const size_t) = 0;
-
             void reserve(const size_t s)
             {
                 for (size_t i = 0; i < s; ++i)

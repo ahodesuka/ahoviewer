@@ -44,16 +44,16 @@ void ThumbnailBar::set_pixbuf(const size_t index, const Glib::RefPtr<Gdk::Pixbuf
         scroll_to_selected();
 }
 
+void ThumbnailBar::on_show()
+{
+    Gtk::ScrolledWindow::on_show();
+    scroll_to_selected();
+}
+
 void ThumbnailBar::set_selected(const size_t index)
 {
     Gtk::TreePath path(std::to_string(index));
     m_TreeView->get_selection()->select(path);
-    scroll_to_selected();
-}
-
-void ThumbnailBar::on_show()
-{
-    Gtk::ScrolledWindow::on_show();
     scroll_to_selected();
 }
 

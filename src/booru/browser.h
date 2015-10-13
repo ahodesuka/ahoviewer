@@ -45,6 +45,7 @@ namespace AhoViewer
             // }}}
         protected:
             virtual void on_realize();
+            virtual void on_show();
         private:
             struct ComboBoxModelColumns : public Gtk::TreeModelColumnRecord
             {

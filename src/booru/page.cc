@@ -101,9 +101,21 @@ void Page::set_selected(const size_t index)
 
     Gtk::TreePath path(std::to_string(index));
     m_IconView->select_path(path);
-    gtk_icon_view_set_cursor(m_IconView->gobj(), path.gobj(), NULL, FALSE);
+    scroll_to_selected();
 
     get_window()->thaw_updates();
+}
+
+void Page::scroll_to_selected()
+{
+    std::vector<Gtk::TreePath> paths = m_IconView->get_selected_items();
+
+    if (!paths.empty())
+    {
+        Gtk::TreePath path = paths[0];
+        if (path)
+            m_IconView->scroll_to_path(path, false, 0, 0);
+    }
 }
 
 void Page::search(const std::shared_ptr<Site> &site)

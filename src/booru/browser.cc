@@ -238,6 +238,15 @@ void Browser::on_realize()
     get_window()->thaw_updates();
 }
 
+void Browser::on_show()
+{
+    Gtk::VPaned::on_show();
+    Page *page = get_active_page();
+
+    if (page)
+        page->scroll_to_selected();
+}
+
 void Browser::close_page(Page *page)
 {
     if (page->ask_cancel_save())

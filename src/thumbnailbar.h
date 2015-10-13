@@ -16,11 +16,11 @@ namespace AhoViewer
 
         virtual void clear();
         virtual void set_pixbuf(const size_t index, const Glib::RefPtr<Gdk::Pixbuf> &pixbuf);
-        virtual void set_selected(const size_t index);
     protected:
         virtual void on_show();
-    private:
+        virtual void set_selected(const size_t index);
         void scroll_to_selected();
+    private:
         void on_cursor_changed();
 
         Gtk::TreeView *m_TreeView;
