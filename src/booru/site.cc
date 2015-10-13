@@ -168,8 +168,8 @@ Glib::RefPtr<Gdk::Pixbuf> Site::get_icon_pixbuf(const bool update)
                             loader->write(m_Curler.get_data(), m_Curler.get_data_size());
                             loader->close();
                             m_IconPixbuf = loader->get_pixbuf();
-                            m_IconPixbuf->save(m_IconPath, "png");
                             m_SignalIconDownloaded();
+                            m_IconPixbuf->save(m_IconPath, "png");
                             break;
                         }
                         catch (const Gdk::PixbufError &ex)
