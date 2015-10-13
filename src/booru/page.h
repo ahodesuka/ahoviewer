@@ -17,6 +17,8 @@ namespace AhoViewer
         class Page : public Gtk::ScrolledWindow,
                      public ImageList::Widget
         {
+            friend class Browser;
+
             typedef sigc::signal<void, Page*> SignalClosedType;
             typedef sigc::signal<void, const std::string> SignalDownloadErrorType;
             typedef sigc::signal<void, size_t, size_t> SignalSaveProgressType;
@@ -26,27 +28,29 @@ namespace AhoViewer
 
             virtual void set_selected(const size_t index);
 
+            ImageFetcher& get_image_fetcher() const { return *m_ImageFetcher; }
+            std::shared_ptr<Site> get_site() const { return m_Site; }
+            std::shared_ptr<ImageList> get_imagelist() const { return m_ImageList; }
+            size_t get_page_num() const { return m_Page; }
+
+            SignalClosedType signal_closed() const { return m_SignalClosed; }
+            SignalDownloadErrorType signal_no_results() const { return m_SignalDownloadError; }
+            SignalSaveProgressType signal_save_progress() const { return m_SignalSaveProgress; }
+        private:
             void set_tags(const std::string &tags) { m_Tags = tags; }
             void search(const std::shared_ptr<Site> &site);
             void save_image(const std::string &path, const std::shared_ptr<Image> &img);
             void save_images(const std::string &path);
             bool ask_cancel_save();
 
-            ImageFetcher& get_image_fetcher() const { return *m_ImageFetcher; }
-            Gtk::Widget* get_tab() const { return m_Tab; }
-            std::shared_ptr<Site> get_site() const { return m_Site; }
-            std::shared_ptr<ImageList> get_imagelist() const { return m_ImageList; }
-            std::string get_tags() const { return m_Tags; }
-            size_t get_page_num() const { return m_Page; }
-            bool is_saving() const { return m_Saving; }
-
-            SignalClosedType signal_closed() const { return m_SignalClosed; }
-            SignalDownloadErrorType signal_no_results() const { return m_SignalDownloadError; }
-            SignalSaveProgressType signal_save_progress() const { return m_SignalSaveProgress; }
-        private:
             void cancel_save();
             void get_posts();
             bool get_next_page();
+
+            Gtk::Widget* get_tab() const { return m_Tab; }
+            std::string get_tags() const { return m_Tags; }
+            bool is_saving() const { return m_Saving; }
+
             void on_posts_downloaded();
             void on_selection_changed();
             void on_value_changed();
