@@ -118,13 +118,6 @@ void Page::scroll_to_selected()
     }
 }
 
-
-void Page::search(const std::shared_ptr<Site> &site)
-{
-    m_Site = site;
-    search();
-}
-
 void Page::search()
 {
     if (!ask_cancel_save())
