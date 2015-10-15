@@ -107,8 +107,6 @@ void Browser::on_new_tab()
     if (m_Notebook->get_n_pages() == 0)
         page->set_tags(m_TagEntry->get_text());
 
-    page->set_site(get_active_site());
-
     int page_num = m_Notebook->append_page(*page, *page->get_tab());
 
     m_Notebook->set_current_page(page_num);
@@ -402,5 +400,5 @@ void Browser::on_new_tab_tag(const std::string &tag)
     m_TagEntry->set_text(tag);
     m_TagView->clear();
 
-    get_active_page()->search();
+    get_active_page()->search(get_active_site());
 }
