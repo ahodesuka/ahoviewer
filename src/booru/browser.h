@@ -59,7 +59,6 @@ namespace AhoViewer
             bool on_entry_key_press_event(GdkEventKey *e);
             void on_entry_value_changed();
             void on_page_removed(Gtk::Widget*, guint);
-            void on_site_changed();
             void on_switch_page(void*, guint);
             void on_imagelist_changed(const std::shared_ptr<AhoViewer::Image> &image);
             void on_new_tab_tag(const std::string &tag);

@@ -118,14 +118,7 @@ void Page::scroll_to_selected()
     }
 }
 
-
 void Page::search(const std::shared_ptr<Site> &site)
-{
-    m_Site = site;
-    search();
-}
-
-void Page::search()
 {
     if (!ask_cancel_save())
         return;
@@ -139,6 +132,7 @@ void Page::search()
     if (m_GetPostsThread)
         m_GetPostsThread->join();
 
+    m_Site = site;
     m_Page = 1;
     m_LastPage = false;
 
@@ -152,8 +146,8 @@ void Page::search()
         tags = f == std::string::npos ? "" : " - " + tags.substr(f, l - f + 1);
     }
 
-    m_TabLabel->set_text(m_Site->get_name() + tags);
-    m_TabIcon->set(m_Site->get_icon_pixbuf());
+    m_TabLabel->set_text(site->get_name() + tags);
+    m_TabIcon->set(site->get_icon_pixbuf());
 
     get_posts();
 }

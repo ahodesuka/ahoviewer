@@ -39,9 +39,7 @@ namespace AhoViewer
             virtual void scroll_to_selected();
         private:
             void set_tags(const std::string &tags) { m_Tags = tags; }
-            void set_site(const std::shared_ptr<Site> &site) { m_Site = site; }
             void search(const std::shared_ptr<Site> &site);
-            void search();
             void save_image(const std::string &path, const std::shared_ptr<Image> &img);
             void save_images(const std::string &path);
             bool ask_cancel_save();
