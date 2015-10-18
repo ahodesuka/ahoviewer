@@ -35,7 +35,7 @@ namespace AhoViewer
 
         Glib::Dispatcher& signal_pixbuf_changed() { return m_SignalPixbufChanged; }
 
-        static std::uint8_t const ThumbnailSize = 100;
+        static const size_t ThumbnailSize = 100;
     protected:
         static bool is_webm(const std::string&);
 

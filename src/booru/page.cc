@@ -61,6 +61,8 @@ Page::Page(Gtk::Menu *menu)
     m_ListStore = Gtk::ListStore::create(columns);
     m_IconView->set_model(m_ListStore);
     m_IconView->set_selection_mode(Gtk::SELECTION_BROWSE);
+    m_IconView->set_item_width(Image::BooruThumbnailSize - m_IconView->get_margin()
+                                                         - m_IconView->property_item_padding().get_value());
     m_IconView->signal_selection_changed().connect(sigc::mem_fun(*this, &Page::on_selection_changed));
     m_IconView->signal_button_press_event().connect(sigc::mem_fun(*this, &Page::on_button_press_event));
 

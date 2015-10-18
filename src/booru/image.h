@@ -35,6 +35,8 @@ namespace AhoViewer
             void cancel_download();
 
             SignalProgressType signal_progress() const { return m_SignalProgress; }
+
+            static const size_t BooruThumbnailSize = 150;
         private:
             bool start_download();
 
