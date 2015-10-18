@@ -48,7 +48,7 @@ SettingsManager::SettingsManager()
     }),
     DefaultSites(
     {
-        std::make_tuple("Gelbooru",   "http://gelbooru.com",         Booru::Site::Type::GELBOORU),
+        // std::make_tuple("Gelbooru",   "http://gelbooru.com",         Booru::Site::Type::GELBOORU),
         std::make_tuple("Danbooru",   "https://danbooru.donmai.us",  Booru::Site::Type::DANBOORU),
         std::make_tuple("Konachan",   "http://konachan.com",         Booru::Site::Type::MOEBOORU),
         std::make_tuple("yande.re",   "https://yande.re",            Booru::Site::Type::MOEBOORU),
