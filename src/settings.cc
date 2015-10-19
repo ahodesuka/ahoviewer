@@ -201,7 +201,7 @@ int SettingsManager::get_int(const std::string &key) const
 std::string SettingsManager::get_string(const std::string &key) const
 {
     if (Config.exists(key))
-        return (const char*)Config.lookup(key);
+        return static_cast<const char*>(Config.lookup(key));
 
     return "";
 }
@@ -336,7 +336,7 @@ std::string SettingsManager::reset_keybinding(const std::string &group, const st
 Gdk::Color SettingsManager::get_background_color() const
 {
     if (Config.exists("BackgroundColor"))
-        return Gdk::Color((const char*)Config.lookup("BackgroundColor"));
+        return Gdk::Color(static_cast<const char*>(Config.lookup("BackgroundColor")));
 
     return DefaultBGColor;
 }
@@ -362,7 +362,7 @@ void SettingsManager::set_booru_max_rating(const Booru::Site::Rating value)
 ImageBox::ZoomMode SettingsManager::get_zoom_mode() const
 {
     if (Config.exists("ZoomMode"))
-        return ImageBox::ZoomMode(((const char*)Config.lookup("ZoomMode"))[0]);
+        return ImageBox::ZoomMode(static_cast<const char*>(Config.lookup("ZoomMode"))[0]);
 
     return DefaultZoomMode;
 }
