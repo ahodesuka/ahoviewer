@@ -86,7 +86,7 @@ ImageBox::ImageBox(BaseObjectType *cobj, const Glib::RefPtr<Gtk::Builder> &bldr)
         m_WindowHandle = GDK_WINDOW_XID(m_DrawingArea->get_window()->gobj());
 #endif // GDK_WINDOWING_X11
 #ifdef GDK_WINDOWING_WIN32
-        m_WindowHandle = (guintptr)GDK_WINDOW_HWND(m_DrawingArea->get_window()->gobj());
+        m_WindowHandle = GDK_WINDOW_HWND(m_DrawingArea->get_window()->gobj());
 #endif // GDK_WINDOWING_WIN32
         gst_element_set_state(m_Playbin, GST_STATE_READY);
      });
