@@ -314,7 +314,7 @@ bool Page::get_next_page()
  **/
 void Page::on_posts_downloaded()
 {
-    if (m_Posts->get_attribute("success") == "false" && !m_Posts->get_attribute("reason").empty())
+    if (m_Posts && m_Posts->get_attribute("success") == "false" && !m_Posts->get_attribute("reason").empty())
     {
         m_SignalDownloadError(m_Posts->get_attribute("reason"));
     }
