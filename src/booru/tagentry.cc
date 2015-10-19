@@ -48,7 +48,6 @@ void TagEntry::on_text_changed()
     if (key[0] == '-')
         key = key.substr(1);
 
-    Gtk::TreeRow row;
     m_Model->clear();
 
     if (key.length() >= static_cast<size_t>(m_TagCompletion->get_minimum_key_length()))
@@ -58,8 +57,8 @@ void TagEntry::on_text_changed()
         {
             if (tag.compare(0, key.length(), key) == 0)
             {
-                row = *(m_Model->append());
-                row[m_Columns.tag_column] = tag;
+                Gtk::TreeIter iter = m_Model->append();
+                iter->set_value(m_Columns.tag_column, tag);
 
                 // Limit list to 20 tags
                 if (++i >= 20)
@@ -96,16 +95,16 @@ void TagEntry::on_cursor_on_match(const std::string &tag)
     set_text(tags + prefix + tag);
     m_ChangedConn.unblock();
 
+    // This is needed to keep track of what part of the tag was completed
     select_region(spos, -1);
 }
 
 bool TagEntry::on_match_selected(const Gtk::TreeIter &iter)
 {
-    std::string tag((*iter)->get_value(m_Columns.tag_column));
     size_t pos = get_text().find_last_of(' ');
-    std::string tags = pos == std::string::npos ? "" : get_text().substr(0, pos + 1),
-                prefix = (pos == std::string::npos ?
-                            get_text()[0] : get_text()[pos + 1]) == '-' ? "-" : "";
+    std::string tag    = iter->get_value(m_Columns.tag_column),
+                tags   = pos == std::string::npos ? "" : get_text().substr(0, pos + 1),
+                prefix = (pos == std::string::npos ? get_text()[0] : get_text()[pos + 1]) == '-' ? "-" : "";
 
     m_ChangedConn.block();
     set_text(tags + prefix + tag + " ");
