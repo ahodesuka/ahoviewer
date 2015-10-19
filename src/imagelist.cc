@@ -66,7 +66,7 @@ bool ImageList::load(const std::string path, std::string &error, int index)
         }
         else
         {
-            error = "'" + path + "' is invalid or not supported.";
+            error = "'" + Glib::path_get_basename(path) + "' is invalid or not supported.";
             return false;
         }
     }
@@ -82,7 +82,7 @@ bool ImageList::load(const std::string path, std::string &error, int index)
     // No valid images in this directory
     if (entries.empty())
     {
-        error = "No valid image files found in '" + (archive ? archive->get_path() : dirPath) + "'.";
+        error = "No valid image files found in '" + Glib::path_get_basename(archive ? archive->get_path() : dirPath) + "'.";
         return false;
     }
 
