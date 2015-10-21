@@ -95,7 +95,7 @@ Archive::Type Archive::get_type(const std::string &path)
     std::ifstream ifs(path, std::ios::binary);
 
     char magic[MagicSize] = { };
-    ifs.read(magic, sizeof(magic) / sizeof(*magic));
+    ifs.readsome(magic, MagicSize);
 
 #ifdef HAVE_LIBZIP
     if (std::memcmp(magic, Zip::Magic, Zip::MagicSize) == 0)
