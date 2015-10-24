@@ -95,6 +95,11 @@ void Curler::set_follow_location(const bool n)
     curl_easy_setopt(m_EasyHandle, CURLOPT_FOLLOWLOCATION, n);
 }
 
+void Curler::set_referer(const std::string &url) const
+{
+    curl_easy_setopt(m_EasyHandle, CURLOPT_REFERER, url.c_str());
+}
+
 std::string Curler::escape(const std::string &str) const
 {
     char *estr = curl_easy_escape(m_EasyHandle, str.c_str(), 0);

@@ -28,6 +28,7 @@ namespace AhoViewer
             void set_url(const std::string &url);
             void set_no_body(const bool n = true);
             void set_follow_location(const bool n = true);
+            void set_referer(const std::string &url) const;
             std::string escape(const std::string &str) const;
             bool perform();
 
