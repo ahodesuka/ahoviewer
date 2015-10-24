@@ -71,20 +71,20 @@ std::unique_ptr<Archive> Archive::create(const std::string &path, const std::str
             !parentDir.empty() ? Glib::build_filename(Glib::path_get_basename(parentDir),
                                                       Glib::path_get_basename(path)) :
                                  Glib::path_get_basename(path));
-    }
 
-    // Failed to create temp directory
-    if (!dir.empty())
-    {
+        // Make sure temp directory was created
+        if (!dir.empty())
+        {
 #ifdef HAVE_LIBZIP
-        if (type == Type::ZIP)
-            return std::unique_ptr<Archive>(new Zip(path, dir));
+            if (type == Type::ZIP)
+                return std::unique_ptr<Archive>(new Zip(path, dir));
 #endif // HAVE_LIBZIP
 
 #ifdef HAVE_LIBUNRAR
-        if (type == Type::RAR)
-            return std::unique_ptr<Archive>(new Rar(path, dir));
+            if (type == Type::RAR)
+                return std::unique_ptr<Archive>(new Rar(path, dir));
 #endif // HAVE_LIBUNRAR
+        }
     }
 
     return nullptr;

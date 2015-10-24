@@ -40,8 +40,6 @@ namespace AhoViewer
             const Archive &m_Archive;
         };
 
-        // use ::create instead.
-        explicit Archive(const std::string &path, const std::string &exDir);
         virtual ~Archive();
 
         static bool is_valid(const std::string &path);
@@ -57,6 +55,8 @@ namespace AhoViewer
 
         static const std::vector<std::string> MimeTypes, FileExtensions;
     protected:
+        Archive(const std::string &path, const std::string &exDir);
+
         std::string m_Path, m_ExtractedPath;
     private:
         static Type get_type(const std::string &path);
