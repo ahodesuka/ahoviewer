@@ -28,10 +28,11 @@ namespace AhoViewer
                 UNKNOWN,
             };
 
-            Site(std::string name, std::string url, Type type);
             ~Site();
 
-            static std::shared_ptr<Site> create(const std::string &name, const std::string &url);
+            static std::shared_ptr<Site> create(const std::string &name,
+                                                const std::string &url,
+                                                const Type type = Type::UNKNOWN);
             static const Glib::RefPtr<Gdk::Pixbuf>& get_missing_pixbuf();
 
             std::string get_posts_url(const std::string &tags, size_t page);
@@ -54,6 +55,8 @@ namespace AhoViewer
 
             Glib::Dispatcher& signal_icon_downloaded() { return m_SignalIconDownloaded; }
         private:
+            Site(const std::string &name, const std::string &url, const Type type);
+
             static Type get_type_from_url(const std::string &url);
 
             static const std::map<Type, std::string> RequestURI,

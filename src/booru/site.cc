@@ -23,12 +23,19 @@ const std::map<Site::Type, std::string> Site::PostURI =
     { Type::MOEBOORU, "/post/show/%1" },
 };
 
-std::shared_ptr<Site> Site::create(const std::string &name, const std::string &url)
+std::shared_ptr<Site> Site::create(const std::string &name, const std::string &url, const Type type)
 {
-    Type t = get_type_from_url(url);
+    Type t = type == Type::UNKNOWN ? get_type_from_url(url) : type;
 
     if (t != Type::UNKNOWN)
-        return std::make_shared<Site>(name, url, t);
+    {
+        struct _shared_site : public Site
+        {
+            _shared_site(const std::string &n, const std::string &url, const Type t)
+                : Site(n, url, t) { }
+        };
+        return std::make_shared<_shared_site>(name, url, t);
+    }
 
     return nullptr;
 }
@@ -66,7 +73,7 @@ Site::Type Site::get_type_from_url(const std::string &url)
     return Type::UNKNOWN;
 }
 
-Site::Site(std::string name, std::string url, Type type)
+Site::Site(const std::string &name, const std::string &url, const Type type)
   : m_Name(name),
     m_Url(url),
     m_IconPath(Glib::build_filename(Settings.get_booru_path(), m_Name + ".png")),

@@ -5,6 +5,7 @@
 
 #include "settings.h"
 using namespace AhoViewer;
+using namespace AhoViewer::Booru;
 
 #include "config.h"
 
@@ -48,11 +49,11 @@ SettingsManager::SettingsManager()
     }),
     DefaultSites(
     {
-        // std::make_tuple("Gelbooru",   "http://gelbooru.com",         Booru::Site::Type::GELBOORU),
-        std::make_tuple("Danbooru",   "https://danbooru.donmai.us",  Booru::Site::Type::DANBOORU),
-        std::make_tuple("Konachan",   "http://konachan.com",         Booru::Site::Type::MOEBOORU),
-        std::make_tuple("yande.re",   "https://yande.re",            Booru::Site::Type::MOEBOORU),
-        std::make_tuple("Safebooru",  "http://safebooru.org",        Booru::Site::Type::GELBOORU),
+        // std::make_tuple("Gelbooru",   "http://gelbooru.com",         Site::Type::GELBOORU),
+        std::make_tuple("Danbooru",   "https://danbooru.donmai.us",  Site::Type::DANBOORU),
+        std::make_tuple("Konachan",   "http://konachan.com",         Site::Type::MOEBOORU),
+        std::make_tuple("yande.re",   "https://yande.re",            Site::Type::MOEBOORU),
+        std::make_tuple("Safebooru",  "http://safebooru.org",        Site::Type::GELBOORU),
     }),
     DefaultKeybindings(
     {
@@ -206,7 +207,7 @@ std::string SettingsManager::get_string(const std::string &key) const
     return "";
 }
 
-std::vector<std::shared_ptr<Booru::Site>>& SettingsManager::get_sites()
+std::vector<std::shared_ptr<Site>>& SettingsManager::get_sites()
 {
     if (m_Sites.size())
     {
@@ -220,8 +221,8 @@ std::vector<std::shared_ptr<Booru::Site>>& SettingsManager::get_sites()
             for (size_t i = 0; i < static_cast<size_t>(sites.getLength()); ++i)
             {
                 const Setting &s = sites[i];
-                m_Sites.push_back(std::make_shared<Booru::Site>(s["name"], s["url"],
-                            static_cast<Booru::Site::Type>(static_cast<int>(s["type"]))));
+                m_Sites.push_back(Site::create(s["name"], s["url"],
+                            static_cast<Site::Type>(static_cast<int>(s["type"]))));
             }
 
             return m_Sites;
@@ -229,9 +230,8 @@ std::vector<std::shared_ptr<Booru::Site>>& SettingsManager::get_sites()
     }
     else
     {
-        for (const std::tuple<std::string, std::string, Booru::Site::Type> &s : DefaultSites)
-            m_Sites.push_back(std::make_shared<Booru::Site>(
-                        std::get<0>(s), std::get<1>(s), std::get<2>(s)));
+        for (const std::tuple<std::string, std::string, Site::Type> &s : DefaultSites)
+            m_Sites.push_back(Site::create(std::get<0>(s), std::get<1>(s), std::get<2>(s)));
     }
 
     return m_Sites;
@@ -242,7 +242,7 @@ void SettingsManager::update_sites()
     remove("Sites");
     Setting &sites = Config.getRoot().add("Sites", Setting::TypeList);
 
-    for (const std::shared_ptr<Booru::Site> &s : m_Sites)
+    for (const std::shared_ptr<Site> &s : m_Sites)
     {
         Setting &site = sites.add(Setting::TypeGroup);
         set("name", s->get_name(), Setting::TypeString, site);
@@ -346,15 +346,15 @@ void SettingsManager::set_background_color(const Gdk::Color &value)
     set("BackgroundColor", value.to_string());
 }
 
-Booru::Site::Rating SettingsManager::get_booru_max_rating() const
+Site::Rating SettingsManager::get_booru_max_rating() const
 {
     if (Config.exists("BooruMaxRating"))
-        return Booru::Site::Rating(static_cast<int>(Config.lookup("BooruMaxRating")));
+        return Site::Rating(static_cast<int>(Config.lookup("BooruMaxRating")));
 
     return DefaultBooruMaxRating;
 }
 
-void SettingsManager::set_booru_max_rating(const Booru::Site::Rating value)
+void SettingsManager::set_booru_max_rating(const Site::Rating value)
 {
     set("BooruMaxRating", static_cast<int>(value));
 }
