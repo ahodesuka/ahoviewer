@@ -134,6 +134,7 @@ void SiteEditor::delete_site()
 
     Gtk::TreeIter n = m_Model->erase(o);
     get_selection()->select(n ? n : --n);
+    on_cursor_changed();
 }
 
 void SiteEditor::on_name_edited(const std::string &p, const std::string &text)
