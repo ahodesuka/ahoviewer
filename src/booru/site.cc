@@ -1,3 +1,4 @@
+#include <chrono>
 #include <fstream>
 #include <iostream>
 
@@ -23,7 +24,15 @@ const std::map<Site::Type, std::string> Site::PostURI =
     { Type::MOEBOORU, "/post/show/%1" },
 };
 
-std::shared_ptr<Site> Site::create(const std::string &name, const std::string &url, const Type type)
+const std::map<Site::Type, std::string> Site::RegisterURI =
+{
+    { Type::DANBOORU, "/users/new" },
+    { Type::GELBOORU, "/index.php?page=account&s=reg" },
+    { Type::MOEBOORU, "/user/signup" },
+};
+
+std::shared_ptr<Site> Site::create(const std::string &name, const std::string &url, const Type type,
+                                   const std::string &user, const std::string &pass)
 {
     Type t = type == Type::UNKNOWN ? get_type_from_url(url) : type;
 
@@ -31,10 +40,11 @@ std::shared_ptr<Site> Site::create(const std::string &name, const std::string &u
     {
         struct _shared_site : public Site
         {
-            _shared_site(const std::string &n, const std::string &url, const Type t)
-                : Site(n, url, t) { }
+            _shared_site(const std::string &n, const std::string &url, const Type t,
+                         const std::string &u, const std::string &p)
+                : Site(n, url, t, u, p) { }
         };
-        return std::make_shared<_shared_site>(name, url, t);
+        return std::make_shared<_shared_site>(name, url, t, user, pass);
     }
 
     return nullptr;
@@ -73,12 +83,18 @@ Site::Type Site::get_type_from_url(const std::string &url)
     return Type::UNKNOWN;
 }
 
-Site::Site(const std::string &name, const std::string &url, const Type type)
+Site::Site(const std::string &name, const std::string &url, const Type type,
+           const std::string &user, const std::string &pass)
   : m_Name(name),
     m_Url(url),
+    m_Username(user),
+    m_Password(pass),
     m_IconPath(Glib::build_filename(Settings.get_booru_path(), m_Name + ".png")),
     m_TagsPath(Glib::build_filename(Settings.get_booru_path(), m_Name + "-tags")),
+    m_CookiePath(Glib::build_filename(Settings.get_booru_path(), m_Name + "-cookie")),
     m_Type(type),
+    m_NewAccount(false),
+    m_CookieTS(0),
     m_IconCurlerThread(nullptr)
 {
     // Load tags
@@ -101,6 +117,8 @@ Site::~Site()
         m_IconCurlerThread->join();
         m_IconCurlerThread = nullptr;
     }
+
+    cleanup_cookie();
 }
 
 std::string Site::get_posts_url(const std::string &tags, size_t page)
@@ -134,6 +152,82 @@ bool Site::set_url(const std::string &url)
     }
 
     return true;
+}
+
+// FIXME: Hopefully Gelbooru implements basic HTTP Authentication
+std::string Site::get_cookie()
+{
+    if (m_Type != Type::GELBOORU)
+        return "";
+
+    if (!m_Username.empty() && !m_Password.empty())
+    {
+        using namespace std::chrono;
+        uint64_t cts = duration_cast<seconds>(system_clock::now().time_since_epoch()).count();
+
+        if (m_NewAccount || cts >= m_CookieTS)
+        {
+            // Get cookie expiration timestamp
+            if (Glib::file_test(m_CookiePath, Glib::FILE_TEST_EXISTS))
+            {
+                std::ifstream ifs(m_CookiePath);
+                std::string line, tok;
+
+                while (std::getline(ifs, line))
+                {
+                    if (line.substr(0, 10).compare("#HttpOnly_") == 0)
+                        line = line.substr(1);
+
+                    // Skip comments
+                    if (line[0] == '#') continue;
+
+                    std::istringstream iss(line);
+                    size_t i = 0;
+
+                    while (std::getline(iss, tok, '\t'))
+                    {
+                        // Timestamp is always at the 4th index
+                        if (i == 4)
+                        {
+                            char *after = nullptr;
+                            uint64_t ts = strtoull(tok.c_str(), &after, 10);
+
+                            if (ts < m_CookieTS || m_CookieTS == 0)
+                                m_CookieTS = ts;
+                        }
+
+                        ++i;
+                    }
+                }
+            }
+
+            // Login and get a new cookie
+            // This does not check whether or not the login succeeded.
+            if (cts >= m_CookieTS || m_NewAccount)
+            {
+                if (Glib::file_test(m_CookiePath, Glib::FILE_TEST_EXISTS))
+                    g_unlink(m_CookiePath.c_str());
+
+                Curler curler(m_Url + "/index.php?page=account&s=login&code=00");
+                std::string f = Glib::ustring::compose("user=%1&pass=%2", m_Username, m_Password);
+
+                curler.set_cookie_jar(m_CookiePath);
+                curler.set_post_fields(f);
+                curler.perform();
+
+                m_NewAccount = false;
+            }
+        }
+    }
+
+    return m_CookiePath;
+}
+
+void Site::cleanup_cookie() const
+{
+    if ((m_Username.empty() || m_Password.empty() || m_NewAccount) &&
+            Glib::file_test(m_CookiePath, Glib::FILE_TEST_EXISTS))
+        g_unlink(m_CookiePath.c_str());
 }
 
 std::string Site::get_path()

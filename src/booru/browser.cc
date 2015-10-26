@@ -323,7 +323,7 @@ void Browser::on_switch_page(void*, guint)
     if (page->get_site())
     {
         int index = 0;
-        std::vector<std::shared_ptr<Site>> sites = Settings.get_sites();
+        std::vector<std::shared_ptr<Site>> &sites = Settings.get_sites();
         std::vector<std::shared_ptr<Site>>::iterator it =
             std::find(sites.begin(), sites.end(), page->get_site());
 

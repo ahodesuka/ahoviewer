@@ -265,6 +265,11 @@ void Page::get_posts()
             }
         }
 
+        if (m_Site->get_type() == Site::Type::GELBOORU)
+            m_Curler.set_cookie_file(m_Site->get_cookie());
+        else
+            m_Curler.set_http_auth(m_Site->get_username(), m_Site->get_password());
+
         if (m_Curler.perform())
         {
             m_Posts = std::unique_ptr<xmlDocument>(

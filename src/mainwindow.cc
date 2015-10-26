@@ -798,7 +798,7 @@ void MainWindow::on_quit()
 
     Settings.set("SelectedBooru", m_BooruBrowser->get_selected_booru());
 
-    for (std::shared_ptr<Booru::Site> site : Settings.get_sites())
+    for (const std::shared_ptr<Booru::Site> &site : Settings.get_sites())
         site->save_tags();
 
     save_window_geometry();

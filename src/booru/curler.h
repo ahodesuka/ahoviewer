@@ -6,8 +6,6 @@
 #include <giomm.h>
 #include <atomic>
 #include <chrono>
-#include <string>
-#include <vector>
 
 namespace AhoViewer
 {
@@ -17,18 +15,22 @@ namespace AhoViewer
 
         class Curler
         {
-        public:
             friend class ImageFetcher;
 
             typedef sigc::signal<void, const unsigned char*, size_t> SignalWriteType;
-
+        public:
             Curler(const std::string &url = "");
             ~Curler();
 
             void set_url(const std::string &url);
-            void set_no_body(const bool n = true);
-            void set_follow_location(const bool n = true);
+            void set_no_body(const bool n = true) const;
+            void set_follow_location(const bool n = true) const;
             void set_referer(const std::string &url) const;
+            void set_http_auth(const std::string &u, const std::string &p) const;
+            void set_cookie_jar(const std::string &path) const;
+            void set_cookie_file(const std::string &path) const;
+            void set_post_fields(const std::string &fields) const;
+
             std::string escape(const std::string &str) const;
             bool perform();
 

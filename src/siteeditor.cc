@@ -2,6 +2,7 @@
 
 #include "siteeditor.h"
 using namespace AhoViewer;
+using namespace AhoViewer::Booru;
 
 #include "settings.h"
 
@@ -21,9 +22,14 @@ SiteEditor::SiteEditor(BaseObjectType *cobj, const Glib::RefPtr<Gtk::Builder> &b
     m_SiteCheckEditSuccess(false),
     m_SiteCheckThread(nullptr)
 {
+    bldr->get_widget("BooruRegisterLinkButton", m_RegisterButton);
+    bldr->get_widget("BooruUsernameEntry", m_UsernameEntry);
+    bldr->get_widget("BooruPasswordEntry", m_PasswordEntry);
+    bldr->get_widget("BooruPasswordLabel", m_PasswordLabel);
+
     m_SignalSiteChecked.connect(sigc::mem_fun(*this, &SiteEditor::on_site_checked));
 
-    for (const std::shared_ptr<Booru::Site> &s : m_Sites)
+    for (const std::shared_ptr<Site> &s : m_Sites)
     {
         Gtk::TreeIter iter = m_Model->append();
         iter->set_value(m_Columns.icon, s->get_icon_pixbuf());
@@ -63,6 +69,12 @@ SiteEditor::SiteEditor(BaseObjectType *cobj, const Glib::RefPtr<Gtk::Builder> &b
 
     bldr->get_widget("AddSiteButton", toolButton);
     toolButton->signal_clicked().connect(sigc::mem_fun(*this, &SiteEditor::add_row));
+
+    m_UsernameEntry->signal_changed().connect(sigc::mem_fun(*this, &SiteEditor::on_username_edited));
+    m_PasswordEntry->signal_changed().connect(sigc::mem_fun(*this, &SiteEditor::on_password_edited));
+
+    // Set initial values for entries and linkbutton
+    on_cursor_changed();
 }
 
 SiteEditor::~SiteEditor()
@@ -72,6 +84,24 @@ SiteEditor::~SiteEditor()
         m_SiteCheckThread->join();
         m_SiteCheckThread = nullptr;
     }
+}
+
+void SiteEditor::on_cursor_changed()
+{
+    Gtk::TreeView::on_cursor_changed();
+
+    const std::shared_ptr<Site> &s = get_selection()->get_selected()->get_value(m_Columns.site);
+
+    m_RegisterButton->set_label(_("Register account on ") + s->get_name());
+    m_RegisterButton->set_uri(s->get_register_uri());
+
+    m_UsernameEntry->set_text(s->get_username());
+    m_PasswordEntry->set_text(s->get_password());
+
+    if (s->get_type() == Site::Type::GELBOORU)
+        m_PasswordLabel->set_text(_("Password:"));
+    else
+        m_PasswordLabel->set_text(_("API Key:"));
 }
 
 void SiteEditor::add_row()
@@ -86,7 +116,6 @@ void SiteEditor::delete_site()
     Gtk::TreeIter o = get_selection()->get_selected();
 
     m_Sites.erase(std::remove(m_Sites.begin(), m_Sites.end(), o->get_value(m_Columns.site)), m_Sites.end());
-    Settings.update_sites();
     m_SignalEdited();
 
     Gtk::TreeIter n = m_Model->erase(o);
@@ -150,9 +179,9 @@ void SiteEditor::add_edit_site(const Gtk::TreeIter &iter)
 
     m_SiteCheckIter = iter;
 
-    std::vector<std::shared_ptr<Booru::Site>>::iterator i =
+    std::vector<std::shared_ptr<Site>>::iterator i =
         std::find(m_Sites.begin(), m_Sites.end(), iter->get_value(m_Columns.site));
-    std::shared_ptr<Booru::Site> site = i != m_Sites.end() ? *i : nullptr;
+    std::shared_ptr<Site> site = i != m_Sites.end() ? *i : nullptr;
 
     // editting
     if (site)
@@ -185,7 +214,7 @@ void SiteEditor::add_edit_site(const Gtk::TreeIter &iter)
         m_SiteCheckIter->set_value(m_Columns.loading, true);
         m_SiteCheckThread = Glib::Threads::Thread::create([ this, name, url ]()
         {
-            m_SiteCheckSite = Booru::Site::create(name, url);
+            m_SiteCheckSite = Site::create(name, url);
 
             if (m_SiteCheckSite)
                 update_edited_site_icon();
@@ -215,11 +244,20 @@ void SiteEditor::on_site_checked()
     }
 
     if (m_SiteCheckEdit || m_SiteCheckSite)
-    {
-        Settings.update_sites();
         m_SignalEdited();
-    }
 
     m_SiteCheckThread->join();
     m_SiteCheckThread = nullptr;
+}
+
+void SiteEditor::on_username_edited()
+{
+    const std::shared_ptr<Site> &s = get_selection()->get_selected()->get_value(m_Columns.site);
+    s->set_username(m_UsernameEntry->get_text());
+}
+
+void SiteEditor::on_password_edited()
+{
+    const std::shared_ptr<Site> &s = get_selection()->get_selected()->get_value(m_Columns.site);
+    s->set_password(m_PasswordEntry->get_text());
 }

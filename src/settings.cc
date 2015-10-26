@@ -49,11 +49,11 @@ SettingsManager::SettingsManager()
     }),
     DefaultSites(
     {
-        // std::make_tuple("Gelbooru",   "http://gelbooru.com",         Site::Type::GELBOORU),
-        std::make_tuple("Danbooru",   "https://danbooru.donmai.us",  Site::Type::DANBOORU),
-        std::make_tuple("Konachan",   "http://konachan.com",         Site::Type::MOEBOORU),
-        std::make_tuple("yande.re",   "https://yande.re",            Site::Type::MOEBOORU),
-        std::make_tuple("Safebooru",  "http://safebooru.org",        Site::Type::GELBOORU),
+        std::make_tuple("Danbooru",   "https://danbooru.donmai.us",  Site::Type::DANBOORU, "", ""),
+        std::make_tuple("Gelbooru",   "http://gelbooru.com",         Site::Type::GELBOORU, "", ""),
+        std::make_tuple("Konachan",   "http://konachan.com",         Site::Type::MOEBOORU, "", ""),
+        std::make_tuple("yande.re",   "https://yande.re",            Site::Type::MOEBOORU, "", ""),
+        std::make_tuple("Safebooru",  "http://safebooru.org",        Site::Type::GELBOORU, "", ""),
     }),
     DefaultKeybindings(
     {
@@ -160,6 +160,8 @@ SettingsManager::SettingsManager()
 
 SettingsManager::~SettingsManager()
 {
+    save_sites();
+
     try
     {
         Config.writeFile(ConfigFilePath.c_str());
@@ -221,8 +223,14 @@ std::vector<std::shared_ptr<Site>>& SettingsManager::get_sites()
             for (size_t i = 0; i < static_cast<size_t>(sites.getLength()); ++i)
             {
                 const Setting &s = sites[i];
-                m_Sites.push_back(Site::create(s["name"], s["url"],
-                            static_cast<Site::Type>(static_cast<int>(s["type"]))));
+                std::string username = s.exists("username") ? s["username"] : "",
+                            password = s.exists("password") ? s["password"] : "";
+                m_Sites.push_back(
+                        Site::create(s["name"],
+                                     s["url"],
+                                     static_cast<Site::Type>(static_cast<int>(s["type"])),
+                                     username,
+                                     password));
             }
 
             return m_Sites;
@@ -230,25 +238,15 @@ std::vector<std::shared_ptr<Site>>& SettingsManager::get_sites()
     }
     else
     {
-        for (const std::tuple<std::string, std::string, Site::Type> &s : DefaultSites)
-            m_Sites.push_back(Site::create(std::get<0>(s), std::get<1>(s), std::get<2>(s)));
+        for (const SiteTuple &s : DefaultSites)
+            m_Sites.push_back(Site::create(std::get<0>(s),
+                                           std::get<1>(s),
+                                           std::get<2>(s),
+                                           std::get<3>(s),
+                                           std::get<4>(s)));
     }
 
     return m_Sites;
-}
-
-void SettingsManager::update_sites()
-{
-    remove("Sites");
-    Setting &sites = Config.getRoot().add("Sites", Setting::TypeList);
-
-    for (const std::shared_ptr<Site> &s : m_Sites)
-    {
-        Setting &site = sites.add(Setting::TypeGroup);
-        set("name", s->get_name(), Setting::TypeString, site);
-        set("url", s->get_url(), Setting::TypeString, site);
-        set("type", static_cast<int>(s->get_type()), Setting::TypeInt, site);
-    }
 }
 
 bool SettingsManager::get_geometry(int &x, int &y, int &w, int &h) const
@@ -409,5 +407,22 @@ void SettingsManager::load_keybindings()
     else
     {
         m_Keybindings = DefaultKeybindings;
+    }
+}
+
+void SettingsManager::save_sites()
+{
+    remove("Sites");
+    Setting &sites = Config.getRoot().add("Sites", Setting::TypeList);
+
+    for (const std::shared_ptr<Site> &s : m_Sites)
+    {
+        Setting &site = sites.add(Setting::TypeGroup);
+        set("name", s->get_name(), Setting::TypeString, site);
+        set("url", s->get_url(), Setting::TypeString, site);
+        set("type", static_cast<int>(s->get_type()), Setting::TypeInt, site);
+        set("username", s->get_username(), Setting::TypeString, site);
+        set("password", s->get_password(), Setting::TypeString, site);
+        s->cleanup_cookie();
     }
 }

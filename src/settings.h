@@ -15,6 +15,7 @@ namespace AhoViewer
 {
     class SettingsManager
     {
+        typedef std::tuple<std::string, std::string, Booru::Site::Type, std::string, std::string> SiteTuple;
     public:
         SettingsManager();
         ~SettingsManager();
@@ -24,7 +25,6 @@ namespace AhoViewer
         std::string get_string(const std::string &key) const;
 
         std::vector<std::shared_ptr<Booru::Site>>& get_sites();
-        void update_sites();
 
         std::string get_keybinding(const std::string &group, const std::string &name) const;
         void set_keybinding(const std::string &group, const std::string &name, const std::string &value);
@@ -71,6 +71,7 @@ namespace AhoViewer
         }
     private:
         void load_keybindings();
+        void save_sites();
 
         libconfig::Config Config;
 
@@ -81,7 +82,7 @@ namespace AhoViewer
 
         const std::map<std::string, bool> DefaultBools;
         const std::map<std::string, int> DefaultInts;
-        const std::vector<std::tuple<std::string, std::string, Booru::Site::Type>> DefaultSites;
+        const std::vector<SiteTuple> DefaultSites;
         const std::map<std::string, std::map<std::string, std::string>> DefaultKeybindings;
         const Gdk::Color DefaultBGColor;
         const Booru::Site::Rating DefaultBooruMaxRating = Booru::Site::Rating::EXPLICIT;

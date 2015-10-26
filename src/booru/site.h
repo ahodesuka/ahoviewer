@@ -32,7 +32,9 @@ namespace AhoViewer
 
             static std::shared_ptr<Site> create(const std::string &name,
                                                 const std::string &url,
-                                                const Type type = Type::UNKNOWN);
+                                                const Type type = Type::UNKNOWN,
+                                                const std::string &user = "",
+                                                const std::string &pass = "");
             static const Glib::RefPtr<Gdk::Pixbuf>& get_missing_pixbuf();
 
             std::string get_posts_url(const std::string &tags, size_t page);
@@ -48,6 +50,17 @@ namespace AhoViewer
             Type get_type() const { return m_Type; }
             const std::set<std::string>& get_tags() const { return m_Tags; }
 
+            std::string get_register_uri() const { return m_Url + RegisterURI.at(m_Type); }
+
+            std::string get_username() const { return m_Username; }
+            void set_username(const std::string &s) { m_NewAccount = true; m_Username = s; }
+
+            std::string get_password() const { return m_Password; }
+            void set_password(const std::string &s) { m_NewAccount = true; m_Password = s; }
+
+            std::string get_cookie();
+            void cleanup_cookie() const;
+
             std::string get_path();
             Glib::RefPtr<Gdk::Pixbuf> get_icon_pixbuf(const bool update = false);
 
@@ -55,15 +68,29 @@ namespace AhoViewer
 
             Glib::Dispatcher& signal_icon_downloaded() { return m_SignalIconDownloaded; }
         private:
-            Site(const std::string &name, const std::string &url, const Type type);
+            Site(const std::string &name,
+                 const std::string &url,
+                 const Type type,
+                 const std::string &user,
+                 const std::string &pass);
 
             static Type get_type_from_url(const std::string &url);
 
             static const std::map<Type, std::string> RequestURI,
-                                                     PostURI;
+                                                     PostURI,
+                                                     RegisterURI;
 
-            std::string m_Name, m_Url, m_IconPath, m_TagsPath, m_Path;
+            std::string m_Name,
+                        m_Url,
+                        m_Username,
+                        m_Password,
+                        m_IconPath,
+                        m_TagsPath,
+                        m_CookiePath,
+                        m_Path;
             Type m_Type;
+            bool m_NewAccount;
+            uint64_t m_CookieTS;
             std::set<std::string> m_Tags;
             Curler m_Curler;
 

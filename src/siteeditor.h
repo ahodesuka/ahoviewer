@@ -16,6 +16,8 @@ namespace AhoViewer
         virtual ~SiteEditor();
 
         sigc::signal<void> signal_edited() const { return m_SignalEdited; }
+    protected:
+        void on_cursor_changed();
     private:
         class CellRendererIcon : public Gtk::CellRenderer/*{{{*/
         {
@@ -130,11 +132,18 @@ namespace AhoViewer
         void update_edited_site_icon();
         void on_site_checked();
 
+        void on_username_edited();
+        void on_password_edited();
+
         ModelColumns m_Columns;
         Glib::RefPtr<Gtk::ListStore> m_Model;
 
-        Gtk::TreeView::Column *m_NameColumn,
-                              *m_UrlColumn;
+        Gtk::TreeViewColumn *m_NameColumn,
+                            *m_UrlColumn;
+        Gtk::LinkButton *m_RegisterButton;
+        Gtk::Entry *m_UsernameEntry,
+                   *m_PasswordEntry;
+        Gtk::Label *m_PasswordLabel;
 
         std::vector<std::shared_ptr<Booru::Site>>& m_Sites;
         Glib::RefPtr<Gdk::Pixbuf> m_ErrorPixbuf;

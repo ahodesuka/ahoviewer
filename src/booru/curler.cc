@@ -85,12 +85,12 @@ void Curler::set_url(const std::string &url)
     curl_easy_setopt(m_EasyHandle, CURLOPT_URL, m_Url.c_str());
 }
 
-void Curler::set_no_body(const bool n)
+void Curler::set_no_body(const bool n) const
 {
     curl_easy_setopt(m_EasyHandle, CURLOPT_NOBODY, n);
 }
 
-void Curler::set_follow_location(const bool n)
+void Curler::set_follow_location(const bool n) const
 {
     curl_easy_setopt(m_EasyHandle, CURLOPT_FOLLOWLOCATION, n);
 }
@@ -98,6 +98,28 @@ void Curler::set_follow_location(const bool n)
 void Curler::set_referer(const std::string &url) const
 {
     curl_easy_setopt(m_EasyHandle, CURLOPT_REFERER, url.c_str());
+}
+
+void Curler::set_http_auth(const std::string &u, const std::string &p) const
+{
+    curl_easy_setopt(m_EasyHandle, CURLOPT_USERNAME, u.c_str());
+    curl_easy_setopt(m_EasyHandle, CURLOPT_PASSWORD, p.c_str());
+}
+
+void Curler::set_cookie_jar(const std::string &path) const
+{
+    curl_easy_setopt(m_EasyHandle, CURLOPT_COOKIEJAR, path.c_str());
+}
+
+void Curler::set_cookie_file(const std::string &path) const
+{
+    curl_easy_setopt(m_EasyHandle, CURLOPT_COOKIEFILE, path.c_str());
+}
+
+void Curler::set_post_fields(const std::string &fields) const
+{
+    curl_easy_setopt(m_EasyHandle, CURLOPT_POSTFIELDSIZE, fields.length());
+    curl_easy_setopt(m_EasyHandle, CURLOPT_POSTFIELDS, fields.c_str());
 }
 
 std::string Curler::escape(const std::string &str) const
