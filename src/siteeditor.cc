@@ -92,13 +92,27 @@ void SiteEditor::on_cursor_changed()
 
     const std::shared_ptr<Site> &s = get_selection()->get_selected()->get_value(m_Columns.site);
 
-    m_RegisterButton->set_label(_("Register account on ") + s->get_name());
-    m_RegisterButton->set_uri(s->get_register_uri());
+    if (s)
+    {
+        m_RegisterButton->set_label(_("Register account on ") + s->get_name());
+        m_RegisterButton->set_uri(s->get_register_uri());
 
-    m_UsernameEntry->set_text(s->get_username());
-    m_PasswordEntry->set_text(s->get_password());
+        m_UsernameEntry->set_text(s->get_username());
+        m_PasswordEntry->set_text(s->get_password());
+    }
+    else
+    {
+        m_RegisterButton->set_label(_("Register account"));
 
-    if (s->get_type() == Site::Type::GELBOORU)
+        m_UsernameEntry->set_text("");
+        m_PasswordEntry->set_text("");
+    }
+
+    m_RegisterButton->set_sensitive(!!s);
+    m_UsernameEntry->set_sensitive(!!s);
+    m_PasswordEntry->set_sensitive(!!s);
+
+    if (!s || s->get_type() == Site::Type::GELBOORU)
         m_PasswordLabel->set_text(_("Password:"));
     else
         m_PasswordLabel->set_text(_("API Key:"));
@@ -241,6 +255,7 @@ void SiteEditor::on_site_checked()
     {
         m_Sites.push_back(m_SiteCheckSite);
         m_SiteCheckIter->set_value(m_Columns.site, m_SiteCheckSite);
+        on_cursor_changed();
     }
 
     if (m_SiteCheckEdit || m_SiteCheckSite)
@@ -253,11 +268,11 @@ void SiteEditor::on_site_checked()
 void SiteEditor::on_username_edited()
 {
     const std::shared_ptr<Site> &s = get_selection()->get_selected()->get_value(m_Columns.site);
-    s->set_username(m_UsernameEntry->get_text());
+    if (s) s->set_username(m_UsernameEntry->get_text());
 }
 
 void SiteEditor::on_password_edited()
 {
     const std::shared_ptr<Site> &s = get_selection()->get_selected()->get_value(m_Columns.site);
-    s->set_password(m_PasswordEntry->get_text());
+    if (s) s->set_password(m_PasswordEntry->get_text());
 }
