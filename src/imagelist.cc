@@ -82,7 +82,8 @@ bool ImageList::load(const std::string path, std::string &error, int index)
     // No valid images in this directory
     if (entries.empty())
     {
-        error = "No valid image files found in '" + Glib::path_get_basename(archive ? archive->get_path() : dirPath) + "'.";
+        error = "No valid image files found in '" +
+            Glib::path_get_basename(archive ? archive->get_path() : dirPath) + "'.";
         return false;
     }
 
@@ -136,42 +137,12 @@ bool ImageList::load(const std::string path, std::string &error, int index)
 
 void ImageList::go_next()
 {
-    if (m_Index + 1 < m_Images.size())
-    {
-        set_current(m_Index + 1);
-    }
-    else if (m_Archive && Settings.get_bool("AutoOpenArchive"))
-    {
-        size_t i = std::find(m_ArchiveEntries.begin(), m_ArchiveEntries.end(),
-                        m_Archive->get_path()) - m_ArchiveEntries.begin();
-
-        if (i < m_ArchiveEntries.size() - 1)
-        {
-            std::string e;
-            if (!load(m_ArchiveEntries[i + 1], e))
-                m_SignalArchiveError(e);
-        }
-    }
+    set_current_relative(1);
 }
 
 void ImageList::go_previous()
 {
-    if (m_Index != 0)
-    {
-        set_current(m_Index - 1);
-    }
-    else if (m_Archive && Settings.get_bool("AutoOpenArchive"))
-    {
-        size_t i = std::find(m_ArchiveEntries.begin(), m_ArchiveEntries.end(),
-                        m_Archive->get_path()) - m_ArchiveEntries.begin();
-
-        if (i > 0)
-        {
-            std::string e;
-            if (!load(m_ArchiveEntries[i - 1], e, -1))
-                m_SignalArchiveError(e);
-        }
-    }
+    set_current_relative(-1);
 }
 
 void ImageList::go_first()
@@ -197,7 +168,7 @@ bool ImageList::can_go_next() const
 
 bool ImageList::can_go_previous() const
 {
-    if (m_Index != 0)
+    if (m_Index > 0)
         return true;
     else if (m_Archive && Settings.get_bool("AutoOpenArchive"))
         return std::find(m_ArchiveEntries.begin(), m_ArchiveEntries.end(),
@@ -404,6 +375,26 @@ void ImageList::on_directory_changed(const Glib::RefPtr<Gio::File> &file,
 
         update_cache();
         m_SignalSizeChanged();
+    }
+}
+
+void ImageList::set_current_relative(const int d)
+{
+    if ((d > 0 && m_Index + 1 < m_Images.size()) || (d < 0 && m_Index > 0))
+    {
+        set_current(m_Index + d);
+    }
+    else if (m_Archive && Settings.get_bool("AutoOpenArchive"))
+    {
+        size_t i = std::find(m_ArchiveEntries.begin(), m_ArchiveEntries.end(),
+                        m_Archive->get_path()) - m_ArchiveEntries.begin();
+
+        if ((d > 0 && i < m_ArchiveEntries.size() - 1) || (d < 0 && i > 0))
+        {
+            std::string e;
+            if (!load(m_ArchiveEntries[i + d], e, d < 0 ? -1 : 0))
+                m_SignalArchiveError(e);
+        }
     }
 }
 

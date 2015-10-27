@@ -38,7 +38,6 @@ namespace AhoViewer
             typedef sigc::signal<void, const size_t> SignalSelectedChangedType;
         public:
             virtual ~Widget() = default;
-
         protected:
             struct ModelColumns : public Gtk::TreeModelColumnRecord
             {
@@ -140,6 +139,7 @@ namespace AhoViewer
                                   const Glib::RefPtr<Gio::File>&,
                                   Gio::FileMonitorEvent event);
 
+        void set_current_relative(const int d);
         void update_cache();
         void cancel_cache();
 
