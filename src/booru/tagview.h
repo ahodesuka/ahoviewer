@@ -16,7 +16,7 @@ namespace AhoViewer
 
             void clear() { m_ListStore->clear(); }
 
-            void show_favorite_tags() { set_tags(*m_FavoriteTags); }
+            void show_favorite_tags() { set_tags(m_FavoriteTags); }
             void set_tags(const std::set<std::string> &tags);
 
             SignalNewTabTag signal_new_tab_tag() const { return m_SignalNewTabTag; }
@@ -41,7 +41,7 @@ namespace AhoViewer
             Glib::RefPtr<Gtk::ListStore> m_ListStore;
 
             TagEntry *m_TagEntry;
-            const std::set<std::string> *m_FavoriteTags;
+            const std::set<std::string>& m_FavoriteTags;
 
             Gdk::Color m_Color,
                        m_PrevColor;

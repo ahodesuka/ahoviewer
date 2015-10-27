@@ -53,7 +53,8 @@ const std::string TagView::StarOutlineSVG = "<?xml version=\"1.0\" standalone=\"
 // }}}
 
 TagView::TagView(BaseObjectType *cobj, const Glib::RefPtr<Gtk::Builder> &bldr)
-  : Gtk::TreeView(cobj)
+  : Gtk::TreeView(cobj),
+    m_FavoriteTags(Settings.get_favorite_tags())
 {
     bldr->get_widget_derived("Booru::Browser::TagEntry", m_TagEntry);
     m_TagEntry->signal_changed().connect([ this ]() { queue_draw(); });
@@ -73,7 +74,6 @@ TagView::TagView(BaseObjectType *cobj, const Glib::RefPtr<Gtk::Builder> &bldr)
     get_column(0)->set_cell_data_func(*fcell, sigc::mem_fun(*this, &TagView::on_favorite_cell_data));
     get_column(1)->set_cell_data_func(*cell, sigc::mem_fun(*this, &TagView::on_toggle_cell_data));
 
-    m_FavoriteTags = &Settings.get_favorite_tags();
     show_favorite_tags();
 }
 
@@ -112,7 +112,7 @@ bool TagView::on_button_press_event(GdkEventButton *e)
             // The favorite column was left clicked
             if (e->button == 1 && e->x < get_column(0)->get_width())
             {
-                if (m_FavoriteTags->find(tag) != m_FavoriteTags->end())
+                if (m_FavoriteTags.find(tag) != m_FavoriteTags.end())
                     Settings.remove_favorite_tag(tag);
                 else
                     Settings.add_favorite_tag(tag);
@@ -155,7 +155,7 @@ void TagView::on_favorite_cell_data(Gtk::CellRenderer *c, const Gtk::TreeIter &i
     Gtk::CellRendererPixbuf *cell = static_cast<Gtk::CellRendererPixbuf*>(c);
     std::string tag = iter->get_value(m_Columns.tag);
 
-    if (m_FavoriteTags->find(tag) != m_FavoriteTags->end())
+    if (m_FavoriteTags.find(tag) != m_FavoriteTags.end())
         cell->property_pixbuf().set_value(m_StarPixbuf);
     else
         cell->property_pixbuf().set_value(m_StarOutlinePixbuf);
