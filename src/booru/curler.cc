@@ -124,10 +124,14 @@ void Curler::set_post_fields(const std::string &fields) const
 
 std::string Curler::escape(const std::string &str) const
 {
-    char *estr = curl_easy_escape(m_EasyHandle, str.c_str(), 0);
-    std::string r(estr);
+    std::string r;
+    char *s = curl_easy_escape(m_EasyHandle, str.c_str(), str.length());
 
-    curl_free(estr);
+    if (s)
+    {
+        r = s;
+        curl_free(s);
+    }
 
     return r;
 }
@@ -141,9 +145,11 @@ bool Curler::perform()
 
     clear();
 
-    do {
+    do
+    {
         m_Response = curl_easy_perform(m_EasyHandle);
-    } while (m_Response == CURLE_OPERATION_TIMEDOUT && ++retry <= 5);
+    }
+    while (m_Response == CURLE_OPERATION_TIMEDOUT && ++retry <= 5);
 
     return m_Response == CURLE_OK ||
            m_Response == CURLE_ABORTED_BY_CALLBACK ||
