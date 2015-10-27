@@ -129,13 +129,13 @@ bool TagView::on_button_press_event(GdkEventButton *e)
                 else
                 {
                     std::istringstream ss(m_TagEntry->get_text());
-                    std::set<std::string> tags = { std::istream_iterator<std::string>(ss),
-                                                   std::istream_iterator<std::string>() };
+                    std::vector<std::string> tags = { std::istream_iterator<std::string>(ss),
+                                                      std::istream_iterator<std::string>() };
 
-                    if (tags.find(tag) != tags.end())
-                        tags.erase(tag);
+                    if (std::find(tags.begin(), tags.end(), tag) != tags.end())
+                        tags.erase(std::remove(tags.begin(), tags.end(), tag), tags.end());
                     else
-                        tags.insert(tags.end(), tag);
+                        tags.push_back(tag);
 
                     std::ostringstream oss;
                     std::copy(tags.begin(), tags.end(), std::ostream_iterator<std::string>(oss, " "));
@@ -165,8 +165,8 @@ void TagView::on_toggle_cell_data(Gtk::CellRenderer *c, const Gtk::TreeIter &ite
 {
     Gtk::CellRendererToggle *cell = static_cast<Gtk::CellRendererToggle*>(c);
     std::istringstream ss(m_TagEntry->get_text());
-    std::set<std::string> tags = { std::istream_iterator<std::string>(ss),
-                                   std::istream_iterator<std::string>() };
+    std::vector<std::string> tags = { std::istream_iterator<std::string>(ss),
+                                      std::istream_iterator<std::string>() };
 
     std::string tag = iter->get_value(m_Columns.tag);
     cell->set_active(std::find(tags.begin(), tags.end(), tag) != tags.end());
