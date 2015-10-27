@@ -23,8 +23,7 @@ ThumbnailBar::ThumbnailBar(BaseObjectType *cobj, const Glib::RefPtr<Gtk::Builder
 
     // If the user scrolls the widget, this will keep scroll_to_selected from being
     // called when thumbnails are being loaded
-    m_ScrollConn = get_vadjustment()->signal_value_changed().connect([ this ]()
-        { m_KeepAligned = false; });
+    m_ScrollConn = get_vadjustment()->signal_value_changed().connect([ this ]() { m_KeepAligned = false; });
 }
 
 void ThumbnailBar::clear()

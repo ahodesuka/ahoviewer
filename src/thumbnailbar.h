@@ -18,8 +18,9 @@ namespace AhoViewer
         virtual void set_pixbuf(const size_t index, const Glib::RefPtr<Gdk::Pixbuf> &pixbuf);
     protected:
         virtual void on_show();
+
         virtual void set_selected(const size_t index);
-        void scroll_to_selected();
+        virtual void scroll_to_selected();
     private:
         void on_cursor_changed();
 
