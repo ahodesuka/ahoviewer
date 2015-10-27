@@ -67,13 +67,13 @@ namespace AhoViewer
             void save_tags() const;
 
             Glib::Dispatcher& signal_icon_downloaded() { return m_SignalIconDownloaded; }
-        private:
+        protected:
             Site(const std::string &name,
                  const std::string &url,
                  const Type type,
                  const std::string &user,
                  const std::string &pass);
-
+        private:
             static Type get_type_from_url(const std::string &url);
 
             static const std::map<Type, std::string> RequestURI,

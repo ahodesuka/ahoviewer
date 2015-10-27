@@ -31,21 +31,19 @@ const std::map<Site::Type, std::string> Site::RegisterURI =
     { Type::MOEBOORU, "/user/signup" },
 };
 
+struct _shared_site : public Site
+{
+    template<typename...Ts>
+    _shared_site(Ts&&...args) : Site(std::forward<Ts>(args)...) { }
+};
+
 std::shared_ptr<Site> Site::create(const std::string &name, const std::string &url, const Type type,
                                    const std::string &user, const std::string &pass)
 {
     Type t = type == Type::UNKNOWN ? get_type_from_url(url) : type;
 
     if (t != Type::UNKNOWN)
-    {
-        struct _shared_site : public Site
-        {
-            _shared_site(const std::string &n, const std::string &url, const Type t,
-                         const std::string &u, const std::string &p)
-                : Site(n, url, t, u, p) { }
-        };
         return std::make_shared<_shared_site>(name, url, t, user, pass);
-    }
 
     return nullptr;
 }
