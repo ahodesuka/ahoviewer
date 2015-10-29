@@ -163,7 +163,7 @@ std::string Site::get_cookie()
         using namespace std::chrono;
         uint64_t cts = duration_cast<seconds>(system_clock::now().time_since_epoch()).count();
 
-        if (m_NewAccount || cts >= m_CookieTS)
+        if (cts >= m_CookieTS || m_NewAccount)
         {
             // Get cookie expiration timestamp
             if (Glib::file_test(m_CookiePath, Glib::FILE_TEST_EXISTS))

@@ -1,7 +1,6 @@
 #ifndef _IMAGEBOX_H_
 #define _IMAGEBOX_H_
 
-#include <atomic>
 #include <gtkmm.h>
 
 #include "config.h"
@@ -27,7 +26,7 @@ namespace AhoViewer
         };
 
         ImageBox(BaseObjectType*, const Glib::RefPtr<Gtk::Builder>&);
-        virtual ~ImageBox() = default;
+        virtual ~ImageBox() override = default;
 
         void queue_draw_image(const bool scroll = false);
         void set_image(const std::shared_ptr<Image> &image);
@@ -39,7 +38,7 @@ namespace AhoViewer
         void reset_slideshow();
         void toggle_slideshow();
 
-        ZoomMode get_zoom_mode() const;
+        ZoomMode get_zoom_mode() const { return m_ZoomMode; }
         void set_zoom_mode(const ZoomMode);
 
         sigc::signal<void> signal_slideshow_ended() const { return m_SlideshowEndedSignal; }
@@ -55,11 +54,11 @@ namespace AhoViewer
         void on_scroll_right();
         // }}}
     protected:
-        virtual void on_realize();
-        virtual bool on_button_press_event(GdkEventButton*);
-        virtual bool on_button_release_event(GdkEventButton*);
-        virtual bool on_motion_notify_event(GdkEventMotion*);
-        virtual bool on_scroll_event(GdkEventScroll*);
+        virtual void on_realize() override;
+        virtual bool on_button_press_event(GdkEventButton *e) override;
+        virtual bool on_button_release_event(GdkEventButton *e) override;
+        virtual bool on_motion_notify_event(GdkEventMotion *e) override;
+        virtual bool on_scroll_event(GdkEventScroll *e) override;
     private:
         void draw_image(bool scroll);
         bool update_animation();

@@ -22,10 +22,10 @@ namespace AhoViewer
 
             enum class Type
             {
-                DANBOORU = 0,
+                UNKNOWN = -1,
+                DANBOORU,
                 GELBOORU,
                 MOEBOORU,
-                UNKNOWN,
             };
 
             ~Site();

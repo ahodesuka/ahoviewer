@@ -13,11 +13,11 @@ namespace AhoViewer
         friend class CellRendererIcon;
 
         SiteEditor(BaseObjectType *cobj, const Glib::RefPtr<Gtk::Builder> &bldr);
-        virtual ~SiteEditor();
+        virtual ~SiteEditor() override;
 
         sigc::signal<void> signal_edited() const { return m_SignalEdited; }
     protected:
-        void on_cursor_changed();
+        void on_cursor_changed() override;
     private:
         class CellRendererIcon : public Gtk::CellRenderer/*{{{*/
         {
@@ -46,7 +46,7 @@ namespace AhoViewer
                         });
                 m_SiteEditor->get_toplevel()->signal_hide().connect([ this ]() { m_SpinnerConn.disconnect(); });
             }
-            virtual ~CellRendererIcon() = default;
+            virtual ~CellRendererIcon() override = default;
 
             Glib::PropertyProxy<bool> property_loading()
                 { return m_LoadingProperty.get_proxy(); }
@@ -60,7 +60,7 @@ namespace AhoViewer
                                         int *x_offset,
                                         int *y_offset,
                                         int *width,
-                                        int *height) const
+                                        int *height) const override
             {
                 if (m_LoadingProperty.get_value())
                     m_SpinnerRenderer->get_size(widget, *cell_area, *x_offset, *y_offset, *width, *height);
@@ -74,7 +74,7 @@ namespace AhoViewer
                                       const Gdk::Rectangle &bg_area,
                                       const Gdk::Rectangle &cell_area,
                                       const Gdk::Rectangle &expose_area,
-                                      Gtk::CellRendererState flags)
+                                      Gtk::CellRendererState flags) override
             {
                 Gtk::CellRenderer::render_vfunc(window, widget, bg_area, cell_area, expose_area, flags);
 

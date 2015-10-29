@@ -1,7 +1,7 @@
-#include <curl/curl.h>
 #include <gtkmm.h>
-#include <iostream>
 #include <cstdlib>
+#include <iostream>
+#include <curl/curl.h>
 #include <libxml/parser.h>
 
 #include "config.h"

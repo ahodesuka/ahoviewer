@@ -13,7 +13,7 @@ namespace AhoViewer
         public:
             ImageList(Widget *w);
 
-            virtual size_t get_size() const { return m_Size ? m_Size : AhoViewer::ImageList::get_size(); }
+            virtual size_t get_size() const override { return m_Size ? m_Size : AhoViewer::ImageList::get_size(); }
             size_t get_vector_size() const { return m_Images.size(); }
 
             virtual void clear();

@@ -15,18 +15,17 @@ namespace AhoViewer
 {
     class ImageList : public sigc::trackable
     {
-        typedef std::vector<std::shared_ptr<Image>> ImageVector;
-        typedef ImageVector::iterator ImageVectorIter;
+        using ImageVector = std::vector<std::shared_ptr<Image>>;
 
         // This signal is emitted when m_Index is changed.
         // It is connected by the MainWindow which tells the ImageBox to draw the new image.
-        typedef sigc::signal<void, const std::shared_ptr<Image>&> SignalChangedType;
+        using SignalChangedType = sigc::signal<void, const std::shared_ptr<Image>&>;
 
         // Emitted when AutoOpenArchive is true and loading an archive fails.
-        typedef sigc::signal<void, const std::string> SignalArchiveErrorType;
+        using SignalArchiveErrorType = sigc::signal<void, const std::string>;
 
         // Used for async thumbnail pixbuf loading
-        typedef std::pair<size_t, const Glib::RefPtr<Gdk::Pixbuf>> PixbufPair;
+        using PixbufPair = std::pair<size_t, const Glib::RefPtr<Gdk::Pixbuf>>;
     public:
         // ImageList::Widget {{{
         // This is used by ThumbnailBar and Booru::Page.
@@ -35,7 +34,7 @@ namespace AhoViewer
             friend class ImageList;
 
             // When the widget's selected item changes it will emit this signal.
-            typedef sigc::signal<void, const size_t> SignalSelectedChangedType;
+            using SignalSelectedChangedType = sigc::signal<void, const size_t>;
         public:
             virtual ~Widget() = default;
         protected:
@@ -82,7 +81,7 @@ namespace AhoViewer
         };
         // }}}
 
-        ImageList(Widget*);
+        ImageList(Widget *const w);
         virtual ~ImageList();
 
         virtual void clear();
@@ -106,8 +105,8 @@ namespace AhoViewer
         bool empty() const { return m_Images.empty(); }
         bool from_archive() const { return !!m_Archive; }
 
-        ImageVectorIter begin() { return m_Images.begin(); }
-        ImageVectorIter end() { return m_Images.end(); }
+        ImageVector::iterator begin() { return m_Images.begin(); }
+        ImageVector::iterator end() { return m_Images.end(); }
 
         void on_cache_size_changed();
 

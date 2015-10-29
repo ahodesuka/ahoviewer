@@ -12,13 +12,13 @@ namespace AhoViewer
         class Image : public AhoViewer::Image,
                       public sigc::trackable
         {
-            typedef sigc::signal<void, double, double> SignalProgressType;
+            using SignalProgressType = sigc::signal<void, double, double>;
         public:
             Image(const std::string &path, const std::string &url,
                   const std::string &thumbPath, const std::string &thumbUrl,
                   const std::string &postUrl,
                   std::set<std::string> tags, const Page &page);
-            virtual ~Image();
+            virtual ~Image() override;
 
             time_point_t get_start_time() const { return m_Curler.get_start_time(); }
             std::set<std::string> get_tags() const { return m_Tags; }
@@ -26,10 +26,10 @@ namespace AhoViewer
             std::string get_url() const { return m_Url; }
             std::string get_post_url() const { return m_PostUrl; }
 
-            virtual std::string get_filename() const;
-            virtual const Glib::RefPtr<Gdk::Pixbuf>& get_thumbnail();
+            virtual std::string get_filename() const override;
+            virtual const Glib::RefPtr<Gdk::Pixbuf>& get_thumbnail() override;
 
-            virtual void load_pixbuf();
+            virtual void load_pixbuf() override;
 
             void save(const std::string &path);
             void cancel_download();

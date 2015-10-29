@@ -11,13 +11,13 @@ namespace AhoViewer
 {
     namespace Booru
     {
-        typedef std::chrono::time_point<std::chrono::steady_clock> time_point_t;
+        using time_point_t = std::chrono::time_point<std::chrono::steady_clock>;
 
         class Curler
         {
             friend class ImageFetcher;
 
-            typedef sigc::signal<void, const unsigned char*, size_t> SignalWriteType;
+            using SignalWriteType = sigc::signal<void, const unsigned char*, size_t>;
         public:
             Curler(const std::string &url = "");
             ~Curler();

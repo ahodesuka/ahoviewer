@@ -16,20 +16,20 @@ namespace AhoViewer
     {
     public:
         MainWindow(BaseObjectType *cobj, const Glib::RefPtr<Gtk::Builder> &bldr);
-        virtual ~MainWindow();
+        virtual ~MainWindow() override = default;
 
         void open_file(const std::string &path, const int index = 0, const bool restore = false);
         void restore_last_file();
         void get_drawable_area_size(int &w, int &h) const;
     protected:
-        virtual void on_realize();
-        virtual void on_check_resize();
-        virtual bool on_delete_event(GdkEventAny*);
+        virtual void on_realize() override;
+        virtual void on_check_resize() override;
+        virtual bool on_delete_event(GdkEventAny *e) override;
         virtual void on_drag_data_received(const Glib::RefPtr<Gdk::DragContext> &ctx, int, int,
-                                           const Gtk::SelectionData &data, guint, guint time);
-        virtual bool on_key_press_event(GdkEventKey *e);
+                                           const Gtk::SelectionData &data, guint, guint time) override;
+        virtual bool on_key_press_event(GdkEventKey *e) override;
     private:
-        void set_active_imagelist(std::shared_ptr<ImageList> imageList);
+        void set_active_imagelist(const std::shared_ptr<ImageList> &imageList);
         void save_window_geometry();
         void create_actions();
         void update_widgets_visibility();

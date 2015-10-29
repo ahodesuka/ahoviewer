@@ -17,10 +17,10 @@ namespace AhoViewer
     {
         class Browser : public Gtk::VPaned
         {
-            typedef sigc::signal<void, Page*> SignalPageChangedType;
+            using SignalPageChangedType = sigc::signal<void, Page*>;
         public:
             Browser(BaseObjectType *cobj, const Glib::RefPtr<Gtk::Builder> &bldr);
-            virtual ~Browser() = default;
+            virtual ~Browser() override = default;
 
             std::vector<Page*> get_pages() const;
             Page* get_active_page() const
@@ -44,8 +44,8 @@ namespace AhoViewer
             void on_copy_image_url();
             // }}}
         protected:
-            virtual void on_realize();
-            virtual void on_show();
+            virtual void on_realize() override;
+            virtual void on_show() override;
         private:
             struct ComboBoxModelColumns : public Gtk::TreeModelColumnRecord
             {

@@ -12,7 +12,7 @@ namespace AhoViewer
     {
     public:
         PreferencesDialog(BaseObjectType *cobj, const Glib::RefPtr<Gtk::Builder> &bldr);
-        virtual ~PreferencesDialog() = default;
+        virtual ~PreferencesDialog() override = default;
 
         SiteEditor* get_site_editor() const { return m_SiteEditor; }
         KeybindingEditor* get_keybinding_editor() const { return m_KeybindingEditor; }

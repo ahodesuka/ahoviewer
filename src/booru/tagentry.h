@@ -12,11 +12,11 @@ namespace AhoViewer
         {
         public:
             TagEntry(BaseObjectType *cobj, const Glib::RefPtr<Gtk::Builder> &bldr);
-            ~TagEntry() = default;
+            virtual ~TagEntry() override = default;
 
             void set_tags(const std::set<std::string> &tags);
         protected:
-            virtual void on_grab_focus();
+            virtual void on_grab_focus() override;
         private:
             struct ModelColumns : public Gtk::TreeModelColumnRecord
             {
@@ -33,6 +33,7 @@ namespace AhoViewer
             void on_cursor_on_match(const std::string &tag);
             bool on_match_selected(const Gtk::TreeIter &iter);
 
+            // These are the tags used for completion
             const std::set<std::string> *m_Tags;
             Glib::RefPtr<Gtk::EntryCompletion> m_TagCompletion;
             Glib::RefPtr<Gtk::ListStore> m_Model;

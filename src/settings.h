@@ -15,7 +15,7 @@ namespace AhoViewer
 {
     class SettingsManager
     {
-        typedef std::tuple<std::string, std::string, Booru::Site::Type, std::string, std::string> SiteTuple;
+        using SiteTuple = std::tuple<std::string, std::string, Booru::Site::Type, std::string, std::string>;
     public:
         SettingsManager();
         ~SettingsManager();

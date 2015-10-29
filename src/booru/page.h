@@ -19,12 +19,12 @@ namespace AhoViewer
         {
             friend class Browser;
 
-            typedef sigc::signal<void, Page*> SignalClosedType;
-            typedef sigc::signal<void, const std::string> SignalDownloadErrorType;
-            typedef sigc::signal<void, size_t, size_t> SignalSaveProgressType;
+            using SignalClosedType = sigc::signal<void, Page*>;
+            using SignalDownloadErrorType = sigc::signal<void, const std::string>;
+            using SignalSaveProgressType = sigc::signal<void, size_t, size_t>;
         public:
             Page(Gtk::Menu *menu);
-            virtual ~Page();
+            virtual ~Page() override;
 
             ImageFetcher& get_image_fetcher() const { return *m_ImageFetcher; }
             std::shared_ptr<Site> get_site() const { return m_Site; }
@@ -35,8 +35,8 @@ namespace AhoViewer
             SignalDownloadErrorType signal_no_results() const { return m_SignalDownloadError; }
             SignalSaveProgressType signal_save_progress() const { return m_SignalSaveProgress; }
         protected:
-            virtual void set_selected(const size_t index);
-            virtual void scroll_to_selected();
+            virtual void set_selected(const size_t index) override;
+            virtual void scroll_to_selected() override;
         private:
             void set_tags(const std::string &tags) { m_Tags = tags; }
             void search(const std::shared_ptr<Site> &site);

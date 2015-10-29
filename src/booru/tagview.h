@@ -9,10 +9,10 @@ namespace AhoViewer
     {
         class TagView : public Gtk::TreeView
         {
-            typedef sigc::signal<void, const std::string&> SignalNewTabTag;
+            using SignalNewTabTag = sigc::signal<void, const std::string&>;
         public:
             TagView(BaseObjectType *cobj, const Glib::RefPtr<Gtk::Builder> &bldr);
-            virtual ~TagView() = default;
+            virtual ~TagView() override = default;
 
             void clear() { m_ListStore->clear(); }
 
@@ -21,8 +21,8 @@ namespace AhoViewer
 
             SignalNewTabTag signal_new_tab_tag() const { return m_SignalNewTabTag; }
         protected:
-            virtual void on_style_changed(const Glib::RefPtr<Gtk::Style>&);
-            virtual bool on_button_press_event(GdkEventButton *e);
+            virtual void on_style_changed(const Glib::RefPtr<Gtk::Style> &s) override;
+            virtual bool on_button_press_event(GdkEventButton *e) override;
         private:
             struct ModelColumns : public Gtk::TreeModelColumnRecord
             {

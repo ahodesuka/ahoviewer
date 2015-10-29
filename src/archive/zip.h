@@ -9,11 +9,11 @@ namespace AhoViewer
     {
     public:
         Zip(const std::string &path, const std::string &exDir);
-        virtual ~Zip() = default;
+        virtual ~Zip() override = default;
 
-        virtual bool extract(const std::string &file) const;
-        virtual bool has_valid_files(const FileType t) const;
-        virtual std::vector<std::string> get_entries(const FileType t) const;
+        virtual bool extract(const std::string &file) const override;
+        virtual bool has_valid_files(const FileType t) const override;
+        virtual std::vector<std::string> get_entries(const FileType t) const override;
 
         static const int MagicSize = 4;
         static const char Magic[MagicSize];

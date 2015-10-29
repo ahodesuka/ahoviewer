@@ -7,7 +7,7 @@ using namespace AhoViewer;
 #include "naturalsort.h"
 #include "settings.h"
 
-ImageList::ImageList(Widget *w)
+ImageList::ImageList(Widget *const w)
   : m_Widget(w),
     m_Index(0),
     m_ThumbnailCancel(Gio::Cancellable::create()),
@@ -311,7 +311,7 @@ void ImageList::on_directory_changed(const Glib::RefPtr<Gio::File> &file,
 {
     if (!file) return;
 
-    ImageVectorIter it;
+    ImageVector::iterator it;
     auto comp = [ file ](const std::shared_ptr<Image> &i) { return i->get_path() == file->get_path(); };
 
     if (event == Gio::FILE_MONITOR_EVENT_DELETED)

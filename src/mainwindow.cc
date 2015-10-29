@@ -37,8 +37,7 @@ MainWindow::MainWindow(BaseObjectType *cobj, const Glib::RefPtr<Gtk::Builder> &b
 
     m_Builder->get_widget("AboutDialog", m_AboutDialog);
     m_Builder->get_widget("MainWindow::HPaned", m_HPaned);
-    m_HPaned->property_position().signal_changed().connect(
-    [ this ]()
+    m_HPaned->property_position().signal_changed().connect([ this ]()
     {
         if (!m_BooruBrowser->get_realized())
             return;
@@ -137,11 +136,6 @@ MainWindow::MainWindow(BaseObjectType *cobj, const Glib::RefPtr<Gtk::Builder> &b
 
     if (Settings.get_bool("StartFullscreen"))
         m_ActionGroup->get_action("ToggleFullscreen")->activate();
-}
-
-MainWindow::~MainWindow()
-{
-    delete m_PreferencesDialog;
 }
 
 void MainWindow::open_file(const std::string &path, const int index, const bool restore)
@@ -243,10 +237,11 @@ void MainWindow::on_check_resize()
     Gtk::Window::on_check_resize();
 }
 
-bool MainWindow::on_delete_event(GdkEventAny*)
+bool MainWindow::on_delete_event(GdkEventAny *e)
 {
     on_quit();
-    return true;
+
+    return Gtk::Window::on_delete_event(e);
 }
 
 void MainWindow::on_drag_data_received(const Glib::RefPtr<Gdk::DragContext> &ctx, int, int,
@@ -297,7 +292,7 @@ bool MainWindow::on_key_press_event(GdkEventKey *e)
             return true;
         }
     }
-    else if (m_BooruBrowser->get_tag_entry()->has_focus() && !(e->state & GDK_CONTROL_MASK))
+    else if (m_BooruBrowser->get_tag_entry()->has_focus() && (e->state & GDK_CONTROL_MASK) == 0)
     {
         return m_BooruBrowser->get_tag_entry()->event(reinterpret_cast<GdkEvent*>(e));
     }
@@ -305,7 +300,7 @@ bool MainWindow::on_key_press_event(GdkEventKey *e)
     return Gtk::Window::on_key_press_event(e);
 }
 
-void MainWindow::set_active_imagelist(std::shared_ptr<ImageList> imageList)
+void MainWindow::set_active_imagelist(const std::shared_ptr<ImageList> &imageList)
 {
     m_ImageListConn.disconnect();
     m_ImageListClearedConn.disconnect();
@@ -601,8 +596,7 @@ void MainWindow::set_sensitives()
     };
 
     for (const std::string &s : names)
-        Glib::RefPtr<Gtk::ToggleAction>::cast_static(
-                m_ActionGroup->get_action(s))->set_sensitive(!hideAll);
+        m_ActionGroup->get_action(s)->set_sensitive(!hideAll);
 
     names =
     {
@@ -615,22 +609,21 @@ void MainWindow::set_sensitives()
 
     for (const std::string &s : names)
     {
-        bool sens = !!m_ActiveImageList && !m_ActiveImageList->empty();
+        bool sens = m_ActiveImageList && !m_ActiveImageList->empty();
 
         if (s == "NextImage")
             sens = sens && m_ActiveImageList->can_go_next();
         else if (s == "PreviousImage")
             sens = sens && m_ActiveImageList->can_go_previous();
 
-        Glib::RefPtr<Gtk::ToggleAction>::cast_static(m_ActionGroup->get_action(s))->set_sensitive(sens);
+        m_ActionGroup->get_action(s)->set_sensitive(sens);
     }
 
-    Booru::Page *page = m_BooruBrowser->get_active_page();
+    const Booru::Page *page = m_BooruBrowser->get_active_page();
     bool local = !m_LocalImageList->empty() && m_LocalImageList == m_ActiveImageList,
-         booru = page && (m_BooruBrowser->get_visible() || page->get_imagelist() == m_ActiveImageList);
+         booru = page && page->get_imagelist() == m_ActiveImageList;
 
-    m_ActionGroup->get_action("ToggleThumbnailBar")->set_sensitive(
-            !hideAll && !m_LocalImageList->empty());
+    m_ActionGroup->get_action("ToggleThumbnailBar")->set_sensitive(!hideAll && !m_LocalImageList->empty());
 
     m_ActionGroup->get_action("Close")->set_sensitive(local || booru);
     m_ActionGroup->get_action("NewTab")->set_sensitive(m_BooruBrowser->get_visible());
@@ -681,7 +674,7 @@ void MainWindow::on_imagelist_cleared()
 {
     if (m_LocalImageList == m_ActiveImageList)
     {
-        Booru::Page *page = m_BooruBrowser->get_active_page();
+        const Booru::Page *page = m_BooruBrowser->get_active_page();
 
         if (page && !page->get_imagelist()->empty())
         {

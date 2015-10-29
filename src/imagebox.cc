@@ -185,11 +185,6 @@ void ImageBox::toggle_slideshow()
     }
 }
 
-ImageBox::ZoomMode ImageBox::get_zoom_mode() const
-{
-    return m_ZoomMode;
-}
-
 void ImageBox::set_zoom_mode(const ZoomMode mode)
 {
     if (mode != m_ZoomMode)
