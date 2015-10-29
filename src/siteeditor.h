@@ -155,6 +155,9 @@ namespace AhoViewer
         Glib::Threads::Thread *m_SiteCheckThread;
         Glib::Dispatcher m_SignalSiteChecked;
 
+        sigc::connection m_UsernameConn,
+                         m_PasswordConn;
+
         sigc::signal<void> m_SignalEdited;
     };
 }

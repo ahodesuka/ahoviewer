@@ -70,8 +70,10 @@ SiteEditor::SiteEditor(BaseObjectType *cobj, const Glib::RefPtr<Gtk::Builder> &b
     bldr->get_widget("AddSiteButton", toolButton);
     toolButton->signal_clicked().connect(sigc::mem_fun(*this, &SiteEditor::add_row));
 
-    m_UsernameEntry->signal_changed().connect(sigc::mem_fun(*this, &SiteEditor::on_username_edited));
-    m_PasswordEntry->signal_changed().connect(sigc::mem_fun(*this, &SiteEditor::on_password_edited));
+    m_UsernameConn = m_UsernameEntry->signal_changed().connect(
+            sigc::mem_fun(*this, &SiteEditor::on_username_edited));
+    m_PasswordConn = m_PasswordEntry->signal_changed().connect(
+            sigc::mem_fun(*this, &SiteEditor::on_password_edited));
 
     // Set initial values for entries and linkbutton
     on_cursor_changed();
@@ -92,6 +94,9 @@ void SiteEditor::on_cursor_changed()
 
     const std::shared_ptr<Site> &s = get_selection()->get_selected()->get_value(m_Columns.site);
 
+    m_UsernameConn.block();
+    m_PasswordConn.block();
+
     if (s)
     {
         m_RegisterButton->set_label(_("Register account on ") + s->get_name());
@@ -107,6 +112,9 @@ void SiteEditor::on_cursor_changed()
         m_UsernameEntry->set_text("");
         m_PasswordEntry->set_text("");
     }
+
+    m_UsernameConn.unblock();
+    m_PasswordConn.unblock();
 
     m_RegisterButton->set_sensitive(!!s);
     m_UsernameEntry->set_sensitive(!!s);
