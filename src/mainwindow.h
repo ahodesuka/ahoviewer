@@ -79,12 +79,14 @@ namespace AhoViewer
         Booru::Browser *m_BooruBrowser;
         Gtk::HPaned *m_HPaned;
 
+        int m_Width, m_Height, m_HPanedMinPos, m_HPanedLastPos;
+        // This keeps track of whether hide all was set automatically
+        bool m_HideAllFullscreen;
+
         std::shared_ptr<ImageList> m_ActiveImageList,
                                    m_LocalImageList;
         sigc::connection m_ImageListConn,
                          m_ImageListClearedConn;
-
-        int m_Width, m_Height, m_HPanedMinPos, m_HPanedLastPos;
     };
 }
 

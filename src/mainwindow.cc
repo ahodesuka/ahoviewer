@@ -16,7 +16,8 @@ MainWindow::MainWindow(BaseObjectType *cobj, const Glib::RefPtr<Gtk::Builder> &b
     m_Width(0),
     m_Height(0),
     m_HPanedMinPos(0),
-    m_HPanedLastPos(0)
+    m_HPanedLastPos(0),
+    m_HideAllFullscreen(false)
 {
 #ifndef _WIN32
     try
@@ -574,7 +575,8 @@ void MainWindow::create_actions()
 
 void MainWindow::update_widgets_visibility()
 {
-    bool hideAll = Settings.get_bool("HideAll");
+    bool hideAll = Glib::RefPtr<Gtk::ToggleAction>::cast_static(
+            m_ActionGroup->get_action("ToggleHideAll"))->get_active();
 
     m_MenuBar->set_visible(!hideAll && Settings.get_bool("MenuBarVisible"));
     m_StatusBar->set_visible(!hideAll && Settings.get_bool("StatusBarVisible"));
@@ -588,6 +590,8 @@ void MainWindow::update_widgets_visibility()
 
 void MainWindow::set_sensitives()
 {
+    bool hideAll = Glib::RefPtr<Gtk::ToggleAction>::cast_static(
+            m_ActionGroup->get_action("ToggleHideAll"))->get_active();
     std::vector<std::string> names =
     {
         "ToggleMenuBar",
@@ -597,8 +601,8 @@ void MainWindow::set_sensitives()
     };
 
     for (const std::string &s : names)
-        Glib::RefPtr<Gtk::ToggleAction>::cast_static(m_ActionGroup->get_action(s))->
-            set_sensitive(!Settings.get_bool("HideAll"));
+        Glib::RefPtr<Gtk::ToggleAction>::cast_static(
+                m_ActionGroup->get_action(s))->set_sensitive(!hideAll);
 
     names =
     {
@@ -626,7 +630,7 @@ void MainWindow::set_sensitives()
          booru = page && (m_BooruBrowser->get_visible() || page->get_imagelist() == m_ActiveImageList);
 
     m_ActionGroup->get_action("ToggleThumbnailBar")->set_sensitive(
-            !Settings.get_bool("HideAll") && !m_LocalImageList->empty());
+            !hideAll && !m_LocalImageList->empty());
 
     m_ActionGroup->get_action("Close")->set_sensitive(local || booru);
     m_ActionGroup->get_action("NewTab")->set_sensitive(m_BooruBrowser->get_visible());
@@ -837,17 +841,23 @@ void MainWindow::on_toggle_fullscreen()
 {
     if (is_fullscreen())
     {
-        if (Settings.get_bool("HideAllFullscreen"))
+        if (Settings.get_bool("HideAllFullscreen") && m_HideAllFullscreen)
+        {
+            m_HideAllFullscreen = false;
             Glib::RefPtr<Gtk::ToggleAction>::cast_static(m_ActionGroup->
                     get_action("ToggleHideAll"))->set_active(false);
+        }
 
         unfullscreen();
     }
     else
     {
         if (Settings.get_bool("HideAllFullscreen"))
+        {
+            m_HideAllFullscreen = true;
             Glib::RefPtr<Gtk::ToggleAction>::cast_static(m_ActionGroup->
                     get_action("ToggleHideAll"))->set_active();
+        }
 
         // Save this here in case the program is closed when fullscreen
         save_window_geometry();
@@ -896,7 +906,10 @@ void MainWindow::on_toggle_booru_browser()
 
     if (bbAction->get_active())
     {
-        if (!Settings.get_bool("HideAll"))
+        bool hideAll = Glib::RefPtr<Gtk::ToggleAction>::cast_static(
+                m_ActionGroup->get_action("ToggleHideAll"))->get_active();
+
+        if (!hideAll)
             m_BooruBrowser->get_tag_entry()->grab_focus();
 
         if (m_BooruBrowser->get_active_page() &&
@@ -943,7 +956,12 @@ void MainWindow::on_toggle_hide_all()
     Glib::RefPtr<Gtk::ToggleAction> a =
         Glib::RefPtr<Gtk::ToggleAction>::cast_static(m_ActionGroup->get_action("ToggleHideAll"));
 
-    Settings.set("HideAll", a->get_active());
+    // User toggled hide all after program set it to true
+    if (m_HideAllFullscreen && !a->get_active())
+        m_HideAllFullscreen = false;
+
+    if (!m_HideAllFullscreen)
+        Settings.set("HideAll", a->get_active());
 
     update_widgets_visibility();
 }
