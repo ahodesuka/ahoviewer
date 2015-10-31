@@ -1702,6 +1702,8 @@
           <menuitem action="ToggleSlideshow"/>
         </menu>
         <menu action="HelpMenu">
+          <menuitem action="ReportIssue"/>
+          <separator/>
           <menuitem action="About"/>
         </menu>
       </menubar>

@@ -425,6 +425,9 @@ void MainWindow::create_actions()
             Gtk::AccelKey(Settings.get_keybinding("Navigation", "LastImage")),
             sigc::mem_fun(*this, &MainWindow::on_last_image));
 
+    m_ActionGroup->add(Gtk::Action::create("ReportIssue", Gtk::Stock::DIALOG_WARNING,
+                _("_Report Issue"), _("Report an issue on the issue tracker")),
+            [](){ Gio::AppInfo::launch_default_for_uri(PACKAGE_BUGREPORT); });
     m_ActionGroup->add(Gtk::Action::create("About", Gtk::Stock::ABOUT,
                 _("_About"), _("View information about " PACKAGE)),
             sigc::mem_fun(m_AboutDialog, &Gtk::AboutDialog::show));
