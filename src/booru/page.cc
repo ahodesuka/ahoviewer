@@ -261,7 +261,7 @@ void Page::get_posts()
         if (m_Page == 1 && m_Site->get_type() == Site::Type::DANBOORU)
         {
             m_CountsCurler.set_url(m_Site->get_url() + "/counts/posts.xml?tags=" + tags);
-            if (m_CountsCurler.perform())
+            if (m_CountsCurler.perform() && !m_CountsCurler.is_cancelled())
             {
                 xmlDocument doc(reinterpret_cast<char*>(m_CountsCurler.get_data()), m_CountsCurler.get_data_size());
                 postsCount = std::stoul(doc.get_children()[0].get_value());
@@ -273,7 +273,7 @@ void Page::get_posts()
         else
             m_Curler.set_http_auth(m_Site->get_username(), m_Site->get_password());
 
-        if (m_Curler.perform())
+        if (m_Curler.perform() && !m_Curler.is_cancelled())
         {
             m_Posts = std::unique_ptr<xmlDocument>(
                     new xmlDocument(reinterpret_cast<char*>(m_Curler.get_data()),
@@ -283,7 +283,7 @@ void Page::get_posts()
             if (postsCount)
                 m_Posts->set_attribute("count", std::to_string(postsCount));
         }
-        else
+        else if (!m_Curler.is_cancelled())
         {
             m_NumPosts = 0;
             std::cerr << "Error while downloading posts on " << m_Curler.get_url() << std::endl
