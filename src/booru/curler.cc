@@ -3,6 +3,8 @@
 #include "curler.h"
 using namespace AhoViewer::Booru;
 
+const char *Curler::UserAgent = "Mozilla/5.0";
+
 size_t Curler::write_cb(const unsigned char *ptr, size_t size, size_t nmemb, void *userp)
 {
     Curler *self = static_cast<Curler*>(userp);
@@ -54,6 +56,7 @@ Curler::Curler(const std::string &url)
     m_DownloadCurrent(0),
     m_Cancel(Gio::Cancellable::create())
 {
+    curl_easy_setopt(m_EasyHandle, CURLOPT_USERAGENT, UserAgent);
     curl_easy_setopt(m_EasyHandle, CURLOPT_WRITEFUNCTION, &Curler::write_cb);
     curl_easy_setopt(m_EasyHandle, CURLOPT_WRITEDATA, this);
     curl_easy_setopt(m_EasyHandle, CURLOPT_XFERINFOFUNCTION, &Curler::progress_cb);

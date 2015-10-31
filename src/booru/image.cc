@@ -28,7 +28,7 @@ Image::Image(const std::string &path, const std::string &url,
     if (m_isWebM && !Glib::file_test(m_Path, Glib::FILE_TEST_EXISTS))
         m_Loading = true;
 
-    m_Curler.set_referer(page.get_site()->get_url());
+    m_Curler.set_referer(m_PostUrl);
     m_Curler.signal_progress().connect(sigc::mem_fun(*this, &Image::on_progress));
     m_Curler.signal_finished().connect(sigc::mem_fun(*this, &Image::on_finished));
 }

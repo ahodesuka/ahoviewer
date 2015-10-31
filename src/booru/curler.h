@@ -59,6 +59,8 @@ namespace AhoViewer
             static size_t write_cb(const unsigned char *ptr, size_t size, size_t nmemb, void *userp);
             static int progress_cb(void *userp, curl_off_t, curl_off_t, curl_off_t, curl_off_t);
 
+            static const char *UserAgent;
+
             CURL *m_EasyHandle;
             CURLcode m_Response;
             std::string m_Url;
