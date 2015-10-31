@@ -78,10 +78,13 @@ void ImageFetcher::add_handle(Curler *curler)
     Glib::Threads::Mutex::Lock lock(m_Mutex);
 
     curl_easy_setopt(curler->m_EasyHandle, CURLOPT_PRIVATE, curler);
+
+    curler->m_Cancel->reset();
+    curler->clear();
+
     m_Curlers.push_back(curler);
     curl_multi_add_handle(m_MultiHandle, curler->m_EasyHandle);
 
-    curler->m_Cancel->reset();
     curler->m_Active = true;
     curler->m_StartTime = std::chrono::steady_clock::now();
 }

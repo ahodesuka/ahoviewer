@@ -30,6 +30,7 @@ namespace AhoViewer
             virtual const Glib::RefPtr<Gdk::Pixbuf>& get_thumbnail() override;
 
             virtual void load_pixbuf() override;
+            virtual void reset_pixbuf() override;
 
             void save(const std::string &path);
             void cancel_download();

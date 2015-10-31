@@ -92,6 +92,14 @@ void Image::load_pixbuf()
     }
 }
 
+void Image::reset_pixbuf()
+{
+    if (m_Loading)
+        cancel_download();
+
+    AhoViewer::Image::reset_pixbuf();
+}
+
 void Image::save(const std::string &path)
 {
     if (!Glib::file_test(m_Path, Glib::FILE_TEST_EXISTS))
@@ -115,6 +123,7 @@ void Image::cancel_download()
 {
     Glib::Threads::Mutex::Lock lock(m_DownloadMutex);
     m_Curler.cancel();
+    m_Curler.clear();
 
     if (m_Loader)
     {
@@ -178,7 +187,7 @@ void Image::on_finished()
     m_Curler.save_file(m_Path);
     m_Curler.clear();
 
-    if (!m_isWebM)
+    if (m_Loader)
     {
         m_Loader->close();
         m_Loader.reset();

@@ -140,9 +140,7 @@ bool Curler::perform()
 {
     int retry = 0;
 
-    if (m_Cancel)
-        m_Cancel->reset();
-
+    m_Cancel->reset();
     clear();
 
     do
