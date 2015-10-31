@@ -65,16 +65,18 @@ void Site::on_password_lookup(GObject*, GAsyncResult *result, gpointer ptr)
 {
     GError *error = NULL;
     gchar *password = secret_password_lookup_finish(result, &error);
+    Site *s = static_cast<Site*>(ptr);
 
     if (!error && password)
     {
-        Site *s = static_cast<Site*>(ptr);
         s->m_Password = password;
         s->m_PasswordLookup();
         secret_password_free(password);
     }
     else if (error)
     {
+        std::cerr << "Failed to lookup password for " << s->get_name() << std::endl
+                  << "  " << error->message << std::endl;
         g_error_free(error);
     }
 }
