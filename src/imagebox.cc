@@ -107,7 +107,14 @@ void ImageBox::queue_draw_image(const bool scroll)
 
 void ImageBox::set_image(const std::shared_ptr<Image> &image)
 {
-    clear_image();
+    m_ImageConn.disconnect();
+    reset_slideshow();
+
+#ifdef HAVE_GSTREAMER
+    gst_element_set_state(m_Playbin, GST_STATE_NULL);
+    m_Playing = false;
+    m_DrawingArea->hide();
+#endif // HAVE_GSTREAMER
 
     m_Image = image;
     m_FirstDraw = m_Loading = true;
