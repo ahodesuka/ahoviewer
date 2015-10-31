@@ -422,7 +422,9 @@ void SettingsManager::save_sites()
         set("url", s->get_url(), Setting::TypeString, site);
         set("type", static_cast<int>(s->get_type()), Setting::TypeInt, site);
         set("username", s->get_username(), Setting::TypeString, site);
+#ifndef HAVE_LIBSECRET
         set("password", s->get_password(), Setting::TypeString, site);
+#endif // !HAVE_LIBSECRET
         s->cleanup_cookie();
     }
 }

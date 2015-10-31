@@ -8,6 +8,10 @@ using namespace AhoViewer::Booru;
 #include "settings.h"
 #include "tempdir.h"
 
+#ifdef HAVE_LIBSECRET
+#include <libsecret/secret.h>
+#endif // HAVE_LIBSECRET
+
 // 1: page, 2: limit, 3: tags
 const std::map<Site::Type, std::string> Site::RequestURI =
 {
@@ -56,6 +60,40 @@ const Glib::RefPtr<Gdk::Pixbuf>& Site::get_missing_pixbuf()
     return pixbuf;
 }
 
+#ifdef HAVE_LIBSECRET
+void Site::on_password_lookup(GObject*, GAsyncResult *result, gpointer ptr)
+{
+    GError *error = NULL;
+    gchar *password = secret_password_lookup_finish(result, &error);
+
+    if (!error && password)
+    {
+        Site *s = static_cast<Site*>(ptr);
+        s->m_Password = password;
+        s->m_PasswordLookup();
+        secret_password_free(password);
+    }
+    else if (error)
+    {
+        g_error_free(error);
+    }
+}
+
+void Site::on_password_stored(GObject*, GAsyncResult *result, gpointer ptr)
+{
+    GError *error = NULL;
+    secret_password_store_finish(result, &error);
+
+    if (error)
+    {
+        Site *s = static_cast<Site*>(ptr);
+        std::cerr << "Failed to set password for " << s->get_name() << std::endl
+                  << "  " << error->message << std::endl;
+        g_error_free(error);
+    }
+}
+#endif // HAVE_LIBSECRET
+
 Site::Type Site::get_type_from_url(const std::string &url)
 {
     Curler curler;
@@ -95,6 +133,16 @@ Site::Site(const std::string &name, const std::string &url, const Type type,
     m_CookieTS(0),
     m_IconCurlerThread(nullptr)
 {
+#ifdef HAVE_LIBSECRET
+    if (!m_Username.empty())
+        secret_password_lookup(SECRET_SCHEMA_COMPAT_NETWORK,
+                               NULL,
+                               &Site::on_password_lookup, this,
+                               "user", m_Username.c_str(),
+                               "server", m_Url.c_str(),
+                               NULL);
+#endif // HAVE_LIBSECRET
+
     // Load tags
     if (Glib::file_test(m_TagsPath, Glib::FILE_TEST_EXISTS))
     {
@@ -150,6 +198,23 @@ bool Site::set_url(const std::string &url)
     }
 
     return true;
+}
+
+void Site::set_password(const std::string &s)
+{
+    m_NewAccount = true;
+#ifdef HAVE_LIBSECRET
+    if (!m_Username.empty())
+        secret_password_store(SECRET_SCHEMA_COMPAT_NETWORK,
+                              SECRET_COLLECTION_DEFAULT,
+                              "password", s.c_str(),
+                              NULL,
+                              &Site::on_password_stored, this,
+                              "user", m_Username.c_str(),
+                              "server", m_Url.c_str(),
+                              NULL);
+#endif // HAVE_LIBSECRET
+    m_Password = s;
 }
 
 // FIXME: Hopefully Gelbooru implements basic HTTP Authentication

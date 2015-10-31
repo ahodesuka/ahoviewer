@@ -75,6 +75,15 @@ SiteEditor::SiteEditor(BaseObjectType *cobj, const Glib::RefPtr<Gtk::Builder> &b
     m_PasswordConn = m_PasswordEntry->signal_changed().connect(
             sigc::mem_fun(*this, &SiteEditor::on_password_edited));
 
+#ifdef HAVE_LIBSECRET
+    // Make sure the initially selected site's password gets set in the entry once it's loaded
+    const std::shared_ptr<Site> &s = get_selection()->get_selected()->get_value(m_Columns.site);
+    if (s)
+        s->signal_password_lookup().connect([ this, s ]() { m_PasswordEntry->set_text(s->get_password()); });
+
+    m_PasswordEntry->set_visibility(false);
+#endif // HAVE_LIBSECRET
+
     // Set initial values for entries and linkbutton
     on_cursor_changed();
 }

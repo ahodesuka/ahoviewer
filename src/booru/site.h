@@ -4,6 +4,7 @@
 #include <gdkmm.h>
 #include <set>
 
+#include "config.h"
 #include "curler.h"
 
 namespace AhoViewer
@@ -37,6 +38,11 @@ namespace AhoViewer
                                                 const std::string &pass = "");
             static const Glib::RefPtr<Gdk::Pixbuf>& get_missing_pixbuf();
 
+#ifdef HAVE_LIBSECRET
+            static void on_password_lookup(GObject*, GAsyncResult *result, gpointer ptr);
+            static void on_password_stored(GObject*, GAsyncResult *result, gpointer ptr);
+#endif // HAVE_LIBSECRET
+
             std::string get_posts_url(const std::string &tags, size_t page);
             std::string get_post_url(const std::string &id);
             void add_tags(const std::set<std::string> &tags);
@@ -56,7 +62,7 @@ namespace AhoViewer
             void set_username(const std::string &s) { m_NewAccount = true; m_Username = s; }
 
             std::string get_password() const { return m_Password; }
-            void set_password(const std::string &s) { m_NewAccount = true; m_Password = s; }
+            void set_password(const std::string &s);
 
             std::string get_cookie();
             void cleanup_cookie() const;
@@ -67,6 +73,9 @@ namespace AhoViewer
             void save_tags() const;
 
             Glib::Dispatcher& signal_icon_downloaded() { return m_SignalIconDownloaded; }
+#ifdef HAVE_LIBSECRET
+            sigc::signal<void> signal_password_lookup() { return m_PasswordLookup; }
+#endif // HAVE_LIBSECRET
         protected:
             Site(const std::string &name,
                  const std::string &url,
@@ -97,6 +106,10 @@ namespace AhoViewer
             Glib::RefPtr<Gdk::Pixbuf> m_IconPixbuf;
             Glib::Threads::Thread *m_IconCurlerThread;
             Glib::Dispatcher m_SignalIconDownloaded;
+
+#ifdef HAVE_LIBSECRET
+            sigc::signal<void> m_PasswordLookup;
+#endif // HAVE_LIBSECRET
         };
     }
 }

@@ -14,6 +14,8 @@ AC_SUBST(LIBCURL_CPPFLAGS)
 AC_SUBST(LIBCURL)
 AC_SUBST(gstreamer_CFLAGS)
 AC_SUBST(gstreamer_LIBS)
+AC_SUBST(libsecret_CFLAGS)
+AC_SUBST(libsecret_LIBS)
 AC_SUBST(libunrar_LIBS)
 AC_SUBST(libzip_CFLAGS)
 AC_SUBST(libzip_LIBS)
@@ -68,6 +70,27 @@ if test x"$windows" != xtrue; then
                 ]
             )
     fi
+fi
+
+AC_ARG_ENABLE([libsecret],
+    AS_HELP_STRING([--enable-libsecret],
+        [enable libsecret support @<:@default=auto@:>@]
+    ),
+    [enable_libsecret=$enableval],
+    [enable_libsecret=auto]
+)
+
+if test x"$enable_libsecret" != xno; then
+    PKG_CHECK_MODULES([libsecret], [libsecret-1],
+        [
+            AC_DEFINE(HAVE_LIBSECRET, 1, [Define to have libsecret support])
+        ],
+        [
+            if test x"$enable_libsecret" = xyes; then
+                AC_MSG_ERROR([libsecret not found, but --enable-libsecret=yes])
+            fi
+        ]
+    )
 fi
 
 AC_ARG_ENABLE([rar],

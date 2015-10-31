@@ -13,6 +13,7 @@ A GTK2 image viewer, manga reader, and booru browser.
     * gst-plugins-bad (opengl)
     * gst-plugins-good `runtime`
     * gst-plugins-vpx or gst-plugins-libav `runtime`
+* libsecret `optional`
 * libunrar `optional`
 * libzip `optional`
 
