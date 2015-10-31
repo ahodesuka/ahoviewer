@@ -313,6 +313,7 @@ void MainWindow::set_active_imagelist(const std::shared_ptr<ImageList> &imageLis
 
     if (!m_ActiveImageList->empty())
     {
+        m_ImageBox->clear_image();
         m_ImageBox->set_image(m_ActiveImageList->get_current());
 
         update_title();
