@@ -220,12 +220,10 @@ void Image::on_area_prepared()
 
 void Image::on_area_updated(int, int, int, int)
 {
-    long since = std::chrono::duration_cast<std::chrono::milliseconds>(
-            std::chrono::steady_clock::now() - m_LastDraw).count();
-
-    if (!m_Curler.is_cancelled() && since >= 100)
+    using namespace std::chrono;
+    if (!m_Curler.is_cancelled() && steady_clock::now() >= m_LastDraw + milliseconds(100))
     {
         m_SignalPixbufChanged();
-        m_LastDraw = std::chrono::steady_clock::now();
+        m_LastDraw = steady_clock::now();
     }
 }
