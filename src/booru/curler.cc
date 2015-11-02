@@ -66,7 +66,7 @@ Curler::Curler(const std::string &url)
     curl_easy_setopt(m_EasyHandle, CURLOPT_MAXREDIRS, 5);
     curl_easy_setopt(m_EasyHandle, CURLOPT_FAILONERROR, 1);
     curl_easy_setopt(m_EasyHandle, CURLOPT_VERBOSE, 0);
-    curl_easy_setopt(m_EasyHandle, CURLOPT_CONNECTTIMEOUT, 10);
+    curl_easy_setopt(m_EasyHandle, CURLOPT_CONNECTTIMEOUT, 60);
     curl_easy_setopt(m_EasyHandle, CURLOPT_NOSIGNAL, 1);
 
 #ifdef _WIN32
@@ -141,20 +141,12 @@ std::string Curler::escape(const std::string &str) const
 
 bool Curler::perform()
 {
-    int retry = 0;
-
     m_Cancel->reset();
     clear();
 
-    do
-    {
-        m_Response = curl_easy_perform(m_EasyHandle);
-    }
-    while (m_Response == CURLE_OPERATION_TIMEDOUT && ++retry <= 5);
+    m_Response = curl_easy_perform(m_EasyHandle);
 
-    return m_Response == CURLE_OK ||
-           m_Response == CURLE_ABORTED_BY_CALLBACK ||
-           (m_Response == CURLE_WRITE_ERROR && is_cancelled());
+    return m_Response == CURLE_OK;
 }
 
 void Curler::get_progress(double &current, double &total)
