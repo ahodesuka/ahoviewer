@@ -335,6 +335,14 @@ void Page::on_posts_downloaded()
         reserve(m_NumPosts);
         m_ImageList->load(*m_Posts, *this);
     }
+    // 401 = Unauthorized
+    else if (m_Curler.get_response_code() == 401)
+    {
+        Glib::ustring e = Glib::ustring::compose(_("Failed to login as %1 on %2"),
+                                                 m_Site->get_username(),
+                                                 m_Site->get_name());
+        m_SignalDownloadError(e);
+    }
     else if (m_Page == 1)
     {
         m_SignalDownloadError(_("No results found"));
