@@ -105,8 +105,11 @@ void Curler::set_referer(const std::string &url) const
 
 void Curler::set_http_auth(const std::string &u, const std::string &p) const
 {
-    curl_easy_setopt(m_EasyHandle, CURLOPT_USERNAME, u.c_str());
-    curl_easy_setopt(m_EasyHandle, CURLOPT_PASSWORD, p.c_str());
+    if (!u.empty())
+    {
+        curl_easy_setopt(m_EasyHandle, CURLOPT_USERNAME, u.c_str());
+        curl_easy_setopt(m_EasyHandle, CURLOPT_PASSWORD, p.c_str());
+    }
 }
 
 void Curler::set_cookie_jar(const std::string &path) const
