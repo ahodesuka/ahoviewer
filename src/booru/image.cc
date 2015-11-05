@@ -131,9 +131,6 @@ void Image::cancel_download()
     }
 
     m_DownloadCond.signal();
-
-    if (m_Curler.is_active())
-        m_Page.get_image_fetcher().remove_handle(&m_Curler);
 }
 
 /**

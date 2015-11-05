@@ -14,7 +14,6 @@ namespace AhoViewer
             virtual ~ImageFetcher();
 
             void add_handle(Curler *curler);
-            void remove_handle(Curler *curler);
         private:
             struct SockInfo
             {
@@ -28,6 +27,7 @@ namespace AhoViewer
             static int socket_cb(CURL*, curl_socket_t s, int action, void *userp, void *sockp);
             static int timer_cb(CURLM*, long timeout_ms, void *userp);
 
+            void remove_handle(Curler *curler);
             bool event_cb(curl_socket_t sockfd, Glib::IOCondition cond);
             bool timeout_cb();
             void read_info();

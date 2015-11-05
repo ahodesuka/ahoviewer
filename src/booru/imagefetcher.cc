@@ -135,20 +135,17 @@ void ImageFetcher::read_info()
 
     while ((msg = curl_multi_info_read(m_MultiHandle, &msgs)))
     {
-        if (msg->msg == CURLMSG_DONE)
+        Curler *curler = nullptr;
+        curl_easy_getinfo(msg->easy_handle, CURLINFO_PRIVATE, &curler);
+
+        if (curler && (msg->msg == CURLMSG_DONE || curler->is_cancelled()))
         {
-            Curler *curler = nullptr;
-            curl_easy_getinfo(msg->easy_handle, CURLINFO_PRIVATE, &curler);
+            lock.release();
+            remove_handle(curler);
+            lock.acquire();
 
-            if (curler)
-            {
-                lock.release();
-                remove_handle(curler);
-                lock.acquire();
-
-                if (!curler->is_cancelled())
-                    curler->m_SignalFinished();
-            }
+            if (!curler->is_cancelled())
+                curler->m_SignalFinished();
         }
     }
 }
