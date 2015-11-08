@@ -91,8 +91,6 @@ void ImageFetcher::add_handle(Curler *curler)
 
 void ImageFetcher::remove_handle(Curler *curler)
 {
-    Glib::Threads::Mutex::Lock lock(m_Mutex);
-
     curl_multi_remove_handle(m_MultiHandle, curler->m_EasyHandle);
     m_Curlers.erase(std::remove(m_Curlers.begin(), m_Curlers.end(), curler), m_Curlers.end());
 
@@ -140,9 +138,7 @@ void ImageFetcher::read_info()
 
         if (curler && (msg->msg == CURLMSG_DONE || curler->is_cancelled()))
         {
-            lock.release();
             remove_handle(curler);
-            lock.acquire();
 
             if (!curler->is_cancelled())
                 curler->m_SignalFinished();
