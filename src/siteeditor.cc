@@ -158,7 +158,7 @@ void SiteEditor::on_name_edited(const std::string &p, const std::string &text)
 {
     Gtk::TreePath path(p);
     Gtk::TreeIter iter = m_Model->get_iter(path);
-    std::string name(text);
+    std::string name = text;
 
     // make sure the site name is unique
     for (size_t i = 1; !is_name_unique(iter, name); ++i)
@@ -177,7 +177,7 @@ void SiteEditor::on_url_edited(const std::string &p, const std::string &text)
 {
     Gtk::TreePath path(p);
     Gtk::TreeIter iter = m_Model->get_iter(path);
-    std::string url(text);
+    std::string url = text;
 
     if (url.back() == '/')
         url = text.substr(0, text.size() - 1);
@@ -197,7 +197,7 @@ bool SiteEditor::is_name_unique(const Gtk::TreeIter &iter, const std::string &na
 
 void SiteEditor::add_edit_site(const Gtk::TreeIter &iter)
 {
-    std::string name(iter->get_value(m_Columns.name)),
+    std::string name = iter->get_value(m_Columns.name),
                 url(iter->get_value(m_Columns.url));
 
     if (name.empty() || url.empty())

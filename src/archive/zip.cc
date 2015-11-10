@@ -37,7 +37,7 @@ bool Zip::extract(const std::string &file) const
 
             if (st.name == file)
             {
-                std::string fPath(Glib::build_filename(m_ExtractedPath, st.name));
+                std::string fPath = Glib::build_filename(m_ExtractedPath, st.name);
 
                 if (!Glib::file_test(Glib::path_get_dirname(fPath), Glib::FILE_TEST_EXISTS))
                     g_mkdir_with_parents(Glib::path_get_dirname(fPath).c_str(), 0755);

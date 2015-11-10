@@ -306,7 +306,7 @@ bool MainWindow::on_key_press_event(GdkEventKey *e)
         if ((entries = gtk_accel_group_query(m_UIManager->get_accel_group()->gobj(),
                     e->keyval, static_cast<GdkModifierType>(e->state), NULL)))
         {
-            std::string path(g_quark_to_string(entries[0].accel_path_quark));
+            std::string path = g_quark_to_string(entries[0].accel_path_quark);
             m_ActionGroup->get_action(path.substr(path.rfind('/') + 1))->activate();
 
             return true;

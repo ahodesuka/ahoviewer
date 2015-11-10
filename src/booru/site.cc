@@ -104,16 +104,14 @@ Site::Type Site::get_type_from_url(const std::string &url)
 
     for (const Type &type : { Type::GELBOORU, Type::MOEBOORU, Type::DANBOORU })
     {
-        std::string uri(RequestURI.at(type));
+        std::string uri = RequestURI.at(type);
 
         if (type == Type::GELBOORU)
             uri = uri.substr(0, uri.find("&pid"));
         else
             uri = uri.substr(0, uri.find("?"));
 
-        std::string s(url + uri);
-
-        curler.set_url(s);
+        curler.set_url(url + uri);
         if (curler.perform() && curler.get_response_code() == 200)
             return type;
     }

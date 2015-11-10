@@ -390,7 +390,7 @@ void SettingsManager::load_keybindings()
                 {
                     if (keys[i.first.c_str()].exists(j.first))
                     {
-                        m_Keybindings[i.first][j.first] = std::string(keys[i.first.c_str()][j.first.c_str()].c_str());
+                        m_Keybindings[i.first][j.first] = keys[i.first.c_str()][j.first.c_str()].c_str();
                     }
                     else
                     {

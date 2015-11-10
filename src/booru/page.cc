@@ -239,7 +239,7 @@ void Page::cancel_save()
 
 void Page::get_posts()
 {
-    std::string tags(m_Tags);
+    std::string tags = m_SearchTags;
 
     if (m_Tags.find("rating:") == std::string::npos)
     {

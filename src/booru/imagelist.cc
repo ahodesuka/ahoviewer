@@ -25,12 +25,12 @@ void ImageList::load(const xmlDocument &posts, const Page &page)
 
     for (const xmlDocument::Node &post : posts.get_children())
     {
-        std::string thumbUrl(post.get_attribute("preview_url")),
-                    thumbPath(Glib::build_filename(page.get_site()->get_path(), "thumbnails",
-                                                   Glib::uri_unescape_string(Glib::path_get_basename(thumbUrl)))),
-                    imageUrl(post.get_attribute("file_url")),
-                    imagePath(Glib::build_filename(page.get_site()->get_path(),
-                                                   Glib::uri_unescape_string(Glib::path_get_basename(imageUrl))));
+        std::string thumbUrl  = post.get_attribute("preview_url"),
+                    thumbPath = Glib::build_filename(page.get_site()->get_path(), "thumbnails",
+                                                   Glib::uri_unescape_string(Glib::path_get_basename(thumbUrl))),
+                    imageUrl  = post.get_attribute("file_url"),
+                    imagePath = Glib::build_filename(page.get_site()->get_path(),
+                                                   Glib::uri_unescape_string(Glib::path_get_basename(imageUrl)));
 
         std::istringstream ss(post.get_attribute("tags"));
         std::set<std::string> tags { std::istream_iterator<std::string>(ss),
