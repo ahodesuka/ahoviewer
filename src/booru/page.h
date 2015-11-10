@@ -70,7 +70,7 @@ namespace AhoViewer
             std::shared_ptr<Site> m_Site;
             Curler m_Curler, m_CountsCurler;
 
-            std::string m_Tags, m_Path;
+            std::string m_Tags, m_SearchTags, m_Path;
             size_t m_Page, m_NumPosts,
                    m_SaveImagesTotal;
             std::atomic<size_t> m_SaveImagesCurrent;
