@@ -139,19 +139,20 @@ void Page::search(const std::shared_ptr<Site> &site)
     m_LastPage = false;
     m_SearchTags = m_Tags;
 
+    std::string tags = m_Tags;
+
     // Trim whitespace for the tab label text
-    if (!m_SearchTags.empty())
+    if (!tags.empty())
     {
-        size_t f = m_SearchTags.find_first_not_of(' '),
-               l = m_SearchTags.find_last_not_of(' ');
-        m_SearchTags = f == std::string::npos ? "" : " - " + m_SearchTags.substr(f, l - f + 1);
-    }
-    else
-    {
-        m_SearchTags = "*";
+        size_t f = tags.find_first_not_of(' '),
+               l = tags.find_last_not_of(' ');
+        tags = f == std::string::npos ? "" : " - " + tags.substr(f, l - f + 1);
     }
 
-    m_TabLabel->set_text(m_Site->get_name() + m_SearchTags);
+    if (m_SearchTags.empty())
+        m_SearchTags = "*";
+
+    m_TabLabel->set_text(m_Site->get_name() + tags);
     m_TabIcon->set(m_Site->get_icon_pixbuf());
 
     m_Curler.set_referer(m_Site->get_url());
