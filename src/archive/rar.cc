@@ -79,7 +79,7 @@ std::vector<std::string> Rar::get_entries(const FileType t) const
         {
             if (((t & IMAGES)  && Image::is_valid_extension(header.FileName)) ||
                 ((t & ARCHIVES) && Archive::is_valid_extension(header.FileName)))
-                entries.push_back(header.FileName);
+                entries.emplace_back(header.FileName);
 
             RARProcessFile(rar, RAR_SKIP, NULL, NULL);
         }

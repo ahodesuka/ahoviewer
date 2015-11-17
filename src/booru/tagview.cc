@@ -135,7 +135,7 @@ bool TagView::on_button_press_event(GdkEventButton *e)
                     if (std::find(tags.begin(), tags.end(), tag) != tags.end())
                         tags.erase(std::remove(tags.begin(), tags.end(), tag), tags.end());
                     else
-                        tags.push_back(tag);
+                        tags.push_back(std::move(tag));
 
                     std::ostringstream oss;
                     std::copy(tags.begin(), tags.end(), std::ostream_iterator<std::string>(oss, " "));

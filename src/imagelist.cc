@@ -126,7 +126,7 @@ bool ImageList::load(const std::string path, std::string &error, int index)
             img = std::make_shared<Archive::Image>(e, *m_Archive);
         else
             img = std::make_shared<Image>(e);
-        m_Images.push_back(img);
+        m_Images.push_back(std::move(img));
     }
 
     m_ThumbnailThread = Glib::Threads::Thread::create(sigc::mem_fun(*this, &ImageList::load_thumbnails));

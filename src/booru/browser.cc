@@ -78,7 +78,7 @@ void Browser::update_combobox_model()
         Gtk::TreeIter it = m_ComboModel->append();
         sigc::connection c = site->signal_icon_downloaded().connect([ this, site, it ]
                 { it->set_value(m_ComboColumns.icon, site->get_icon_pixbuf()); });
-        m_SiteIconConns.push_back(c);
+        m_SiteIconConns.push_back(std::move(c));
 
         it->set_value(m_ComboColumns.icon, site->get_icon_pixbuf());
         it->set_value(m_ComboColumns.name, site->get_name());

@@ -102,7 +102,7 @@ std::vector<std::string> Zip::get_entries(const FileType t) const
             if (zip_stat_index(zip, i, 0, &st) != -1 &&
                  (((t & IMAGES)   && Image::is_valid_extension(st.name)) ||
                   ((t & ARCHIVES) && Archive::is_valid_extension(st.name))))
-                entries.push_back(st.name);
+                entries.emplace_back(st.name);
         }
 
         zip_close(zip);

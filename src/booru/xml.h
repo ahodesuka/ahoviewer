@@ -88,7 +88,7 @@ namespace AhoViewer
             for (xmlNodePtr n = xmlDocGetRootElement(m_xmlDoc)->children; n; n = n->next)
             {
                 if (n->type == XML_ELEMENT_NODE)
-                    children.push_back(xmlDocument::Node(n));
+                    children.emplace_back(n);
             }
 
             return children;
