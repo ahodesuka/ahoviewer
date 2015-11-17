@@ -238,7 +238,7 @@ std::string Site::get_cookie()
 
                 while (std::getline(ifs, line))
                 {
-                    if (line.substr(0, 10).compare("#HttpOnly_") == 0)
+                    if (line.compare(0, 10, "#HttpOnly_") == 0)
                         line = line.substr(1);
 
                     // Skip comments
