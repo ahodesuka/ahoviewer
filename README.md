@@ -14,6 +14,7 @@ A GTK2 image viewer, manga reader, and booru browser.
     * gst-plugins-good `runtime`
     * gst-plugins-vpx or gst-plugins-libav `runtime`
 * libsecret `optional`
+    * gnome-keyring `runtime`
 * libunrar `optional`
 * libzip `optional`
 
@@ -33,6 +34,15 @@ or
 
 ### Screenshot
 ![Booru Browser](https://camo.githubusercontent.com/ad37a28fc1f47a41d1c79409ab31e3e01a1507e9/68747470733a2f2f692e696d6775722e636f6d2f486e47656368662e676966)
+
+### FAQ
+1. **My password/API key is not saved after restarting ahoviewer**
+   * See my comment in [issue #20](https://github.com/ahodesuka/ahoviewer/issues/20#issuecomment-157997909)
+2. **I get *No results found* on Danbooru**
+   * Danbooru only allows normal users to use 2 tags, if you have `Maximum post rating` set to anything other than `Explicit` it will count as one tag.
+3. **I get *No results found* on Gelbooru**
+   * Gelbooru no longer supports anonymous API users, you must register and set your user information in ahoviewer's preferences.
+
 
 #### Default Keybindings
 | Function                                  | Key             |
