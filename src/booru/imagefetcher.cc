@@ -91,7 +91,12 @@ void ImageFetcher::add_handle(Curler *curler)
 
 void ImageFetcher::remove_handle(Curler *curler)
 {
-    curl_multi_remove_handle(m_MultiHandle, curler->m_EasyHandle);
+    if (!curler)
+        return;
+
+    if (curler->m_EasyHandle)
+        curl_multi_remove_handle(m_MultiHandle, curler->m_EasyHandle);
+
     m_Curlers.erase(std::remove(m_Curlers.begin(), m_Curlers.end(), curler), m_Curlers.end());
 
     curler->m_Active = false;
