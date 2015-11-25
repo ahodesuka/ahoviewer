@@ -326,7 +326,7 @@ void ImageList::on_directory_changed(const Glib::RefPtr<Gio::File> &file,
                 --m_Index;
 
             m_Widget->erase(index);
-            m_Images.erase(std::remove_if(m_Images.begin(), m_Images.end(), comp));
+            m_Images.erase(it);
 
             if (current)
             {
