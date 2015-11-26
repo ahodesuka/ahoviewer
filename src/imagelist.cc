@@ -1,4 +1,5 @@
 #include <glib/gstdio.h>
+#include <numeric>
 
 #include "imagelist.h"
 using namespace AhoViewer;
