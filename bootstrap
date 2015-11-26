@@ -1,4 +1,10 @@
-#!/bin/sh
+#!/bin/bash
 
-autoreconf -vi      || exit 1
-./configure "$@"    || exit 1
+if [ "$(uname)" == "Darwin" ];
+then
+  autoreconf -fvi -I/usr/local/opt/curl/share/aclocal || exit 1
+  ./configure --with-libcurl=/usr/local/opt/curl      || exit 1
+else
+  autoreconf -fvi  || exit 1
+  ./configure "$@" || exit 1
+fi
