@@ -3,13 +3,12 @@
 
 #include <cctype>
 #include <cstdlib>
-#include <functional>
 
 #include "image.h"
 
 namespace AhoViewer
 {
-    class NaturalSort : public std::binary_function<std::string, std::string, bool>
+    class NaturalSort
     {
     public:
         bool operator()(const std::string &a, const std::string &b)
