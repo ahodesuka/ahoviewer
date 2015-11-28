@@ -23,7 +23,7 @@ namespace AhoViewer
         bool compare_natural(const char *a, const char *b)
         {
             // End of string
-            if (!a || !b) return a ? true : false;
+            if (!a || !b) return !!a;
 
             // Both are numbers, compare them as such
             if (std::isdigit(*a) && std::isdigit(*b))
@@ -39,7 +39,7 @@ namespace AhoViewer
 
             // One of them is a number
             if (std::isdigit(*a) || std::isdigit(*b))
-                return std::isdigit(*a) ? true : false;
+                return std::isdigit(*a);
 
             // Both of them are not numbers
             while (*a && *b)
@@ -56,7 +56,7 @@ namespace AhoViewer
                 ++b;
             }
 
-            return *a ? true : false;
+            return !!*a;
         }
     };
 }
