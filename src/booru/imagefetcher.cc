@@ -63,6 +63,8 @@ ImageFetcher::ImageFetcher()
 
 ImageFetcher::~ImageFetcher()
 {
+    Glib::Threads::Mutex::Lock lock(m_Mutex);
+
     m_MainLoop->quit();
     m_Thread->join();
     m_Thread = nullptr;
