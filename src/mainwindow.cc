@@ -1,3 +1,4 @@
+#include <iomanip>
 #include <iostream>
 #include <glibmm/i18n.h>
 
@@ -73,11 +74,15 @@ MainWindow::MainWindow(BaseObjectType *cobj, const Glib::RefPtr<Gtk::Builder> &b
     m_BooruBrowser->signal_entry_blur().connect([ this ]()
             { m_ImageBox->grab_focus(); });
 
+    m_ImageBox->signal_image_drawn().connect(
+            sigc::mem_fun(*this, &MainWindow::update_title));
     m_ImageBox->signal_slideshow_ended().connect(
             sigc::mem_fun(*this, &MainWindow::on_toggle_slideshow));
 
     m_PreferencesDialog->signal_bg_color_set().connect(
             sigc::mem_fun(m_ImageBox, &ImageBox::update_background_color));
+    m_PreferencesDialog->signal_title_format_changed().connect(
+            sigc::mem_fun(*this, &MainWindow::update_title));
     m_PreferencesDialog->signal_cursor_hide_delay_changed().connect(
             sigc::mem_fun(m_ImageBox, &ImageBox::cursor_timeout));
     m_PreferencesDialog->signal_cache_size_changed().connect(
@@ -336,7 +341,6 @@ void MainWindow::set_active_imagelist(const std::shared_ptr<ImageList> &imageLis
         m_ImageBox->clear_image();
         m_ImageBox->set_image(m_ActiveImageList->get_current());
 
-        update_title();
         set_sensitives();
     }
     else
@@ -661,17 +665,56 @@ void MainWindow::update_title()
 {
     if (m_ActiveImageList && !m_ActiveImageList->empty())
     {
+        std::string fmt = Settings.get_string("TitleFormat");
         std::ostringstream ss;
 
-        if (m_ImageBox->is_slideshow_running())
-            ss << "[SLIDESHOW] ";
+        for (auto i = fmt.begin(); i < fmt.end(); ++i)
+        {
+            if (*i != '%')
+            {
+                ss << *i;
+            }
+            else if (++i != fmt.end())
+            {
+                switch (*i)
+                {
+                    case '%':
+                        ss << *i;
+                        break;
+                    case 'c':
+                        ss << m_ActiveImageList->get_size();
+                        break;
+                    case 'f':
+                        ss << m_ActiveImageList->get_current()->get_filename();
+                        break;
+                    case 'h':
+                        ss << m_ImageBox->get_orig_height();
+                        break;
+                    case 'i':
+                        ss << m_ActiveImageList->get_index() + 1;
+                        break;
+                    case 'p':
+                        ss << PACKAGE;
+                        break;
+                    case 's':
+                        ss << std::setprecision(1) << std::fixed;
+                        ss << m_ImageBox->get_scale();
+                        break;
+                    case 'w':
+                        ss << m_ImageBox->get_orig_width();
+                        break;
+                    case 'z':
+                        ss << static_cast<char>(m_ImageBox->get_zoom_mode());
+                        break;
+                    default:
+                        std::cerr << "Invalid format specifier %" << *i << std::endl;
+                        break;
 
-        ss << "[" << m_ActiveImageList->get_index() + 1 << " / "
-           << m_ActiveImageList->get_size() << "] "
-           << m_ActiveImageList->get_current()->get_filename()
-           << " - " PACKAGE;
+                }
+            }
+        }
+
         set_title(ss.str());
-
 
         m_StatusBar->set_page_info(m_ActiveImageList->get_index() + 1, m_ActiveImageList->get_size());
         m_StatusBar->set_filename(m_ActiveImageList->get_current()->get_filename());
@@ -690,7 +733,6 @@ bool MainWindow::is_fullscreen() const
 void MainWindow::on_imagelist_changed(const std::shared_ptr<Image> &image)
 {
     m_ImageBox->set_image(image);
-    update_title();
     set_sensitives();
 }
 
@@ -1006,5 +1048,5 @@ void MainWindow::on_last_image()
 void MainWindow::on_toggle_slideshow()
 {
     m_ImageBox->toggle_slideshow();
-    update_title();
+    // update_title();
 }

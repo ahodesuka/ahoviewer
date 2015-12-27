@@ -47,6 +47,10 @@ SettingsManager::SettingsManager()
         { "BooruLimit",       50  },
         { "BooruWidth",       -1  },
     }),
+    DefaultStrings(
+    {
+        { "TitleFormat", "[%i / %c] %f - %p" },
+    }),
     DefaultSites(
     {
         std::make_tuple("Danbooru",   "https://danbooru.donmai.us",  Site::Type::DANBOORU, "", ""),
@@ -205,6 +209,8 @@ std::string SettingsManager::get_string(const std::string &key) const
 {
     if (Config.exists(key))
         return static_cast<const char*>(Config.lookup(key));
+    else if (DefaultStrings.find(key) != DefaultStrings.end())
+        return DefaultStrings.at(key);
 
     return "";
 }

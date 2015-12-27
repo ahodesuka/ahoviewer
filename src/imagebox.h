@@ -38,10 +38,16 @@ namespace AhoViewer
         void reset_slideshow();
         void toggle_slideshow();
 
+        int get_orig_width() const { return m_OrigWidth; }
+        int get_orig_height() const { return m_OrigHeight; }
+
+        double get_scale() const { return m_Scale; }
+
         ZoomMode get_zoom_mode() const { return m_ZoomMode; }
         void set_zoom_mode(const ZoomMode);
 
-        sigc::signal<void> signal_slideshow_ended() const { return m_SlideshowEndedSignal; }
+        sigc::signal<void> signal_slideshow_ended() const { return m_SignalSlideshowEnded; }
+        sigc::signal<void> signal_image_drawn() const { return m_SignalImageDrawn; }
 
         // Action callbacks {{{
         void on_zoom_in();
@@ -95,6 +101,9 @@ namespace AhoViewer
 
         const Gdk::Cursor m_LeftPtrCursor, m_FleurCursor, m_BlankCursor;
 
+        int m_OrigWidth, m_OrigHeight;
+        double m_Scale;
+
         std::shared_ptr<Image> m_Image;
         Glib::RefPtr<Gdk::PixbufAnimation> m_PixbufAnim;
         Glib::RefPtr<Gdk::PixbufAnimationIter> m_PixbufAnimIter;
@@ -113,7 +122,8 @@ namespace AhoViewer
                m_ScrollTime, m_ScrollDuration,
                m_ScrollStart, m_ScrollTarget;
 
-        sigc::signal<void> m_SlideshowEndedSignal;
+        sigc::signal<void> m_SignalSlideshowEnded,
+                           m_SignalImageDrawn;
     };
 }
 

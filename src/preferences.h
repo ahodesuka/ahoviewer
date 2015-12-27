@@ -21,6 +21,7 @@ namespace AhoViewer
         sigc::signal<void> signal_cursor_hide_delay_changed() const { return m_SpinSignals.at("CursorHideDelay"); }
         sigc::signal<void> signal_cache_size_changed() const { return m_SpinSignals.at("CacheSize"); }
         sigc::signal<void> signal_slideshow_delay_changed() const { return m_SpinSignals.at("SlideshowDelay"); }
+        sigc::signal<void> signal_title_format_changed() const { return m_SignalTitleFormatChanged; }
     private:
         struct BooruMaxRatingModelColumns : public Gtk::TreeModelColumnRecord
         {
@@ -32,7 +33,8 @@ namespace AhoViewer
         KeybindingEditor *m_KeybindingEditor;
 
         const std::map<std::string, sigc::signal<void>> m_SpinSignals;
-        sigc::signal<void> m_SignalBGColorSet;
+        sigc::signal<void> m_SignalBGColorSet,
+                           m_SignalTitleFormatChanged;
     };
 }
 

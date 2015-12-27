@@ -39,6 +39,15 @@ PreferencesDialog::PreferencesDialog(BaseObjectType *cobj, const Glib::RefPtr<Gt
         m_SignalBGColorSet();
     });
 
+    Gtk::Entry *fmtEntry = nullptr;
+    bldr->get_widget("TitleFormat", fmtEntry);
+    fmtEntry->set_text(Settings.get_string("TitleFormat"));
+    fmtEntry->signal_changed().connect([=]()
+    {
+        Settings.set("TitleFormat", fmtEntry->get_text());
+        m_SignalTitleFormatChanged();
+    });
+
     // {{{ Check Buttons
     std::vector<std::string> checkSettings =
     {

@@ -82,6 +82,7 @@ namespace AhoViewer
 
         const std::map<std::string, bool> DefaultBools;
         const std::map<std::string, int> DefaultInts;
+        const std::map<std::string, std::string> DefaultStrings;
         const std::vector<SiteTuple> DefaultSites;
         const std::map<std::string, std::map<std::string, std::string>> DefaultKeybindings;
         const Gdk::Color DefaultBGColor;

@@ -381,8 +381,6 @@ void ImageBox::draw_image(bool scroll)
         return;
     }
 
-    int origWidth, origHeight;
-
     Glib::RefPtr<Gdk::Pixbuf> origPixbuf, tempPixbuf;
 
     bool hideScrollbars = !Settings.get_bool("ScrollbarsVisible") ||
@@ -410,8 +408,8 @@ void ImageBox::draw_image(bool scroll)
         GstCaps *caps = gst_pad_get_current_caps(pad);
         GstStructure *s = gst_caps_get_structure(caps, 0);
 
-        gst_structure_get_int(s, "width", &origWidth);
-        gst_structure_get_int(s, "height", &origHeight);
+        gst_structure_get_int(s, "width", &m_OrigWidth);
+        gst_structure_get_int(s, "height", &m_OrigHeight);
 
         gst_caps_unref(caps);
         gst_object_unref(pad);
@@ -445,8 +443,8 @@ void ImageBox::draw_image(bool scroll)
         origPixbuf = m_PixbufAnimIter->get_pixbuf()->copy();
         tempPixbuf = origPixbuf;
 
-        origWidth  = origPixbuf->get_width();
-        origHeight = origPixbuf->get_height();
+        m_OrigWidth  = origPixbuf->get_width();
+        m_OrigHeight = origPixbuf->get_height();
 #ifdef HAVE_GSTREAMER
     }
 #endif // HAVE_GSTREAMER
@@ -462,19 +460,19 @@ void ImageBox::draw_image(bool scroll)
 
     int w            = windowWidth,
         h            = windowHeight,
-        scaledWidth  = origWidth,
-        scaledHeight = origHeight;
+        scaledWidth  = m_OrigWidth,
+        scaledHeight = m_OrigHeight;
 
     double windowAspect = static_cast<double>(windowWidth) / windowHeight,
-           imageAspect  = static_cast<double>(origWidth) / origHeight;
+           imageAspect  = static_cast<double>(m_OrigWidth) / m_OrigHeight;
 
-    if ((origWidth > windowWidth || (origHeight > windowHeight && origWidth > layoutWidth)) &&
+    if ((m_OrigWidth > windowWidth || (m_OrigHeight > windowHeight && m_OrigWidth > layoutWidth)) &&
         (m_ZoomMode == ZoomMode::FIT_WIDTH || (m_ZoomMode == ZoomMode::AUTO_FIT && windowAspect <= imageAspect)))
     {
         scaledWidth = std::ceil(windowWidth / imageAspect) > windowHeight && !hideScrollbars ? layoutWidth : windowWidth;
         scaledHeight = std::ceil(scaledWidth / imageAspect);
     }
-    else if ((origHeight > windowHeight || (origWidth > windowWidth && origHeight > layoutHeight)) &&
+    else if ((m_OrigHeight > windowHeight || (m_OrigWidth > windowWidth && m_OrigHeight > layoutHeight)) &&
              (m_ZoomMode == ZoomMode::FIT_HEIGHT || (m_ZoomMode == ZoomMode::AUTO_FIT && windowAspect >= imageAspect)))
     {
         scaledHeight = std::ceil(windowHeight * imageAspect) > windowWidth && !hideScrollbars ? layoutHeight : windowHeight;
@@ -482,11 +480,11 @@ void ImageBox::draw_image(bool scroll)
     }
     else if (m_ZoomMode == ZoomMode::MANUAL && m_ZoomPercent != 100)
     {
-        scaledWidth = origWidth * static_cast<double>(m_ZoomPercent) / 100;
-        scaledHeight = origHeight * static_cast<double>(m_ZoomPercent) / 100;
+        scaledWidth = m_OrigWidth * static_cast<double>(m_ZoomPercent) / 100;
+        scaledHeight = m_OrigHeight * static_cast<double>(m_ZoomPercent) / 100;
     }
 
-    if (!m_Image->is_webm() && (scaledWidth != origWidth || scaledHeight != origHeight))
+    if (!m_Image->is_webm() && (scaledWidth != m_OrigWidth || scaledHeight != m_OrigHeight))
         tempPixbuf = origPixbuf->scale_simple(scaledWidth, scaledHeight, Gdk::INTERP_BILINEAR);
 
     // Show scrollbars if image is scrollable
@@ -559,9 +557,9 @@ void ImageBox::draw_image(bool scroll)
     get_window()->thaw_updates();
     m_RedrawQueued = false;
 
-    double scale = m_ZoomMode == ZoomMode::MANUAL ? m_ZoomPercent :
-                        static_cast<double>(scaledWidth) / origWidth * 100;
-    m_StatusBar->set_resolution(origWidth, origHeight, scale, m_ZoomMode);
+    m_Scale = m_ZoomMode == ZoomMode::MANUAL ? m_ZoomPercent :
+                        static_cast<double>(scaledWidth) / m_OrigWidth * 100;
+    m_StatusBar->set_resolution(m_OrigWidth, m_OrigHeight, m_Scale, m_ZoomMode);
 
 #ifdef HAVE_GSTREAMER
     if (!m_Playing && m_Image->is_webm())
@@ -570,6 +568,8 @@ void ImageBox::draw_image(bool scroll)
         m_Playing = true;
     }
 #endif // HAVE_GSTREAMER
+
+    m_SignalImageDrawn();
 }
 
 bool ImageBox::update_animation()
@@ -616,7 +616,7 @@ void ImageBox::scroll(const int x, const int y, const bool panning, const bool f
             m_ScrollConn.disconnect();
 
             if (m_SlideshowConn && !m_NextAction->is_sensitive())
-                m_SlideshowEndedSignal();
+                m_SignalSlideshowEnded();
             else
                 m_NextAction->activate();
         }
