@@ -618,15 +618,15 @@
                                     <property name="visible">True</property>
                                     <property name="can_focus">False</property>
                                     <property name="tooltip_text" translatable="yes">Formatting for the main windows title.
-	%i current image list index.
-	%c current image list size.
-	%f current filename.
+  %i current image list index.
+  %c current image list size.
+  %f current filename.
   %s current scale percentage.
   %w current image's original width.
-	%h current image's original height.
+  %h current image's original height.
   %z current zoom mode.
-	%p program name.
-	%% a percent sign.</property>
+  %p program name.
+  %% a percent sign.</property>
                                     <property name="xalign">0</property>
                                     <property name="label" translatable="yes">Title formatting:</property>
                                   </object>
