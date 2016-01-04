@@ -148,11 +148,14 @@ MainWindow::MainWindow(BaseObjectType *cobj, const Glib::RefPtr<Gtk::Builder> &b
     int x, y, w, h;
     if (Settings.get_geometry(x, y, w, h))
     {
-        set_position(Gtk::WIN_POS_NONE);
-        set_default_size(w, h);
+        if (Settings.get_bool("RememberWindowSize"))
+            set_default_size(w, h);
 
+        set_position(Gtk::WIN_POS_NONE);
         show_all();
-        move(x, y);
+
+        if (Settings.get_bool("RememberWindowPos"))
+            move(x, y);
     }
     else
     {

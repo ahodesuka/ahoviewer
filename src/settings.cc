@@ -35,6 +35,8 @@ SettingsManager::SettingsManager()
         { "ThumbnailBarVisible",  false },
         { "HideAll",              false },
         { "HideAllFullscreen",    true  },
+        { "RememberWindowSize",   true  },
+        { "RememberWindowPos",    true  },
     }),
     DefaultInts(
     {

@@ -53,6 +53,8 @@ PreferencesDialog::PreferencesDialog(BaseObjectType *cobj, const Glib::RefPtr<Gt
     {
         "StartFullscreen",
         "HideAllFullscreen",
+        "RememberWindowSize",
+        "RememberWindowPos",
         "SmartNavigation",
         "AutoOpenArchive",
         "RememberLastFile",
