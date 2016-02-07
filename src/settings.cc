@@ -244,15 +244,13 @@ std::vector<std::shared_ptr<Site>>& SettingsManager::get_sites()
             return m_Sites;
         }
     }
-    else
-    {
-        for (const SiteTuple &s : DefaultSites)
-            m_Sites.push_back(Site::create(std::get<0>(s),
-                                           std::get<1>(s),
-                                           std::get<2>(s),
-                                           std::get<3>(s),
-                                           std::get<4>(s)));
-    }
+
+    for (const SiteTuple &s : DefaultSites)
+        m_Sites.push_back(Site::create(std::get<0>(s),
+                                       std::get<1>(s),
+                                       std::get<2>(s),
+                                       std::get<3>(s),
+                                       std::get<4>(s)));
 
     return m_Sites;
 }
