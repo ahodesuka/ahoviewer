@@ -53,7 +53,7 @@ namespace AhoViewer
 
             time_point_t m_LastDraw;
 
-            Curler m_Curler;
+            Curler m_Curler, m_ThumbnailCurler;
             Glib::RefPtr<Gdk::PixbufLoader> m_Loader;
             bool m_PixbufError;
             Glib::Threads::RWLock m_ThumbnailLock;

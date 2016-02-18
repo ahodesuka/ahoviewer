@@ -17,6 +17,7 @@ Image::Image(const std::string &path, const std::string &url,
     m_Tags(tags),
     m_Page(page),
     m_Curler(m_Url),
+    m_ThumbnailCurler(m_ThumbnailUrl),
     m_PixbufError(false)
 {
     m_ThumbnailPath = thumbPath;
@@ -46,12 +47,10 @@ const Glib::RefPtr<Gdk::Pixbuf>& Image::get_thumbnail()
 {
     if (!m_ThumbnailPixbuf)
     {
-        Curler curler(m_ThumbnailUrl);
-
         m_ThumbnailLock.writer_lock();
-        if (curler.perform())
+        if (m_ThumbnailCurler.perform())
         {
-            curler.save_file(m_ThumbnailPath);
+            m_ThumbnailCurler.save_file(m_ThumbnailPath);
 
             try
             {
@@ -66,7 +65,7 @@ const Glib::RefPtr<Gdk::Pixbuf>& Image::get_thumbnail()
         else
         {
             std::cerr << "Error while downloading thumbnail " << m_ThumbnailUrl
-                      << " " << std::endl << "  " << curler.get_error() << std::endl;
+                      << " " << std::endl << "  " << m_ThumbnailCurler.get_error() << std::endl;
             m_ThumbnailPixbuf = get_missing_pixbuf();
         }
         m_ThumbnailLock.writer_unlock();
