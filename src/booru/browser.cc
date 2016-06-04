@@ -204,6 +204,15 @@ void Browser::on_copy_image_url()
     m_StatusBar->set_message(_("Copied image URL to clipboard"));
 }
 
+void Browser::on_copy_post_url()
+{
+    const std::shared_ptr<Image> image =
+        std::static_pointer_cast<Image>(get_active_page()->get_imagelist()->get_current());
+
+    Gtk::Clipboard::get()->set_text(image->get_post_url());
+    m_StatusBar->set_message(_("Copied post URL to clipboard"));
+}
+
 void Browser::on_realize()
 {
     Gtk::VPaned::on_realize();

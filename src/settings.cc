@@ -129,6 +129,7 @@ SettingsManager::SettingsManager()
                 { "SaveImages",          "<Primary><Shift>s" },
                 { "ViewPost",            "<Primary><Shift>o" },
                 { "CopyImageURL",        "y"                 },
+                { "CopyPostURL",         "<Primary>y"                 },
             }
         }
     }),
