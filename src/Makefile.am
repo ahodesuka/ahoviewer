@@ -55,7 +55,7 @@ version:
 	@cd .. && ./version.sh > /dev/null 2>&1
 
 ahoviewer_CPPFLAGS = @CPPFLAGS@ @LIBCURL_CPPFLAGS@ -DDATADIR=\"$(datadir)\"
-ahoviewer_CXXFLAGS = @CXXFLAGS@ @gtkmm_CFLAGS@ @libxml2_CFLAGS@ @gstreamer_CFLAGS@ \
-				@libsecret_CFLAGS@ @libzip_CFLAGS@
+ahoviewer_CXXFLAGS = @CXXFLAGS@ @gtkmm_CFLAGS@ @libconfig_CFLAGS@ @libxml2_CFLAGS@ \
+				@gstreamer_CFLAGS@ @libsecret_CFLAGS@ @libzip_CFLAGS@
 ahoviewer_LDADD = @LIBS@ @gtkmm_LIBS@ @libconfig_LIBS@ @LIBCURL@ @libxml2_LIBS@ \
 				@gstreamer_LIBS@ @libsecret_LIBS@ @libunrar_LIBS@ @libzip_LIBS@
