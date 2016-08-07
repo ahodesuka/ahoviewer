@@ -1,5 +1,5 @@
 AC_PREREQ([2.69])
-AC_INIT([ahoviewer], m4_esyscmd_s([./version.sh]),
+AC_INIT([ahoviewer], m4_esyscmd_s([sh version.sh]),
         [https://github.com/ahodesuka/ahoviewer/issues],
         [ahoviewer],
         [https://github.com/ahodesuka/ahoviewer])
