@@ -14,6 +14,7 @@ extern const char *const ahoviewer_version;
 MainWindow::MainWindow(BaseObjectType *cobj, const Glib::RefPtr<Gtk::Builder> &bldr)
   : Gtk::Window(cobj),
     m_Builder(bldr),
+    m_LastSavePath(Settings.get_string("LastSavePath")),
     m_Width(0),
     m_Height(0),
     m_HPanedMinPos(0),
@@ -458,7 +459,7 @@ void MainWindow::create_actions()
     m_ActionGroup->add(Gtk::Action::create("SaveImage", Gtk::Stock::SAVE_AS,
             _("Save Image as..."), _("Save the selected image")),
             Gtk::AccelKey(Settings.get_keybinding("BooruBrowser", "SaveImage")),
-            sigc::mem_fun(m_BooruBrowser, &Booru::Browser::on_save_image));
+            sigc::mem_fun(*this, &MainWindow::on_save_image));
     m_ActionGroup->add(Gtk::Action::create("SaveImages", Gtk::Stock::SAVE, _("Save Images"), _("Save Images")),
             Gtk::AccelKey(Settings.get_keybinding("BooruBrowser", "SaveImages")),
             sigc::mem_fun(m_BooruBrowser, &Booru::Browser::on_save_images));
@@ -656,13 +657,14 @@ void MainWindow::set_sensitives()
 
     const Booru::Page *page = m_BooruBrowser->get_active_page();
     bool local = !m_LocalImageList->empty() && m_LocalImageList == m_ActiveImageList,
-         booru = page && page->get_imagelist() == m_ActiveImageList;
+         booru = page && page->get_imagelist() == m_ActiveImageList,
+         save  = (booru && !page->get_imagelist()->empty()) || (local && m_ActiveImageList->from_archive());
 
     m_ActionGroup->get_action("ToggleThumbnailBar")->set_sensitive(!hideAll && !m_LocalImageList->empty());
 
     m_ActionGroup->get_action("Close")->set_sensitive(local || booru);
     m_ActionGroup->get_action("NewTab")->set_sensitive(m_BooruBrowser->get_visible());
-    m_ActionGroup->get_action("SaveImage")->set_sensitive(booru && !page->get_imagelist()->empty());
+    m_ActionGroup->get_action("SaveImage")->set_sensitive(save);
     m_ActionGroup->get_action("SaveImages")->set_sensitive(booru && !page->get_imagelist()->empty());
     m_ActionGroup->get_action("ViewPost")->set_sensitive(booru && !page->get_imagelist()->empty());
     m_ActionGroup->get_action("CopyImageURL")->set_sensitive(booru && !page->get_imagelist()->empty());
@@ -896,9 +898,15 @@ void MainWindow::on_quit()
     }
 
     if (Settings.get_bool("RememberLastSavePath"))
+    {
         Settings.set("LastSavePath", m_BooruBrowser->get_last_save_path());
+        Settings.set("LastLocalSavePath", m_LastSavePath);
+    }
     else
+    {
         Settings.remove("LastSavePath");
+        Settings.remove("LastLocalSavePath");
+    }
 
     hide();
 }
@@ -1056,4 +1064,42 @@ void MainWindow::on_toggle_slideshow()
 {
     m_ImageBox->toggle_slideshow();
     // update_title();
+}
+
+void MainWindow::on_save_image()
+{
+    const Booru::Page *page = m_BooruBrowser->get_active_page();
+    bool archive = !m_LocalImageList->empty() && m_LocalImageList == m_ActiveImageList
+                    && m_LocalImageList->from_archive(),
+         booru   = page && page->get_imagelist() == m_ActiveImageList;
+
+    if (booru)
+    {
+        m_BooruBrowser->on_save_image();
+    }
+    else if (archive)
+    {
+        Gtk::Window *window = static_cast<Gtk::Window*>(get_toplevel());
+        Gtk::FileChooserDialog dialog(*window, "Save Image As", Gtk::FILE_CHOOSER_ACTION_SAVE);
+        dialog.set_modal();
+
+        const std::shared_ptr<Archive::Image> image =
+            std::static_pointer_cast<Archive::Image>(m_ActiveImageList->get_current());
+
+        dialog.add_button(Gtk::Stock::CANCEL, Gtk::RESPONSE_CANCEL);
+        dialog.add_button("Save", Gtk::RESPONSE_OK);
+
+        if (!m_LastSavePath.empty())
+            dialog.set_current_folder(m_LastSavePath);
+
+        dialog.set_current_name(Glib::path_get_basename(image->get_filename()));
+
+        if (dialog.run() == Gtk::RESPONSE_OK)
+        {
+            std::string path = dialog.get_filename();
+            m_LastSavePath = Glib::path_get_dirname(path);
+            image->save(path);
+        }
+
+    }
 }
