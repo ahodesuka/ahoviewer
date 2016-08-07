@@ -1,3 +1,5 @@
+#include <giomm.h>
+
 #include "archive.h"
 using namespace AhoViewer;
 
@@ -40,6 +42,13 @@ void Archive::Image::load_pixbuf()
         m_Loading = false;
         m_SignalPixbufChanged();
     }
+}
+
+void Archive::Image::save(const std::string &path)
+{
+    Glib::RefPtr<Gio::File> src = Gio::File::create_for_path(m_Path),
+                            dst = Gio::File::create_for_path(path);
+    src->copy(dst, Gio::FILE_COPY_OVERWRITE);
 }
 
 void Archive::Image::extract_file()

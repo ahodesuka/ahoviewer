@@ -63,6 +63,7 @@ namespace AhoViewer
         void on_last_image();
         void on_first_image();
         void on_toggle_slideshow();
+        void on_save_image();
         // }}}
 
         Glib::RefPtr<Gtk::Builder> m_Builder;
@@ -78,6 +79,8 @@ namespace AhoViewer
         StatusBar *m_StatusBar;
         Booru::Browser *m_BooruBrowser;
         Gtk::HPaned *m_HPaned;
+
+        std::string m_LastSavePath;
 
         int m_Width, m_Height, m_HPanedMinPos, m_HPanedLastPos;
         // This keeps track of whether hide all was set automatically
