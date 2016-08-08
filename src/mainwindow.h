@@ -18,7 +18,7 @@ namespace AhoViewer
         MainWindow(BaseObjectType *cobj, const Glib::RefPtr<Gtk::Builder> &bldr);
         virtual ~MainWindow() override = default;
 
-        void open_file(const std::string &path, const int index = 0, const bool restore = false);
+        void open_file(const Glib::ustring &path, const int index = 0, const bool restore = false);
         void restore_last_file();
         void get_drawable_area_size(int &w, int &h) const;
     protected:

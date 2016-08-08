@@ -44,11 +44,11 @@ namespace AhoViewer
 
         virtual ~Archive();
 
-        static bool is_valid(const std::string &path);
-        static bool is_valid_extension(const std::string &path);
-        static std::unique_ptr<Archive> create(const std::string &path, const std::string &parentDir = "");
+        static bool is_valid(const Glib::ustring &path);
+        static bool is_valid_extension(const Glib::ustring &path);
+        static std::unique_ptr<Archive> create(const Glib::ustring &path, const Glib::ustring &parentDir = "");
 
-        virtual bool extract(const std::string &file) const = 0;
+        virtual bool extract(const Glib::ustring &file) const = 0;
         virtual bool has_valid_files(const FileType t) const = 0;
         virtual std::vector<std::string> get_entries(const FileType t) const = 0;
 
@@ -57,11 +57,11 @@ namespace AhoViewer
 
         static const std::vector<std::string> MimeTypes, FileExtensions;
     protected:
-        Archive(const std::string &path, const std::string &exDir);
+        Archive(const Glib::ustring &path, const Glib::ustring &exDir);
 
-        std::string m_Path, m_ExtractedPath;
+        Glib::ustring m_Path, m_ExtractedPath;
     private:
-        static Type get_type(const std::string &path);
+        static Type get_type(const Glib::ustring &path);
 
         // Matches the largest archive MagicSize
         static const int MagicSize = 6;

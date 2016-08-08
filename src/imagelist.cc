@@ -46,10 +46,10 @@ void ImageList::clear()
  * Creates a local image list from a given file (archive/image) or direcotry.
  * The parameter index is used when reopening an archive at a given index.
  **/
-bool ImageList::load(const std::string path, std::string &error, int index)
+bool ImageList::load(const Glib::ustring path, std::string &error, int index)
 {
     std::unique_ptr<Archive> archive = nullptr;
-    std::string dirPath;
+    Glib::ustring dirPath;
 
     if (Glib::file_test(path, Glib::FILE_TEST_EXISTS))
     {
@@ -84,7 +84,7 @@ bool ImageList::load(const std::string path, std::string &error, int index)
     if (entries.empty())
     {
         error = "No valid image files found in '" +
-            Glib::path_get_basename(archive ? archive->get_path() : dirPath) + "'.";
+            Glib::path_get_basename(archive ? archive->get_path() : dirPath.c_str()) + "'.";
         return false;
     }
 

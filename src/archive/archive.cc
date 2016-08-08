@@ -1,6 +1,8 @@
 #include <cctype>
 #include <cstring>
 #include <fstream>
+#include <giomm.h>
+#include <glib.h>
 
 #include "archive.h"
 using namespace AhoViewer;
@@ -43,12 +45,12 @@ const std::vector<std::string> Archive::FileExtensions =
 #endif // HAVE_LIBUNRAR
 };
 
-bool Archive::is_valid(const std::string &path)
+bool Archive::is_valid(const Glib::ustring &path)
 {
     return get_type(path) != Type::UNKNOWN;
 }
 
-bool Archive::is_valid_extension(const std::string &path)
+bool Archive::is_valid_extension(const Glib::ustring &path)
 {
     std::string ext = path.substr(path.find_last_of('.') + 1);
     std::transform(ext.begin(), ext.end(), ext.begin(), ::tolower);
@@ -60,9 +62,9 @@ bool Archive::is_valid_extension(const std::string &path)
     return false;
 }
 
-std::unique_ptr<Archive> Archive::create(const std::string &path, const std::string &parentDir)
+std::unique_ptr<Archive> Archive::create(const Glib::ustring &path, const Glib::ustring &parentDir)
 {
-    std::string dir;
+    Glib::ustring dir;
     Type type = get_type(path);
 
     if (type != Type::UNKNOWN)
@@ -90,12 +92,16 @@ std::unique_ptr<Archive> Archive::create(const std::string &path, const std::str
     return nullptr;
 }
 
-Archive::Type Archive::get_type(const std::string &path)
+Archive::Type Archive::get_type(const Glib::ustring &path)
 {
-    std::ifstream ifs(path, std::ios::binary);
+    if (Glib::file_test(path, Glib::FILE_TEST_IS_DIR))
+        return Type::UNKNOWN;
+
+    Glib::RefPtr<Gio::File> file = Gio::File::create_for_path(path);
+    Glib::RefPtr<Gio::FileInputStream> ifs = file->read();
 
     char magic[MagicSize] = { };
-    ifs.readsome(magic, MagicSize);
+    ifs->read(magic, MagicSize);
 
 #ifdef HAVE_LIBZIP
     if (std::memcmp(magic, Zip::Magic, Zip::MagicSize) == 0)
@@ -110,11 +116,16 @@ Archive::Type Archive::get_type(const std::string &path)
     return Type::UNKNOWN;
 }
 
-Archive::Archive(const std::string &path, const std::string &exDir)
+Archive::Archive(const Glib::ustring &path, const Glib::ustring &exDir)
   : m_Path(path),
     m_ExtractedPath(exDir)
 {
+#ifdef _WIN32
+    gchar *tmp = g_win32_locale_filename_from_utf8(path.data());
+    m_Path = tmp;
 
+    g_free(tmp);
+#endif // _WIN32
 }
 
 Archive::~Archive()

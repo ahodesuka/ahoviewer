@@ -16,13 +16,13 @@ using namespace AhoViewer;
 
 const char Rar::Magic[Rar::MagicSize] = { 'R', 'a', 'r', '!', 0x1A, 0x07 };
 
-Rar::Rar(const std::string &path, const std::string &exDir)
+Rar::Rar(const Glib::ustring &path, const Glib::ustring &exDir)
   : Archive::Archive(path, exDir)
 {
 
 }
 
-bool Rar::extract(const std::string &file) const
+bool Rar::extract(const Glib::ustring &file) const
 {
     bool found = false;
     RAROpenArchiveData archive;

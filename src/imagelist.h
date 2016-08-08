@@ -85,7 +85,7 @@ namespace AhoViewer
         virtual ~ImageList();
 
         virtual void clear();
-        bool load(const std::string path, std::string &error, int index = 0);
+        bool load(const Glib::ustring path, std::string &error, int index = 0);
 
         // Action callbacks {{{
         void go_next();
