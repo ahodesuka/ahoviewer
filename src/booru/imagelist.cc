@@ -38,10 +38,20 @@ void ImageList::load(const xmlDocument &posts, const Page &page)
         page.get_site()->add_tags(tags);
 
         if (thumbUrl[0] == '/')
-            thumbUrl = page.get_site()->get_url() + thumbUrl;
+        {
+            if (thumbUrl[1] == '/')
+                thumbUrl = "http:" + thumbUrl;
+            else
+                thumbUrl = page.get_site()->get_url() + thumbUrl;
+        }
 
         if (imageUrl[0] == '/')
-            imageUrl = page.get_site()->get_url() + imageUrl;
+        {
+            if (imageUrl[1] == '/')
+                imageUrl = "http:" + imageUrl;
+            else
+                imageUrl = page.get_site()->get_url() + imageUrl;
+        }
 
         std::string postUrl = page.get_site()->get_post_url(post.get_attribute("id"));
 
