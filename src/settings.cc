@@ -56,10 +56,10 @@ SettingsManager::SettingsManager()
     DefaultSites(
     {
         std::make_tuple("Danbooru",   "https://danbooru.donmai.us",  Site::Type::DANBOORU, "", ""),
-        std::make_tuple("Gelbooru",   "http://gelbooru.com",         Site::Type::GELBOORU, "", ""),
-        std::make_tuple("Konachan",   "http://konachan.com",         Site::Type::MOEBOORU, "", ""),
+        std::make_tuple("Gelbooru",   "https://gelbooru.com",        Site::Type::GELBOORU, "", ""),
+        std::make_tuple("Konachan",   "https://konachan.com",        Site::Type::MOEBOORU, "", ""),
         std::make_tuple("yande.re",   "https://yande.re",            Site::Type::MOEBOORU, "", ""),
-        std::make_tuple("Safebooru",  "http://safebooru.org",        Site::Type::GELBOORU, "", ""),
+        std::make_tuple("Safebooru",  "https://safebooru.org",       Site::Type::GELBOORU, "", ""),
     }),
     DefaultKeybindings(
     {

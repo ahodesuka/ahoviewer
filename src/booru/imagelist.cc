@@ -40,7 +40,7 @@ void ImageList::load(const xmlDocument &posts, const Page &page)
         if (thumbUrl[0] == '/')
         {
             if (thumbUrl[1] == '/')
-                thumbUrl = "http:" + thumbUrl;
+                thumbUrl = "https:" + thumbUrl;
             else
                 thumbUrl = page.get_site()->get_url() + thumbUrl;
         }
@@ -48,7 +48,7 @@ void ImageList::load(const xmlDocument &posts, const Page &page)
         if (imageUrl[0] == '/')
         {
             if (imageUrl[1] == '/')
-                imageUrl = "http:" + imageUrl;
+                imageUrl = "https:" + imageUrl;
             else
                 imageUrl = page.get_site()->get_url() + imageUrl;
         }
