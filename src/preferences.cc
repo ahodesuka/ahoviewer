@@ -67,7 +67,7 @@ PreferencesDialog::PreferencesDialog(BaseObjectType *cobj, const Glib::RefPtr<Gt
     {
         bldr->get_widget(s, checkButton);
         checkButton->set_active(Settings.get_bool(s));
-        checkButton->signal_toggled().connect([ this, s, checkButton ]()
+        checkButton->signal_toggled().connect([ s, checkButton ]()
                 { Settings.set(s, checkButton->get_active()); });
     }
     // }}}
@@ -115,6 +115,6 @@ PreferencesDialog::PreferencesDialog(BaseObjectType *cobj, const Glib::RefPtr<Gt
     comboBox->pack_start(columns.text_column);
     comboBox->set_model(comboModel);
     comboBox->set_active(static_cast<int>(Settings.get_booru_max_rating()));
-    comboBox->signal_changed().connect([ this, comboBox ]()
+    comboBox->signal_changed().connect([ comboBox ]()
             { Settings.set_booru_max_rating(static_cast<Booru::Site::Rating>(comboBox->get_active_row_number())); });
 }
