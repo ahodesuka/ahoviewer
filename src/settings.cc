@@ -232,11 +232,13 @@ std::vector<std::shared_ptr<Site>>& SettingsManager::get_sites()
             for (size_t i = 0; i < static_cast<size_t>(sites.getLength()); ++i)
             {
                 const Setting &s = sites[i];
-                std::string username = s.exists("username") ? s["username"] : "",
+                std::string name     = s.exists("name") ? s["name"] : "",
+                            url      = s.exists("url") ? s["url"] : "",
+                            username = s.exists("username") ? s["username"] : "",
                             password = s.exists("password") ? s["password"] : "";
                 m_Sites.push_back(
-                        Site::create(s["name"],
-                                     s["url"],
+                        Site::create(name,
+                                     url,
                                      static_cast<Site::Type>(static_cast<int>(s["type"])),
                                      username,
                                      password));
