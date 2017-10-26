@@ -43,9 +43,6 @@ or
    * See my comment in [issue #20](https://github.com/ahodesuka/ahoviewer/issues/20#issuecomment-157997909)
 2. **I get *No results found* on Danbooru**
    * Danbooru only allows normal users to use 2 tags, if you have `Maximum post rating` set to anything other than `Explicit` it will count as one tag.
-3. **I get *No results found* on Gelbooru**
-   * Gelbooru no longer supports anonymous API users, you must register and set your user information in ahoviewer's preferences.
-
 
 #### Default Keybindings
 | Function                                  | Key             |
