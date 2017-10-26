@@ -55,7 +55,7 @@ namespace AhoViewer
             void on_posts_downloaded();
             void on_selection_changed();
             void on_value_changed();
-            bool on_button_press_event(GdkEventButton *e) override;
+            virtual bool on_button_press_event(GdkEventButton *e) override;
             bool on_tab_button_release_event(GdkEventButton *e);
 
             Gtk::Menu *m_PopupMenu;
