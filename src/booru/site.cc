@@ -1,12 +1,12 @@
 #include <chrono>
 #include <fstream>
 #include <iostream>
+#include <glib/gstdio.h>
 
 #include "site.h"
 using namespace AhoViewer::Booru;
 
 #include "settings.h"
-#include "tempdir.h"
 
 #ifdef HAVE_LIBSECRET
 #include <libsecret/secret.h>
@@ -291,17 +291,6 @@ void Site::cleanup_cookie() const
     if ((m_Username.empty() || m_Password.empty() || m_NewAccount) &&
             Glib::file_test(m_CookiePath, Glib::FILE_TEST_EXISTS))
         g_unlink(m_CookiePath.c_str());
-}
-
-std::string Site::get_path()
-{
-    if (m_Path.empty())
-    {
-        m_Path = TempDir::get_instance().make_dir(m_Name);
-        g_mkdir_with_parents(Glib::build_filename(m_Path, "thumbnails").c_str(), 0755);
-    }
-
-    return m_Path;
 }
 
 Glib::RefPtr<Gdk::Pixbuf> Site::get_icon_pixbuf(const bool update)
