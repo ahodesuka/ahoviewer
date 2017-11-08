@@ -67,7 +67,6 @@ namespace AhoViewer
             std::string get_cookie();
             void cleanup_cookie() const;
 
-            std::string get_path();
             Glib::RefPtr<Gdk::Pixbuf> get_icon_pixbuf(const bool update = false);
 
             void save_tags() const;
@@ -95,8 +94,7 @@ namespace AhoViewer
                         m_Password,
                         m_IconPath,
                         m_TagsPath,
-                        m_CookiePath,
-                        m_Path;
+                        m_CookiePath;
             Type m_Type;
             bool m_NewAccount;
             uint64_t m_CookieTS;

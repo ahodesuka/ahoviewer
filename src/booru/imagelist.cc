@@ -3,6 +3,7 @@ using namespace AhoViewer::Booru;
 
 #include "image.h"
 #include "page.h"
+#include "tempdir.h"
 
 ImageList::ImageList(Widget *w)
   : AhoViewer::ImageList(w),
@@ -11,10 +12,32 @@ ImageList::ImageList(Widget *w)
 
 }
 
+ImageList::~ImageList()
+{
+    clear();
+}
+
 void ImageList::clear()
 {
     AhoViewer::ImageList::clear();
+    if (!m_Path.empty()) {
+        TempDir::get_instance().remove_dir(m_Path);
+        m_Path.clear();
+    }
     m_Size = 0;
+}
+
+std::string ImageList::get_path()
+{
+    static int id = 1;
+
+    if (m_Path.empty())
+    {
+        m_Path = TempDir::get_instance().make_dir(std::to_string(id++));
+        g_mkdir_with_parents(Glib::build_filename(m_Path, "thumbnails").c_str(), 0755);
+    }
+
+    return m_Path;
 }
 
 void ImageList::load(const xmlDocument &posts, const Page &page)
@@ -26,10 +49,10 @@ void ImageList::load(const xmlDocument &posts, const Page &page)
     for (const xmlDocument::Node &post : posts.get_children())
     {
         std::string thumbUrl  = post.get_attribute("preview_url"),
-                    thumbPath = Glib::build_filename(page.get_site()->get_path(), "thumbnails",
+                    thumbPath = Glib::build_filename(get_path(), "thumbnails",
                                                    Glib::uri_unescape_string(Glib::path_get_basename(thumbUrl))),
                     imageUrl  = post.get_attribute("file_url"),
-                    imagePath = Glib::build_filename(page.get_site()->get_path(),
+                    imagePath = Glib::build_filename(get_path(),
                                                    Glib::uri_unescape_string(Glib::path_get_basename(imageUrl)));
 
         std::istringstream ss(post.get_attribute("tags"));
