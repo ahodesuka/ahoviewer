@@ -82,7 +82,7 @@ void Image::load_pixbuf()
         {
             AhoViewer::Image::load_pixbuf();
         }
-        else if (!start_download() && !m_isWebM && m_Loader->get_animation())
+        else if (!start_download() && !m_isWebM && m_Loader && m_Loader->get_animation())
         {
             m_Pixbuf = m_Loader->get_animation();
         }
@@ -209,10 +209,11 @@ void Image::on_area_prepared()
     }
     m_ThumbnailLock.reader_unlock();
 
-    m_Pixbuf = m_Loader->get_animation();
-
     if (!m_Curler.is_cancelled())
+    {
+        m_Pixbuf = m_Loader->get_animation();
         m_SignalPixbufChanged();
+    }
 }
 
 void Image::on_area_updated(int, int, int, int)
