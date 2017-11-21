@@ -669,6 +669,7 @@ void MainWindow::set_sensitives()
     m_ActionGroup->get_action("SaveImages")->set_sensitive(booru && !page->get_imagelist()->empty());
     m_ActionGroup->get_action("ViewPost")->set_sensitive(booru && !page->get_imagelist()->empty());
     m_ActionGroup->get_action("CopyImageURL")->set_sensitive(booru && !page->get_imagelist()->empty());
+    m_ActionGroup->get_action("CopyPostURL")->set_sensitive(booru && !page->get_imagelist()->empty());
 }
 
 void MainWindow::update_title()
