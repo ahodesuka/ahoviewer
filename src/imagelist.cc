@@ -1,4 +1,3 @@
-#include <glib/gstdio.h>
 #include <numeric>
 
 #include "imagelist.h"
