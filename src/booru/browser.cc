@@ -395,7 +395,8 @@ void Browser::on_imagelist_changed(const std::shared_ptr<AhoViewer::Image> &imag
 
 void Browser::on_new_tab_tag(const std::string &tag)
 {
-    on_new_tab();
+    if (!get_active_page() || !get_active_page()->get_imagelist()->empty())
+        on_new_tab();
 
     m_TagEntry->set_text(tag);
     m_TagView->clear();
