@@ -61,6 +61,7 @@ PreferencesDialog::PreferencesDialog(BaseObjectType *cobj, const Glib::RefPtr<Gt
         "StoreRecentFiles",
         "SaveThumbnails",
         "RememberLastSavePath",
+        "SaveImageTags",
     };
 
     for (const std::string &s : checkSettings)

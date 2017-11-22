@@ -23,6 +23,7 @@ SettingsManager::SettingsManager()
         { "MangaMode",            true  },
         { "RememberLastFile",     true  },
         { "RememberLastSavePath", true  },
+        { "SaveImageTags",        false },
         { "SaveThumbnails",       true  },
         { "StartFullscreen",      false },
         { "StoreRecentFiles",     true  },

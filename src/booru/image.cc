@@ -1,10 +1,12 @@
 #include <chrono>
+#include <fstream>
 #include <iostream>
 
 #include "image.h"
 using namespace AhoViewer::Booru;
 
 #include "browser.h"
+#include "settings.h"
 
 Image::Image(const std::string &path, const std::string &url,
              const std::string &thumbPath, const std::string &thumbUrl,
@@ -114,6 +116,14 @@ void Image::save(const std::string &path)
     Glib::RefPtr<Gio::File> src = Gio::File::create_for_path(m_Path),
                             dst = Gio::File::create_for_path(path);
     src->copy(dst, Gio::FILE_COPY_OVERWRITE);
+
+    if (Settings.get_bool("SaveImageTags"))
+    {
+        std::ofstream ofs(path + ".txt");
+
+        if (ofs)
+            std::copy(m_Tags.begin(), m_Tags.end(), std::ostream_iterator<std::string>(ofs, "\n"));
+    }
 }
 
 void Image::cancel_download()
