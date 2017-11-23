@@ -7,6 +7,7 @@ using namespace AhoViewer;
 #include "booru/image.h"
 #include "naturalsort.h"
 #include "settings.h"
+#include "threadpool.h"
 
 ImageList::ImageList(Widget *const w)
   : m_Widget(w),
@@ -196,7 +197,7 @@ void ImageList::set_current(const size_t index, const bool fromWidget, const boo
 
 void ImageList::load_thumbnails()
 {
-    Glib::ThreadPool pool(std::thread::hardware_concurrency());
+    ThreadPool pool(std::thread::hardware_concurrency());
     m_ThumbnailCancel->reset();
 
     std::vector<size_t> indices(m_Images.size());
@@ -205,7 +206,7 @@ void ImageList::load_thumbnails()
 
     for (const size_t i : indices)
     {
-        pool.push([ this, i ]()
+        pool.enqueue([ this, i ]()
         {
             if (m_ThumbnailCancel->is_cancelled())
                 return;
@@ -220,8 +221,6 @@ void ImageList::load_thumbnails()
                 m_SignalThumbnailLoaded();
         });
     }
-
-    pool.shutdown(m_ThumbnailCancel->is_cancelled());
 }
 
 // Resets the image list to it's initial state
