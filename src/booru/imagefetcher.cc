@@ -40,6 +40,7 @@ int ImageFetcher::timer_cb(CURLM*, long timeout_ms, void *userp)
 {
     ImageFetcher *self = static_cast<ImageFetcher*>(userp);
 
+    std::lock_guard<std::recursive_mutex> lock(self->m_Mutex);
     self->m_TimeoutConn = self->m_MainContext->signal_timeout().connect(
             sigc::mem_fun(self, &ImageFetcher::timeout_cb), timeout_ms);
 
@@ -49,11 +50,10 @@ int ImageFetcher::timer_cb(CURLM*, long timeout_ms, void *userp)
 ImageFetcher::ImageFetcher()
   : m_MainContext(Glib::MainContext::create()),
     m_MainLoop(Glib::MainLoop::create(m_MainContext)),
-    m_Thread(nullptr),
     m_MultiHandle(curl_multi_init()),
     m_RunningHandles(0)
 {
-    m_Thread = Glib::Threads::Thread::create([ this ]() { m_MainLoop->run(); });
+    m_Thread = std::thread([ this ]() { m_MainLoop->run(); });
 
     curl_multi_setopt(m_MultiHandle, CURLMOPT_SOCKETFUNCTION, &ImageFetcher::socket_cb);
     curl_multi_setopt(m_MultiHandle, CURLMOPT_SOCKETDATA, this);
@@ -64,8 +64,7 @@ ImageFetcher::ImageFetcher()
 ImageFetcher::~ImageFetcher()
 {
     m_MainLoop->quit();
-    m_Thread->join();
-    m_Thread = nullptr;
+    m_Thread.join();
 
     for (Curler *c : m_Curlers)
         remove_handle(c);
@@ -75,7 +74,7 @@ ImageFetcher::~ImageFetcher()
 
 void ImageFetcher::add_handle(Curler *curler)
 {
-    Glib::Threads::Mutex::Lock lock(m_Mutex);
+    std::lock_guard<std::recursive_mutex> lock(m_Mutex);
 
     curl_easy_setopt(curler->m_EasyHandle, CURLOPT_PRIVATE, curler);
 

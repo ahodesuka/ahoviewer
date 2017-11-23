@@ -73,7 +73,7 @@ std::string Image::get_filename() const
 
 const Glib::RefPtr<Gdk::PixbufAnimation>& Image::get_pixbuf()
 {
-    Glib::Threads::Mutex::Lock lock(m_Mutex);
+    std::lock_guard<std::mutex> lock(m_Mutex);
     return m_Pixbuf;
 }
 
@@ -129,7 +129,7 @@ void Image::load_pixbuf()
     {
         Glib::RefPtr<Gdk::PixbufAnimation> p = Gdk::PixbufAnimation::create_from_file(m_Path);
         {
-            Glib::Threads::Mutex::Lock lock(m_Mutex);
+            std::lock_guard<std::mutex> lock(m_Mutex);
             m_Pixbuf = p;
         }
         m_SignalPixbufChanged();
@@ -138,7 +138,7 @@ void Image::load_pixbuf()
 
 void Image::reset_pixbuf()
 {
-    Glib::Threads::Mutex::Lock lock(m_Mutex);
+    std::lock_guard<std::mutex> lock(m_Mutex);
     m_Pixbuf.reset();
 }
 

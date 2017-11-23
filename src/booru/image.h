@@ -1,6 +1,8 @@
 #ifndef _BOORUIMAGE_H_
 #define _BOORUIMAGE_H_
 
+#include <condition_variable>
+
 #include "../image.h"
 #include "curler.h"
 #include "page.h"
@@ -58,8 +60,8 @@ namespace AhoViewer
             bool m_PixbufError;
             Glib::Threads::RWLock m_ThumbnailLock;
 
-            Glib::Threads::Cond m_DownloadCond;
-            Glib::Threads::Mutex m_DownloadMutex;
+            std::condition_variable m_DownloadCond;
+            std::mutex m_DownloadMutex;
 
             SignalProgressType m_SignalProgress;
         };

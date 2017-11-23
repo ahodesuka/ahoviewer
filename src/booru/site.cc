@@ -130,8 +130,7 @@ Site::Site(const std::string &name, const std::string &url, const Type type,
     m_CookiePath(Glib::build_filename(Settings.get_booru_path(), m_Name + "-cookie")),
     m_Type(type),
     m_NewAccount(false),
-    m_CookieTS(0),
-    m_IconCurlerThread(nullptr)
+    m_CookieTS(0)
 {
 #ifdef HAVE_LIBSECRET
     if (!m_Username.empty())
@@ -158,11 +157,8 @@ Site::Site(const std::string &name, const std::string &url, const Type type,
 Site::~Site()
 {
     m_Curler.cancel();
-    if (m_IconCurlerThread)
-    {
-        m_IconCurlerThread->join();
-        m_IconCurlerThread = nullptr;
-    }
+    if (m_IconCurlerThread.joinable())
+        m_IconCurlerThread.join();
 
     cleanup_cookie();
 }
@@ -305,7 +301,7 @@ Glib::RefPtr<Gdk::Pixbuf> Site::get_icon_pixbuf(const bool update)
         {
             m_IconPixbuf = get_missing_pixbuf();
             // Attempt to download the site's favicon
-            m_IconCurlerThread = Glib::Threads::Thread::create([ this ]()
+            m_IconCurlerThread = std::thread([ this ]()
             {
                 for (const std::string &url : { m_Url + "/favicon.ico",
                                                 m_Url + "/favicon.png" })
@@ -335,10 +331,7 @@ Glib::RefPtr<Gdk::Pixbuf> Site::get_icon_pixbuf(const bool update)
             });
 
             if (update)
-            {
-                m_IconCurlerThread->join();
-                m_IconCurlerThread = nullptr;
-            }
+                m_IconCurlerThread.join();
         }
     }
 

@@ -1,4 +1,5 @@
 #include <numeric>
+#include <thread>
 
 #include "imagelist.h"
 using namespace AhoViewer;
@@ -11,9 +12,7 @@ ImageList::ImageList(Widget *const w)
   : m_Widget(w),
     m_Index(0),
     m_ThumbnailCancel(Gio::Cancellable::create()),
-    m_ThumbnailThread(nullptr),
-    m_CacheCancel(Gio::Cancellable::create()),
-    m_CacheThread(nullptr)
+    m_CacheCancel(Gio::Cancellable::create())
 {
     // Sorts indices based on how close they are to m_Index
     m_IndexSort = [ this ](size_t a, size_t b)
@@ -27,7 +26,6 @@ ImageList::ImageList(Widget *const w)
             sigc::bind(sigc::mem_fun(*this, &ImageList::set_current), true, false));
 
     m_ThumbnailLoadedConn = m_SignalThumbnailLoaded.connect(sigc::mem_fun(*this, &ImageList::on_thumbnail_loaded));
-    m_SignalThumbnailsLoaded.connect(sigc::mem_fun(*this, &ImageList::on_thumbnails_loaded));
 }
 
 ImageList::~ImageList()
@@ -129,7 +127,7 @@ bool ImageList::load(const Glib::ustring path, std::string &error, int index)
         m_Images.push_back(std::move(img));
     }
 
-    m_ThumbnailThread = Glib::Threads::Thread::create(sigc::mem_fun(*this, &ImageList::load_thumbnails));
+    m_ThumbnailThread = std::thread(sigc::mem_fun(*this, &ImageList::load_thumbnails));
     set_current(index, false, true);
 
     return true;
@@ -198,7 +196,7 @@ void ImageList::set_current(const size_t index, const bool fromWidget, const boo
 
 void ImageList::load_thumbnails()
 {
-    Glib::ThreadPool pool(4);
+    Glib::ThreadPool pool(std::thread::hardware_concurrency());
     m_ThumbnailCancel->reset();
 
     std::vector<size_t> indices(m_Images.size());
@@ -214,7 +212,7 @@ void ImageList::load_thumbnails()
 
             const Glib::RefPtr<Gdk::Pixbuf> &thumb = m_Images[i]->get_thumbnail();
             {
-                Glib::Threads::Mutex::Lock lock(m_ThumbnailMutex);
+                std::lock_guard<std::mutex> lock(m_ThumbnailMutex);
                 m_ThumbnailQueue.push(PixbufPair(i, thumb));
             }
 
@@ -224,9 +222,6 @@ void ImageList::load_thumbnails()
     }
 
     pool.shutdown(m_ThumbnailCancel->is_cancelled());
-
-    if (!m_ThumbnailCancel->is_cancelled())
-        m_SignalThumbnailsLoaded();
 }
 
 // Resets the image list to it's initial state
@@ -239,15 +234,12 @@ void ImageList::reset()
         m_FileMonitor->cancel();
 
     {
-        Glib::Threads::Mutex::Lock lock(m_ThumbnailMutex);
+        std::lock_guard<std::mutex> lock(m_ThumbnailMutex);
         m_ThumbnailQueue = std::queue<PixbufPair>();
     }
 
-    if (m_ThumbnailThread)
-    {
-        m_ThumbnailThread->join();
-        m_ThumbnailThread = nullptr;
-    }
+    if (m_ThumbnailThread.joinable())
+        m_ThumbnailThread.join();
 
     m_Images.clear();
     m_Widget->clear();
@@ -289,7 +281,7 @@ void ImageList::on_thumbnail_loaded()
 
     while (!m_ThumbnailQueue.empty() && !m_ThumbnailCancel->is_cancelled())
     {
-        Glib::Threads::Mutex::Lock lock(m_ThumbnailMutex);
+        std::lock_guard<std::mutex> lock(m_ThumbnailMutex);
 
         PixbufPair p = m_ThumbnailQueue.front();
         m_Widget->set_pixbuf(p.first, p.second);
@@ -301,8 +293,7 @@ void ImageList::on_thumbnail_loaded()
 
 void ImageList::on_thumbnails_loaded()
 {
-    m_ThumbnailThread->join();
-    m_ThumbnailThread = nullptr;
+    m_ThumbnailThread.join();
 }
 
 void ImageList::on_directory_changed(const Glib::RefPtr<Gio::File> &file,
@@ -423,7 +414,7 @@ void ImageList::update_cache()
 
     // Start the cache loading thread
     m_Cache = cache;
-    m_CacheThread = Glib::Threads::Thread::create([ this ]()
+    m_CacheThread = std::thread([ this ]()
     {
         for (const size_t i : m_Cache)
         {
@@ -437,12 +428,11 @@ void ImageList::update_cache()
 
 void ImageList::cancel_cache()
 {
-    if (m_CacheThread)
+    if (m_CacheThread.joinable())
     {
         m_CacheCancel->cancel();
 
-        m_CacheThread->join();
-        m_CacheThread = nullptr;
+        m_CacheThread.join();
         m_CacheCancel->reset();
 
         m_Cache.clear();

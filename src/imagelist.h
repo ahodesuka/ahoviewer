@@ -124,7 +124,7 @@ namespace AhoViewer
         size_t m_Index;
 
         Glib::RefPtr<Gio::Cancellable> m_ThumbnailCancel;
-        Glib::Threads::Thread *m_ThumbnailThread;
+        std::thread m_ThumbnailThread;
 
         SignalChangedType m_SignalChanged;
     private:
@@ -149,8 +149,8 @@ namespace AhoViewer
         std::function<int(size_t, size_t)> m_IndexSort;
 
         Glib::RefPtr<Gio::Cancellable> m_CacheCancel;
-        Glib::Threads::Mutex m_ThumbnailMutex;
-        Glib::Threads::Thread *m_CacheThread;
+        std::mutex m_ThumbnailMutex;
+        std::thread m_CacheThread;
         Glib::RefPtr<Gio::FileMonitor> m_FileMonitor;
 
         Glib::Dispatcher m_SignalThumbnailLoaded,

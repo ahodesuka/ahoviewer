@@ -105,9 +105,10 @@ void Image::save(const std::string &path)
     {
         start_download();
 
-        Glib::Threads::Mutex::Lock lock(m_DownloadMutex);
-        while (!m_Curler.is_cancelled() && !Glib::file_test(m_Path, Glib::FILE_TEST_EXISTS))
-            m_DownloadCond.wait(m_DownloadMutex);
+        std::unique_lock<std::mutex> lk(m_DownloadMutex);
+        m_DownloadCond.wait(lk, [ this ]
+                { return m_Curler.is_cancelled()
+                      || Glib::file_test(m_Path, Glib::FILE_TEST_EXISTS); });
     }
 
     if (m_Curler.is_cancelled())
@@ -128,7 +129,7 @@ void Image::save(const std::string &path)
 
 void Image::cancel_download()
 {
-    Glib::Threads::Mutex::Lock lock(m_DownloadMutex);
+    std::lock_guard<std::mutex> lock(m_DownloadMutex);
     m_Curler.cancel();
     m_Curler.clear();
 
@@ -139,7 +140,7 @@ void Image::cancel_download()
         m_Loader.reset();
     }
 
-    m_DownloadCond.signal();
+    m_DownloadCond.notify_one();
 }
 
 /**
@@ -169,7 +170,7 @@ void Image::on_write(const unsigned char *d, size_t l)
 {
     try
     {
-        Glib::Threads::Mutex::Lock lock(m_DownloadMutex);
+        std::lock_guard<std::mutex> lock(m_DownloadMutex);
         m_Loader->write(d, l);
     }
     catch (const Gdk::PixbufError &ex)
@@ -189,7 +190,7 @@ void Image::on_progress()
 
 void Image::on_finished()
 {
-    Glib::Threads::Mutex::Lock lock(m_DownloadMutex);
+    std::lock_guard<std::mutex> lock(m_DownloadMutex);
 
     m_Curler.save_file(m_Path);
     m_Curler.clear();
@@ -203,7 +204,7 @@ void Image::on_finished()
     m_Loading = false;
 
     m_SignalPixbufChanged();
-    m_DownloadCond.signal();
+    m_DownloadCond.notify_one();
 }
 
 void Image::on_area_prepared()

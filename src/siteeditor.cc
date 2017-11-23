@@ -19,8 +19,7 @@ SiteEditor::SiteEditor(BaseObjectType *cobj, const Glib::RefPtr<Gtk::Builder> &b
     m_Sites(Settings.get_sites()),
     m_ErrorPixbuf(Gtk::Invisible().render_icon(Gtk::Stock::DELETE, Gtk::ICON_SIZE_MENU)),
     m_SiteCheckEdit(false),
-    m_SiteCheckEditSuccess(false),
-    m_SiteCheckThread(nullptr)
+    m_SiteCheckEditSuccess(false)
 {
     bldr->get_widget("BooruRegisterLinkButton", m_RegisterButton);
     bldr->get_widget("BooruUsernameEntry", m_UsernameEntry);
@@ -90,11 +89,8 @@ SiteEditor::SiteEditor(BaseObjectType *cobj, const Glib::RefPtr<Gtk::Builder> &b
 
 SiteEditor::~SiteEditor()
 {
-    if (m_SiteCheckThread)
-    {
-        m_SiteCheckThread->join();
-        m_SiteCheckThread = nullptr;
-    }
+    if (m_SiteCheckThread.joinable())
+        m_SiteCheckThread.join();
 }
 
 void SiteEditor::on_cursor_changed()
@@ -206,8 +202,8 @@ void SiteEditor::add_edit_site(const Gtk::TreeIter &iter)
         return;
     }
 
-    if (m_SiteCheckThread)
-        m_SiteCheckThread->join();
+    if (m_SiteCheckThread.joinable())
+        m_SiteCheckThread.join();
 
     m_SiteCheckIter = iter;
 
@@ -229,7 +225,7 @@ void SiteEditor::add_edit_site(const Gtk::TreeIter &iter)
         m_SiteCheckEdit = true;
         m_SiteCheckSite = site;
         m_SiteCheckIter->set_value(m_Columns.loading, true);
-        m_SiteCheckThread = Glib::Threads::Thread::create([ this, name, url ]()
+        m_SiteCheckThread = std::thread([ this, name, url ]()
         {
             m_SiteCheckSite->set_name(name);
             m_SiteCheckEditSuccess = m_SiteCheckSite->set_url(url);
@@ -244,7 +240,7 @@ void SiteEditor::add_edit_site(const Gtk::TreeIter &iter)
     {
         m_SiteCheckEdit = false;
         m_SiteCheckIter->set_value(m_Columns.loading, true);
-        m_SiteCheckThread = Glib::Threads::Thread::create([ this, name, url ]()
+        m_SiteCheckThread = std::thread([ this, name, url ]()
         {
             m_SiteCheckSite = Site::create(name, url);
 
@@ -279,8 +275,8 @@ void SiteEditor::on_site_checked()
     if (m_SiteCheckEdit || m_SiteCheckSite)
         m_SignalEdited();
 
-    m_SiteCheckThread->join();
-    m_SiteCheckThread = nullptr;
+    if (m_SiteCheckThread.joinable())
+        m_SiteCheckThread.join();
 }
 
 void SiteEditor::on_username_edited()

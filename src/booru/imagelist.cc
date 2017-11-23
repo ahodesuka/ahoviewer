@@ -84,13 +84,13 @@ void ImageList::load(const xmlDocument &posts, const Page &page)
     // If thumbnails are still loading from the last page
     // the operation needs to be cancelled, all the
     // thumbnails will be loaded in the new thread
-    if (m_ThumbnailThread)
+    if (m_ThumbnailThread.joinable())
     {
         m_ThumbnailCancel->cancel();
-        m_ThumbnailThread->join();
+        m_ThumbnailThread.join();
     }
 
-    m_ThumbnailThread = Glib::Threads::Thread::create(sigc::mem_fun(*this, &ImageList::load_thumbnails));
+    m_ThumbnailThread = std::thread(sigc::mem_fun(*this, &ImageList::load_thumbnails));
 
     // only call set_current if this is the first page
     if (page.get_page_num() == 1)

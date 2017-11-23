@@ -3,6 +3,7 @@
 
 #include <gdkmm.h>
 #include <set>
+#include <thread>
 
 #include "config.h"
 #include "curler.h"
@@ -102,7 +103,7 @@ namespace AhoViewer
             Curler m_Curler;
 
             Glib::RefPtr<Gdk::Pixbuf> m_IconPixbuf;
-            Glib::Threads::Thread *m_IconCurlerThread;
+            std::thread m_IconCurlerThread;
             Glib::Dispatcher m_SignalIconDownloaded;
 
 #ifdef HAVE_LIBSECRET

@@ -3,6 +3,8 @@
 
 #include "curler.h"
 
+#include <thread>
+
 namespace AhoViewer
 {
     namespace Booru
@@ -34,8 +36,8 @@ namespace AhoViewer
 
             Glib::RefPtr<Glib::MainContext> m_MainContext;
             Glib::RefPtr<Glib::MainLoop> m_MainLoop;
-            Glib::Threads::Thread *m_Thread;
-            Glib::Threads::Mutex m_Mutex;
+            std::thread m_Thread;
+            std::recursive_mutex m_Mutex;
 
             CURLM *m_MultiHandle;
             int m_RunningHandles;

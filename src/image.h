@@ -4,6 +4,8 @@
 #include <gdkmm.h>
 #include <glibmm.h>
 
+#include <thread>
+
 #include "config.h"
 
 #ifdef HAVE_GSTREAMER
@@ -49,7 +51,7 @@ namespace AhoViewer
         Glib::RefPtr<Gdk::Pixbuf> m_ThumbnailPixbuf;
         Glib::RefPtr<Gdk::PixbufAnimation> m_Pixbuf;
 
-        Glib::Threads::Mutex m_Mutex;
+        std::mutex m_Mutex;
         Glib::Dispatcher m_SignalPixbufChanged;
     private:
         Glib::RefPtr<Gdk::Pixbuf> scale_pixbuf(Glib::RefPtr<Gdk::Pixbuf> &pixbuf,

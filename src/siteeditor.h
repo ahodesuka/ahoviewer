@@ -3,6 +3,8 @@
 
 #include <gtkmm.h>
 
+#include <thread>
+
 #include "booru/site.h"
 
 namespace AhoViewer
@@ -152,7 +154,7 @@ namespace AhoViewer
         Gtk::TreeIter m_SiteCheckIter;
         bool m_SiteCheckEdit, m_SiteCheckEditSuccess;
 
-        Glib::Threads::Thread *m_SiteCheckThread;
+        std::thread m_SiteCheckThread;
         Glib::Dispatcher m_SignalSiteChecked;
 
         sigc::connection m_UsernameConn,

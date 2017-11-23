@@ -78,8 +78,8 @@ namespace AhoViewer
             std::unique_ptr<xmlDocument> m_Posts;
 
             Glib::RefPtr<Gio::Cancellable> m_SaveCancel;
-            Glib::Threads::Thread *m_GetPostsThread,
-                                  *m_SaveImagesThread;
+            std::thread m_GetPostsThread,
+                        m_SaveImagesThread;
             Glib::Dispatcher m_SignalPostsDownloaded,
                              m_SignalSaveProgressDisp;
 

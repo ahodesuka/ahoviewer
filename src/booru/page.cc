@@ -22,9 +22,7 @@ Page::Page(Gtk::Menu *menu)
     m_NumPosts(0),
     m_LastPage(false),
     m_Saving(false),
-    m_SaveCancel(Gio::Cancellable::create()),
-    m_GetPostsThread(nullptr),
-    m_SaveImagesThread(nullptr)
+    m_SaveCancel(Gio::Cancellable::create())
 {
     set_policy(Gtk::POLICY_NEVER, Gtk::POLICY_AUTOMATIC);
     set_shadow_type(Gtk::SHADOW_ETCHED_IN);
@@ -88,11 +86,8 @@ Page::~Page()
     m_Curler.cancel();
     m_CountsCurler.cancel();
 
-    if (m_GetPostsThread)
-    {
-        m_GetPostsThread->join();
-        m_GetPostsThread = nullptr;
-    }
+    if (m_GetPostsThread.joinable())
+        m_GetPostsThread.join();
 
     cancel_save();
 }
@@ -131,8 +126,8 @@ void Page::search(const std::shared_ptr<Site> &site)
     cancel_save();
     m_ImageList->clear();
 
-    if (m_GetPostsThread)
-        m_GetPostsThread->join();
+    if (m_GetPostsThread.joinable())
+        m_GetPostsThread.join();
 
     m_Site = site;
     m_Page = 1;
@@ -166,7 +161,7 @@ void Page::save_image(const std::string &path, const std::shared_ptr<Image> &img
     m_SaveCancel->reset();
 
     m_Saving            = true;
-    m_SaveImagesThread  = Glib::Threads::Thread::create([ this, path, img ]()
+    m_SaveImagesThread  = std::thread([ this, path, img ]()
     {
         img->save(path);
         m_Saving = false;
@@ -180,7 +175,7 @@ void Page::save_images(const std::string &path)
     m_Saving            = true;
     m_SaveImagesCurrent = 0;
     m_SaveImagesTotal   = m_ImageList->get_vector_size();
-    m_SaveImagesThread  = Glib::Threads::Thread::create([ this, path ]()
+    m_SaveImagesThread  = std::thread([ this, path ]()
     {
 //        Glib::ThreadPool pool(std::thread::hardware_concurrency());
         for (const std::shared_ptr<AhoViewer::Image> &img : *m_ImageList)
@@ -230,11 +225,8 @@ void Page::cancel_save()
         bimage->cancel_download();
     }
 
-    if (m_SaveImagesThread)
-    {
-        m_SaveImagesThread->join();
-        m_SaveImagesThread = nullptr;
-    }
+    if (m_SaveImagesThread.joinable())
+        m_SaveImagesThread.join();
 }
 
 void Page::get_posts()
@@ -256,7 +248,7 @@ void Page::get_posts()
     tags = m_Curler.escape(tags);
     m_Curler.set_url(m_Site->get_posts_url(tags, m_Page));
 
-    m_GetPostsThread = Glib::Threads::Thread::create([ this, tags ]()
+    m_GetPostsThread = std::thread([ this, tags ]()
     {
         size_t postsCount = 0;
         // Danbooru doesn't give the post count with the posts
@@ -306,7 +298,7 @@ bool Page::get_next_page()
 {
     // Do not fetch the next page if this is the last
     // or the current page is still loading
-    if (m_LastPage || m_GetPostsThread)
+    if (m_LastPage || m_GetPostsThread.joinable())
         return false;
 
     if (!m_Saving)
@@ -355,8 +347,7 @@ void Page::on_posts_downloaded()
         m_LastPage = true;
 
     m_Posts = nullptr;
-    m_GetPostsThread->join();
-    m_GetPostsThread = nullptr;
+    m_GetPostsThread.join();
 }
 
 void Page::on_selection_changed()
