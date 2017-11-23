@@ -129,16 +129,16 @@ void Image::save(const std::string &path)
 
 void Image::cancel_download()
 {
-    std::lock_guard<std::mutex> lock(m_DownloadMutex);
     m_Curler.cancel();
-    m_Curler.clear();
 
+    std::lock_guard<std::mutex> lock(m_DownloadMutex);
     if (m_Loader)
     {
         try { m_Loader->close(); }
         catch (...) { }
         m_Loader.reset();
     }
+    m_Curler.clear();
 
     m_DownloadCond.notify_one();
 }
@@ -168,10 +168,13 @@ bool Image::start_download()
 
 void Image::on_write(const unsigned char *d, size_t l)
 {
+    if (m_Curler.is_cancelled())
+        return;
+
     try
     {
         std::lock_guard<std::mutex> lock(m_DownloadMutex);
-        if (!m_Loader || m_Curler.is_cancelled())
+        if (!m_Loader)
             return;
 
         m_Loader->write(d, l);
