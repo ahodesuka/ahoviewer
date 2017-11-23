@@ -171,6 +171,9 @@ void Image::on_write(const unsigned char *d, size_t l)
     try
     {
         std::lock_guard<std::mutex> lock(m_DownloadMutex);
+        if (!m_Loader || m_Curler.is_cancelled())
+            return;
+
         m_Loader->write(d, l);
     }
     catch (const Gdk::PixbufError &ex)
