@@ -182,12 +182,11 @@ void Page::save_images(const std::string &path)
     m_SaveImagesTotal   = m_ImageList->get_vector_size();
     m_SaveImagesThread  = Glib::Threads::Thread::create([ this, path ]()
     {
-        // 2 if cachesize is 0, 8 if cachesize > 2
-        Glib::ThreadPool pool(std::max(std::min(Settings.get_int("CacheSize") * 4, 8), 2));
+//        Glib::ThreadPool pool(std::thread::hardware_concurrency());
         for (const std::shared_ptr<AhoViewer::Image> &img : *m_ImageList)
         {
-            pool.push([ this, path, img ]()
-            {
+//            pool.push([ this, path, img ]()
+//            {
                 if (m_SaveCancel->is_cancelled())
                     return;
 
@@ -197,10 +196,10 @@ void Page::save_images(const std::string &path)
 
                 if (!m_SaveCancel->is_cancelled())
                     m_SignalSaveProgressDisp();
-            });
+//            });
         }
 
-        pool.shutdown(m_SaveCancel->is_cancelled());
+//        pool.shutdown(m_SaveCancel->is_cancelled());
         m_Saving = false;
     });
 }
