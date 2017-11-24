@@ -62,8 +62,6 @@ ImageFetcher::ImageFetcher()
 
 ImageFetcher::~ImageFetcher()
 {
-    std::lock_guard<std::mutex> lock(m_Mutex);
-
     m_MainLoop->quit();
     m_Thread.join();
 
@@ -107,10 +105,7 @@ bool ImageFetcher::event_cb(curl_socket_t sockfd, Glib::IOCondition cond)
     int action = (cond & Glib::IO_IN ? CURL_CSELECT_IN : 0) |
                  (cond & Glib::IO_OUT ? CURL_CSELECT_OUT : 0);
 
-    {
-        std::lock_guard<std::mutex> lock(m_Mutex);
-        curl_multi_socket_action(m_MultiHandle, sockfd, action, &m_RunningHandles);
-    }
+    curl_multi_socket_action(m_MultiHandle, sockfd, action, &m_RunningHandles);
     read_info();
 
     if (m_RunningHandles == 0)
@@ -134,7 +129,6 @@ void ImageFetcher::read_info()
 {
     int msgs;
     CURLMsg *msg = nullptr;
-    std::lock_guard<std::mutex> lock(m_Mutex);
 
     while ((msg = curl_multi_info_read(m_MultiHandle, &msgs)))
     {
