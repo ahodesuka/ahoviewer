@@ -59,7 +59,7 @@ if test x"$windows" != xtrue; then
     )
 
     if test x"$enable_gst" != xno; then
-            PKG_CHECK_MODULES([gstreamer], [gstreamer-1.0 gstreamer-video-1.0 gstreamer-gl-1.0],
+            PKG_CHECK_MODULES([gstreamer], [gstreamer-1.0 gstreamer-video-1.0 gstreamer-plugins-base-1.0],
                 [
                     AC_DEFINE(HAVE_GSTREAMER, 1, [Define to have webm support through GStreamer])
                 ],

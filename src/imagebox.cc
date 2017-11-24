@@ -7,12 +7,7 @@ using namespace AhoViewer;
 
 #ifdef HAVE_GSTREAMER
 #include <gst/video/videooverlay.h>
-#ifdef GDK_WINDOWING_X11
 #include <gdk/gdkx.h>
-#endif // GDK_WINDOWING_X11
-#ifdef GDK_WINDOWING_WIN32
-#include <gdk/gdkwin32.h>
-#endif // GDK_WINDOWING_WIN32
 
 GstBusSyncReply ImageBox::create_window(GstBus*, GstMessage *message, void *userp)
 {
@@ -68,9 +63,10 @@ ImageBox::ImageBox(BaseObjectType *cobj, const Glib::RefPtr<Gtk::Builder> &bldr)
 
 #ifdef HAVE_GSTREAMER
     m_Playbin   = gst_element_factory_make("playbin", "playbin"),
-    m_VideoSink = gst_element_factory_make("glimagesink", "videosink");
+    m_VideoSink = gst_element_factory_make("xvimagesink", "videosink");
 
-    gst_video_overlay_handle_events(GST_VIDEO_OVERLAY(m_VideoSink), false);
+    if (!m_VideoSink)
+        m_VideoSink = gst_element_factory_make("ximagesink", "videosink");
 
     g_object_set(m_Playbin,
             "audio-sink", gst_element_factory_make("fakesink", "audiosink"),
@@ -84,12 +80,7 @@ ImageBox::ImageBox(BaseObjectType *cobj, const Glib::RefPtr<Gtk::Builder> &bldr)
 
     m_DrawingArea->signal_realize().connect([ this ]()
     {
-#ifdef GDK_WINDOWING_X11
         m_WindowHandle = GDK_WINDOW_XID(m_DrawingArea->get_window()->gobj());
-#endif // GDK_WINDOWING_X11
-#ifdef GDK_WINDOWING_WIN32
-        m_WindowHandle = GDK_WINDOW_HWND(m_DrawingArea->get_window()->gobj());
-#endif // GDK_WINDOWING_WIN32
         gst_element_set_state(m_Playbin, GST_STATE_READY);
      });
 #endif // HAVE_GSTREAMER
@@ -537,11 +528,14 @@ void ImageBox::draw_image(bool scroll)
         m_Layout->move(*m_GtkImage, x, y);
         m_GtkImage->set(tempPixbuf);
     }
+#ifdef HAVE_GSTREAMER
     else
     {
         m_Layout->move(*m_DrawingArea, x, y);
         m_DrawingArea->set_size_request(scaledWidth, scaledHeight);
+        gst_video_overlay_expose(GST_VIDEO_OVERLAY(m_VideoSink));
     }
+#endif // HAVE_GSTREAMER
 
     // Reset the scrollbar positions
     if (scroll || m_FirstDraw)
@@ -619,6 +613,10 @@ void ImageBox::scroll(const int x, const int y, const bool panning, const bool f
 
         if (nY <= adjustUpperY)
             m_VAdjust->set_value(nY);
+#ifdef HAVE_GSTREAMER
+        if (m_Playing && m_Image->is_webm())
+            gst_video_overlay_expose(GST_VIDEO_OVERLAY(m_VideoSink));
+#endif // HAVE_GSTREAMER
     }
     else
     {
