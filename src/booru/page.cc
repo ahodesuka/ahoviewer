@@ -159,6 +159,8 @@ void Page::search(const std::shared_ptr<Site> &site)
 void Page::save_image(const std::string &path, const std::shared_ptr<Image> &img)
 {
     m_SaveCancel->reset();
+    if (m_SaveImagesThread.joinable())
+        m_SaveImagesThread.join();
 
     m_Saving            = true;
     m_SaveImagesThread  = std::thread([ this, path, img ]()
@@ -171,6 +173,8 @@ void Page::save_image(const std::string &path, const std::shared_ptr<Image> &img
 void Page::save_images(const std::string &path)
 {
     m_SaveCancel->reset();
+    if (m_SaveImagesThread.joinable())
+        m_SaveImagesThread.join();
 
     m_Saving            = true;
     m_SaveImagesCurrent = 0;
