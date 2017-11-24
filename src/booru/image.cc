@@ -203,7 +203,8 @@ void Image::on_finished()
 
     if (m_Loader)
     {
-        m_Loader->close();
+        try { m_Loader->close(); }
+        catch (...) { }
         m_Loader.reset();
     }
 
