@@ -10,7 +10,7 @@ A GTK2 image viewer, manga reader, and booru browser.
 * libcurl `>= 7.32.0`
 * libxml2
 * gstreamer-1.0 `optional`
-    * gst-plugins-base
+    * gst-plugins-base `runtime`
     * gst-plugins-good `runtime`
     * gst-plugins-vpx or gst-plugins-libav `runtime`
 * libsecret `optional`
