@@ -407,14 +407,24 @@ void ImageBox::draw_image(bool scroll)
         GstPad *pad = nullptr;
         g_signal_emit_by_name(m_Playbin, "get-video-pad", 0, &pad, NULL);
 
-        GstCaps *caps = gst_pad_get_current_caps(pad);
-        GstStructure *s = gst_caps_get_structure(caps, 0);
+        if (pad)
+        {
+            GstCaps *caps = gst_pad_get_current_caps(pad);
+            GstStructure *s = gst_caps_get_structure(caps, 0);
 
-        gst_structure_get_int(s, "width", &m_OrigWidth);
-        gst_structure_get_int(s, "height", &m_OrigHeight);
+            gst_structure_get_int(s, "width", &m_OrigWidth);
+            gst_structure_get_int(s, "height", &m_OrigHeight);
 
-        gst_caps_unref(caps);
-        gst_object_unref(pad);
+            gst_caps_unref(caps);
+            gst_object_unref(pad);
+        }
+        else
+        {
+            tempPixbuf = Image::get_missing_pixbuf();
+            m_OrigWidth  = tempPixbuf->get_width();
+            m_OrigHeight = tempPixbuf->get_height();
+            m_DrawingArea->hide();
+        }
     }
     else
     {
