@@ -4,6 +4,7 @@
 #include <gdkmm.h>
 #include <glibmm.h>
 
+#include <mutex>
 #include <thread>
 
 #include "config.h"

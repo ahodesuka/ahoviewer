@@ -3,6 +3,7 @@
 
 #include "curler.h"
 
+#include <mutex>
 #include <thread>
 
 namespace AhoViewer
