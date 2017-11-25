@@ -36,7 +36,10 @@ int ImageFetcher::socket_cb(CURL*, curl_socket_t s, int action, void *userp, voi
         source->attach(self->m_MainContext);
 
         if (need_assign)
+        {
+            std::lock_guard<std::recursive_mutex> lock(self->m_Mutex);
             curl_multi_assign(self->m_MultiHandle, s, fdp);
+        }
     }
 
     return 0;
@@ -87,13 +90,12 @@ ImageFetcher::~ImageFetcher()
 
 void ImageFetcher::add_handle(Curler *curler)
 {
-    std::lock_guard<std::mutex> lock(m_Mutex);
-
     curl_easy_setopt(curler->m_EasyHandle, CURLOPT_PRIVATE, curler);
 
     curler->m_Cancel->reset();
     curler->clear();
 
+    std::lock_guard<std::recursive_mutex> lock(m_Mutex);
     m_Curlers.push_back(curler);
     curl_multi_add_handle(m_MultiHandle, curler->m_EasyHandle);
 
@@ -106,6 +108,7 @@ void ImageFetcher::remove_handle(Curler *curler)
     if (!curler)
         return;
 
+    std::lock_guard<std::recursive_mutex> lock(m_Mutex);
     if (curler->m_EasyHandle)
         curl_multi_remove_handle(m_MultiHandle, curler->m_EasyHandle);
 
@@ -119,6 +122,7 @@ bool ImageFetcher::event_cb(curl_socket_t sockfd, Glib::IOCondition cond)
     int action = (cond & Glib::IO_IN ? CURL_CSELECT_IN : 0) |
                  (cond & Glib::IO_OUT ? CURL_CSELECT_OUT : 0);
 
+    std::lock_guard<std::recursive_mutex> lock(m_Mutex);
     curl_multi_socket_action(m_MultiHandle, sockfd, action, &m_RunningHandles);
     read_info();
 
@@ -133,6 +137,7 @@ bool ImageFetcher::event_cb(curl_socket_t sockfd, Glib::IOCondition cond)
 
 bool ImageFetcher::timeout_cb()
 {
+    std::lock_guard<std::recursive_mutex> lock(m_Mutex);
     curl_multi_socket_action(m_MultiHandle, CURL_SOCKET_TIMEOUT, 0, &m_RunningHandles);
     read_info();
 
@@ -144,6 +149,7 @@ void ImageFetcher::read_info()
     int msgs;
     CURLMsg *msg = nullptr;
 
+    std::lock_guard<std::recursive_mutex> lock(m_Mutex);
     while ((msg = curl_multi_info_read(m_MultiHandle, &msgs)))
     {
         if (msg->msg == CURLMSG_DONE)

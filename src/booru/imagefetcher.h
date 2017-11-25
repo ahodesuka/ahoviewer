@@ -38,7 +38,7 @@ namespace AhoViewer
             Glib::RefPtr<Glib::MainContext> m_MainContext;
             Glib::RefPtr<Glib::MainLoop> m_MainLoop;
             std::thread m_Thread;
-            std::mutex m_Mutex;
+            std::recursive_mutex m_Mutex;
 
             CURLM *m_MultiHandle;
             int m_RunningHandles;
