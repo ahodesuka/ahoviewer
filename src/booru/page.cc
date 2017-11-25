@@ -7,6 +7,7 @@ using namespace AhoViewer::Booru;
 #include "curler.h"
 #include "image.h"
 #include "settings.h"
+#include "threadpool.h"
 
 Page::Page(Gtk::Menu *menu)
   : Gtk::ScrolledWindow(),
@@ -181,24 +182,25 @@ void Page::save_images(const std::string &path)
     m_SaveImagesTotal   = m_ImageList->get_vector_size();
     m_SaveImagesThread  = std::thread([ this, path ]()
     {
-//        Glib::ThreadPool pool(std::thread::hardware_concurrency());
-        for (const std::shared_ptr<AhoViewer::Image> &img : *m_ImageList)
         {
-//            pool.push([ this, path, img ]()
-//            {
-                if (m_SaveCancel->is_cancelled())
-                    return;
+            ThreadPool pool(std::thread::hardware_concurrency());
+            for (const std::shared_ptr<AhoViewer::Image> &img : *m_ImageList)
+            {
+                pool.enqueue([ this, path, img ]()
+                {
+                    if (m_SaveCancel->is_cancelled())
+                        return;
 
-                std::shared_ptr<Image> bimage = std::static_pointer_cast<Image>(img);
-                bimage->save(Glib::build_filename(path, Glib::path_get_basename(bimage->get_filename())));
-                ++m_SaveImagesCurrent;
+                    std::shared_ptr<Image> bimage = std::static_pointer_cast<Image>(img);
+                    bimage->save(Glib::build_filename(path, Glib::path_get_basename(bimage->get_filename())));
+                    ++m_SaveImagesCurrent;
 
-                if (!m_SaveCancel->is_cancelled())
-                    m_SignalSaveProgressDisp();
-//            });
+                    if (!m_SaveCancel->is_cancelled())
+                        m_SignalSaveProgressDisp();
+                });
+            }
         }
 
-//        pool.shutdown(m_SaveCancel->is_cancelled());
         m_Saving = false;
     });
 }
