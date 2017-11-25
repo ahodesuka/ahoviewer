@@ -73,6 +73,8 @@ const Glib::RefPtr<Gdk::Pixbuf>& Image::get_thumbnail()
             m_ThumbnailPixbuf = get_missing_pixbuf();
             m_ThumbnailLock.writer_unlock();
         }
+
+        m_ThumbnailCurler.clear();
     }
 
     return m_ThumbnailPixbuf;
