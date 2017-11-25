@@ -165,8 +165,11 @@ void SiteEditor::delete_site()
         m_SignalEdited();
 
         Gtk::TreeIter n = m_Model->erase(o);
-        get_selection()->select(n ? n : --n);
-        on_cursor_changed();
+        if (m_Model->children().size())
+        {
+            get_selection()->select(n ? n : --n);
+            on_cursor_changed();
+        }
     }
 }
 
