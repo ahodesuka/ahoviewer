@@ -1,5 +1,6 @@
 *.o
 *.swp
+.gdb_history
 .syntastic_cpp_config
 .ycm_extra_conf.py*
 TAGS
