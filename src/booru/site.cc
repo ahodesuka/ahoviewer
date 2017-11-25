@@ -18,6 +18,7 @@ const std::map<Site::Type, std::string> Site::RequestURI =
     { Type::DANBOORU, "/post/index.xml?page=%1&limit=%2&tags=%3" },
     { Type::GELBOORU, "/index.php?page=dapi&s=post&q=index&pid=%1&limit=%2&tags=%3" },
     { Type::MOEBOORU, "/post.xml?page=%1&limit=%2&tags=%3" },
+    { Type::SHIMMIE,  "/api/danbooru/find_posts/index.xml?page=%1&limit=%2&tags=%3" },
 };
 
 // 1: id
@@ -26,6 +27,7 @@ const std::map<Site::Type, std::string> Site::PostURI =
     { Type::DANBOORU, "/posts/%1" },
     { Type::GELBOORU, "/index.php?page=post&s=view&id=%1" },
     { Type::MOEBOORU, "/post/show/%1" },
+    { Type::SHIMMIE,  "/post/view/%1" },
 };
 
 const std::map<Site::Type, std::string> Site::RegisterURI =
@@ -33,6 +35,7 @@ const std::map<Site::Type, std::string> Site::RegisterURI =
     { Type::DANBOORU, "/users/new" },
     { Type::GELBOORU, "/index.php?page=account&s=reg" },
     { Type::MOEBOORU, "/user/signup" },
+    { Type::SHIMMIE,  "/user_admin/create" },
 };
 
 struct _shared_site : public Site
@@ -102,7 +105,7 @@ Site::Type Site::get_type_from_url(const std::string &url)
     curler.set_no_body();
     curler.set_follow_location(false);
 
-    for (const Type &type : { Type::GELBOORU, Type::MOEBOORU, Type::DANBOORU })
+    for (const Type &type : { Type::GELBOORU, Type::MOEBOORU, Type::DANBOORU, Type::SHIMMIE })
     {
         std::string uri = RequestURI.at(type);
 

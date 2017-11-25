@@ -28,6 +28,7 @@ namespace AhoViewer
                 DANBOORU,
                 GELBOORU,
                 MOEBOORU,
+                SHIMMIE,
             };
 
             ~Site();
