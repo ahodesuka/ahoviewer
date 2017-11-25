@@ -46,8 +46,13 @@ int ImageFetcher::timer_cb(CURLM*, long timeout_ms, void *userp)
 {
     ImageFetcher *self = static_cast<ImageFetcher*>(userp);
 
-    self->m_TimeoutConn = self->m_MainContext->signal_timeout().connect(
-            sigc::mem_fun(self, &ImageFetcher::timeout_cb), timeout_ms);
+    if (timeout_ms > 0)
+        self->m_TimeoutConn = self->m_MainContext->signal_timeout().connect(
+                sigc::mem_fun(self, &ImageFetcher::timeout_cb), timeout_ms);
+    else if (timeout_ms == 0)
+        self->timeout_cb();
+    else if (timeout_ms == -1 && self->m_TimeoutConn)
+        self->m_TimeoutConn.disconnect();
 
     return 0;
 }
@@ -68,6 +73,9 @@ ImageFetcher::ImageFetcher()
 
 ImageFetcher::~ImageFetcher()
 {
+    if (m_TimeoutConn)
+        m_TimeoutConn.disconnect();
+
     m_MainLoop->quit();
     m_Thread.join();
 
