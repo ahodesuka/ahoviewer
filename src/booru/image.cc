@@ -97,7 +97,7 @@ void Image::load_pixbuf()
 
 void Image::reset_pixbuf()
 {
-    if (m_Loading)
+    if (m_Curler.is_active())
         cancel_download();
 
     AhoViewer::Image::reset_pixbuf();
