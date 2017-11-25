@@ -93,6 +93,23 @@ SiteEditor::~SiteEditor()
         m_SiteCheckThread.join();
 }
 
+bool SiteEditor::on_key_release_event(GdkEventKey *e)
+{
+    if (e->keyval == GDK_Return || e->keyval == GDK_ISO_Enter
+     || e->keyval == GDK_KP_Enter || e->keyval == GDK_Tab)
+    {
+        Gtk::TreeIter iter = get_selection()->get_selected();
+        Gtk::TreePath p(iter);
+
+        if (iter->get_value(m_Columns.url).empty())
+            set_cursor(p, *m_UrlColumn, true);
+        else if (iter->get_value(m_Columns.name).empty())
+            set_cursor(p, *m_NameColumn, true);
+    }
+
+    return false;
+}
+
 void SiteEditor::on_cursor_changed()
 {
     Gtk::TreeView::on_cursor_changed();
@@ -142,12 +159,15 @@ void SiteEditor::delete_site()
 {
     Gtk::TreeIter o = get_selection()->get_selected();
 
-    m_Sites.erase(std::remove(m_Sites.begin(), m_Sites.end(), o->get_value(m_Columns.site)), m_Sites.end());
-    m_SignalEdited();
+    if (o)
+    {
+        m_Sites.erase(std::remove(m_Sites.begin(), m_Sites.end(), o->get_value(m_Columns.site)), m_Sites.end());
+        m_SignalEdited();
 
-    Gtk::TreeIter n = m_Model->erase(o);
-    get_selection()->select(n ? n : --n);
-    on_cursor_changed();
+        Gtk::TreeIter n = m_Model->erase(o);
+        get_selection()->select(n ? n : --n);
+        on_cursor_changed();
+    }
 }
 
 void SiteEditor::on_name_edited(const std::string &p, const std::string &text)
@@ -162,10 +182,7 @@ void SiteEditor::on_name_edited(const std::string &p, const std::string &text)
 
     iter->set_value(m_Columns.name, name);
 
-    // start editing url column if it's blank
-    if (iter->get_value(m_Columns.url).empty())
-        set_cursor(path, *m_UrlColumn, true);
-    else
+    if (!iter->get_value(m_Columns.url).empty())
         add_edit_site(iter);
 }
 

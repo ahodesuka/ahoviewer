@@ -19,6 +19,8 @@ namespace AhoViewer
 
         sigc::signal<void> signal_edited() const { return m_SignalEdited; }
     protected:
+        virtual bool on_key_release_event(GdkEventKey *e) override;
+
         void on_cursor_changed() override;
     private:
         class CellRendererIcon : public Gtk::CellRenderer/*{{{*/
