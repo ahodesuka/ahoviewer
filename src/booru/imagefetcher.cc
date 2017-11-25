@@ -6,17 +6,20 @@ int ImageFetcher::socket_cb(CURL*, curl_socket_t s, int action, void *userp, voi
     ImageFetcher *self = static_cast<ImageFetcher*>(userp);
     SockInfo *fdp = static_cast<SockInfo*>(sockp);
 
-    if (action == CURL_POLL_REMOVE && fdp)
+    if (action == CURL_POLL_REMOVE)
     {
-        delete fdp;
+        if (fdp)
+            delete fdp;
     }
     else
     {
+        bool need_assign = false;
+
         if (!fdp)
         {
+            need_assign = true;
             fdp = new SockInfo();
             fdp->chan = Glib::IOChannel::create_from_fd(s);
-            curl_multi_assign(self->m_MultiHandle, s, fdp);
         }
 
         Glib::IOCondition kind;
@@ -31,6 +34,9 @@ int ImageFetcher::socket_cb(CURL*, curl_socket_t s, int action, void *userp, voi
 
         fdp->conn = source->connect(sigc::bind<0>(sigc::mem_fun(self, &ImageFetcher::event_cb), s));
         source->attach(self->m_MainContext);
+
+        if (need_assign)
+            curl_multi_assign(self->m_MultiHandle, s, fdp);
     }
 
     return 0;
