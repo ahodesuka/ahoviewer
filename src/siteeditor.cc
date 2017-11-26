@@ -113,8 +113,10 @@ bool SiteEditor::on_key_release_event(GdkEventKey *e)
 void SiteEditor::on_cursor_changed()
 {
     Gtk::TreeView::on_cursor_changed();
+    std::shared_ptr<Site> s = nullptr;
 
-    const std::shared_ptr<Site> &s = get_selection()->get_selected()->get_value(m_Columns.site);
+    if (get_selection()->get_selected())
+        s = get_selection()->get_selected()->get_value(m_Columns.site);
 
     m_UsernameConn.block();
     m_PasswordConn.block();
@@ -166,10 +168,8 @@ void SiteEditor::delete_site()
 
         Gtk::TreeIter n = m_Model->erase(o);
         if (m_Model->children().size())
-        {
             get_selection()->select(n ? n : --n);
-            on_cursor_changed();
-        }
+        on_cursor_changed();
     }
 }
 
