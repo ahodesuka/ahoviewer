@@ -56,8 +56,6 @@ Page::Page(Gtk::Menu *menu)
 
     get_vadjustment()->signal_value_changed().connect(sigc::mem_fun(*this, &Page::on_value_changed));
 
-    ModelColumns columns;
-    m_ListStore = Gtk::ListStore::create(columns);
     m_IconView->set_model(m_ListStore);
     m_IconView->set_selection_mode(Gtk::SELECTION_BROWSE);
     m_IconView->set_item_width(Image::BooruThumbnailSize - m_IconView->get_margin()
@@ -182,25 +180,24 @@ void Page::save_images(const std::string &path)
     m_SaveImagesTotal   = m_ImageList->get_vector_size();
     m_SaveImagesThread  = std::thread([ this, path ]()
     {
+        ThreadPool pool(std::thread::hardware_concurrency());
+        for (const std::shared_ptr<AhoViewer::Image> &img : *m_ImageList)
         {
-            ThreadPool pool(std::thread::hardware_concurrency());
-            for (const std::shared_ptr<AhoViewer::Image> &img : *m_ImageList)
+            pool.push([ this, path, img ]()
             {
-                pool.enqueue([ this, path, img ]()
-                {
-                    if (m_SaveCancel->is_cancelled())
-                        return;
+                if (m_SaveCancel->is_cancelled())
+                    return;
 
-                    std::shared_ptr<Image> bimage = std::static_pointer_cast<Image>(img);
-                    bimage->save(Glib::build_filename(path, Glib::path_get_basename(bimage->get_filename())));
-                    ++m_SaveImagesCurrent;
+                std::shared_ptr<Image> bimage = std::static_pointer_cast<Image>(img);
+                bimage->save(Glib::build_filename(path, Glib::path_get_basename(bimage->get_filename())));
+                ++m_SaveImagesCurrent;
 
-                    if (!m_SaveCancel->is_cancelled())
-                        m_SignalSaveProgressDisp();
-                });
-            }
+                if (!m_SaveCancel->is_cancelled())
+                    m_SignalSaveProgressDisp();
+            });
         }
 
+        pool.wait();
         m_Saving = false;
     });
 }

@@ -7,12 +7,13 @@ using namespace AhoViewer;
 #include "booru/image.h"
 #include "naturalsort.h"
 #include "settings.h"
-#include "threadpool.h"
 
 ImageList::ImageList(Widget *const w)
   : m_Widget(w),
     m_Index(0),
     m_ThumbnailCancel(Gio::Cancellable::create()),
+    // number of threads (cores) times 2 since most of the work is I/O
+    m_ThreadPool(std::thread::hardware_concurrency() * 2),
     m_CacheCancel(Gio::Cancellable::create())
 {
     // Sorts indices based on how close they are to m_Index
@@ -128,8 +129,8 @@ bool ImageList::load(const Glib::ustring path, std::string &error, int index)
         m_Images.push_back(std::move(img));
     }
 
-    m_ThumbnailThread = std::thread(sigc::mem_fun(*this, &ImageList::load_thumbnails));
     set_current(index, false, true);
+    m_ThumbnailThread = std::thread(sigc::mem_fun(*this, &ImageList::load_thumbnails));
 
     return true;
 }
@@ -191,13 +192,18 @@ void ImageList::set_current(const size_t index, const bool fromWidget, const boo
     m_SignalChanged(m_Images[m_Index]);
     update_cache();
 
+    if (m_ThreadPool.active())
+    {
+        cancel_thumbnail_thread();
+        m_ThumbnailThread = std::thread(sigc::mem_fun(*this, &ImageList::load_thumbnails));
+    }
+
     if (!fromWidget)
         m_Widget->set_selected(m_Index);
 }
 
 void ImageList::load_thumbnails()
 {
-    ThreadPool pool(std::thread::hardware_concurrency());
     m_ThumbnailCancel->reset();
 
     std::vector<size_t> indices(m_Images.size());
@@ -206,7 +212,7 @@ void ImageList::load_thumbnails()
 
     for (const size_t i : indices)
     {
-        pool.enqueue([ this, i ]()
+        m_ThreadPool.push([ this, i ]()
         {
             if (m_ThumbnailCancel->is_cancelled())
                 return;
@@ -227,18 +233,11 @@ void ImageList::load_thumbnails()
 void ImageList::reset()
 {
     cancel_cache();
-    m_ThumbnailCancel->cancel();
 
     if (m_FileMonitor)
         m_FileMonitor->cancel();
 
-    {
-        std::lock_guard<std::mutex> lock(m_ThumbnailMutex);
-        m_ThumbnailQueue = std::queue<PixbufPair>();
-    }
-
-    if (m_ThumbnailThread.joinable())
-        m_ThumbnailThread.join();
+    cancel_thumbnail_thread();
 
     m_Images.clear();
     m_Widget->clear();
@@ -248,9 +247,21 @@ void ImageList::reset()
     m_Index = 0;
 }
 
+void ImageList::cancel_thumbnail_thread()
+{
+    m_ThumbnailCancel->cancel();
+
+    m_ThreadPool.kill();
+    if (m_ThumbnailThread.joinable())
+        m_ThumbnailThread.join();
+
+    std::lock_guard<std::mutex> lock(m_ThumbnailMutex);
+    m_ThumbnailQueue = std::queue<PixbufPair>();
+}
+
 /**
  * Returns an unsorted vector of the paths to valid T's.
- * T must have a static method ::is_valid, ie Image and Archive
+ * T must have a static method ::is_valid_extension, ie Image and Archive
  **/
 template <typename T>
 std::vector<std::string> ImageList::get_entries(const std::string &path)
@@ -265,7 +276,7 @@ std::vector<std::string> ImageList::get_entries(const std::string &path)
         *i = Glib::build_filename(path, *i);
 
         // Make sure it is a loadable image/archive
-        if (T::is_valid(*i))
+        if (T::is_valid_extension(*i))
             ++i;
         else
             i = entries.erase(i);
@@ -278,21 +289,19 @@ void ImageList::on_thumbnail_loaded()
 {
     m_ThumbnailLoadedConn.block();
 
-    while (!m_ThumbnailQueue.empty() && !m_ThumbnailCancel->is_cancelled())
+    while (!m_ThumbnailCancel->is_cancelled() && !m_ThumbnailQueue.empty())
     {
-        std::lock_guard<std::mutex> lock(m_ThumbnailMutex);
-
+        std::unique_lock<std::mutex> lock(m_ThumbnailMutex);
         PixbufPair p = m_ThumbnailQueue.front();
+        lock.unlock();
         m_Widget->set_pixbuf(p.first, p.second);
-        m_ThumbnailQueue.pop();
+        lock.lock();
+        // Queue may have been clared during set_pixbuf
+        if (!m_ThumbnailQueue.empty())
+            m_ThumbnailQueue.pop();
     }
 
     m_ThumbnailLoadedConn.unblock();
-}
-
-void ImageList::on_thumbnails_loaded()
-{
-    m_ThumbnailThread.join();
 }
 
 void ImageList::on_directory_changed(const Glib::RefPtr<Gio::File> &file,

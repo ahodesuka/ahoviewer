@@ -9,15 +9,12 @@ ThumbnailBar::ThumbnailBar(BaseObjectType *cobj, const Glib::RefPtr<Gtk::Builder
   : Gtk::ScrolledWindow(cobj),
     m_KeepAligned(true)
 {
-    ModelColumns columns;
-
     bldr->get_widget("ThumbnailBar::TreeView", m_TreeView);
 
     m_VAdjust = Glib::RefPtr<Gtk::Adjustment>::cast_static(bldr->get_object("ThumbnailBar::VAdjust"));
 
-    m_ListStore = Gtk::ListStore::create(columns);
     m_TreeView->set_model(m_ListStore);
-    m_TreeView->append_column("Thumbnail", columns.pixbuf_column);
+    m_TreeView->append_column("Thumbnail", m_Columns.pixbuf);
     m_TreeView->set_size_request(Image::ThumbnailSize + 9, -1);
     m_TreeView->signal_cursor_changed().connect(sigc::mem_fun(*this, &ThumbnailBar::on_cursor_changed));
 
@@ -36,6 +33,8 @@ void ThumbnailBar::set_pixbuf(const size_t index, const Glib::RefPtr<Gdk::Pixbuf
 {
     m_ScrollConn.block();
     ImageList::Widget::set_pixbuf(index, pixbuf);
+    while (Gtk::Main::events_pending())
+        Gtk::Main::iteration();
     m_ScrollConn.unblock();
 
     // Keep the selected image centered while thumbnails are being added
@@ -91,4 +90,7 @@ void ThumbnailBar::on_cursor_changed()
 
     m_TreeView->get_cursor(path, column);
     m_SignalSelectedChanged(path[0]);
+
+    Gtk::TreeIter iter = m_ListStore->get_iter(path);
+    if (iter) m_KeepAligned = !iter->get_value(m_Columns.pixbuf);
 }

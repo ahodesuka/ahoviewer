@@ -98,3 +98,16 @@ void ImageList::load(const xmlDocument &posts, const Page &page)
     else
         m_SignalChanged(m_Images[m_Index]);
 }
+
+void ImageList::set_current(const size_t index, const bool fromWidget, const bool force)
+{
+    if (index == m_Index && !force)
+        return;
+
+    m_Index = index;
+    m_SignalChanged(m_Images[m_Index]);
+    update_cache();
+
+    if (!fromWidget)
+        m_Widget->set_selected(m_Index);
+}

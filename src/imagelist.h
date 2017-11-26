@@ -10,9 +10,11 @@
 #include "archive/archive.h"
 #include "booru/xml.h"
 #include "image.h"
+#include "threadpool.h"
 
 namespace AhoViewer
 {
+    namespace Booru { class ImageList; }
     class ImageList : public sigc::trackable
     {
         using ImageVector = std::vector<std::shared_ptr<Image>>;
@@ -32,16 +34,18 @@ namespace AhoViewer
         class Widget
         {
             friend class ImageList;
+            friend class Booru::ImageList;
 
             // When the widget's selected item changes it will emit this signal.
             using SignalSelectedChangedType = sigc::signal<void, const size_t>;
         public:
+            Widget() : m_ListStore(Gtk::ListStore::create(m_Columns)) { }
             virtual ~Widget() = default;
         protected:
             struct ModelColumns : public Gtk::TreeModelColumnRecord
             {
-                ModelColumns() { add(pixbuf_column); }
-                Gtk::TreeModelColumn<Glib::RefPtr<Gdk::Pixbuf>> pixbuf_column;
+                ModelColumns() { add(pixbuf); }
+                Gtk::TreeModelColumn<Glib::RefPtr<Gdk::Pixbuf>> pixbuf;
             };
 
             virtual void set_selected(const size_t) = 0;
@@ -62,6 +66,7 @@ namespace AhoViewer
                     m_ListStore->append();
             }
 
+            ModelColumns m_Columns;
             Glib::RefPtr<Gtk::ListStore> m_ListStore;
             SignalSelectedChangedType m_SignalSelectedChanged;
         private:
@@ -118,6 +123,7 @@ namespace AhoViewer
     protected:
         virtual void set_current(const size_t index, const bool fromWidget = false, const bool force = false);
         virtual void load_thumbnails();
+        void update_cache();
 
         Widget *const m_Widget;
         ImageVector m_Images;
@@ -125,21 +131,21 @@ namespace AhoViewer
 
         Glib::RefPtr<Gio::Cancellable> m_ThumbnailCancel;
         std::thread m_ThumbnailThread;
+        ThreadPool m_ThreadPool;
 
         SignalChangedType m_SignalChanged;
     private:
         void reset();
+        void cancel_thumbnail_thread();
         template <typename T>
         std::vector<std::string> get_entries(const std::string &path);
 
         void on_thumbnail_loaded();
-        void on_thumbnails_loaded();
         void on_directory_changed(const Glib::RefPtr<Gio::File> &file,
                                   const Glib::RefPtr<Gio::File>&,
                                   Gio::FileMonitorEvent event);
 
         void set_current_relative(const int d);
-        void update_cache();
         void cancel_cache();
 
         std::vector<size_t> m_Cache;
@@ -153,8 +159,7 @@ namespace AhoViewer
         std::thread m_CacheThread;
         Glib::RefPtr<Gio::FileMonitor> m_FileMonitor;
 
-        Glib::Dispatcher m_SignalThumbnailLoaded,
-                         m_SignalThumbnailsLoaded;
+        Glib::Dispatcher m_SignalThumbnailLoaded;
 
         sigc::connection m_ThumbnailLoadedConn;
 
