@@ -19,9 +19,10 @@ Image::Image(const std::string &path, const std::string &url,
     m_Tags(tags),
     m_Page(page),
     m_Curler(m_Url),
-    m_ThumbnailCurler(m_ThumbnailUrl),
+    m_ThumbnailCurler(new Curler(m_ThumbnailUrl)),
     m_PixbufError(false)
 {
+    m_SignalThumbnailLoaded.connect([ this ] { m_ThumbnailCurler.reset(nullptr); });
     m_ThumbnailPath = thumbPath;
 
     if (!m_isWebM)
@@ -49,9 +50,9 @@ const Glib::RefPtr<Gdk::Pixbuf>& Image::get_thumbnail()
 {
     if (!m_ThumbnailPixbuf)
     {
-        if (m_ThumbnailCurler.perform())
+        if (m_ThumbnailCurler->perform())
         {
-            m_ThumbnailCurler.save_file(m_ThumbnailPath);
+            m_ThumbnailCurler->save_file(m_ThumbnailPath);
 
             m_ThumbnailLock.writer_lock();
             try
@@ -68,13 +69,13 @@ const Glib::RefPtr<Gdk::Pixbuf>& Image::get_thumbnail()
         else
         {
             std::cerr << "Error while downloading thumbnail " << m_ThumbnailUrl
-                      << " " << std::endl << "  " << m_ThumbnailCurler.get_error() << std::endl;
+                      << " " << std::endl << "  " << m_ThumbnailCurler->get_error() << std::endl;
             m_ThumbnailLock.writer_lock();
             m_ThumbnailPixbuf = get_missing_pixbuf();
             m_ThumbnailLock.writer_unlock();
         }
 
-        m_ThumbnailCurler.clear();
+        m_SignalThumbnailLoaded();
     }
 
     return m_ThumbnailPixbuf;
