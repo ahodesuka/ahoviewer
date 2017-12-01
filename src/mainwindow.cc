@@ -119,7 +119,7 @@ MainWindow::MainWindow(BaseObjectType *cobj, const Glib::RefPtr<Gtk::Builder> &b
 
     m_AboutDialog->set_name(PACKAGE);
     m_AboutDialog->set_version(ahoviewer_version);
-    m_AboutDialog->set_copyright("Copyright \302\251 2013-2017 ahoka");
+    m_AboutDialog->set_copyright(u8"Copyright \u00A9 2013-2017 ahoka");
     m_AboutDialog->set_website(PACKAGE_URL);
 
     m_AboutDialog->set_license(
