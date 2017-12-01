@@ -56,10 +56,10 @@ namespace AhoViewer
         class Queue
         {
         public:
-            bool push(T const & value)
+            bool push(T value)
             {
                 std::unique_lock<std::mutex> lock(m_mutex);
-                m_queue.push(value);
+                m_queue.push(std::move(value));
                 return true;
             }
             // deletes the retrieved element, do not use for non integral types
@@ -68,9 +68,14 @@ namespace AhoViewer
                 std::unique_lock<std::mutex> lock(m_mutex);
                 if (m_queue.empty())
                     return false;
-                v = m_queue.front();
+                v = std::move(m_queue.front());
                 m_queue.pop();
                 return true;
+            }
+            void clear()
+            {
+                std::unique_lock<std::mutex> lock(m_mutex);
+                while (!m_queue.empty()) m_queue.pop();
             }
             bool empty()
             {
@@ -175,33 +180,25 @@ namespace AhoViewer
             using return_type = typename std::result_of<F(Args...)>::type;
             if (!ma_interrupt && !ma_kill)
             {
-                auto pck = std::make_shared<std::packaged_task<return_type()>>(
+                auto task = std::make_shared<std::packaged_task<return_type()>>(
                     std::bind(std::forward<F>(f), std::forward<Args>(args)...)
                 );
-                auto _f  = new std::function<void()>([pck](){ (*pck)(); });
+                auto _f = std::make_unique<std::function<void()>>([ task ]() { (*task)(); });
 
-                m_queue.push(_f);
+                m_queue.push(std::move(_f));
                 std::unique_lock<std::mutex> lock(m_mutex);
                 m_cond.notify_one();
-                return pck->get_future();
+                return task->get_future();
             }
             else return std::future<return_type>();
         }
 
     private:
         // deleted
-        ThreadPool(const ThreadPool &);// = delete;
-        ThreadPool(ThreadPool &&);// = delete;
-        ThreadPool & operator=(const ThreadPool &);// = delete;
-        ThreadPool & operator=(ThreadPool &&);// = delete;
-
-        // clear all tasks
-        void clear_queue()
-        {
-            std::function<void()> *_f = nullptr;
-            while (m_queue.pop(_f))
-                delete _f; // empty the queue
-        }
+        ThreadPool(const ThreadPool&) = delete;
+        ThreadPool(ThreadPool&&) = delete;
+        ThreadPool & operator=(const ThreadPool&) = delete;
+        ThreadPool & operator=(ThreadPool&&) = delete;
 
         // wait for all computing threads to finish
         // may be called asynchronously to not pause the calling thread while waiting
@@ -212,7 +209,7 @@ namespace AhoViewer
             {
                 if (ma_kill) return;
                 ma_kill = true;
-                clear_queue();
+                m_queue.clear();
             }
             else
             {
@@ -227,7 +224,7 @@ namespace AhoViewer
             // wait for the computing threads to finish
             // if ma_shutdown is set the destructor will wait for the queue to finish
             std::unique_lock<std::mutex> lock(m_imutex);
-            m_icond.wait(lock, [ this ]
+            m_icond.wait(lock, [&]()
             {
                 return (ma_n_idle == m_threads.size() && m_queue.empty()) || ma_shutdown;
             });
@@ -244,10 +241,10 @@ namespace AhoViewer
             // a copy of the shared ptr to the abort
             std::shared_ptr<std::atomic<bool>> abort_ptr(m_abort[i]);
 
-            auto f = [this, abort_ptr]()
+            auto f = [ &, abort_ptr ]()
             {
                 std::atomic<bool> & abort = *abort_ptr;
-                std::function<void()> *_f = nullptr;
+                std::unique_ptr<std::function<void()>> _f = nullptr;
                 bool more_tasks = m_queue.pop(_f);
 
                 while (true)
@@ -255,8 +252,6 @@ namespace AhoViewer
                     // if there is anything in the queue
                     while (more_tasks)
                     {
-                        // at return, delete the function even if an exception occurred
-                        std::unique_ptr<std::function<void()>> func(_f);
                         (*_f)();
                         if (abort)
                             return; // return even if the queue is not empty yet
@@ -271,7 +266,7 @@ namespace AhoViewer
                         m_icond.notify_one();
                     }
                     // the queue is empty here, wait for the next command
-                    m_cond.wait(lock, [ this, &_f, &more_tasks, &abort ]
+                    m_cond.wait(lock, [&]()
                     {
                         more_tasks = m_queue.pop(_f);
                         return abort || ma_shutdown || more_tasks;
@@ -281,12 +276,12 @@ namespace AhoViewer
                 }
             };
 
-            m_threads[i].reset(new std::thread(f));
+            m_threads[i] = std::make_unique<std::thread>(f);
         }
 
         std::vector<std::unique_ptr<std::thread>>       m_threads;
         std::vector<std::shared_ptr<std::atomic<bool>>> m_abort;
-        Queue<std::function<void()>*>                   m_queue;
+        Queue<std::unique_ptr<std::function<void()>>>   m_queue;
 
         std::atomic<bool>   ma_interrupt, ma_kill, ma_shutdown;
         std::atomic<size_t> ma_n_idle;
