@@ -277,9 +277,8 @@ void Page::get_posts()
 
         if (m_Curler.perform())
         {
-            m_Posts = std::unique_ptr<xmlDocument>(
-                    new xmlDocument(reinterpret_cast<char*>(m_Curler.get_data()),
-                                    m_Curler.get_data_size()));
+            m_Posts = std::make_unique<xmlDocument>(
+                reinterpret_cast<char*>(m_Curler.get_data()), m_Curler.get_data_size());
             m_NumPosts = m_Posts->get_n_nodes();
 
             if (postsCount)

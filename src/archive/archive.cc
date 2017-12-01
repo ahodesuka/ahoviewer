@@ -79,12 +79,12 @@ std::unique_ptr<Archive> Archive::create(const Glib::ustring &path, const Glib::
         {
 #ifdef HAVE_LIBZIP
             if (type == Type::ZIP)
-                return std::unique_ptr<Archive>(new Zip(path, dir));
+                return std::make_unique<Zip>(path, dir);
 #endif // HAVE_LIBZIP
 
 #ifdef HAVE_LIBUNRAR
             if (type == Type::RAR)
-                return std::unique_ptr<Archive>(new Rar(path, dir));
+                return std::make_unique<Rar>(path, dir);
 #endif // HAVE_LIBUNRAR
         }
     }
