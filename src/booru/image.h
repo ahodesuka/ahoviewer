@@ -28,6 +28,7 @@ namespace AhoViewer
             std::string get_url() const { return m_Url; }
             std::string get_post_url() const { return m_PostUrl; }
 
+            virtual bool is_loading() const override;
             virtual std::string get_filename() const override;
             virtual const Glib::RefPtr<Gdk::Pixbuf>& get_thumbnail() override;
 

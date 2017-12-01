@@ -26,9 +26,10 @@ namespace AhoViewer
         static const Glib::RefPtr<Gdk::Pixbuf>& get_missing_pixbuf();
 
         const std::string get_path() const { return m_Path; }
-        bool is_loading() const { return m_Loading; }
         bool is_webm() const { return m_isWebM; }
 
+        // This is only used in Booru::Image
+        virtual bool is_loading() const { return false; }
         virtual std::string get_filename() const;
         virtual const Glib::RefPtr<Gdk::PixbufAnimation>& get_pixbuf();
         virtual const Glib::RefPtr<Gdk::Pixbuf>& get_thumbnail();
@@ -46,7 +47,7 @@ namespace AhoViewer
         Glib::RefPtr<Gdk::Pixbuf> create_pixbuf_at_size(const std::string &path,
                                                         const int w, const int h) const;
 
-        bool m_Loading, m_isWebM;
+        bool m_isWebM;
         std::string m_Path, m_ThumbnailPath;
 
         Glib::RefPtr<Gdk::Pixbuf> m_ThumbnailPixbuf;

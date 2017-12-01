@@ -8,7 +8,7 @@ Archive::Image::Image(const std::string &path, const Archive &archive)
     m_ArchiveFilePath(path),
     m_Archive(archive)
 {
-    m_Loading = true;
+
 }
 
 std::string Archive::Image::get_filename() const
@@ -39,7 +39,6 @@ void Archive::Image::load_pixbuf()
             std::lock_guard<std::mutex> lock(m_Mutex);
             m_Pixbuf = p;
         }
-        m_Loading = false;
         m_SignalPixbufChanged();
     }
 }

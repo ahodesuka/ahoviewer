@@ -57,8 +57,7 @@ const Glib::RefPtr<Gdk::Pixbuf>& Image::get_missing_pixbuf()
 }
 
 Image::Image(const std::string &path)
-  : m_Loading(false),
-    m_isWebM(Image::is_webm(path)),
+  : m_isWebM(Image::is_webm(path)),
     m_Path(path)
 {
 

@@ -28,9 +28,6 @@ Image::Image(const std::string &path, const std::string &url,
     if (!m_isWebM)
         m_Curler.signal_write().connect(sigc::mem_fun(*this, &Image::on_write));
 
-    if (m_isWebM && !Glib::file_test(m_Path, Glib::FILE_TEST_EXISTS))
-        m_Loading = true;
-
     m_Curler.set_referer(m_PostUrl);
     m_Curler.signal_progress().connect(sigc::mem_fun(*this, &Image::on_progress));
     m_Curler.signal_finished().connect(sigc::mem_fun(*this, &Image::on_finished));
@@ -39,6 +36,11 @@ Image::Image(const std::string &path, const std::string &url,
 Image::~Image()
 {
     cancel_download();
+}
+
+bool Image::is_loading() const
+{
+    return (m_isWebM && !Glib::file_test(m_Path, Glib::FILE_TEST_EXISTS)) || m_Curler.is_active();
 }
 
 std::string Image::get_filename() const
@@ -156,7 +158,6 @@ bool Image::start_download()
     if (!m_Curler.is_active())
     {
         m_Page.get_image_fetcher().add_handle(&m_Curler);
-        m_Loading = true;
 
         if (!m_isWebM)
         {
@@ -212,8 +213,6 @@ void Image::on_finished()
         catch (...) { }
         m_Loader.reset();
     }
-
-    m_Loading = false;
 
     m_SignalPixbufChanged();
     m_DownloadCond.notify_one();
