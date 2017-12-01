@@ -2,6 +2,7 @@
 #define _SITE_H_
 
 #include <gdkmm.h>
+#include <shared_mutex>
 #include <set>
 #include <thread>
 
@@ -14,6 +15,12 @@ namespace AhoViewer
     {
         class Site
         {
+            using Mutex = std::shared_timed_mutex;
+            using ReaderLock = std::shared_lock<Mutex>;
+            using WriterLock = std::unique_lock<Mutex>;
+
+            using ReaderMap = std::map<curl_lock_data, ReaderLock>;
+            using WriterMap = std::map<curl_lock_data, WriterLock>;
         public:
             enum class Rating
             {
@@ -69,6 +76,8 @@ namespace AhoViewer
             std::string get_cookie();
             void cleanup_cookie() const;
 
+            CURLSH* get_share_handle() const { return m_ShareHandle; }
+
             Glib::RefPtr<Gdk::Pixbuf> get_icon_pixbuf(const bool update = false);
 
             void save_tags() const;
@@ -86,6 +95,9 @@ namespace AhoViewer
         private:
             static Type get_type_from_url(const std::string &url);
 
+            static void share_lock_cb(CURL *c, curl_lock_data data, curl_lock_access access, void *userp);
+            static void share_unlock_cb(CURL *c, curl_lock_data data, void *userp);
+
             static const std::map<Type, std::string> RequestURI,
                                                      PostURI,
                                                      RegisterURI;
@@ -101,6 +113,10 @@ namespace AhoViewer
             bool m_NewAccount;
             uint64_t m_CookieTS;
             std::set<std::string> m_Tags;
+            CURLSH *m_ShareHandle;
+            std::map<curl_lock_data, Mutex> m_MutexMap;
+            std::map<CURL*, ReaderMap> m_ReaderMap;
+            std::map<CURL*, WriterMap> m_WriterMap;
             Curler m_Curler;
 
             Glib::RefPtr<Gdk::Pixbuf> m_IconPixbuf;

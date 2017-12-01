@@ -20,9 +20,11 @@ namespace AhoViewer
 
             virtual void clear() override;
             void load(const xmlDocument &posts, const Page &page);
-        private:
+        protected:
             virtual void set_current(const size_t index,
                                      const bool fromWidget = false, const bool force = false) override;
+            virtual void cancel_thumbnail_thread() override;
+        private:
             std::string m_Path;
             size_t m_Size;
         };

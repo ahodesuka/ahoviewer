@@ -122,6 +122,59 @@ Site::Type Site::get_type_from_url(const std::string &url)
     return Type::UNKNOWN;
 }
 
+void Site::share_lock_cb(CURL *c, curl_lock_data data, curl_lock_access access, void *userp)
+{
+    Site *self = static_cast<Site*>(userp);
+
+    auto &m = self->m_MutexMap[data];
+
+    if (access == CURL_LOCK_ACCESS_SINGLE)
+    {
+        auto iter = self->m_WriterMap.find(c);
+        if (iter == self->m_WriterMap.end())
+            std::tie(iter, std::ignore) = self->m_WriterMap.emplace(std::piecewise_construct,
+                                                                    std::forward_as_tuple(c),
+                                                                    std::forward_as_tuple());
+        iter->second.emplace(std::piecewise_construct,
+                             std::forward_as_tuple(data),
+                             std::forward_as_tuple(m));
+    }
+    // libcurl hasn't actually implemented anything that uses shared lock access
+    // but this code is prepared incase it ever does
+    else if (access == CURL_LOCK_ACCESS_SHARED)
+    {
+        auto iter = self->m_ReaderMap.find(c);
+        if (iter == self->m_ReaderMap.end())
+            std::tie(iter, std::ignore) = self->m_ReaderMap.emplace(std::piecewise_construct,
+                                                                    std::forward_as_tuple(c),
+                                                                    std::forward_as_tuple());
+        iter->second.emplace(std::piecewise_construct,
+                             std::forward_as_tuple(data),
+                             std::forward_as_tuple(m));
+    }
+}
+
+void Site::share_unlock_cb(CURL *c, curl_lock_data data, void *userp)
+{
+    Site *self = static_cast<Site*>(userp);
+
+    auto writer_iter = self->m_WriterMap.find(c);
+    if (writer_iter != self->m_WriterMap.end())
+    {
+        auto lock_iter = writer_iter->second.find(data);
+        if (lock_iter != writer_iter->second.end())
+            writer_iter->second.erase(lock_iter);
+    }
+
+    auto reader_iter = self->m_ReaderMap.find(c);
+    if (reader_iter != self->m_ReaderMap.end())
+    {
+        auto lock_iter = reader_iter->second.find(data);
+        if (lock_iter != reader_iter->second.end())
+            reader_iter->second.erase(lock_iter);
+    }
+}
+
 Site::Site(const std::string &name, const std::string &url, const Type type,
            const std::string &user, const std::string &pass)
   : m_Name(name),
@@ -133,8 +186,28 @@ Site::Site(const std::string &name, const std::string &url, const Type type,
     m_CookiePath(Glib::build_filename(Settings.get_booru_path(), m_Name + "-cookie")),
     m_Type(type),
     m_NewAccount(false),
-    m_CookieTS(0)
+    m_CookieTS(0),
+    m_ShareHandle(curl_share_init())
 {
+    curl_share_setopt(m_ShareHandle, CURLSHOPT_LOCKFUNC, &Site::share_lock_cb);
+    curl_share_setopt(m_ShareHandle, CURLSHOPT_UNLOCKFUNC, &Site::share_unlock_cb);
+    curl_share_setopt(m_ShareHandle, CURLSHOPT_USERDATA, this);
+
+    // Types of data to share between curlers for this site
+    // Connection data needs curl >=7.57.0 (not released yet)
+    for (auto d : { CURL_LOCK_DATA_CONNECT,
+                    CURL_LOCK_DATA_COOKIE,
+                    CURL_LOCK_DATA_DNS,
+                    CURL_LOCK_DATA_SSL_SESSION,
+                    CURL_LOCK_DATA_SHARE })
+    {
+        m_MutexMap.emplace(std::piecewise_construct,
+                           std::forward_as_tuple(d),
+                           std::forward_as_tuple());
+        if (d != CURL_LOCK_DATA_SHARE)
+            curl_share_setopt(m_ShareHandle, CURLSHOPT_SHARE, d);
+    }
+
 #ifdef HAVE_LIBSECRET
     if (!m_Username.empty())
         secret_password_lookup(SECRET_SCHEMA_COMPAT_NETWORK,
@@ -164,6 +237,7 @@ Site::~Site()
         m_IconCurlerThread.join();
 
     cleanup_cookie();
+    curl_share_cleanup(m_ShareHandle);
 }
 
 std::string Site::get_posts_url(const std::string &tags, size_t page)
@@ -270,7 +344,7 @@ std::string Site::get_cookie()
                 if (Glib::file_test(m_CookiePath, Glib::FILE_TEST_EXISTS))
                     g_unlink(m_CookiePath.c_str());
 
-                Curler curler(m_Url + "/index.php?page=account&s=login&code=00");
+                Curler curler(m_Url + "/index.php?page=account&s=login&code=00", m_ShareHandle);
                 std::string f = Glib::ustring::compose("user=%1&pass=%2", m_Username, m_Password);
 
                 curler.set_cookie_jar(m_CookiePath);
@@ -304,7 +378,7 @@ Glib::RefPtr<Gdk::Pixbuf> Site::get_icon_pixbuf(const bool update)
         {
             m_IconPixbuf = get_missing_pixbuf();
             // Attempt to download the site's favicon
-            m_IconCurlerThread = std::thread([ this ]()
+            m_IconCurlerThread = std::thread([&]()
             {
                 for (const std::string &url : { m_Url + "/favicon.ico",
                                                 m_Url + "/favicon.png" })

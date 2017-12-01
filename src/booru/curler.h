@@ -19,7 +19,7 @@ namespace AhoViewer
 
             using SignalWriteType = sigc::signal<void, const unsigned char*, size_t>;
         public:
-            Curler(const std::string &url = "");
+            Curler(const std::string &url = "", CURLSH *share = nullptr);
             ~Curler();
 
             void set_url(const std::string &url);
@@ -30,9 +30,10 @@ namespace AhoViewer
             void set_cookie_jar(const std::string &path) const;
             void set_cookie_file(const std::string &path) const;
             void set_post_fields(const std::string &fields) const;
+            void set_share_handle(CURLSH *s) const;
 
             std::string escape(const std::string &str) const;
-            bool perform();
+            bool perform(const size_t rCount = 0);
 
             void clear() { m_Buffer.clear(); }
             void save_file(const std::string &path) const;
@@ -46,6 +47,8 @@ namespace AhoViewer
             size_t get_data_size() const { return m_Buffer.size(); }
 
             std::string get_error() const  { return curl_easy_strerror(m_Response); }
+            CURLcode get_response() const { return m_Response; }
+            // HTTP reponse code
             long get_response_code() const;
             time_point_t get_start_time() const { return m_StartTime; }
 
@@ -66,7 +69,7 @@ namespace AhoViewer
             std::string m_Url;
             std::vector<unsigned char> m_Buffer;
 
-            bool m_Active;
+            std::atomic<bool> m_Active;
             std::atomic<double> m_DownloadTotal,
                                 m_DownloadCurrent;
             time_point_t m_StartTime;

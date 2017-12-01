@@ -18,24 +18,33 @@ Image::Image(const std::string &path, const std::string &url,
     m_PostUrl(postUrl),
     m_Tags(tags),
     m_Page(page),
-    m_Curler(m_Url),
-    m_ThumbnailCurler(new Curler(m_ThumbnailUrl)),
+    m_Curler(m_Url, page.get_site()->get_share_handle()),
+    m_ThumbnailCurler(m_ThumbnailUrl, page.get_site()->get_share_handle()),
     m_PixbufError(false)
 {
-    m_SignalThumbnailLoaded.connect([ this ] { m_ThumbnailCurler.reset(nullptr); });
     m_ThumbnailPath = thumbPath;
 
     if (!m_isWebM)
         m_Curler.signal_write().connect(sigc::mem_fun(*this, &Image::on_write));
 
+    m_ThumbnailCurler.signal_finished().connect([&]()
+    {
+        std::lock_guard<std::mutex> lock(m_ThumbnailMutex);
+        m_ThumbnailCond.notify_one();
+    });
     m_Curler.set_referer(m_PostUrl);
     m_Curler.signal_progress().connect(sigc::mem_fun(*this, &Image::on_progress));
     m_Curler.signal_finished().connect(sigc::mem_fun(*this, &Image::on_finished));
+
+    // Danbooru wont give the thumb/img urls if it's a blacklisted post
+    if (m_ThumbnailUrl.empty())
+        m_ThumbnailPixbuf = get_missing_pixbuf();
 }
 
 Image::~Image()
 {
     cancel_download();
+    cancel_thumbnail_download();
 }
 
 bool Image::is_loading() const
@@ -52,11 +61,20 @@ const Glib::RefPtr<Gdk::Pixbuf>& Image::get_thumbnail()
 {
     if (!m_ThumbnailPixbuf)
     {
-        if (m_ThumbnailCurler->perform())
-        {
-            m_ThumbnailCurler->save_file(m_ThumbnailPath);
+        m_Page.get_image_fetcher().add_handle(&m_ThumbnailCurler);
 
-            m_ThumbnailLock.writer_lock();
+        {
+            std::unique_lock<std::mutex> lock(m_ThumbnailMutex);
+            m_ThumbnailCond.wait(lock, [&]()
+            {
+                return m_ThumbnailCurler.is_cancelled() || !m_ThumbnailCurler.is_active();
+            });
+        }
+        if (!m_ThumbnailCurler.is_cancelled() && m_ThumbnailCurler.get_response() == CURLE_OK)
+        {
+            m_ThumbnailCurler.save_file(m_ThumbnailPath);
+
+            m_ThumbnailLock.lock();
             try
             {
                 m_ThumbnailPixbuf = create_pixbuf_at_size(m_ThumbnailPath, 128, 128);
@@ -66,18 +84,17 @@ const Glib::RefPtr<Gdk::Pixbuf>& Image::get_thumbnail()
                 std::cerr << ex.what() << std::endl;
                 m_ThumbnailPixbuf = get_missing_pixbuf();
             }
-            m_ThumbnailLock.writer_unlock();
+            m_ThumbnailLock.unlock();
         }
         else
         {
-            std::cerr << "Error while downloading thumbnail " << m_ThumbnailUrl
-                      << " " << std::endl << "  " << m_ThumbnailCurler->get_error() << std::endl;
-            m_ThumbnailLock.writer_lock();
+            if (!m_ThumbnailCurler.is_cancelled())
+                std::cerr << "Error while downloading thumbnail " << m_ThumbnailUrl
+                          << " " << std::endl << "  " << m_ThumbnailCurler.get_error() << std::endl;
+            m_ThumbnailLock.lock();
             m_ThumbnailPixbuf = get_missing_pixbuf();
-            m_ThumbnailLock.writer_unlock();
+            m_ThumbnailLock.unlock();
         }
-
-        m_SignalThumbnailLoaded();
     }
 
     return m_ThumbnailPixbuf;
@@ -85,7 +102,7 @@ const Glib::RefPtr<Gdk::Pixbuf>& Image::get_thumbnail()
 
 void Image::load_pixbuf()
 {
-    if (!m_Pixbuf && !m_PixbufError)
+    if (!m_Pixbuf && !m_PixbufError && !m_Url.empty())
     {
         if (Glib::file_test(m_Path, Glib::FILE_TEST_EXISTS))
         {
@@ -112,10 +129,11 @@ void Image::save(const std::string &path)
     {
         start_download();
 
-        std::unique_lock<std::mutex> lk(m_DownloadMutex);
-        m_DownloadCond.wait(lk, [ this ]
-                { return m_Curler.is_cancelled()
-                      || Glib::file_test(m_Path, Glib::FILE_TEST_EXISTS); });
+        std::unique_lock<std::mutex> lock(m_DownloadMutex);
+        m_DownloadCond.wait(lock, [&]()
+        {
+            return m_Curler.is_cancelled() || Glib::file_test(m_Path, Glib::FILE_TEST_EXISTS);
+        });
     }
 
     if (m_Curler.is_cancelled())
@@ -150,9 +168,14 @@ void Image::cancel_download()
     m_DownloadCond.notify_one();
 }
 
-/**
- * Returns true if the download was started
- **/
+void Image::cancel_thumbnail_download()
+{
+    m_ThumbnailCurler.cancel();
+    std::lock_guard<std::mutex> lock(m_ThumbnailMutex);
+    m_ThumbnailCond.notify_all();
+}
+
+// Returns true if the download was started
 bool Image::start_download()
 {
     if (!m_Curler.is_active())
@@ -220,7 +243,7 @@ void Image::on_finished()
 
 void Image::on_area_prepared()
 {
-    m_ThumbnailLock.reader_lock();
+    m_ThumbnailLock.lock_shared();
     if (m_ThumbnailPixbuf && m_ThumbnailPixbuf != get_missing_pixbuf())
     {
         Glib::RefPtr<Gdk::Pixbuf> pixbuf = m_Loader->get_pixbuf();
@@ -229,7 +252,7 @@ void Image::on_area_prepared()
                                      static_cast<double>(pixbuf->get_height()) / m_ThumbnailPixbuf->get_height(),
                                      Gdk::INTERP_BILINEAR, 255);
     }
-    m_ThumbnailLock.reader_unlock();
+    m_ThumbnailLock.unlock_shared();
 
     if (!m_Curler.is_cancelled())
     {

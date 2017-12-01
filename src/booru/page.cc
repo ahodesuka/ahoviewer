@@ -9,20 +9,22 @@ using namespace AhoViewer::Booru;
 #include "settings.h"
 #include "threadpool.h"
 
+#define RETRY_COUNT 5
+
 Page::Page(Gtk::Menu *menu)
   : Gtk::ScrolledWindow(),
     m_PopupMenu(menu),
-    m_ImageFetcher(std::unique_ptr<ImageFetcher>(new ImageFetcher())),
     m_IconView(Gtk::manage(new Gtk::IconView())),
     m_Tab(Gtk::manage(new Gtk::EventBox())),
     m_TabIcon(Gtk::manage(new Gtk::Image(Gtk::Stock::NEW, Gtk::ICON_SIZE_MENU))),
     m_TabLabel(Gtk::manage(new Gtk::Label(_("New Tab")))),
     m_TabButton(Gtk::manage(new Gtk::Button())),
     m_ImageList(std::make_shared<ImageList>(this)),
+    m_ImageFetcher(std::unique_ptr<ImageFetcher>(new ImageFetcher())),
     m_Page(0),
     m_NumPosts(0),
-    m_LastPage(false),
     m_Saving(false),
+    m_LastPage(false),
     m_SaveCancel(Gio::Cancellable::create())
 {
     set_policy(Gtk::POLICY_NEVER, Gtk::POLICY_AUTOMATIC);
@@ -89,6 +91,17 @@ Page::~Page()
         m_GetPostsThread.join();
 
     cancel_save();
+
+    // The ImageFetcher must stop accepting new handles and end it's main loop
+    // before the ImageList is cleared, but the ImageFetcher must not be fully
+    // destructed until after the ImageList has done so first
+    //   ImageFetcher.shutdown -> stops accepting new handles and ends it's main loop
+    //   ~ImageList
+    //   ~ImageFetcher
+    // Moving the ImageFetcher into the ImageList might be a good idea
+    m_ImageFetcher->shutdown();
+    m_ImageList.reset();
+    m_ImageFetcher.reset();
 }
 
 void Page::set_selected(const size_t index)
@@ -149,6 +162,7 @@ void Page::search(const std::shared_ptr<Site> &site)
     m_TabLabel->set_text(m_Site->get_name() + tags);
     m_TabIcon->set(m_Site->get_icon_pixbuf());
 
+    m_Curler.set_share_handle(m_Site->get_share_handle());
     m_Curler.set_referer(m_Site->get_url());
     m_CountsCurler.set_referer(m_Site->get_url());
 
@@ -275,7 +289,7 @@ void Page::get_posts()
         else
             m_Curler.set_http_auth(m_Site->get_username(), m_Site->get_password());
 
-        if (m_Curler.perform())
+        if (m_Curler.perform(RETRY_COUNT))
         {
             m_Posts = std::make_unique<xmlDocument>(
                 reinterpret_cast<char*>(m_Curler.get_data()), m_Curler.get_data_size());

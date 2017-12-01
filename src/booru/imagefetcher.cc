@@ -64,32 +64,52 @@ ImageFetcher::ImageFetcher()
   : m_MainContext(Glib::MainContext::create()),
     m_MainLoop(Glib::MainLoop::create(m_MainContext)),
     m_MultiHandle(curl_multi_init()),
-    m_RunningHandles(0)
+    m_RunningHandles(0),
+    m_Shutdown(false)
 {
-    m_Thread = std::thread([ this ]() { m_MainLoop->run(); });
+    m_Thread = std::thread([&]() { m_MainLoop->run(); });
 
     curl_multi_setopt(m_MultiHandle, CURLMOPT_SOCKETFUNCTION, &ImageFetcher::socket_cb);
     curl_multi_setopt(m_MultiHandle, CURLMOPT_SOCKETDATA, this);
     curl_multi_setopt(m_MultiHandle, CURLMOPT_TIMERFUNCTION, &ImageFetcher::timer_cb);
     curl_multi_setopt(m_MultiHandle, CURLMOPT_TIMERDATA, this);
+
+    // Konachan seems to throw a 503 error if you have too many connections
+    // This is also inderectly controlled by the image list's threadpool size
+    // and the cache size setting
+    // TODO: Per-site setting for this
+    // curl_multi_setopt(m_MultiHandle, CURLMOPT_MAX_TOTAL_CONNECTIONS, 8);
 }
 
 ImageFetcher::~ImageFetcher()
 {
+    if (!m_Shutdown)
+        shutdown();
+    curl_multi_cleanup(m_MultiHandle);
+}
+
+// This is used in the Booru::Page destructor in order to
+// prevent any undefined behavior between the ImageList and this
+// while destructing each.
+void ImageFetcher::shutdown()
+{
+    m_Shutdown = true;
     if (m_TimeoutConn)
         m_TimeoutConn.disconnect();
 
     m_MainLoop->quit();
-    m_Thread.join();
+    if (m_Thread.joinable())
+        m_Thread.join();
 
     for (Curler *c : m_Curlers)
         remove_handle(c);
-
-    curl_multi_cleanup(m_MultiHandle);
 }
 
 void ImageFetcher::add_handle(Curler *curler)
 {
+    if (m_Shutdown)
+        return;
+
     curl_easy_setopt(curler->m_EasyHandle, CURLOPT_PRIVATE, curler);
 
     curler->m_Cancel->reset();
@@ -160,6 +180,7 @@ void ImageFetcher::read_info()
             if (curler)
             {
                 remove_handle(curler);
+                curler->m_Response = msg->data.result;
 
                 if (!curler->is_cancelled())
                     curler->m_SignalFinished();

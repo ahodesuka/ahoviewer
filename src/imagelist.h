@@ -110,6 +110,8 @@ namespace AhoViewer
         bool empty() const { return m_Images.empty(); }
         bool from_archive() const { return !!m_Archive; }
 
+        virtual void set_current(const size_t index, const bool fromWidget = false, const bool force = false);
+
         ImageVector::iterator begin() { return m_Images.begin(); }
         ImageVector::iterator end() { return m_Images.end(); }
 
@@ -121,8 +123,8 @@ namespace AhoViewer
         sigc::signal<void> signal_load_success() const { return m_SignalLoadSuccess; }
         sigc::signal<void> signal_size_changed() const { return m_SignalSizeChanged; }
     protected:
-        virtual void set_current(const size_t index, const bool fromWidget = false, const bool force = false);
         virtual void load_thumbnails();
+        virtual void cancel_thumbnail_thread();
         void update_cache();
 
         Widget *const m_Widget;
@@ -136,7 +138,6 @@ namespace AhoViewer
         SignalChangedType m_SignalChanged;
     private:
         void reset();
-        void cancel_thumbnail_thread();
         template <typename T>
         std::vector<std::string> get_entries(const std::string &path);
 

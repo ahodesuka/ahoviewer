@@ -37,6 +37,7 @@ namespace AhoViewer
 
             void save(const std::string &path);
             void cancel_download();
+            void cancel_thumbnail_download();
 
             SignalProgressType signal_progress() const { return m_SignalProgress; }
 
@@ -56,15 +57,14 @@ namespace AhoViewer
 
             time_point_t m_LastDraw;
 
-            Curler m_Curler;
-            std::unique_ptr<Curler> m_ThumbnailCurler;
-            Glib::Dispatcher m_SignalThumbnailLoaded;
+            Curler m_Curler,
+                   m_ThumbnailCurler;
             Glib::RefPtr<Gdk::PixbufLoader> m_Loader;
             bool m_PixbufError;
-            Glib::Threads::RWLock m_ThumbnailLock;
+            std::shared_timed_mutex m_ThumbnailLock;
 
-            std::condition_variable m_DownloadCond;
-            std::mutex m_DownloadMutex;
+            std::condition_variable m_DownloadCond, m_ThumbnailCond;
+            std::mutex m_DownloadMutex, m_ThumbnailMutex;
 
             SignalProgressType m_SignalProgress;
         };

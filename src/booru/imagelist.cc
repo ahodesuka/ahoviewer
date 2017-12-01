@@ -17,6 +17,7 @@ ImageList::~ImageList()
     clear();
 }
 
+// This is also used when reusing the same page with a new query
 void ImageList::clear()
 {
     AhoViewer::ImageList::clear();
@@ -99,6 +100,7 @@ void ImageList::load(const xmlDocument &posts, const Page &page)
         m_SignalChanged(m_Images[m_Index]);
 }
 
+// Override this so we dont cancel and restart the thumbnail thread
 void ImageList::set_current(const size_t index, const bool fromWidget, const bool force)
 {
     if (index == m_Index && !force)
@@ -110,4 +112,15 @@ void ImageList::set_current(const size_t index, const bool fromWidget, const boo
 
     if (!fromWidget)
         m_Widget->set_selected(m_Index);
+}
+
+// Cancel all image thumbnail curlers.
+// Base ImageList version will take care of stopping the threads.
+void ImageList::cancel_thumbnail_thread()
+{
+    for (auto img : *this)
+    {
+        auto bimage = std::static_pointer_cast<Image>(img);
+        bimage->cancel_thumbnail_download();
+    }
 }

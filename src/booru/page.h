@@ -59,7 +59,6 @@ namespace AhoViewer
             bool on_tab_button_release_event(GdkEventButton *e);
 
             Gtk::Menu *m_PopupMenu;
-            std::unique_ptr<ImageFetcher> m_ImageFetcher;
             Gtk::IconView *m_IconView;
             Gtk::EventBox *m_Tab;
             Gtk::Image *m_TabIcon;
@@ -67,6 +66,7 @@ namespace AhoViewer
             Gtk::Button *m_TabButton;
 
             std::shared_ptr<ImageList> m_ImageList;
+            std::unique_ptr<ImageFetcher> m_ImageFetcher;
             std::shared_ptr<Site> m_Site;
             Curler m_Curler, m_CountsCurler;
 
@@ -74,7 +74,8 @@ namespace AhoViewer
             size_t m_Page, m_NumPosts,
                    m_SaveImagesTotal;
             std::atomic<size_t> m_SaveImagesCurrent;
-            bool m_LastPage, m_Saving;
+            std::atomic<bool> m_Saving;
+            bool m_LastPage;
             std::unique_ptr<xmlDocument> m_Posts;
 
             Glib::RefPtr<Gio::Cancellable> m_SaveCancel;

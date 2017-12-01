@@ -16,6 +16,8 @@ namespace AhoViewer
             ImageFetcher();
             virtual ~ImageFetcher();
 
+            void shutdown();
+
             void add_handle(Curler *curler);
         private:
             struct SockInfo
@@ -43,6 +45,8 @@ namespace AhoViewer
             CURLM *m_MultiHandle;
             int m_RunningHandles;
             std::vector<Curler*> m_Curlers;
+
+            std::atomic<bool> m_Shutdown;
 
             sigc::connection m_TimeoutConn;
         };

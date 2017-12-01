@@ -3,6 +3,12 @@
 #include "curler.h"
 using namespace AhoViewer::Booru;
 
+// Used for looking closer at what libcurl is doing
+// set it to 1 with CXXFLAGS and prepare to be spammed
+#ifndef VERBOSE_LIBCURL
+#define VERBOSE_LIBCURL 0
+#endif
+
 const char *Curler::UserAgent = "Mozilla/5.0";
 
 size_t Curler::write_cb(const unsigned char *ptr, size_t size, size_t nmemb, void *userp)
@@ -49,7 +55,7 @@ int Curler::progress_cb(void *userp, curl_off_t, curl_off_t, curl_off_t, curl_of
     return self->is_cancelled();
 }
 
-Curler::Curler(const std::string &url)
+Curler::Curler(const std::string &url, CURLSH *share)
   : m_EasyHandle(curl_easy_init()),
     m_Active(false),
     m_DownloadTotal(0),
@@ -65,16 +71,24 @@ Curler::Curler(const std::string &url)
     curl_easy_setopt(m_EasyHandle, CURLOPT_FOLLOWLOCATION, 1);
     curl_easy_setopt(m_EasyHandle, CURLOPT_MAXREDIRS, 5);
     curl_easy_setopt(m_EasyHandle, CURLOPT_FAILONERROR, 1);
-    curl_easy_setopt(m_EasyHandle, CURLOPT_VERBOSE, 0);
+    curl_easy_setopt(m_EasyHandle, CURLOPT_VERBOSE, VERBOSE_LIBCURL);
     curl_easy_setopt(m_EasyHandle, CURLOPT_CONNECTTIMEOUT, 60);
     curl_easy_setopt(m_EasyHandle, CURLOPT_NOSIGNAL, 1);
 
 #ifdef _WIN32
-    curl_easy_setopt(m_EasyHandle, CURLOPT_CAINFO, "curl-ca-bundle.crt");
+    HMODULE hModule = GetModuleHandle(NULL);
+    char m[MAX_PATH];
+    GetModuleFileName(hModule, m, MAX_PATH);
+    std::string d(m),
+                cert_path = Glib::build_filename(d.substr(0, d.rfind('\\')), "curl-ca-bundle.crt");
+    curl_easy_setopt(m_EasyHandle, CURLOPT_CAINFO, cert_path.c_str());
 #endif // _WIN32
 
     if (!url.empty())
         set_url(url);
+
+    if (share)
+        set_share_handle(share);
 }
 
 Curler::~Curler()
@@ -128,6 +142,11 @@ void Curler::set_post_fields(const std::string &fields) const
     curl_easy_setopt(m_EasyHandle, CURLOPT_POSTFIELDS, fields.c_str());
 }
 
+void Curler::set_share_handle(CURLSH *s) const
+{
+    curl_easy_setopt(m_EasyHandle, CURLOPT_SHARE, s);
+}
+
 std::string Curler::escape(const std::string &str) const
 {
     std::string r;
@@ -142,12 +161,20 @@ std::string Curler::escape(const std::string &str) const
     return r;
 }
 
-bool Curler::perform()
+bool Curler::perform(const size_t rCount)
 {
+    size_t i = 0;
     m_Cancel->reset();
     clear();
 
-    m_Response = curl_easy_perform(m_EasyHandle);
+    // XXX: Ocassionally Danbooru (cloudflare) returns a 500 internal server error
+    // this is most likely a temporary issue or could even be my ISP's fault,
+    // but this is only used when fetching the posts xml so it should be fine
+    do
+    {
+        m_Response = curl_easy_perform(m_EasyHandle);
+    }
+    while (m_Response != CURLE_OK && ++i < rCount && !is_cancelled());
 
     return m_Response == CURLE_OK;
 }
