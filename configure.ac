@@ -24,7 +24,7 @@ AC_PROG_CXX
 AC_PROG_INSTALL
 
 AC_LANG([C++])
-AX_CXX_COMPILE_STDCXX_11([noext])
+AX_CXX_COMPILE_STDCXX(14, [noext])
 
 # Make sure glibmm is up to date for Glib::Threads::Thread::create
 PKG_CHECK_MODULES([glibmm], [glibmm-2.4 >= 2.36.0])
