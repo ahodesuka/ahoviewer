@@ -45,7 +45,7 @@ bool Image::is_loading() const
 
 std::string Image::get_filename() const
 {
-    return Glib::build_filename(m_Page.get_site()->get_name(), Glib::path_get_basename(m_Path));
+    return m_Page.get_site()->get_name() + "/" + Glib::path_get_basename(m_Path);
 }
 
 const Glib::RefPtr<Gdk::Pixbuf>& Image::get_thumbnail()
