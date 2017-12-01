@@ -76,12 +76,13 @@ Curler::Curler(const std::string &url, CURLSH *share)
     curl_easy_setopt(m_EasyHandle, CURLOPT_NOSIGNAL, 1);
 
 #ifdef _WIN32
-    HMODULE hModule = GetModuleHandle(NULL);
-    char m[MAX_PATH];
-    GetModuleFileName(hModule, m, MAX_PATH);
-    std::string d(m),
-                cert_path = Glib::build_filename(d.substr(0, d.rfind('\\')), "curl-ca-bundle.crt");
-    curl_easy_setopt(m_EasyHandle, CURLOPT_CAINFO, cert_path.c_str());
+    gchar *g = g_win32_get_package_installation_directory_of_module(NULL);
+    if (g)
+    {
+        std::string cert_path = Glib::build_filename(g, "curl-ca-bundle.crt");
+        curl_easy_setopt(m_EasyHandle, CURLOPT_CAINFO, cert_path.c_str());
+        g_free(g);
+    }
 #endif // _WIN32
 
     if (!url.empty())
