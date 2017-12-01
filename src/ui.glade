@@ -1751,8 +1751,8 @@
                           <object class="GtkToolButton" id="KeybindingEditor::ResetSelectedButton">
                             <property name="visible">True</property>
                             <property name="can_focus">False</property>
-                            <property name="tooltip_text" translatable="yes">Reset selected keybinding</property>
-                            <property name="stock_id">gtk-clear</property>
+                            <property name="tooltip_text" translatable="yes">Revert selected keybinding to default</property>
+                            <property name="stock_id">gtk-revert-to-saved</property>
                           </object>
                           <packing>
                             <property name="expand">False</property>
