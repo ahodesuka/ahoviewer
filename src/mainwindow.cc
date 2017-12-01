@@ -39,7 +39,7 @@ MainWindow::MainWindow(BaseObjectType *cobj, const Glib::RefPtr<Gtk::Builder> &b
 
     m_Builder->get_widget("AboutDialog", m_AboutDialog);
     m_Builder->get_widget("MainWindow::HPaned", m_HPaned);
-    m_HPaned->property_position().signal_changed().connect([ this ]()
+    m_HPaned->property_position().signal_changed().connect([&]()
     {
         if (!m_BooruBrowser->get_realized())
             return;
@@ -57,9 +57,9 @@ MainWindow::MainWindow(BaseObjectType *cobj, const Glib::RefPtr<Gtk::Builder> &b
     m_UIManager = Glib::RefPtr<Gtk::UIManager>::cast_static(m_Builder->get_object("UIManager"));
 
     m_LocalImageList = std::make_shared<ImageList>(m_ThumbnailBar);
-    m_LocalImageList->signal_archive_error().connect([ this ](const std::string e) { m_StatusBar->set_message(e); });
-    m_LocalImageList->signal_load_success().connect([ this ]() { set_active_imagelist(m_LocalImageList); });
-    m_LocalImageList->signal_size_changed().connect([ this ]()
+    m_LocalImageList->signal_archive_error().connect([&](const std::string e) { m_StatusBar->set_message(e); });
+    m_LocalImageList->signal_load_success().connect([&]() { set_active_imagelist(m_LocalImageList); });
+    m_LocalImageList->signal_size_changed().connect([&]()
     {
         if (m_LocalImageList == m_ActiveImageList)
         {
@@ -68,11 +68,11 @@ MainWindow::MainWindow(BaseObjectType *cobj, const Glib::RefPtr<Gtk::Builder> &b
         }
     });
 
-    m_BooruBrowser->signal_page_changed().connect([ this ](Booru::Page *page)
+    m_BooruBrowser->signal_page_changed().connect([&](Booru::Page *page)
             { set_active_imagelist(page ? page->get_imagelist() : m_LocalImageList); });
-    m_BooruBrowser->signal_realize().connect([ this ]()
+    m_BooruBrowser->signal_realize().connect([&]()
             { m_HPaned->set_position(Settings.get_int("BooruWidth")); });
-    m_BooruBrowser->signal_entry_blur().connect([ this ]()
+    m_BooruBrowser->signal_entry_blur().connect([&]()
             { m_ImageBox->grab_focus(); });
 
     m_ImageBox->signal_image_drawn().connect(
@@ -96,7 +96,7 @@ MainWindow::MainWindow(BaseObjectType *cobj, const Glib::RefPtr<Gtk::Builder> &b
             sigc::mem_fun(*this, &MainWindow::on_accel_edited));
 
     // About Dialog {{{
-    m_AboutDialog->signal_response().connect([ this ](const int) { m_AboutDialog->hide(); });
+    m_AboutDialog->signal_response().connect([&](const int) { m_AboutDialog->hide(); });
 
     try
     {
@@ -374,10 +374,8 @@ void MainWindow::save_window_geometry()
     Settings.set_geometry(x, y, w, h);
 }
 
-/**
- * Creates the UIManager and sets up all of the actions.
- * Also adds the menubar to the table.
- **/
+// Creates the UIManager and sets up all of the actions.
+// Also adds the menubar to the table.
 void MainWindow::create_actions()
 {
     // Create the action group for the UIManager

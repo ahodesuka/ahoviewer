@@ -66,6 +66,8 @@ namespace AhoViewer
                     m_ListStore->append();
             }
 
+            // Member ordering here is important, m_ListStore requires m_Columns
+            // during initialization
             ModelColumns m_Columns;
             Glib::RefPtr<Gtk::ListStore> m_ListStore;
             SignalSelectedChangedType m_SignalSelectedChanged;

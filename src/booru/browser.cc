@@ -76,7 +76,7 @@ void Browser::update_combobox_model()
     for (std::shared_ptr<Site> site : Settings.get_sites())
     {
         Gtk::TreeIter it = m_ComboModel->append();
-        sigc::connection c = site->signal_icon_downloaded().connect([ this, site, it ]
+        sigc::connection c = site->signal_icon_downloaded().connect([ &, site, it ]
                 { it->set_value(m_ComboColumns.icon, site->get_icon_pixbuf()); });
         m_SiteIconConns.push_back(std::move(c));
 
@@ -85,7 +85,7 @@ void Browser::update_combobox_model()
 
     }
 
-    m_ComboChangedConn = m_ComboBox->signal_changed().connect([ this ]()
+    m_ComboChangedConn = m_ComboBox->signal_changed().connect([&]()
     {
         m_TagEntry->set_tags(get_active_site()->get_tags());
     });
@@ -170,7 +170,9 @@ void Browser::on_save_images()
         m_LastSavePath = path;
         Page *page = get_active_page();
 
-        m_SaveProgConn = page->signal_save_progress().connect([ this, page ](size_t c, size_t t)
+        // FIXME: Make sure this is the active page,
+        // or that the active page is not saving before sending status
+        m_SaveProgConn = page->signal_save_progress().connect([ &, page ](size_t c, size_t t)
         {
             std::ostringstream ss;
             ss << "Saving "
@@ -318,7 +320,7 @@ void Browser::on_switch_page(void*, guint)
     Page *page = get_active_page();
 
     m_DownloadErrorConn.disconnect();
-    m_DownloadErrorConn = page->signal_no_results().connect([ this ](const std::string msg)
+    m_DownloadErrorConn = page->signal_no_results().connect([&](const std::string msg)
     {
         m_StatusBar->set_message(msg);
     });
@@ -372,7 +374,7 @@ void Browser::on_imagelist_changed(const std::shared_ptr<AhoViewer::Image> &imag
         }
     }
 
-    m_ImageProgConn = bimage->signal_progress().connect([ this, bimage ](double c, double t)
+    m_ImageProgConn = bimage->signal_progress().connect([ &, bimage ](double c, double t)
     {
         double speed = (c / std::chrono::duration<double>(std::chrono::steady_clock::now() -
                                                           bimage->get_start_time()).count());

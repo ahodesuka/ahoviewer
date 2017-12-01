@@ -20,7 +20,7 @@ PreferencesDialog::PreferencesDialog(BaseObjectType *cobj, const Glib::RefPtr<Gt
     Gtk::Button *closeButton = nullptr;
     bldr->get_widget("PreferencesDialog::CloseButton", closeButton);
 
-    closeButton->signal_clicked().connect([ this ]() { hide(); });
+    closeButton->signal_clicked().connect([=] { hide(); });
 
     Gtk::CheckButton *checkButton = nullptr;
     bldr->get_widget("SaveThumbnails", checkButton);
@@ -96,7 +96,7 @@ PreferencesDialog::PreferencesDialog(BaseObjectType *cobj, const Glib::RefPtr<Gt
     {
         bldr->get_widget(s, spinButton);
         spinButton->set_value(Settings.get_int(s));
-        spinButton->signal_value_changed().connect([ this, s, spinButton ]()
+        spinButton->signal_value_changed().connect([ &, s, spinButton ]()
         {
             Settings.set(s, spinButton->get_value_as_int());
 

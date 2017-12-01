@@ -40,7 +40,7 @@ Page::Page(Gtk::Menu *menu)
     m_TabButton->property_relief() = Gtk::RELIEF_NONE;
     m_TabButton->set_focus_on_click(false);
     m_TabButton->set_tooltip_text(_("Close Tab"));
-    m_TabButton->signal_clicked().connect([ this ]() { m_SignalClosed(this); });
+    m_TabButton->signal_clicked().connect([=]() { m_SignalClosed(this); });
 
     m_TabLabel->set_alignment(0.0, 0.5);
     m_TabLabel->set_ellipsize(Pango::ELLIPSIZE_END);
@@ -73,7 +73,7 @@ Page::Page(Gtk::Menu *menu)
                                   GTK_CELL_RENDERER(cell->gobj()), "pixbuf", 0);
 
     m_SignalPostsDownloaded.connect(sigc::mem_fun(*this, &Page::on_posts_downloaded));
-    m_SignalSaveProgressDisp.connect([ this ]()
+    m_SignalSaveProgressDisp.connect([&]()
     {
         m_SignalSaveProgress(m_SaveImagesCurrent, m_SaveImagesTotal);
     });
@@ -176,7 +176,7 @@ void Page::save_image(const std::string &path, const std::shared_ptr<Image> &img
         m_SaveImagesThread.join();
 
     m_Saving            = true;
-    m_SaveImagesThread  = std::thread([ this, path, img ]()
+    m_SaveImagesThread  = std::thread([ &, path, img ]()
     {
         img->save(path);
         m_Saving = false;
@@ -192,12 +192,12 @@ void Page::save_images(const std::string &path)
     m_Saving            = true;
     m_SaveImagesCurrent = 0;
     m_SaveImagesTotal   = m_ImageList->get_vector_size();
-    m_SaveImagesThread  = std::thread([ this, path ]()
+    m_SaveImagesThread  = std::thread([ &, path ]()
     {
         ThreadPool pool(std::thread::hardware_concurrency());
         for (const std::shared_ptr<AhoViewer::Image> &img : *m_ImageList)
         {
-            pool.push([ this, path, img ]()
+            pool.push([ &, path, img ]()
             {
                 if (m_SaveCancel->is_cancelled())
                     return;
@@ -216,9 +216,7 @@ void Page::save_images(const std::string &path)
     });
 }
 
-/**
- * Returns true if we want to cancel or we're not saving
- **/
+// Returns true if we want to cancel or we're not saving
 bool Page::ask_cancel_save()
 {
     if (!m_Saving)
@@ -265,7 +263,7 @@ void Page::get_posts()
     tags = m_Curler.escape(tags);
     m_Curler.set_url(m_Site->get_posts_url(tags, m_Page));
 
-    m_GetPostsThread = std::thread([ this, tags ]()
+    m_GetPostsThread = std::thread([ &, tags ]()
     {
         size_t postsCount = 0;
         // Danbooru doesn't give the post count with the posts
@@ -332,9 +330,7 @@ bool Page::get_next_page()
     return true;
 }
 
-/**
- * Adds the downloaded posts to the image list.
- **/
+// Adds the downloaded posts to the image list.
 void Page::on_posts_downloaded()
 {
     if (m_Posts && m_Posts->get_attribute("success") == "false" && !m_Posts->get_attribute("reason").empty())
@@ -385,9 +381,7 @@ void Page::on_selection_changed()
     }
 }
 
-/**
- * Vertical scrollbar value changed
- **/
+// Vertical scrollbar value changed
 void Page::on_value_changed()
 {
     double value = get_vadjustment()->get_value(),

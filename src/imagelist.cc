@@ -17,7 +17,7 @@ ImageList::ImageList(Widget *const w)
     m_CacheCancel(Gio::Cancellable::create())
 {
     // Sorts indices based on how close they are to m_Index
-    m_IndexSort = [ this ](size_t a, size_t b)
+    m_IndexSort = [=](size_t a, size_t b)
     {
         size_t adiff = std::abs(static_cast<int>(a - m_Index)),
                bdiff = std::abs(static_cast<int>(b - m_Index));
@@ -41,10 +41,8 @@ void ImageList::clear()
     m_SignalCleared();
 }
 
-/**
- * Creates a local image list from a given file (archive/image) or direcotry.
- * The parameter index is used when reopening an archive at a given index.
- **/
+// Creates a local image list from a given file (archive/image) or direcotry.
+// The parameter index is used when reopening an archive at a given index.
 bool ImageList::load(const std::string path, std::string &error, int index)
 {
     std::unique_ptr<Archive> archive = nullptr;
@@ -212,15 +210,15 @@ void ImageList::load_thumbnails()
 
     for (const size_t i : indices)
     {
-        m_ThreadPool.push([ this, i ]()
+        m_ThreadPool.push([ &, i ]()
         {
             if (m_ThumbnailCancel->is_cancelled())
                 return;
 
-            const Glib::RefPtr<Gdk::Pixbuf> &thumb = m_Images[i]->get_thumbnail();
+            const Glib::RefPtr<Gdk::Pixbuf> thumb = m_Images[i]->get_thumbnail();
             {
                 std::lock_guard<std::mutex> lock(m_ThumbnailMutex);
-                m_ThumbnailQueue.push(PixbufPair(i, thumb));
+                m_ThumbnailQueue.push(PixbufPair(i, std::move(thumb)));
             }
 
             if (!m_ThumbnailCancel->is_cancelled())
@@ -262,10 +260,8 @@ void ImageList::cancel_thumbnail_thread()
     m_ThumbnailQueue = std::queue<PixbufPair>();
 }
 
-/**
- * Returns an unsorted vector of the paths to valid T's.
- * T must have a static method ::is_valid_extension, ie Image and Archive
- **/
+// Returns an unsorted vector of the paths to valid T's.
+// T must have a static method ::is_valid_extension, ie Image and Archive
 template <typename T>
 std::vector<std::string> ImageList::get_entries(const std::string &path)
 {
@@ -426,8 +422,11 @@ void ImageList::update_cache()
             m_Images[i]->reset_pixbuf();
 
     // Start the cache loading thread
+    // TODO: Make a persistent thread class that does work when needed and
+    // waits on a coditional variable (returns it) can be used here and for
+    // other places where a single thread is used frequently
     m_Cache = cache;
-    m_CacheThread = std::thread([ this ]()
+    m_CacheThread = std::thread([&]()
     {
         for (const size_t i : m_Cache)
         {

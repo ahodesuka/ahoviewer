@@ -32,7 +32,7 @@ SiteEditor::SiteEditor(BaseObjectType *cobj, const Glib::RefPtr<Gtk::Builder> &b
     {
         Gtk::TreeIter iter = m_Model->append();
         iter->set_value(m_Columns.icon, s->get_icon_pixbuf());
-        s->signal_icon_downloaded().connect([ this, iter, s ]()
+        s->signal_icon_downloaded().connect([ &, iter, s ]()
                 { iter->set_value(m_Columns.icon, s->get_icon_pixbuf()); });
         iter->set_value(m_Columns.name, s->get_name());
         iter->set_value(m_Columns.url,  s->get_url());
@@ -78,7 +78,7 @@ SiteEditor::SiteEditor(BaseObjectType *cobj, const Glib::RefPtr<Gtk::Builder> &b
     // Make sure the initially selected site's password gets set in the entry once it's loaded
     const std::shared_ptr<Site> &s = get_selection()->get_selected()->get_value(m_Columns.site);
     if (s)
-        s->signal_password_lookup().connect([ this, s ]() { m_PasswordEntry->set_text(s->get_password()); });
+        s->signal_password_lookup().connect([ &, s ]() { m_PasswordEntry->set_text(s->get_password()); });
 
     m_PasswordEntry->set_visibility(false);
 #endif // HAVE_LIBSECRET
@@ -245,7 +245,7 @@ void SiteEditor::add_edit_site(const Gtk::TreeIter &iter)
         m_SiteCheckEdit = true;
         m_SiteCheckSite = site;
         m_SiteCheckIter->set_value(m_Columns.loading, true);
-        m_SiteCheckThread = std::thread([ this, name, url ]()
+        m_SiteCheckThread = std::thread([ &, name, url ]()
         {
             m_SiteCheckSite->set_name(name);
             m_SiteCheckEditSuccess = m_SiteCheckSite->set_url(url);
@@ -260,7 +260,7 @@ void SiteEditor::add_edit_site(const Gtk::TreeIter &iter)
     {
         m_SiteCheckEdit = false;
         m_SiteCheckIter->set_value(m_Columns.loading, true);
-        m_SiteCheckThread = std::thread([ this, name, url ]()
+        m_SiteCheckThread = std::thread([ &, name, url ]()
         {
             m_SiteCheckSite = Site::create(name, url);
 

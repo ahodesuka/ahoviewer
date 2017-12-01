@@ -4,7 +4,7 @@ using namespace AhoViewer::Booru;
 #include "settings.h"
 
 // {{{ Favorite Icons
-/**
+/*
  * These icons are from http://raphaeljs.com/icons
  *
  * Copyright © 2008 Dmitry Baranovskiy
@@ -25,7 +25,7 @@ using namespace AhoViewer::Booru;
  * copyright holders be liable for any claim, damages or other liability, whether
  * in an action of contract, tort or otherwise, arising from, out of or in
  * connection with the software or the use or other dealings in the software.
- **/
+ */
 const std::string TagView::StarSVG = "<?xml version=\"1.0\" standalone=\"no\"?>\
 <svg width=\"16px\" height=\"16px\" viewBox=\"-2 0 32 32\" version=\"1.1\" xmlns=\"http://www.w3.org/2000/svg\">\
   <path fill=\"%1\" d=\"M22.441,28.181c-0.419,0-0.835-0.132-1.189-0.392l-5.751-4.247L9.75,\
@@ -57,7 +57,7 @@ TagView::TagView(BaseObjectType *cobj, const Glib::RefPtr<Gtk::Builder> &bldr)
     m_FavoriteTags(Settings.get_favorite_tags())
 {
     bldr->get_widget_derived("Booru::Browser::TagEntry", m_TagEntry);
-    m_TagEntry->signal_changed().connect([ this ]() { queue_draw(); });
+    m_TagEntry->signal_changed().connect([&]() { queue_draw(); });
 
     m_ListStore = Gtk::ListStore::create(m_Columns);
 

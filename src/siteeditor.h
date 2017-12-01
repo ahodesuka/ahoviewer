@@ -36,19 +36,19 @@ namespace AhoViewer
                 m_PixbufRenderer(Gtk::manage(new Gtk::CellRendererPixbuf())),
                 m_SpinnerRenderer(Gtk::manage(new Gtk::CellRendererSpinner()))
             {
-                m_LoadingProperty.get_proxy().signal_changed().connect([ this ]()
+                m_LoadingProperty.get_proxy().signal_changed().connect([&]()
                         { m_SpinnerRenderer->property_active() = m_LoadingProperty.get_value(); });
-                m_PulseProperty.get_proxy().signal_changed().connect([ this ]()
+                m_PulseProperty.get_proxy().signal_changed().connect([&]()
                         { m_SpinnerRenderer->property_pulse() = m_PulseProperty.get_value(); });
-                m_PixbufProperty.get_proxy().signal_changed().connect([ this ]()
+                m_PixbufProperty.get_proxy().signal_changed().connect([&]()
                         { m_PixbufRenderer->property_pixbuf() = m_PixbufProperty.get_value(); });
 
-                m_SiteEditor->get_toplevel()->signal_show().connect([ this ]()
+                m_SiteEditor->get_toplevel()->signal_show().connect([&]()
                         {
                             m_SpinnerConn = Glib::signal_timeout().connect(
                                     sigc::mem_fun(*this, &CellRendererIcon::update_spinner), 63);
                         });
-                m_SiteEditor->get_toplevel()->signal_hide().connect([ this ]() { m_SpinnerConn.disconnect(); });
+                m_SiteEditor->get_toplevel()->signal_hide().connect([&]() { m_SpinnerConn.disconnect(); });
             }
             virtual ~CellRendererIcon() override = default;
 

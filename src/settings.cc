@@ -288,11 +288,10 @@ std::string SettingsManager::get_keybinding(const std::string &group, const std:
     return m_Keybindings.at(group).at(name);
 }
 
-/**
- * Clears the first (only) binding that has the same value as value
- * Sets the group and name parameters to those of the binding that was cleared
- * Returns true if it actually cleared a binding
- **/
+// Clears the first (only) binding that has the same value as value
+// Sets the group and name parameters to those of the binding that was cleared
+// Returns true if it actually cleared a binding
+// TODO: Add support for multiple keybindings per action
 bool SettingsManager::clear_keybinding(const std::string &value, std::string &group, std::string &name)
 {
     for (const std::pair<std::string, std::map<std::string, std::string>> &i : m_Keybindings)

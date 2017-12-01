@@ -186,7 +186,7 @@ void ImageBox::cursor_timeout()
     if (Settings.get_int("CursorHideDelay") <= 0)
         return;
 
-    m_CursorConn = Glib::signal_timeout().connect_seconds(sigc::bind_return([ this ]()
+    m_CursorConn = Glib::signal_timeout().connect_seconds(sigc::bind_return([&]()
                 { m_Layout->get_window()->set_cursor(m_BlankCursor); }, false), Settings.get_int("CursorHideDelay"));
 }
 
