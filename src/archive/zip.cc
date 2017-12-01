@@ -51,13 +51,13 @@ bool Zip::extract(const std::string &file) const
                     break;
                 }
 
-                char *buf = new char[st.size];
+                std::vector<char> buf(st.size);
                 int bufSize;
-                if ((bufSize = zip_fread(zfile, buf, st.size)) != -1)
+                if ((bufSize = zip_fread(zfile, &buf[0], st.size)) != -1)
                 {
                     try
                     {
-                        Glib::file_set_contents(fPath, buf, bufSize);
+                        Glib::file_set_contents(fPath, buf.data(), bufSize);
                     }
                     catch(const Glib::FileError &ex)
                     {
@@ -65,7 +65,6 @@ bool Zip::extract(const std::string &file) const
                     }
                 }
 
-                delete[] buf;
                 zip_fclose(zfile);
                 found = true;
                 break;
