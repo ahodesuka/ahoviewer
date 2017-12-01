@@ -235,7 +235,10 @@ void ImageList::reset()
     cancel_cache();
 
     if (m_FileMonitor)
+    {
         m_FileMonitor->cancel();
+        m_FileMonitor.reset();
+    }
 
     cancel_thumbnail_thread();
 
