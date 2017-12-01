@@ -17,6 +17,7 @@ gmon.out
 install-sh
 libtool
 ltmain.sh
+massif.out.*
 missing
 release.sh
 src/**/.deps/
