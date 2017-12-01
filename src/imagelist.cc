@@ -411,10 +411,12 @@ void ImageList::update_cache()
     // Get the indices of the images no longer in the cache
     if (!m_Cache.empty())
     {
+        // Copy the cache to preserve the desired sort order
+        std::vector<size_t> tmp = cache;
         std::sort(m_Cache.begin(), m_Cache.end());
-        std::sort(cache.begin(), cache.end());
+        std::sort(tmp.begin(), tmp.end());
         std::set_difference(m_Cache.begin(), m_Cache.end(),
-                cache.begin(), cache.end(), std::back_inserter(diff));
+                            tmp.begin(), tmp.end(), std::back_inserter(diff));
     }
 
     cancel_cache();
