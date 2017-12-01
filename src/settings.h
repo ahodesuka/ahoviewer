@@ -85,7 +85,6 @@ namespace AhoViewer
         const std::map<std::string, std::string> DefaultStrings;
         const std::vector<SiteTuple> DefaultSites;
         const std::map<std::string, std::map<std::string, std::string>> DefaultKeybindings;
-        const Gdk::Color DefaultBGColor;
         const Booru::Site::Rating DefaultBooruMaxRating = Booru::Site::Rating::EXPLICIT;
         const ImageBox::ZoomMode DefaultZoomMode = ImageBox::ZoomMode::MANUAL;
 

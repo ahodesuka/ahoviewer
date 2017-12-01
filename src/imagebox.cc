@@ -39,6 +39,8 @@ gboolean ImageBox::bus_cb(GstBus*, GstMessage *message, void *userp)
 }
 #endif // HAVE_GSTREAMER
 
+Gdk::Color ImageBox::DefaultBGColor = Gdk::Color();
+
 ImageBox::ImageBox(BaseObjectType *cobj, const Glib::RefPtr<Gtk::Builder> &bldr)
   : Gtk::EventBox(cobj),
     m_LeftPtrCursor(Gdk::LEFT_PTR),
@@ -84,6 +86,11 @@ ImageBox::ImageBox(BaseObjectType *cobj, const Glib::RefPtr<Gtk::Builder> &bldr)
         gst_element_set_state(m_Playbin, GST_STATE_READY);
      });
 #endif // HAVE_GSTREAMER
+
+    m_StyleChangedConn = m_Layout->signal_style_changed().connect([&](const Glib::RefPtr<Gtk::Style>&)
+    {
+        DefaultBGColor = m_Layout->get_style()->get_bg(Gtk::STATE_NORMAL);
+    });
 }
 
 void ImageBox::queue_draw_image(const bool scroll)
@@ -141,7 +148,9 @@ void ImageBox::clear_image()
 
 void ImageBox::update_background_color()
 {
+    m_StyleChangedConn.block();
     m_Layout->modify_bg(Gtk::STATE_NORMAL, Settings.get_background_color());
+    m_StyleChangedConn.unblock();
 }
 
 void ImageBox::cursor_timeout()
@@ -239,6 +248,7 @@ void ImageBox::on_realize()
     m_NextAction = actionGroup->get_action("NextImage");
     m_PreviousAction = actionGroup->get_action("PreviousImage");
 
+    DefaultBGColor = m_Layout->get_style()->get_bg(Gtk::STATE_NORMAL);
     update_background_color();
 
     Gtk::EventBox::on_realize();

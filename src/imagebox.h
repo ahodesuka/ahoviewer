@@ -49,6 +49,8 @@ namespace AhoViewer
         sigc::signal<void> signal_slideshow_ended() const { return m_SignalSlideshowEnded; }
         sigc::signal<void> signal_image_drawn() const { return m_SignalImageDrawn; }
 
+        static Gdk::Color DefaultBGColor;
+
         // Action callbacks {{{
         void on_zoom_in();
         void on_zoom_out();
@@ -112,7 +114,8 @@ namespace AhoViewer
                          m_DrawConn,
                          m_ImageConn,
                          m_ScrollConn,
-                         m_SlideshowConn;
+                         m_SlideshowConn,
+                         m_StyleChangedConn;
 
         bool m_FirstDraw, m_RedrawQueued, m_Loading, m_ZoomScroll;
         ZoomMode m_ZoomMode;

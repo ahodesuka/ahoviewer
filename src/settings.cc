@@ -133,8 +133,7 @@ SettingsManager::SettingsManager()
                 { "CopyPostURL",         "<Primary>y"        },
             }
         }
-    }),
-    DefaultBGColor("#161616")
+    })
 // }}}
 {
     Config.setTabWidth(4); // this is very important
@@ -346,7 +345,7 @@ Gdk::Color SettingsManager::get_background_color() const
     if (Config.exists("BackgroundColor"))
         return Gdk::Color(static_cast<const char*>(Config.lookup("BackgroundColor")));
 
-    return DefaultBGColor;
+    return ImageBox::DefaultBGColor;
 }
 
 void SettingsManager::set_background_color(const Gdk::Color &value)
