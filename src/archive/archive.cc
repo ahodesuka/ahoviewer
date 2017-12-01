@@ -45,12 +45,12 @@ const std::vector<std::string> Archive::FileExtensions =
 #endif // HAVE_LIBUNRAR
 };
 
-bool Archive::is_valid(const Glib::ustring &path)
+bool Archive::is_valid(const std::string &path)
 {
     return get_type(path) != Type::UNKNOWN;
 }
 
-bool Archive::is_valid_extension(const Glib::ustring &path)
+bool Archive::is_valid_extension(const std::string &path)
 {
     std::string ext = path.substr(path.find_last_of('.') + 1);
     std::transform(ext.begin(), ext.end(), ext.begin(), ::tolower);
@@ -62,9 +62,9 @@ bool Archive::is_valid_extension(const Glib::ustring &path)
     return false;
 }
 
-std::unique_ptr<Archive> Archive::create(const Glib::ustring &path, const Glib::ustring &parentDir)
+std::unique_ptr<Archive> Archive::create(const std::string &path, const std::string &parentDir)
 {
-    Glib::ustring dir;
+    std::string dir;
     Type type = get_type(path);
 
     if (type != Type::UNKNOWN)
@@ -92,7 +92,7 @@ std::unique_ptr<Archive> Archive::create(const Glib::ustring &path, const Glib::
     return nullptr;
 }
 
-Archive::Type Archive::get_type(const Glib::ustring &path)
+Archive::Type Archive::get_type(const std::string &path)
 {
     if (Glib::file_test(path, Glib::FILE_TEST_IS_DIR))
         return Type::UNKNOWN;
@@ -116,16 +116,11 @@ Archive::Type Archive::get_type(const Glib::ustring &path)
     return Type::UNKNOWN;
 }
 
-Archive::Archive(const Glib::ustring &path, const Glib::ustring &exDir)
+Archive::Archive(const std::string &path, const std::string &exDir)
   : m_Path(path),
     m_ExtractedPath(exDir)
 {
-#ifdef _WIN32
-    gchar *tmp = g_win32_locale_filename_from_utf8(path.data());
-    m_Path = tmp;
 
-    g_free(tmp);
-#endif // _WIN32
 }
 
 Archive::~Archive()

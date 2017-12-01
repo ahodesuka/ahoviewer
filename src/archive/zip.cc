@@ -10,13 +10,13 @@ using namespace AhoViewer;
 
 const char Zip::Magic[Zip::MagicSize] = { 'P', 'K', 0x03, 0x04 };
 
-Zip::Zip(const Glib::ustring &path, const Glib::ustring &exDir)
+Zip::Zip(const std::string &path, const std::string &exDir)
   : Archive::Archive(path, exDir)
 {
 
 }
 
-bool Zip::extract(const Glib::ustring &file) const
+bool Zip::extract(const std::string &file) const
 {
     bool found = false;
     zip *zip = zip_open(m_Path.c_str(), 0, NULL);
@@ -37,7 +37,7 @@ bool Zip::extract(const Glib::ustring &file) const
 
             if (st.name == file)
             {
-                Glib::ustring fPath = Glib::build_filename(m_ExtractedPath, st.name);
+                std::string fPath = Glib::build_filename(m_ExtractedPath, st.name);
 
                 if (!Glib::file_test(Glib::path_get_dirname(fPath), Glib::FILE_TEST_EXISTS))
                     g_mkdir_with_parents(Glib::path_get_dirname(fPath).c_str(), 0755);

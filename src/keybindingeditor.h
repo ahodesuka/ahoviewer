@@ -28,8 +28,8 @@ namespace AhoViewer
         void action_data_func(Gtk::CellRenderer *c, const Gtk::TreeIter &iter);
         void accel_data_func(Gtk::CellRenderer *c, const Gtk::TreeIter &iter);
 
-        void on_accel_edited(const Glib::ustring &path, guint key, Gdk::ModifierType mods, guint);
-        void on_accel_cleared(const Glib::ustring &path);
+        void on_accel_edited(const std::string &path, guint key, Gdk::ModifierType mods, guint);
+        void on_accel_cleared(const std::string &path);
 
         ModelColumns m_Columns;
         Glib::RefPtr<Gtk::TreeStore> m_Model;

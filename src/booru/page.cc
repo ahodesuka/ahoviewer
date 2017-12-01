@@ -335,7 +335,7 @@ void Page::on_posts_downloaded()
     // 401 = Unauthorized
     else if (m_Curler.get_response_code() == 401)
     {
-        Glib::ustring e = Glib::ustring::compose(_("Failed to login as %1 on %2"),
+        std::string e = Glib::ustring::compose(_("Failed to login as %1 on %2"),
                                                  m_Site->get_username(),
                                                  m_Site->get_name());
         m_SignalDownloadError(e);

@@ -20,6 +20,10 @@ int main(int argc, char **argv)
 
     curl_global_init(CURL_GLOBAL_ALL);
 
+#ifdef _WIN32
+	argv = g_win32_get_command_line();
+#endif // _WIN32
+
     Gtk::Main main(argc, argv);
 #ifdef HAVE_GSTREAMER
     gst_init(&argc, &argv);
@@ -47,6 +51,10 @@ int main(int argc, char **argv)
         window->open_file(argv[1]);
     else
         window->restore_last_file();
+
+#ifdef _WIN32
+    g_strfreev(argv);
+#endif // _WIN32
 
     main.run(*window);
     curl_global_cleanup();

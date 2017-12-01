@@ -94,12 +94,12 @@ void KeybindingEditor::accel_data_func(Gtk::CellRenderer *c, const Gtk::TreeIter
     cell->property_text() = Gtk::AccelGroup::get_label(key, mods);
 }
 
-void KeybindingEditor::on_accel_edited(const Glib::ustring &path, guint key, Gdk::ModifierType mods, guint)
+void KeybindingEditor::on_accel_edited(const std::string &path, guint key, Gdk::ModifierType mods, guint)
 {
     Gtk::TreeIter iter = m_Model->get_iter(path);
     std::string accel = Gtk::AccelGroup::name(key, mods),
                 group, name;
-    Glib::ustring accelPath = Glib::ustring::compose("<Actions>/" PACKAGE "/%1",
+    std::string accelPath = Glib::ustring::compose("<Actions>/" PACKAGE "/%1",
                                                      iter->get_value(m_Columns.name));
     bool exists = Gtk::AccelMap::lookup_entry(accelPath);
 
@@ -132,10 +132,10 @@ void KeybindingEditor::on_accel_edited(const Glib::ustring &path, guint key, Gdk
         m_SignalEdited(accelPath, iter->get_value(m_Columns.name));
 }
 
-void KeybindingEditor::on_accel_cleared(const Glib::ustring &path)
+void KeybindingEditor::on_accel_cleared(const std::string &path)
 {
     Gtk::TreeIter iter = m_Model->get_iter(path);
-    Glib::ustring accelPath = Glib::ustring::compose("<Actions>/" PACKAGE "/%1",
+    std::string accelPath = Glib::ustring::compose("<Actions>/" PACKAGE "/%1",
                                                    iter->get_value(m_Columns.name));
 
     Settings.set_keybinding(iter->parent()->get_value(m_Columns.name),

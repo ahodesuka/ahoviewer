@@ -167,17 +167,17 @@ MainWindow::MainWindow(BaseObjectType *cobj, const Glib::RefPtr<Gtk::Builder> &b
         m_ActionGroup->get_action("ToggleFullscreen")->activate();
 }
 
-void MainWindow::open_file(const Glib::ustring &path, const int index, const bool restore)
+void MainWindow::open_file(const std::string &path, const int index, const bool restore)
 {
     if (path.empty())
         return;
 
-    Glib::ustring absolutePath;
+    std::string absolutePath;
     std::string error;
 
     if (Glib::path_is_absolute(path))
     {
-        absolutePath = Glib::ustring(path);
+        absolutePath = std::string(path);
     }
     else
     {
@@ -191,7 +191,7 @@ void MainWindow::open_file(const Glib::ustring &path, const int index, const boo
 
     if (!m_LocalImageList->load(absolutePath, error, index))
     {
-        Glib::ustring uri = Glib::filename_to_uri(absolutePath);
+        std::string uri = Glib::filename_to_uri(absolutePath);
 
         if (Gtk::RecentManager::get_default()->has_item(uri))
             Gtk::RecentManager::get_default()->remove_item(uri);
@@ -277,11 +277,11 @@ bool MainWindow::on_delete_event(GdkEventAny *e)
 void MainWindow::on_drag_data_received(const Glib::RefPtr<Gdk::DragContext> &ctx, int, int,
                                        const Gtk::SelectionData &data, guint, guint time)
 {
-    std::vector<Glib::ustring> uris = data.get_uris();
+    std::vector<std::string> uris = data.get_uris();
 
     if (uris.size())
     {
-        Glib::ustring uri;
+        std::string uri;
         // In case the URI is not using the file scheme
         try
         {
@@ -848,7 +848,7 @@ void MainWindow::on_open_file_dialog()
 
 void MainWindow::on_open_recent_file()
 {
-    Glib::ustring uri = m_RecentAction->get_current_uri();
+    std::string uri = m_RecentAction->get_current_uri();
 
     if (!uri.empty())
         open_file(Glib::filename_from_uri(uri));

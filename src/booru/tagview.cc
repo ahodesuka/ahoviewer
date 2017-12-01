@@ -175,7 +175,7 @@ void TagView::on_toggle_cell_data(Gtk::CellRenderer *c, const Gtk::TreeIter &ite
 void TagView::update_favorite_icons()
 {
     Glib::RefPtr<Gdk::PixbufLoader> loader;
-    Glib::ustring vgdata;
+    std::string vgdata;
     gchar *color = g_strdup_printf("#%02x%02x%02x", (m_Color.get_red()   >> 8) & 0xff,
                                                     (m_Color.get_green() >> 8) & 0xff,
                                                     (m_Color.get_blue()  >> 8) & 0xff);
