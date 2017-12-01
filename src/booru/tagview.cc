@@ -70,6 +70,8 @@ TagView::TagView(BaseObjectType *cobj, const Glib::RefPtr<Gtk::Builder> &bldr)
     append_column("Toggle", *cell);
 
     append_column("Tag", m_Columns.tag);
+    Gtk::CellRendererText *tcell = static_cast<Gtk::CellRendererText*>(get_column_cell_renderer(2));
+    tcell->property_ellipsize() = Pango::ELLIPSIZE_END;
 
     get_column(0)->set_cell_data_func(*fcell, sigc::mem_fun(*this, &TagView::on_favorite_cell_data));
     get_column(1)->set_cell_data_func(*cell, sigc::mem_fun(*this, &TagView::on_toggle_cell_data));
