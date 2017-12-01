@@ -196,7 +196,23 @@ void MainWindow::open_file(const std::string &path, const int index, const bool 
             absolutePath = Glib::build_filename(Glib::get_current_dir(), path);
     }
 
-    if (!m_LocalImageList->load(absolutePath, error, index))
+    // Check if this image list is already loaded,
+    // no point in reloading it since there are dirwatches setup
+    // just change the current image in the list
+    auto iter = std::find_if(m_LocalImageList->begin(), m_LocalImageList->end(),
+                [&](const auto i) { return i->get_path() == absolutePath; });
+    if (iter != m_LocalImageList->end())
+    {
+        m_LocalImageList->set_current(iter - m_LocalImageList->begin());
+        set_active_imagelist(m_LocalImageList);
+    }
+    // Dont waste time re-extracting the archive just go to the first image
+    else if (m_LocalImageList->from_archive() && absolutePath == m_LocalImageList->get_archive().get_path())
+    {
+        m_LocalImageList->go_first();
+        set_active_imagelist(m_LocalImageList);
+    }
+    else if (!m_LocalImageList->load(absolutePath, error, index))
     {
         std::string uri = Glib::filename_to_uri(absolutePath);
 
@@ -205,23 +221,22 @@ void MainWindow::open_file(const std::string &path, const int index, const bool 
 
         m_StatusBar->clear_progress();
         m_StatusBar->set_message(error);
+        return;
     }
+
+    if (Settings.get_bool("StoreRecentFiles"))
+        Gtk::RecentManager::get_default()->add_item(Glib::filename_to_uri(absolutePath));
+
+    Glib::RefPtr<Gtk::ToggleAction> tbAction =
+        Glib::RefPtr<Gtk::ToggleAction>::cast_static(m_ActionGroup->get_action("ToggleThumbnailBar"));
+
+    // Show the thumbnail bar when opening a new file
+    if (!restore && !tbAction->get_active())
+        tbAction->set_active(true);
     else
-    {
-        if (Settings.get_bool("StoreRecentFiles"))
-            Gtk::RecentManager::get_default()->add_item(Glib::filename_to_uri(absolutePath));
+        update_widgets_visibility();
 
-        Glib::RefPtr<Gtk::ToggleAction> tbAction =
-            Glib::RefPtr<Gtk::ToggleAction>::cast_static(m_ActionGroup->get_action("ToggleThumbnailBar"));
-
-        // Show the thumbnail bar when opening a new file
-        if (!restore && !tbAction->get_active())
-            tbAction->set_active(true);
-        else
-            update_widgets_visibility();
-
-        present();
-    }
+    present();
 }
 
 void MainWindow::restore_last_file()
@@ -339,6 +354,9 @@ bool MainWindow::on_key_press_event(GdkEventKey *e)
 
 void MainWindow::set_active_imagelist(const std::shared_ptr<ImageList> &imageList)
 {
+    if (m_ActiveImageList == imageList)
+        return;
+
     m_ImageListConn.disconnect();
     m_ImageListClearedConn.disconnect();
     m_ActiveImageList = imageList;
