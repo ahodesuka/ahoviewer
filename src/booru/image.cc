@@ -241,7 +241,12 @@ void Image::on_area_prepared()
 void Image::on_area_updated(int, int, int, int)
 {
     using namespace std::chrono;
-    if (!m_Curler.is_cancelled() && steady_clock::now() >= m_LastDraw + milliseconds(100))
+    // Wait longer between draw requests for larger images
+    // A better solution might be to have a drawn signal or flag and check that
+    // but knowing for sure when gtk draws something seems impossible
+    Glib::RefPtr<Gdk::Pixbuf> p = m_Loader->get_pixbuf();
+    auto ms = std::min(std::max((p->get_width() + p->get_height()) / 60.f, 100.f), 800.f);
+    if (!m_Curler.is_cancelled() && steady_clock::now() >= m_LastDraw + milliseconds(static_cast<int>(ms)))
     {
         m_SignalPixbufChanged();
         m_LastDraw = steady_clock::now();
