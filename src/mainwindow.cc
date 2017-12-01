@@ -100,10 +100,17 @@ MainWindow::MainWindow(BaseObjectType *cobj, const Glib::RefPtr<Gtk::Builder> &b
 
     try
     {
-        Glib::RefPtr<Gdk::Pixbuf> logo =
 #ifdef _WIN32
-            Gdk::Pixbuf::create_from_file("share/pixmaps/ahoviewer/ahoviewer-about-logo.png");
+        std::string path;
+        gchar *g = g_win32_get_package_installation_directory_of_module(NULL);
+        if (g)
+        {
+            path = Glib::build_filename(g, "share", "pixmaps", "ahoviewer", "ahoviewer-about-logo.png");
+            g_free(g);
+        }
+        Glib::RefPtr<Gdk::Pixbuf> logo = Gdk::Pixbuf::create_from_file(path);
 #else
+        Glib::RefPtr<Gdk::Pixbuf> logo =
             Gdk::Pixbuf::create_from_file(DATADIR "/pixmaps/ahoviewer/ahoviewer-about-logo.png");
 #endif // _WIN32
         m_AboutDialog->set_logo(logo);
