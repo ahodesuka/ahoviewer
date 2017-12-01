@@ -4,6 +4,7 @@
 #include <gdkmm.h>
 #include <glibmm.h>
 
+#include <atomic>
 #include <mutex>
 #include <thread>
 
@@ -58,19 +59,10 @@ namespace AhoViewer
     private:
         Glib::RefPtr<Gdk::Pixbuf> scale_pixbuf(Glib::RefPtr<Gdk::Pixbuf> &pixbuf,
                                                const int w, const int h) const;
-        Glib::RefPtr<Gdk::Pixbuf> create_webm_thumbnail(const int w, const int h) const;
-        Glib::RefPtr<Gdk::Pixbuf> create_webm_thumbnail(const int w, const int h,
-                                                        int &oWidth, int &oHeight) const;
-#ifdef HAVE_GSTREAMER
-        static Glib::RefPtr<Gdk::Pixbuf> capture_frame(GstElement *playbin, const int w,
-                                                       int &oWidth, int &oHeight);
-        static bool is_pixbuf_interesting(Glib::RefPtr<Gdk::Pixbuf> &pixbuf);
 
-        static constexpr double BoringImageVariance = 256.0;
-#endif // HAVE_GSTREAMER
+        Glib::RefPtr<Gdk::Pixbuf> create_webm_thumbnail(int w, int h) const;
         void create_save_thumbnail();
-        void save_thumbnail(Glib::RefPtr<Gdk::Pixbuf> &pixbuf,
-                            const int w, const int h, const gchar *mimeType) const;
+        void save_thumbnail(Glib::RefPtr<Gdk::Pixbuf> &pixbuf, const gchar *mimeType) const;
         static std::string ThumbnailDir;
     };
 }

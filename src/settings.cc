@@ -53,6 +53,7 @@ SettingsManager::SettingsManager()
     DefaultStrings(
     {
         { "TitleFormat", "[%i / %c] %f - %p" },
+        { "AudioSink",   "fakesink"          },
     }),
     DefaultSites(
     {

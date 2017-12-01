@@ -49,26 +49,37 @@ case "$target" in
     ;;
 esac
 
-if test x"$windows" != xtrue; then
-    AC_ARG_ENABLE([gst],
-        AS_HELP_STRING([--enable-gst],
-            [enable webm support through GStreamer @<:@default=auto@:>@]
-        ),
-        [enable_gst=$enableval],
-        [enable_gst=auto]
-    )
+AC_ARG_ENABLE([gst],
+    AS_HELP_STRING([--enable-gst],
+        [enable webm support through GStreamer @<:@default=auto@:>@]
+    ),
+    [enable_gst=$enableval],
+    [enable_gst=auto]
+)
 
-    if test x"$enable_gst" != xno; then
-            PKG_CHECK_MODULES([gstreamer], [gstreamer-1.0 gstreamer-video-1.0 gstreamer-plugins-base-1.0],
-                [
-                    AC_DEFINE(HAVE_GSTREAMER, 1, [Define to have webm support through GStreamer])
-                ],
-                [
-                    if test x"$enable_gst" = xyes; then
-                        AC_MSG_ERROR([gstreamer not found, but --enable-gst=yes])
-                    fi
-                ]
-            )
+if test x"$enable_gst" != xno; then
+    if test x"$windows" != xtrue; then
+        PKG_CHECK_MODULES([gstreamer], [gstreamer-1.0 gstreamer-video-1.0 gstreamer-plugins-base-1.0],
+            [
+                AC_DEFINE(HAVE_GSTREAMER, 1, [Define to have webm support through GStreamer])
+            ],
+            [
+                if test x"$enable_gst" = xyes; then
+                    AC_MSG_ERROR([gstreamer not found, but --enable-gst=yes])
+                fi
+            ]
+        )
+    else
+        PKG_CHECK_MODULES([gstreamer], [gstreamer-1.0 gstreamer-video-1.0 gstreamer-plugins-base-1.0 gstreamer-plugins-bad-1.0],
+            [
+                AC_DEFINE(HAVE_GSTREAMER, 1, [Define to have webm support through GStreamer])
+            ],
+            [
+                if test x"$enable_gst" = xyes; then
+                    AC_MSG_ERROR([gstreamer not found, but --enable-gst=yes])
+                fi
+            ]
+        )
     fi
 fi
 

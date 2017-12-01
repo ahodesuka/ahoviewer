@@ -31,11 +31,7 @@ bool Image::is_valid_extension(const std::string &path)
     return false;
 }
 
-#ifdef HAVE_GSTREAMER
 bool Image::is_webm(const std::string &path)
-#else
-bool Image::is_webm(const std::string&)
-#endif // HAVE_GSTREAMER
 {
 #ifdef HAVE_GSTREAMER
     bool uncertain;
@@ -44,6 +40,7 @@ bool Image::is_webm(const std::string&)
 
     return mimeType == "video/webm";
 #else
+    (void)path;
     return false;
 #endif // HAVE_GSTREAMER
 }
@@ -129,7 +126,7 @@ void Image::load_pixbuf()
         Glib::RefPtr<Gdk::PixbufAnimation> p = Gdk::PixbufAnimation::create_from_file(m_Path);
         {
             std::lock_guard<std::mutex> lock(m_Mutex);
-            m_Pixbuf = p;
+            m_Pixbuf = std::move(p);
         }
         m_SignalPixbufChanged();
     }
@@ -181,156 +178,134 @@ Glib::RefPtr<Gdk::Pixbuf> Image::scale_pixbuf(Glib::RefPtr<Gdk::Pixbuf> &pixbuf,
                                 Gdk::INTERP_BILINEAR);
 }
 
-Glib::RefPtr<Gdk::Pixbuf> Image::create_webm_thumbnail(const int w, const int h) const
-{
-    int ww, hh;
-    return create_webm_thumbnail(w, h, ww, hh);
-}
-
-#ifdef HAVE_GSTREAMER
-Glib::RefPtr<Gdk::Pixbuf> Image::create_webm_thumbnail(const int w, const int h,
-                                                       int &oWidth, int &oHeight) const
-#else
-Glib::RefPtr<Gdk::Pixbuf> Image::create_webm_thumbnail(const int, const int,
-                                                       int&, int&) const
-#endif // HAVE_GSTREAMER
+Glib::RefPtr<Gdk::Pixbuf> Image::create_webm_thumbnail(int w, int h) const
 {
     Glib::RefPtr<Gdk::Pixbuf> pixbuf;
 #ifdef HAVE_GSTREAMER
-    GstElement *playbin   = gst_element_factory_make("playbin", NULL),
-               *audiosink = gst_element_factory_make("fakesink", NULL),
-               *videosink = gst_element_factory_make("fakesink", NULL);
+    gint64 dur, pos;
+    GstSample *sample;
+    GstMapInfo map;
 
-    g_object_set(playbin,
-                 "uri", Glib::filename_to_uri(m_Path).c_str(),
-                 "audio-sink", audiosink,
-                 "video-sink", videosink,
-                 NULL);
+    std::string des = Glib::ustring::compose("uridecodebin uri=%1 ! videoconvert ! videoscale ! "
+           "appsink name=sink caps=\"video/x-raw,format=RGB,width=%2,pixel-aspect-ratio=1/1\"",
+           Glib::filename_to_uri(m_Path).c_str(), w);
+    GError *error = nullptr;
+    GstElement *pipeline = gst_parse_launch(des.c_str(), &error);
 
-    gst_element_set_state(playbin, GST_STATE_PAUSED);
-    gst_element_get_state(playbin, NULL, NULL, GST_CLOCK_TIME_NONE);
-
-    gint64 dur = -1;
-    if (gst_element_query_duration(playbin, GST_FORMAT_TIME, &dur) && dur != -1)
-        dur /= GST_MSECOND;
-
-    if (dur == -1)
+    if (error != nullptr)
     {
-        pixbuf = capture_frame(playbin, w, oWidth, oHeight);
+        std::cerr << "create_webm_thumbnail: could not construct pipeline: " << error->message << std::endl;
+        g_error_free(error);
+
+        if (pipeline)
+            gst_object_unref(pipeline);
+
+        return get_missing_pixbuf();
     }
-    else
+
+    GstElement *sink = gst_bin_get_by_name(GST_BIN(pipeline), "sink");
+
+    gst_element_set_state(pipeline, GST_STATE_PAUSED);
+    gst_element_get_state(pipeline, NULL, NULL, 5 * GST_SECOND);
+    gst_element_query_duration(pipeline, GST_FORMAT_TIME, &dur);
+
+    static auto is_pixbuf_interesting = [](Glib::RefPtr<Gdk::Pixbuf> &p)
     {
-        std::vector<double> offsets = { 1.0 / 3.0, 2.0 / 3.0, 0.1, 0.9, 0.5 };
+        size_t len      = p->get_rowstride() * p->get_height();
+        guint8 *buf     = p->get_pixels();
+        double xbar     = 0.0,
+               variance = 0.0;
 
-        for (const double offset : offsets)
+        for (size_t i = 0; i < len; ++i)
+            xbar += static_cast<double>(buf[i]);
+        xbar /= static_cast<double>(len);
+
+        for (size_t i = 0; i < len; ++i)
+            variance += std::pow(static_cast<double>(buf[i]) - xbar, 2);
+
+        return variance > 256.0;
+    };
+
+    // Looks at up to 6 different frames (unless duration is -1)
+    // for a pixbuf that is "interesting"
+    for (auto offset : { 1.0 / 3.0, 2.0 / 3.0, 0.1, 0.5, 0.9 })
+    {
+        pos = dur == -1 ? 1 * GST_SECOND : dur / GST_MSECOND * offset * GST_MSECOND;
+
+        if (!gst_element_seek_simple(pipeline, GST_FORMAT_TIME,
+            static_cast<GstSeekFlags>(GST_SEEK_FLAG_KEY_UNIT | GST_SEEK_FLAG_FLUSH), pos))
         {
-            gst_element_seek_simple(playbin, GST_FORMAT_TIME,
-                                    static_cast<GstSeekFlags>(GST_SEEK_FLAG_FLUSH | GST_SEEK_FLAG_KEY_UNIT),
-                                    offset * dur * GST_MSECOND);
+            if (pixbuf)
+                break;
 
-            gst_element_get_state(playbin, NULL, NULL, GST_CLOCK_TIME_NONE);
+            gst_object_unref(sink);
+            gst_element_set_state(pipeline, GST_STATE_NULL);
+            gst_object_unref(pipeline);
 
-            if (!(pixbuf = capture_frame(playbin, w, oWidth, oHeight)))
-                continue;
+            return get_missing_pixbuf();
+        }
 
-            if (is_pixbuf_interesting(pixbuf))
+        g_signal_emit_by_name(sink, "pull-preroll", &sample, NULL);
+
+        if (sample)
+        {
+            GstBuffer *buffer;
+            GstCaps *caps;
+            GstStructure *s;
+
+            caps = gst_sample_get_caps(sample);
+            if (!caps)
+            {
+                gst_object_unref(sink);
+                gst_element_set_state(pipeline, GST_STATE_NULL);
+                gst_object_unref(pipeline);
+
+                return get_missing_pixbuf();
+            }
+            s = gst_caps_get_structure(caps, 0);
+
+            gst_structure_get_int(s, "width", &w);
+            gst_structure_get_int(s, "height", &h);
+
+            buffer = gst_sample_get_buffer(sample);
+            gst_buffer_map(buffer, &map, GST_MAP_READ);
+            pixbuf = Gdk::Pixbuf::create_from_data(map.data,
+                                                    Gdk::COLORSPACE_RGB, false, 8, w, h,
+                                                    GST_ROUND_UP_4(w * 3));
+
+            /* save the pixbuf */
+            gst_buffer_unmap (buffer, &map);
+
+            if (dur == -1 || is_pixbuf_interesting(pixbuf))
                 break;
         }
     }
 
-    gst_element_set_state(playbin, GST_STATE_NULL);
-    g_object_unref(playbin);
-
-    if (pixbuf)
-        pixbuf = scale_pixbuf(pixbuf, w, h);
+    gst_object_unref(sink);
+    gst_element_set_state(pipeline, GST_STATE_NULL);
+    gst_object_unref(pipeline);
+#else
+    (void)w;
+    (void)h;
 #endif // HAVE_GSTREAMER
     return pixbuf;
 }
-
-#ifdef HAVE_GSTREAMER
-Glib::RefPtr<Gdk::Pixbuf> Image::capture_frame(GstElement *playbin, const int w,
-                                               int &oWidth, int &oHeight)
-{
-    Glib::RefPtr<Gdk::Pixbuf> pixbuf;
-
-    GstCaps *to_caps = gst_caps_new_simple("video/x-raw",
-                                           "format", G_TYPE_STRING, "RGB",
-                                           "pixel-aspect-ratio", GST_TYPE_FRACTION, 1, 1,
-                                           "width", G_TYPE_INT, w,
-                                           NULL);
-
-    GstSample *sample = nullptr;
-    g_signal_emit_by_name(playbin, "convert-sample", to_caps, &sample);
-    gst_caps_unref(to_caps);
-
-    if (sample)
-    {
-        GstCaps *sample_caps = gst_sample_get_caps(sample);
-
-        if (sample_caps)
-        {
-            oWidth = 0, oHeight = 0;
-            GstStructure *s = gst_caps_get_structure(sample_caps, 0);
-            gst_structure_get_int(s, "width", &oWidth);
-            gst_structure_get_int(s, "height", &oHeight);
-
-            if (oWidth > 0 && oHeight > 0)
-            {
-                GstMapInfo info;
-                GstMemory *mem = gst_buffer_get_memory(gst_sample_get_buffer(sample), 0);
-                if (gst_memory_map(mem, &info, GST_MAP_READ))
-                {
-                    pixbuf = Gdk::Pixbuf::create_from_data(info.data,
-                                                           Gdk::COLORSPACE_RGB, false, 8,
-                                                           oWidth, oHeight,
-                                                           GST_ROUND_UP_4(w * 3));
-
-                    gst_memory_unmap(mem, &info);
-                }
-
-                gst_memory_unref(mem);
-            }
-        }
-
-        gst_sample_unref(sample);
-    }
-
-    return pixbuf;
-}
-
-bool Image::is_pixbuf_interesting(Glib::RefPtr<Gdk::Pixbuf> &pixbuf)
-{
-    size_t len      = pixbuf->get_rowstride() * pixbuf->get_height();
-    guint8 *buf     = pixbuf->get_pixels();
-    double xbar     = 0.0,
-           variance = 0.0;
-
-    for (size_t i = 0; i < len; ++i)
-        xbar += static_cast<double>(buf[i]);
-    xbar /= static_cast<double>(len);
-
-    for (size_t i = 0; i < len; ++i)
-        variance += std::pow(static_cast<double>(buf[i]) - xbar, 2);
-
-    return variance > BoringImageVariance;
-}
-#endif // HAVE_GSTREAMER
 
 void Image::create_save_thumbnail()
 {
 #ifdef __linux__
-    int w, h;
     Glib::RefPtr<Gdk::Pixbuf> pixbuf;
 
     if (m_isWebM)
     {
-        pixbuf = create_webm_thumbnail(128, 128, w, h);
+        pixbuf = create_webm_thumbnail(128, 128);
 
         if (pixbuf)
-            save_thumbnail(pixbuf, w, h, "video/webm");
+            save_thumbnail(pixbuf, "video/webm");
     }
     else
     {
+        int w, h;
         GdkPixbufFormat *format = gdk_pixbuf_get_file_info(m_Path.c_str(), &w, &h);
         if (format && (w > 128 || h > 128))
         {
@@ -347,21 +322,19 @@ void Image::create_save_thumbnail()
             }
 
             gchar **mimeTypes = gdk_pixbuf_format_get_mime_types(format);
-
-            save_thumbnail(pixbuf, w, h, mimeTypes[0]);
+            save_thumbnail(pixbuf, mimeTypes[0]);
             g_strfreev(mimeTypes);
         }
     }
 
-    if (pixbuf)
+    if (pixbuf && pixbuf != get_missing_pixbuf())
         m_ThumbnailPixbuf = scale_pixbuf(pixbuf, ThumbnailSize, ThumbnailSize);
     else
 #endif // __linux__
         create_thumbnail();
 }
 
-void Image::save_thumbnail(Glib::RefPtr<Gdk::Pixbuf> &pixbuf,
-                           const int w, const int h, const gchar *mimeType) const
+void Image::save_thumbnail(Glib::RefPtr<Gdk::Pixbuf> &pixbuf, const gchar *mimeType) const
 {
     if (!Settings.get_bool("SaveThumbnails"))
         return;
@@ -374,8 +347,6 @@ void Image::save_thumbnail(Glib::RefPtr<Gdk::Pixbuf> &pixbuf,
             "tEXt::Thumb::URI",
             "tEXt::Thumb::MTime",
             "tEXt::Thumb::Size",
-            "tEXt::Thumb::Image::Width",
-            "tEXt::Thumb::Image::Height",
             "tEXt::Thumb::Image::Mimetype",
             "tEXt::Software"
         },
@@ -384,8 +355,6 @@ void Image::save_thumbnail(Glib::RefPtr<Gdk::Pixbuf> &pixbuf,
             Glib::filename_to_uri(m_Path),      // URI
             std::to_string(fileInfo.st_mtime),  // MTime
             std::to_string(fileInfo.st_size),   // Size
-            std::to_string(w),                  // Width
-            std::to_string(h),                  // Height
             mimeType,                           // Mimetype
             PACKAGE_STRING                      // Software
         };

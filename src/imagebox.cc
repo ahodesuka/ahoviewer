@@ -7,7 +7,12 @@ using namespace AhoViewer;
 
 #ifdef HAVE_GSTREAMER
 #include <gst/video/videooverlay.h>
+#ifdef GDK_WINDOWING_X11
 #include <gdk/gdkx.h>
+#endif // GDK_WINDOWING_X11
+#ifdef GDK_WINDOWING_WIN32
+#include <gdk/gdkwin32.h>
+#endif // GDK_WINDOWING_WIN32
 
 GstBusSyncReply ImageBox::create_window(GstBus*, GstMessage *message, void *userp)
 {
@@ -65,14 +70,28 @@ ImageBox::ImageBox(BaseObjectType *cobj, const Glib::RefPtr<Gtk::Builder> &bldr)
 
 #ifdef HAVE_GSTREAMER
     m_Playbin   = gst_element_factory_make("playbin", "playbin"),
+#ifdef GDK_WINDOWING_X11
     m_VideoSink = gst_element_factory_make("xvimagesink", "videosink");
-
     if (!m_VideoSink)
         m_VideoSink = gst_element_factory_make("ximagesink", "videosink");
+#endif // GDK_WINDOWING_X11
+#if defined GDK_WINDOWING_WIN32
+    m_VideoSink = gst_element_factory_make("d3dvideosink", "videosink");
+#endif // GDK_WINDOWING_WIN32
+
+    // Last resort
+    if (!m_VideoSink)
+        m_VideoSink = gst_element_factory_make("autovideosink", "videosink");
 
     g_object_set(m_Playbin,
-            "audio-sink", gst_element_factory_make("fakesink", "audiosink"),
+            // TODO: MAYBE implement sound with volumn control
+            // For now users can put
+            // AudioSink = "autoaudiosink";
+            // into the config file and have sound if they have the correct gstreamer plugins
+            "audio-sink", gst_element_factory_make(Settings.get_string("AudioSink").c_str(), "audiosink"),
             "video-sink", m_VideoSink,
+            // draw_image takes care of it
+            "force-aspect-ratio", FALSE,
             NULL);
 
     GstBus *bus = gst_pipeline_get_bus(GST_PIPELINE(m_Playbin));
@@ -80,11 +99,17 @@ ImageBox::ImageBox(BaseObjectType *cobj, const Glib::RefPtr<Gtk::Builder> &bldr)
     gst_bus_set_sync_handler(bus, &ImageBox::create_window, this, NULL);
     g_object_unref(bus);
 
-    m_DrawingArea->signal_realize().connect([ this ]()
-    {
-        m_WindowHandle = GDK_WINDOW_XID(m_DrawingArea->get_window()->gobj());
-        gst_element_set_state(m_Playbin, GST_STATE_READY);
-     });
+    if (m_VideoSink)
+        m_DrawingArea->signal_realize().connect([&]()
+        {
+#ifdef GDK_WINDOWING_X11
+            m_WindowHandle = GDK_WINDOW_XID(m_DrawingArea->get_window()->gobj());
+#endif // GDK_WINDOWING_X11
+#ifdef GDK_WINDOWING_WIN32
+            m_WindowHandle = (guintptr)GDK_WINDOW_HWND(m_DrawingArea->get_window()->gobj());
+#endif // GDK_WINDOWING_WIN32
+            gst_element_set_state(m_Playbin, GST_STATE_READY);
+        });
 #endif // HAVE_GSTREAMER
 
     m_StyleChangedConn = m_Layout->signal_style_changed().connect([&](const Glib::RefPtr<Gtk::Style>&)
