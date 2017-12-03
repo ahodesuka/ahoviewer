@@ -20,7 +20,7 @@ Page::Page(Gtk::Menu *menu)
     m_TabLabel(Gtk::manage(new Gtk::Label(_("New Tab")))),
     m_TabButton(Gtk::manage(new Gtk::Button())),
     m_ImageList(std::make_shared<ImageList>(this)),
-    m_ImageFetcher(std::unique_ptr<ImageFetcher>(new ImageFetcher())),
+    m_ImageFetcher(std::make_unique<ImageFetcher>()),
     m_Page(0),
     m_NumPosts(0),
     m_Saving(false),
