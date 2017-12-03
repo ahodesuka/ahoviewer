@@ -21,7 +21,7 @@ namespace AhoViewer
 
             using SignalClosedType = sigc::signal<void, Page*>;
             using SignalDownloadErrorType = sigc::signal<void, const std::string>;
-            using SignalSaveProgressType = sigc::signal<void, size_t, size_t>;
+            using SignalSaveProgressType = sigc::signal<void, const Page*>;
         public:
             Page(Gtk::Menu *menu);
             virtual ~Page() override;
@@ -38,7 +38,6 @@ namespace AhoViewer
             virtual void set_selected(const size_t index) override;
             virtual void scroll_to_selected() override;
         private:
-            void set_tags(const std::string &tags) { m_Tags = tags; }
             void search(const std::shared_ptr<Site> &site);
             void save_image(const std::string &path, const std::shared_ptr<Image> &img);
             void save_images(const std::string &path);
@@ -49,7 +48,6 @@ namespace AhoViewer
             bool get_next_page();
 
             Gtk::Widget* get_tab() const { return m_Tab; }
-            std::string get_tags() const { return m_Tags; }
             bool is_saving() const { return m_Saving; }
 
             void on_posts_downloaded();
@@ -70,6 +68,8 @@ namespace AhoViewer
             std::shared_ptr<Site> m_Site;
             Curler m_Curler, m_CountsCurler;
 
+            // m_Tags stores tags that are inside the entry
+            // while m_SearchTags are the actual current tags
             std::string m_Tags, m_SearchTags, m_Path;
             size_t m_Page, m_NumPosts,
                    m_SaveImagesTotal;

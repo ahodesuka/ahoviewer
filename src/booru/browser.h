@@ -56,6 +56,7 @@ namespace AhoViewer
             };
 
             void close_page(Page *page);
+            void on_save_progress(const Page *p);
 
             bool on_entry_key_press_event(GdkEventKey *e);
             void on_entry_value_changed();
@@ -63,6 +64,8 @@ namespace AhoViewer
             void on_switch_page(void*, guint);
             void on_imagelist_changed(const std::shared_ptr<AhoViewer::Image> &image);
             void on_new_tab_tag(const std::string &tag);
+
+            void check_saving_page();
 
             std::shared_ptr<Site> get_active_site() const
                 { return Settings.get_sites()[m_ComboBox->get_active_row_number()]; }

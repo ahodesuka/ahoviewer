@@ -104,7 +104,7 @@ void Browser::on_new_tab()
     // enter it will create a new tab for you
     // The tags need to be manually set in this case
     if (m_Notebook->get_n_pages() == 0)
-        page->set_tags(m_TagEntry->get_text());
+        page->m_Tags = m_TagEntry->get_text();
 
     int page_num = m_Notebook->append_page(*page, *page->get_tab());
 
@@ -170,20 +170,8 @@ void Browser::on_save_images()
         m_LastSavePath = path;
         Page *page = get_active_page();
 
-        // FIXME: Make sure this is the active page,
-        // or that the active page is not saving before sending status
-        m_SaveProgConn = page->signal_save_progress().connect([ &, page ](size_t c, size_t t)
-        {
-            std::ostringstream ss;
-            ss << "Saving "
-               << page->get_site()->get_name() + (!page->get_tags().empty() ? " - " + page->get_tags() : "")
-               << " " << c << " / " << t;
-            m_StatusBar->set_progress(static_cast<double>(c) / t, StatusBar::Priority::HIGH, c == t ? 2 : 0);
-            m_StatusBar->set_message(ss.str(), StatusBar::Priority::HIGH, c == t ? 2 : 0);
-
-            if (c == t)
-                m_SaveProgConn.disconnect();
-        });
+        m_SaveProgConn.disconnect();
+        m_SaveProgConn = page->signal_save_progress().connect(sigc::mem_fun(this, &Browser::on_save_progress));
 
         page->save_images(path);
     }
@@ -264,6 +252,40 @@ void Browser::close_page(Page *page)
         m_Notebook->remove_page(*page);
 }
 
+void Browser::on_save_progress(const Page *p)
+{
+    size_t c = p->m_SaveImagesCurrent,
+           t = p->m_SaveImagesTotal;
+    std::ostringstream ss;
+    ss << "Saving "
+       << p->get_site()->get_name() + (!p->m_SearchTags.empty() ? " - " + p->m_SearchTags : "")
+       << " " << c << " / " << t;
+    m_StatusBar->set_progress(static_cast<double>(c) / t, StatusBar::Priority::HIGH, c == t ? 2 : 0);
+    m_StatusBar->set_message(ss.str(), StatusBar::Priority::HIGH, c == t ? 2 : 0);
+
+    if (c == t)
+    {
+        m_SaveProgConn.disconnect();
+        Glib::signal_timeout().connect_seconds_once(sigc::mem_fun(*this, &Browser::check_saving_page), 2);
+    }
+}
+
+// Finds the first page that is currently saving and connects
+// it's progress signal
+void Browser::check_saving_page()
+{
+    auto pages = get_pages();
+    auto iter  = std::find_if(pages.cbegin(), pages.cend(),
+                    [](const auto page) { return page->is_saving(); });
+
+    if (iter != pages.end())
+    {
+        m_SaveProgConn = (*iter)->signal_save_progress().connect(
+            sigc::mem_fun(*this, &Browser::on_save_progress));
+        on_save_progress(*iter);
+    }
+}
+
 bool Browser::on_entry_key_press_event(GdkEventKey *e)
 {
     // we only care if enter/return was pressed while shift or no modifier was down
@@ -293,10 +315,10 @@ bool Browser::on_entry_key_press_event(GdkEventKey *e)
 void Browser::on_entry_value_changed()
 {
     if (get_active_page())
-        get_active_page()->set_tags(m_TagEntry->get_text());
+        get_active_page()->m_Tags = m_TagEntry->get_text();
 }
 
-void Browser::on_page_removed(Gtk::Widget*, guint)
+void Browser::on_page_removed(Gtk::Widget *p, guint)
 {
     if (m_Notebook->get_n_pages() == 0)
     {
@@ -312,6 +334,13 @@ void Browser::on_page_removed(Gtk::Widget*, guint)
         }
 
         m_SignalPageChanged(nullptr);
+    }
+
+    if (static_cast<Page*>(p)->is_saving())
+    {
+        m_SaveProgConn.disconnect();
+        m_StatusBar->clear_message();
+        m_StatusBar->clear_progress();
     }
 }
 
@@ -329,7 +358,19 @@ void Browser::on_switch_page(void*, guint)
     m_ImageListConn = page->get_imagelist()->signal_changed().connect(
             sigc::mem_fun(*this, &Browser::on_imagelist_changed));
 
-    m_TagEntry->set_text(page->get_tags());
+    if (page->is_saving())
+    {
+        m_SaveProgConn.disconnect();
+        m_SaveProgConn = page->signal_save_progress().connect(
+            sigc::mem_fun(*this, &Browser::on_save_progress));
+        on_save_progress(page);
+    }
+    else if (!m_SaveProgConn)
+    {
+        check_saving_page();
+    }
+
+    m_TagEntry->set_text(page->m_Tags);
 
     if (page->get_site())
     {
@@ -367,7 +408,7 @@ void Browser::on_imagelist_changed(const std::shared_ptr<AhoViewer::Image> &imag
     {
         m_ImageProgConn.disconnect();
 
-        if (!get_active_page()->is_saving())
+        if (!m_SaveProgConn)
         {
             m_StatusBar->clear_message();
             m_StatusBar->clear_progress();

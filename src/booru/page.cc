@@ -73,10 +73,7 @@ Page::Page(Gtk::Menu *menu)
                                   GTK_CELL_RENDERER(cell->gobj()), "pixbuf", 0);
 
     m_SignalPostsDownloaded.connect(sigc::mem_fun(*this, &Page::on_posts_downloaded));
-    m_SignalSaveProgressDisp.connect([&]()
-    {
-        m_SignalSaveProgress(m_SaveImagesCurrent, m_SaveImagesTotal);
-    });
+    m_SignalSaveProgressDisp.connect([&](){ m_SignalSaveProgress(this); });
 
     add(*m_IconView);
     show_all();
@@ -191,9 +188,12 @@ void Page::save_images(const std::string &path)
 
     m_Saving            = true;
     m_SaveImagesCurrent = 0;
-    m_SaveImagesTotal   = m_ImageList->get_vector_size();
+    // Blacklisted posts on danbooru will have empty urls
+    m_SaveImagesTotal   = std::count_if(m_ImageList->begin(), m_ImageList->end(),
+        [](auto &i) { return !std::static_pointer_cast<Image>(i)->get_url().empty(); });
     m_SaveImagesThread  = std::thread([ &, path ]()
     {
+        // FIXME: Why not using the ImageFetchers threads?
         ThreadPool pool(std::thread::hardware_concurrency());
         for (const std::shared_ptr<AhoViewer::Image> &img : *m_ImageList)
         {
