@@ -69,7 +69,7 @@ namespace AhoViewer
             Curler m_Curler, m_CountsCurler;
 
             // m_Tags stores tags that are inside the entry
-            // while m_SearchTags are the actual current tags
+            // while m_SearchTags are the whitespace trimmed tags or *
             std::string m_Tags, m_SearchTags, m_Path;
             size_t m_Page, m_NumPosts,
                    m_SaveImagesTotal;
