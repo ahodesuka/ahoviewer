@@ -229,8 +229,15 @@ void Image::on_finished()
 {
     std::lock_guard<std::mutex> lock(m_DownloadMutex);
 
-    m_Curler.save_file(m_Path);
-    m_Curler.clear();
+    if (m_Curler.get_data_size() > 0)
+    {
+        m_Curler.save_file(m_Path);
+        m_Curler.clear();
+    }
+    else
+    {
+        std::cerr << "Booru::Image::on_finished: Curler recieved no data yet finished!" << std::endl;
+    }
 
     if (m_Loader)
     {
@@ -240,7 +247,7 @@ void Image::on_finished()
     }
 
     m_SignalPixbufChanged();
-    m_DownloadCond.notify_one();
+    m_DownloadCond.notify_all();
 }
 
 void Image::on_area_prepared()
