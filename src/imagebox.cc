@@ -84,12 +84,13 @@ ImageBox::ImageBox(BaseObjectType *cobj, const Glib::RefPtr<Gtk::Builder> &bldr)
         m_VideoSink = gst_element_factory_make("autovideosink", "videosink");
 
     g_object_set(m_Playbin,
-            // TODO: MAYBE implement sound with volumn control
             // For now users can put
             // AudioSink = "autoaudiosink";
             // into the config file and have sound if they have the correct gstreamer plugins
+            // Can also set Volume = 0-100; in config to control it
             "audio-sink", gst_element_factory_make(Settings.get_string("AudioSink").c_str(), "audiosink"),
             "video-sink", m_VideoSink,
+            "volume", static_cast<double>(Settings.get_int("Volume")) / 100,
             // draw_image takes care of it
             "force-aspect-ratio", FALSE,
             NULL);

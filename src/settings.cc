@@ -49,6 +49,7 @@ SettingsManager::SettingsManager()
         { "SelectedBooru",    0   },
         { "BooruLimit",       50  },
         { "BooruWidth",       -1  },
+        { "Volume",           100 }
     }),
     DefaultStrings(
     {
