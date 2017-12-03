@@ -260,19 +260,19 @@ void Browser::on_save_progress(const Page *p)
     ss << "Saving "
        << p->get_site()->get_name() + (!p->m_SearchTags.empty() ? " - " + p->m_SearchTags : "")
        << " " << c << " / " << t;
-    m_StatusBar->set_progress(static_cast<double>(c) / t, StatusBar::Priority::HIGH, c == t ? 2 : 0);
-    m_StatusBar->set_message(ss.str(), StatusBar::Priority::HIGH, c == t ? 2 : 0);
+    m_StatusBar->set_progress(ss.str(), static_cast<double>(c) / t, StatusBar::Priority::SAVE, c == t ? 2 : 0);
 
     if (c == t)
     {
         m_SaveProgConn.disconnect();
-        Glib::signal_timeout().connect_seconds_once(sigc::mem_fun(*this, &Browser::check_saving_page), 2);
+        Glib::signal_timeout().connect_seconds_once([&]() { check_saving_page(); }, 2);
     }
 }
 
 // Finds the first page that is currently saving and connects
 // it's progress signal
-void Browser::check_saving_page()
+// returns true if a page is saving
+bool Browser::check_saving_page()
 {
     auto pages = get_pages();
     auto iter  = std::find_if(pages.cbegin(), pages.cend(),
@@ -284,6 +284,40 @@ void Browser::check_saving_page()
             sigc::mem_fun(*this, &Browser::on_save_progress));
         on_save_progress(*iter);
     }
+
+    return iter != pages.end();
+}
+
+void Browser::connect_image_signals(const std::shared_ptr<Image> bimage)
+{
+    m_ImageErrorConn.disconnect();
+    m_ImageErrorConn = bimage->signal_download_error().connect([&](const std::string &msg)
+    {
+        m_StatusBar->set_message(msg);
+        m_StatusBar->clear_progress(StatusBar::Priority::DOWNLOAD);
+        m_StatusBar->clear_message(StatusBar::Priority::DOWNLOAD);
+    });
+
+    m_ImageProgConn.disconnect();
+    m_ImageProgConn = bimage->signal_progress().connect([ &, bimage ](double c, double t)
+    {
+        double speed = (c / std::chrono::duration<double>(std::chrono::steady_clock::now() -
+                                                          bimage->get_start_time()).count());
+        std::ostringstream ss;
+
+        if (t > 0)
+        {
+            ss << "Downloading " << readable_file_size(c) << " / " << readable_file_size(t) << " @ "
+               << readable_file_size(speed) << "/s";
+            m_StatusBar->set_progress(ss.str(), c / t, StatusBar::Priority::DOWNLOAD, c == t ? 2 : 0);
+        }
+        else
+        {
+             ss << "Downloading " << readable_file_size(c) << " / ?? @ "
+                << readable_file_size(speed) << "/s";
+            m_StatusBar->set_message(ss.str(), StatusBar::Priority::DOWNLOAD, c == t ? 2 : 0);
+        }
+    });
 }
 
 bool Browser::on_entry_key_press_event(GdkEventKey *e)
@@ -318,7 +352,7 @@ void Browser::on_entry_value_changed()
         get_active_page()->m_Tags = m_TagEntry->get_text();
 }
 
-void Browser::on_page_removed(Gtk::Widget *p, guint)
+void Browser::on_page_removed(Gtk::Widget*, guint)
 {
     if (m_Notebook->get_n_pages() == 0)
     {
@@ -326,27 +360,22 @@ void Browser::on_page_removed(Gtk::Widget *p, guint)
         m_TagView->show_favorite_tags();
         m_SaveImagesButton->set_sensitive(false);
 
-        if (m_ImageProgConn)
-        {
-            m_ImageProgConn.disconnect();
-            m_StatusBar->clear_message();
-            m_StatusBar->clear_progress();
-        }
+        m_SaveProgConn.disconnect();
+        m_ImageProgConn.disconnect();
+        m_StatusBar->clear_progress(StatusBar::Priority::SAVE);
+        m_StatusBar->clear_message(StatusBar::Priority::SAVE);
 
         m_SignalPageChanged(nullptr);
-    }
-
-    if (static_cast<Page*>(p)->is_saving())
-    {
-        m_SaveProgConn.disconnect();
-        m_StatusBar->clear_message();
-        m_StatusBar->clear_progress();
     }
 }
 
 void Browser::on_switch_page(void*, guint)
 {
     Page *page = get_active_page();
+    std::shared_ptr<Image> bimage = nullptr;
+
+    if (!page->get_imagelist()->empty())
+        bimage = std::static_pointer_cast<Image>(page->get_imagelist()->get_current());
 
     m_DownloadErrorConn.disconnect();
     m_DownloadErrorConn = page->signal_no_results().connect([&](const std::string msg)
@@ -358,16 +387,18 @@ void Browser::on_switch_page(void*, guint)
     m_ImageListConn = page->get_imagelist()->signal_changed().connect(
             sigc::mem_fun(*this, &Browser::on_imagelist_changed));
 
-    if (page->is_saving())
+    if (!check_saving_page())
     {
         m_SaveProgConn.disconnect();
-        m_SaveProgConn = page->signal_save_progress().connect(
-            sigc::mem_fun(*this, &Browser::on_save_progress));
-        on_save_progress(page);
-    }
-    else if (!m_SaveProgConn)
-    {
-        check_saving_page();
+        if (bimage && bimage->is_loading())
+        {
+            connect_image_signals(bimage);
+        }
+        else
+        {
+            m_StatusBar->clear_progress(StatusBar::Priority::SAVE);
+            m_StatusBar->clear_message(StatusBar::Priority::SAVE);
+        }
     }
 
     m_TagEntry->set_text(page->m_Tags);
@@ -384,12 +415,8 @@ void Browser::on_switch_page(void*, guint)
 
         m_ComboBox->set_active(index);
 
-        if (!page->get_imagelist()->empty())
-        {
-            std::shared_ptr<Image> bimage =
-                std::static_pointer_cast<Image>(page->get_imagelist()->get_current());
+        if (bimage)
             m_TagView->set_tags(bimage->get_tags());
-        }
     }
     else
     {
@@ -404,36 +431,10 @@ void Browser::on_imagelist_changed(const std::shared_ptr<AhoViewer::Image> &imag
     std::shared_ptr<Image> bimage = std::static_pointer_cast<Image>(image);
     m_TagView->set_tags(bimage->get_tags());
 
-    if (m_ImageProgConn)
-    {
-        m_ImageProgConn.disconnect();
+    m_StatusBar->clear_progress(StatusBar::Priority::DOWNLOAD);
+    m_StatusBar->clear_message(StatusBar::Priority::DOWNLOAD);
 
-        if (!m_SaveProgConn)
-        {
-            m_StatusBar->clear_message();
-            m_StatusBar->clear_progress();
-        }
-    }
-
-    m_ImageProgConn = bimage->signal_progress().connect([ &, bimage ](double c, double t)
-    {
-        double speed = (c / std::chrono::duration<double>(std::chrono::steady_clock::now() -
-                                                          bimage->get_start_time()).count());
-        std::ostringstream ss;
-
-        if (t > 0)
-        {
-            ss << "Downloading " << readable_file_size(c) << " / " << readable_file_size(t) << " @ "
-               << readable_file_size(speed) << "/s";
-            m_StatusBar->set_progress(c / t, StatusBar::Priority::NORMAL, c == t ? 2 : 0);
-        }
-        else
-        {
-             ss << "Downloading " << readable_file_size(c) << " / ?? @ "
-                << readable_file_size(speed) << "/s";
-        }
-        m_StatusBar->set_message(ss.str(), StatusBar::Priority::NORMAL, c == t ? 2 : 0);
-    });
+    connect_image_signals(bimage);
 }
 
 void Browser::on_new_tab_tag(const std::string &tag)

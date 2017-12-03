@@ -167,7 +167,7 @@ void Image::cancel_download()
     }
     m_Curler.clear();
 
-    m_DownloadCond.notify_one();
+    m_DownloadCond.notify_all();
 }
 
 void Image::cancel_thumbnail_download()
@@ -215,6 +215,7 @@ void Image::on_write(const unsigned char *d, size_t l)
         std::cerr << ex.what() << std::endl;
         cancel_download();
         m_PixbufError = true;
+        m_SignalDownloadError(ex.what());
     }
 }
 

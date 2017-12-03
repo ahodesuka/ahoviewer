@@ -219,7 +219,6 @@ void MainWindow::open_file(const std::string &path, const int index, const bool 
         if (Gtk::RecentManager::get_default()->has_item(uri))
             Gtk::RecentManager::get_default()->remove_item(uri);
 
-        m_StatusBar->clear_progress();
         m_StatusBar->set_message(error);
         return;
     }
@@ -816,7 +815,8 @@ void MainWindow::on_connect_proxy(const Glib::RefPtr<Gtk::Action> &action, Gtk::
                 sigc::bind(sigc::mem_fun(m_StatusBar, &StatusBar::set_message),
                     action->get_tooltip(), StatusBar::Priority::TOOLTIP, 0));
         static_cast<Gtk::MenuItem*>(w)->signal_deselect().connect(
-                sigc::mem_fun(m_StatusBar, &StatusBar::clear_message));
+                sigc::bind(sigc::mem_fun(m_StatusBar, &StatusBar::clear_message),
+                           StatusBar::Priority::TOOLTIP));
     }
 }
 

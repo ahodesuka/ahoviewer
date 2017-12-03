@@ -15,6 +15,7 @@ namespace AhoViewer
                       public sigc::trackable
         {
             using SignalProgressType = sigc::signal<void, double, double>;
+            using SignalDownloadErrorType = sigc::signal<void, const std::string&>;
         public:
             Image(const std::string &path, const std::string &url,
                   const std::string &thumbPath, const std::string &thumbUrl,
@@ -40,6 +41,7 @@ namespace AhoViewer
             void cancel_thumbnail_download();
 
             SignalProgressType signal_progress() const { return m_SignalProgress; }
+            SignalDownloadErrorType signal_download_error() const { return m_SignalDownloadError; }
 
             static const size_t BooruThumbnailSize = 150;
         private:
@@ -67,6 +69,7 @@ namespace AhoViewer
             std::mutex m_DownloadMutex, m_ThumbnailMutex;
 
             SignalProgressType m_SignalProgress;
+            SignalDownloadErrorType m_SignalDownloadError;
         };
     }
 }

@@ -6,8 +6,8 @@ using namespace AhoViewer;
 
 StatusBar::StatusBar(BaseObjectType *cobj, const Glib::RefPtr<Gtk::Builder> &bldr)
   : Gtk::Frame(cobj),
-    m_MessagePriority(Priority::NORMAL),
-    m_ProgressPriority(Priority::NORMAL)
+    m_MessagePriority(Priority::UNUSED),
+    m_ProgressPriority(Priority::UNUSED)
 {
     bldr->get_widget("PageInfoLabel",      m_PageInfo);
     bldr->get_widget("ResolutionLabel",    m_Resolution);
@@ -51,23 +51,34 @@ void StatusBar::set_message(const std::string &msg, const Priority priority, con
 
     // Tooltip messages are manually cleared.
     if (priority != Priority::TOOLTIP && delay > 0)
-        m_MessageConn = Glib::signal_timeout().connect_seconds(
-                sigc::bind_return(sigc::mem_fun(*this, &StatusBar::clear_message), false), delay);
+        m_MessageConn = Glib::signal_timeout().connect_seconds([=]()
+        {
+            clear_message(priority);
+            return false;
+        }, delay);
 }
 
-void StatusBar::set_progress(const double fraction, const Priority priority, const std::uint8_t delay)
+// Same as set_message but shows the progress bar as well
+// This will only update the progress bar if the priority is lower
+void StatusBar::set_progress(const std::string &msg, const double fraction,
+                             const Priority priority, const std::uint8_t delay)
 {
     if (priority < m_ProgressPriority)
         return;
 
-    m_ProgressConn.disconnect();
+    // Set message and timeout clean up
+    set_message(msg, priority, delay);
+
     m_ProgressPriority = priority;
     m_ProgressBar->set_fraction(fraction);
     m_ProgressBar->show();
 
     if (delay > 0)
-        m_ProgressConn = Glib::signal_timeout().connect_seconds(
-                sigc::bind_return(sigc::mem_fun(*this, &StatusBar::clear_progress), false), delay);
+        m_ProgressConn = Glib::signal_timeout().connect_seconds([=]()
+        {
+            clear_progress(priority);
+            return false;
+        }, delay);
 }
 
 void StatusBar::clear_page_info()
@@ -87,20 +98,33 @@ void StatusBar::clear_filename()
     m_Filename->set_text(" ");
 }
 
-void StatusBar::clear_message()
+void StatusBar::clear_message(const Priority priority)
 {
+    if (priority < m_MessagePriority)
+        return;
+
+    m_MessagePriority = Priority::UNUSED;
     m_MessageConn.disconnect();
+
+    // This means the set_progress was called with delay = 0
+    // it is going to be called after this we dont want to clear the message
+    // just yet or it will flicker  before set_progress sets the new message
+    if (m_ProgressBar->is_visible() && !m_ProgressConn)
+        return;
+
     m_Message->hide();
     m_Message->set_text("");
-    m_MessagePriority = Priority::NORMAL;
 
     m_Filename->show();
 }
 
-void StatusBar::clear_progress()
+void StatusBar::clear_progress(const Priority priority)
 {
+    if (priority < m_ProgressPriority)
+        return;
+
+    m_ProgressPriority = Priority::UNUSED;
     m_ProgressConn.disconnect();
     m_ProgressBar->hide();
     m_ProgressBar->set_fraction(0);
-    m_ProgressPriority = Priority::NORMAL;
 }

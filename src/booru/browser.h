@@ -65,7 +65,8 @@ namespace AhoViewer
             void on_imagelist_changed(const std::shared_ptr<AhoViewer::Image> &image);
             void on_new_tab_tag(const std::string &tag);
 
-            void check_saving_page();
+            bool check_saving_page();
+            void connect_image_signals(const std::shared_ptr<Image> bimage);
 
             std::shared_ptr<Site> get_active_site() const
                 { return Settings.get_sites()[m_ComboBox->get_active_row_number()]; }
@@ -96,6 +97,7 @@ namespace AhoViewer
                              m_DownloadErrorConn,
                              m_ImageListConn,
                              m_ImageProgConn,
+                             m_ImageErrorConn,
                              m_SaveProgConn;
 
             SignalPageChangedType m_SignalPageChanged;

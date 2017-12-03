@@ -12,28 +12,32 @@ namespace AhoViewer
     public:
         enum class Priority : uint8_t
         {
-            NORMAL = 0,
-            HIGH,
+            UNUSED = 0,
+            DOWNLOAD,
+            SAVE,
+            MESSAGE,
             TOOLTIP
         };
         StatusBar(BaseObjectType*, const Glib::RefPtr<Gtk::Builder>&);
         virtual ~StatusBar() = default;
 
-        void set_page_info(const size_t, const size_t);
-        void set_resolution(const int, const int, const double, const ImageBox::ZoomMode);
-        void set_filename(const std::string&);
-        void set_message(const std::string&,
-                         const Priority priority = Priority::NORMAL,
+        void set_page_info(const size_t page, const size_t total);
+        void set_resolution(const int w, const int h, const double scale,
+                            const ImageBox::ZoomMode zoom_mode);
+        void set_filename(const std::string &filename);
+        void set_message(const std::string &msg,
+                         const Priority priority = Priority::MESSAGE,
                          const std::uint8_t delay = 3);
-        void set_progress(const double,
-                          const Priority priority = Priority::NORMAL,
+        void set_progress(const std::string &msg,
+                          const double prog,
+                          const Priority priority = Priority::MESSAGE,
                           const std::uint8_t delay = 3);
 
         void clear_page_info();
         void clear_resolution();
         void clear_filename();
-        void clear_message();
-        void clear_progress();
+        void clear_message(const Priority priority);
+        void clear_progress(const Priority priority);
     private:
         Gtk::Label *m_PageInfo,
                    *m_Resolution,
