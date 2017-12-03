@@ -168,4 +168,7 @@ AC_CONFIG_FILES([
      po/Makefile
      src/Makefile
 ])
+if test x"$windows" == xtrue; then
+    AC_CONFIG_FILES([build/installer.nsi])
+fi
 AC_OUTPUT
