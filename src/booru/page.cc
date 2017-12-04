@@ -142,6 +142,7 @@ void Page::search(const std::shared_ptr<Site> &site)
     m_Page = 1;
     m_LastPage = false;
     m_SearchTags = m_Tags;
+    m_ImageFetcher->set_max_connections(m_Site->get_max_connections());
 
     // Trim leading and trailing whitespace for tab label
     // and m_SearchTags which is used to display tags in other places

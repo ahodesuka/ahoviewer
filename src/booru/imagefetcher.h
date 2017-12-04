@@ -19,6 +19,8 @@ namespace AhoViewer
             void shutdown();
 
             void add_handle(Curler *curler);
+
+            void set_max_connections(unsigned int n);
         private:
             struct SockInfo
             {

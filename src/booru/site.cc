@@ -45,12 +45,12 @@ struct _shared_site : public Site
 };
 
 std::shared_ptr<Site> Site::create(const std::string &name, const std::string &url, const Type type,
-                                   const std::string &user, const std::string &pass)
+                                   const std::string &user, const std::string &pass, const unsigned int max_cons)
 {
     Type t = type == Type::UNKNOWN ? get_type_from_url(url) : type;
 
     if (t != Type::UNKNOWN)
-        return std::make_shared<_shared_site>(name, url, t, user, pass);
+        return std::make_shared<_shared_site>(name, url, t, user, pass, max_cons);
 
     return nullptr;
 }
@@ -176,7 +176,7 @@ void Site::share_unlock_cb(CURL *c, curl_lock_data data, void *userp)
 }
 
 Site::Site(const std::string &name, const std::string &url, const Type type,
-           const std::string &user, const std::string &pass)
+           const std::string &user, const std::string &pass, const unsigned int max_cons)
   : m_Name(name),
     m_Url(url),
     m_Username(user),
@@ -187,6 +187,7 @@ Site::Site(const std::string &name, const std::string &url, const Type type,
     m_Type(type),
     m_NewAccount(false),
     m_CookieTS(0),
+    m_MaxConnections(max_cons),
     m_ShareHandle(curl_share_init())
 {
     curl_share_setopt(m_ShareHandle, CURLSHOPT_LOCKFUNC, &Site::share_lock_cb);

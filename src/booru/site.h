@@ -44,7 +44,8 @@ namespace AhoViewer
                                                 const std::string &url,
                                                 const Type type = Type::UNKNOWN,
                                                 const std::string &user = "",
-                                                const std::string &pass = "");
+                                                const std::string &pass = "",
+                                                const unsigned int max_cons = 0);
             static const Glib::RefPtr<Gdk::Pixbuf>& get_missing_pixbuf();
 
 #ifdef HAVE_LIBSECRET
@@ -76,6 +77,7 @@ namespace AhoViewer
             std::string get_cookie();
             void cleanup_cookie() const;
 
+            unsigned int get_max_connections() const { return m_MaxConnections; }
             CURLSH* get_share_handle() const { return m_ShareHandle; }
 
             Glib::RefPtr<Gdk::Pixbuf> get_icon_pixbuf(const bool update = false);
@@ -91,7 +93,8 @@ namespace AhoViewer
                  const std::string &url,
                  const Type type,
                  const std::string &user,
-                 const std::string &pass);
+                 const std::string &pass,
+                 const unsigned int max_cons);
         private:
             static Type get_type_from_url(const std::string &url);
 
@@ -113,6 +116,7 @@ namespace AhoViewer
             bool m_NewAccount;
             uint64_t m_CookieTS;
             std::set<std::string> m_Tags;
+            unsigned int m_MaxConnections;
             CURLSH *m_ShareHandle;
             std::map<curl_lock_data, Mutex> m_MutexMap;
             std::map<CURL*, ReaderMap> m_ReaderMap;

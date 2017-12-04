@@ -1,6 +1,8 @@
 #include "imagefetcher.h"
 using namespace AhoViewer::Booru;
 
+#include <algorithm>
+
 int ImageFetcher::socket_cb(CURL*, curl_socket_t s, int action, void *userp, void *sockp)
 {
     ImageFetcher *self = static_cast<ImageFetcher*>(userp);
@@ -73,12 +75,6 @@ ImageFetcher::ImageFetcher()
     curl_multi_setopt(m_MultiHandle, CURLMOPT_SOCKETDATA, this);
     curl_multi_setopt(m_MultiHandle, CURLMOPT_TIMERFUNCTION, &ImageFetcher::timer_cb);
     curl_multi_setopt(m_MultiHandle, CURLMOPT_TIMERDATA, this);
-
-    // Konachan seems to throw a 503 error if you have too many connections
-    // This is also inderectly controlled by the image list's threadpool size
-    // and the cache size setting
-    // TODO: Per-site setting for this
-    // curl_multi_setopt(m_MultiHandle, CURLMOPT_MAX_TOTAL_CONNECTIONS, 8);
 }
 
 ImageFetcher::~ImageFetcher()
@@ -121,6 +117,16 @@ void ImageFetcher::add_handle(Curler *curler)
 
     curler->m_Active = true;
     curler->m_StartTime = std::chrono::steady_clock::now();
+}
+
+// Konachan seems to throw a 503 error if you have too many connections
+// This is also indirectly controlled by the image list's threadpool size
+// and the cache size setting. It's only changable inside the cfg file.
+// 0 = unlimited, must be at least 2
+void ImageFetcher::set_max_connections(unsigned int n)
+{
+    n = n == 1 ? 2 : n;
+    curl_multi_setopt(m_MultiHandle, CURLMOPT_MAX_HOST_CONNECTIONS, n);
 }
 
 void ImageFetcher::remove_handle(Curler *curler)

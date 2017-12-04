@@ -238,12 +238,16 @@ std::vector<std::shared_ptr<Site>>& SettingsManager::get_sites()
                             url      = s.exists("url") ? s["url"] : "",
                             username = s.exists("username") ? s["username"] : "",
                             password = s.exists("password") ? s["password"] : "";
+                unsigned int max_cons = 0;
+                s.lookupValue("max_connections", max_cons);
+                max_cons = max_cons == 1 ? 2 : max_cons;
                 m_Sites.push_back(
                         Site::create(name,
                                      url,
                                      static_cast<Site::Type>(static_cast<int>(s["type"])),
                                      username,
-                                     password));
+                                     password,
+                                     max_cons));
             }
 
             return m_Sites;
@@ -435,6 +439,7 @@ void SettingsManager::save_sites()
 #ifndef HAVE_LIBSECRET
         set("password", s->get_password(), Setting::TypeString, site);
 #endif // !HAVE_LIBSECRET
+        set("max_connections", static_cast<int>(s->get_max_connections()), Setting::TypeInt, site);
         s->cleanup_cookie();
     }
 }
