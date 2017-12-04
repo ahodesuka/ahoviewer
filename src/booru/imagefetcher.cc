@@ -38,10 +38,7 @@ int ImageFetcher::socket_cb(CURL*, curl_socket_t s, int action, void *userp, voi
         source->attach(self->m_MainContext);
 
         if (need_assign)
-        {
-            std::lock_guard<std::recursive_mutex> lock(self->m_Mutex);
             curl_multi_assign(self->m_MultiHandle, s, fdp);
-        }
     }
 
     return 0;
@@ -69,7 +66,13 @@ ImageFetcher::ImageFetcher()
     m_RunningHandles(0),
     m_Shutdown(false)
 {
-    m_Thread = std::thread([&]() { m_MainLoop->run(); });
+    m_Thread = std::thread([&]()
+    {
+        std::shared_ptr<Glib::Dispatcher> dis = std::make_shared<Glib::Dispatcher>(m_MainContext);
+        dis->connect(sigc::mem_fun(*this, &ImageFetcher::on_handle_added));
+        m_SignalHandleAdded = dis;
+        m_MainLoop->run();
+    });
 
     curl_multi_setopt(m_MultiHandle, CURLMOPT_SOCKETFUNCTION, &ImageFetcher::socket_cb);
     curl_multi_setopt(m_MultiHandle, CURLMOPT_SOCKETDATA, this);
@@ -106,17 +109,13 @@ void ImageFetcher::add_handle(Curler *curler)
     if (m_Shutdown)
         return;
 
-    curl_easy_setopt(curler->m_EasyHandle, CURLOPT_PRIVATE, curler);
-
     curler->m_Cancel->reset();
     curler->clear();
-
-    std::lock_guard<std::recursive_mutex> lock(m_Mutex);
-    m_Curlers.push_back(curler);
-    curl_multi_add_handle(m_MultiHandle, curler->m_EasyHandle);
-
     curler->m_Active = true;
-    curler->m_StartTime = std::chrono::steady_clock::now();
+    m_CurlerQueue.push(curler);
+
+    if (auto dis = m_SignalHandleAdded.lock())
+        dis->emit();
 }
 
 // Konachan seems to throw a 503 error if you have too many connections
@@ -129,16 +128,29 @@ void ImageFetcher::set_max_connections(unsigned int n)
     curl_multi_setopt(m_MultiHandle, CURLMOPT_MAX_HOST_CONNECTIONS, n);
 }
 
+void ImageFetcher::on_handle_added()
+{
+    Curler *curler = nullptr;
+    while (!m_Shutdown && m_CurlerQueue.pop(curler))
+    {
+        std::lock_guard<std::mutex> lock(m_Mutex);
+
+        m_Curlers.push_back(curler);
+        curl_multi_add_handle(m_MultiHandle, curler->m_EasyHandle);
+        curler->m_StartTime = std::chrono::steady_clock::now();
+    }
+}
+
 void ImageFetcher::remove_handle(Curler *curler)
 {
     if (!curler)
         return;
 
-    std::lock_guard<std::recursive_mutex> lock(m_Mutex);
-    if (curler->m_EasyHandle)
+    {
+        std::lock_guard<std::mutex> lock(m_Mutex);
         curl_multi_remove_handle(m_MultiHandle, curler->m_EasyHandle);
-
-    m_Curlers.erase(std::remove(m_Curlers.begin(), m_Curlers.end(), curler), m_Curlers.end());
+        m_Curlers.erase(std::remove(m_Curlers.begin(), m_Curlers.end(), curler), m_Curlers.end());
+    }
 
     curler->m_Active = false;
 }
@@ -148,7 +160,6 @@ bool ImageFetcher::event_cb(curl_socket_t sockfd, Glib::IOCondition cond)
     int action = (cond & Glib::IO_IN ? CURL_CSELECT_IN : 0) |
                  (cond & Glib::IO_OUT ? CURL_CSELECT_OUT : 0);
 
-    std::lock_guard<std::recursive_mutex> lock(m_Mutex);
     curl_multi_socket_action(m_MultiHandle, sockfd, action, &m_RunningHandles);
     read_info();
 
@@ -163,7 +174,6 @@ bool ImageFetcher::event_cb(curl_socket_t sockfd, Glib::IOCondition cond)
 
 bool ImageFetcher::timeout_cb()
 {
-    std::lock_guard<std::recursive_mutex> lock(m_Mutex);
     curl_multi_socket_action(m_MultiHandle, CURL_SOCKET_TIMEOUT, 0, &m_RunningHandles);
     read_info();
 
@@ -175,7 +185,6 @@ void ImageFetcher::read_info()
     int msgs;
     CURLMsg *msg = nullptr;
 
-    std::lock_guard<std::recursive_mutex> lock(m_Mutex);
     while ((msg = curl_multi_info_read(m_MultiHandle, &msgs)))
     {
         if (msg->msg == CURLMSG_DONE)

@@ -74,6 +74,7 @@ Curler::Curler(const std::string &url, CURLSH *share)
     curl_easy_setopt(m_EasyHandle, CURLOPT_VERBOSE, VERBOSE_LIBCURL);
     curl_easy_setopt(m_EasyHandle, CURLOPT_CONNECTTIMEOUT, 60);
     curl_easy_setopt(m_EasyHandle, CURLOPT_NOSIGNAL, 1);
+    curl_easy_setopt(m_EasyHandle, CURLOPT_PRIVATE, this);
 
 #ifdef _WIN32
     gchar *g = g_win32_get_package_installation_directory_of_module(NULL);
