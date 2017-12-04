@@ -1,11 +1,10 @@
 #ifndef _IMAGEFETCHER_H_
 #define _IMAGEFETCHER_H_
 
-#include "curler.h"
-
-#include <mutex>
-#include <queue>
 #include <thread>
+
+#include "curler.h"
+#include "tsqueue.h"
 
 namespace AhoViewer
 {
@@ -13,37 +12,6 @@ namespace AhoViewer
     {
         class ImageFetcher : public sigc::trackable
         {
-            // Thread-safe queue {{{
-            template <typename T>
-            class Queue
-            {
-            public:
-                bool push(T value)
-                {
-                    std::unique_lock<std::mutex> lock(m_Mutex);
-                    m_Queue.push(value);
-                    return true;
-                }
-                bool pop(T & v)
-                {
-                    std::unique_lock<std::mutex> lock(m_Mutex);
-                    if (m_Queue.empty())
-                        return false;
-                    v = m_Queue.front();
-                    m_Queue.pop();
-                    return true;
-                }
-                void clear()
-                {
-                    std::unique_lock<std::mutex> lock(m_Mutex);
-                    while (!m_Queue.empty()) m_Queue.pop();
-                }
-
-            private:
-                std::queue<T> m_Queue;
-                std::mutex m_Mutex;
-            };
-            // }}}
         public:
             ImageFetcher();
             virtual ~ImageFetcher();
@@ -79,7 +47,7 @@ namespace AhoViewer
 
             CURLM *m_MultiHandle;
             int m_RunningHandles;
-            Queue<Curler*> m_CurlerQueue;
+            TSQueue<Curler*> m_CurlerQueue;
             std::vector<Curler*> m_Curlers;
 
             std::weak_ptr<Glib::Dispatcher> m_SignalHandleAdded;

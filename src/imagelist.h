@@ -3,7 +3,6 @@
 
 #include <gtkmm.h>
 #include <memory>
-#include <queue>
 #include <string>
 #include <vector>
 
@@ -11,6 +10,7 @@
 #include "booru/xml.h"
 #include "image.h"
 #include "threadpool.h"
+#include "tsqueue.h"
 
 namespace AhoViewer
 {
@@ -27,7 +27,7 @@ namespace AhoViewer
         using SignalArchiveErrorType = sigc::signal<void, const std::string>;
 
         // Used for async thumbnail pixbuf loading
-        using PixbufPair = std::pair<size_t, const Glib::RefPtr<Gdk::Pixbuf>>;
+        using PixbufPair = std::pair<size_t, Glib::RefPtr<Gdk::Pixbuf>>;
     public:
         // ImageList::Widget {{{
         // This is used by ThumbnailBar and Booru::Page.
@@ -154,7 +154,7 @@ namespace AhoViewer
         std::vector<size_t> m_Cache;
         std::unique_ptr<Archive> m_Archive;
         std::vector<std::string> m_ArchiveEntries;
-        std::queue<PixbufPair> m_ThumbnailQueue;
+        TSQueue<PixbufPair> m_ThumbnailQueue;
         std::function<int(size_t, size_t)> m_IndexSort;
 
         Glib::RefPtr<Gio::Cancellable> m_CacheCancel;

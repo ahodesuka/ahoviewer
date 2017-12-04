@@ -216,10 +216,7 @@ void ImageList::load_thumbnails()
                 return;
 
             const Glib::RefPtr<Gdk::Pixbuf> thumb = m_Images[i]->get_thumbnail();
-            {
-                std::lock_guard<std::mutex> lock(m_ThumbnailMutex);
-                m_ThumbnailQueue.push(PixbufPair(i, std::move(thumb)));
-            }
+            m_ThumbnailQueue.push(PixbufPair(i, std::move(thumb)));
 
             if (!m_ThumbnailCancel->is_cancelled())
                 m_SignalThumbnailLoaded();
@@ -256,8 +253,7 @@ void ImageList::cancel_thumbnail_thread()
     if (m_ThumbnailThread.joinable())
         m_ThumbnailThread.join();
 
-    std::lock_guard<std::mutex> lock(m_ThumbnailMutex);
-    m_ThumbnailQueue = std::queue<PixbufPair>();
+    m_ThumbnailQueue.clear();
 }
 
 // Returns an unsorted vector of the paths to valid T's.
@@ -287,18 +283,10 @@ std::vector<std::string> ImageList::get_entries(const std::string &path)
 void ImageList::on_thumbnail_loaded()
 {
     m_ThumbnailLoadedConn.block();
+    PixbufPair p;
 
-    while (!m_ThumbnailCancel->is_cancelled() && !m_ThumbnailQueue.empty())
-    {
-        std::unique_lock<std::mutex> lock(m_ThumbnailMutex);
-        PixbufPair p = m_ThumbnailQueue.front();
-        lock.unlock();
+    while (!m_ThumbnailCancel->is_cancelled() && m_ThumbnailQueue.pop(p))
         m_Widget->set_pixbuf(p.first, p.second);
-        lock.lock();
-        // Queue may have been clared during set_pixbuf
-        if (!m_ThumbnailQueue.empty())
-            m_ThumbnailQueue.pop();
-    }
 
     m_ThumbnailLoadedConn.unblock();
 }
