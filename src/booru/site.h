@@ -15,12 +15,6 @@ namespace AhoViewer
     {
         class Site
         {
-            using Mutex = std::shared_timed_mutex;
-            using ReaderLock = std::shared_lock<Mutex>;
-            using WriterLock = std::unique_lock<Mutex>;
-
-            using ReaderMap = std::map<curl_lock_data, ReaderLock>;
-            using WriterMap = std::map<curl_lock_data, WriterLock>;
         public:
             enum class Rating
             {
@@ -118,9 +112,7 @@ namespace AhoViewer
             std::set<std::string> m_Tags;
             unsigned int m_MaxConnections;
             CURLSH *m_ShareHandle;
-            std::map<curl_lock_data, Mutex> m_MutexMap;
-            std::map<CURL*, ReaderMap> m_ReaderMap;
-            std::map<CURL*, WriterMap> m_WriterMap;
+            std::map<curl_lock_data, std::mutex> m_MutexMap;
             Curler m_Curler;
 
             Glib::RefPtr<Gdk::Pixbuf> m_IconPixbuf;

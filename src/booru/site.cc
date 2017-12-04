@@ -122,57 +122,14 @@ Site::Type Site::get_type_from_url(const std::string &url)
     return Type::UNKNOWN;
 }
 
-void Site::share_lock_cb(CURL *c, curl_lock_data data, curl_lock_access access, void *userp)
+void Site::share_lock_cb(CURL*, curl_lock_data data, curl_lock_access, void *userp)
 {
-    Site *self = static_cast<Site*>(userp);
-
-    auto &m = self->m_MutexMap[data];
-
-    if (access == CURL_LOCK_ACCESS_SINGLE)
-    {
-        auto iter = self->m_WriterMap.find(c);
-        if (iter == self->m_WriterMap.end())
-            std::tie(iter, std::ignore) = self->m_WriterMap.emplace(std::piecewise_construct,
-                                                                    std::forward_as_tuple(c),
-                                                                    std::forward_as_tuple());
-        iter->second.emplace(std::piecewise_construct,
-                             std::forward_as_tuple(data),
-                             std::forward_as_tuple(m));
-    }
-    // libcurl hasn't actually implemented anything that uses shared lock access
-    // but this code is prepared incase it ever does
-    else if (access == CURL_LOCK_ACCESS_SHARED)
-    {
-        auto iter = self->m_ReaderMap.find(c);
-        if (iter == self->m_ReaderMap.end())
-            std::tie(iter, std::ignore) = self->m_ReaderMap.emplace(std::piecewise_construct,
-                                                                    std::forward_as_tuple(c),
-                                                                    std::forward_as_tuple());
-        iter->second.emplace(std::piecewise_construct,
-                             std::forward_as_tuple(data),
-                             std::forward_as_tuple(m));
-    }
+    static_cast<Site*>(userp)->m_MutexMap[data].lock();
 }
 
-void Site::share_unlock_cb(CURL *c, curl_lock_data data, void *userp)
+void Site::share_unlock_cb(CURL*, curl_lock_data data, void *userp)
 {
-    Site *self = static_cast<Site*>(userp);
-
-    auto writer_iter = self->m_WriterMap.find(c);
-    if (writer_iter != self->m_WriterMap.end())
-    {
-        auto lock_iter = writer_iter->second.find(data);
-        if (lock_iter != writer_iter->second.end())
-            writer_iter->second.erase(lock_iter);
-    }
-
-    auto reader_iter = self->m_ReaderMap.find(c);
-    if (reader_iter != self->m_ReaderMap.end())
-    {
-        auto lock_iter = reader_iter->second.find(data);
-        if (lock_iter != reader_iter->second.end())
-            reader_iter->second.erase(lock_iter);
-    }
+    static_cast<Site*>(userp)->m_MutexMap[data].unlock();
 }
 
 Site::Site(const std::string &name, const std::string &url, const Type type,
@@ -195,8 +152,12 @@ Site::Site(const std::string &name, const std::string &url, const Type type,
     curl_share_setopt(m_ShareHandle, CURLSHOPT_USERDATA, this);
 
     // Types of data to share between curlers for this site
-    // Connection data needs curl >=7.57.0 (not released yet)
-    for (auto d : { CURL_LOCK_DATA_CONNECT,
+    for (auto d : {
+// CURL_LOCK_DATA_CONNECT is currently buggy in >=7.57.0
+// assuming it gets fixed in 7.57.1
+#if LIBCURL_VERSION_NUM != 0x073900
+                    CURL_LOCK_DATA_CONNECT,
+#endif
                     CURL_LOCK_DATA_COOKIE,
                     CURL_LOCK_DATA_DNS,
                     CURL_LOCK_DATA_SSL_SESSION,
