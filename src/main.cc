@@ -18,10 +18,10 @@ int main(int argc, char **argv)
 {
     LIBXML_TEST_VERSION
 
-    curl_global_init(CURL_GLOBAL_ALL);
+    curl_global_init(CURL_GLOBAL_DEFAULT);
 
 #ifdef _WIN32
-	argv = g_win32_get_command_line();
+    argv = g_win32_get_command_line();
 #endif // _WIN32
 
     Gtk::Main main(argc, argv);
