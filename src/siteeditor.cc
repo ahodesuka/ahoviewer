@@ -78,7 +78,13 @@ SiteEditor::SiteEditor(BaseObjectType *cobj, const Glib::RefPtr<Gtk::Builder> &b
     // Make sure the initially selected site's password gets set in the entry once it's loaded
     const std::shared_ptr<Site> &s = get_selection()->get_selected()->get_value(m_Columns.site);
     if (s)
-        s->signal_password_lookup().connect([ &, s ]() { m_PasswordEntry->set_text(s->get_password()); });
+        s->signal_password_lookup().connect([ &, s ]()
+        {
+            m_PasswordConn.block();
+            m_PasswordEntry->set_text(s->get_password());
+            m_PasswordConn.unblock();
+
+        });
 
     m_PasswordEntry->set_visibility(false);
 #endif // HAVE_LIBSECRET
