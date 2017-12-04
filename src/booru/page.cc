@@ -194,7 +194,6 @@ void Page::save_images(const std::string &path)
         [](auto &i) { return !std::static_pointer_cast<Image>(i)->get_url().empty(); });
     m_SaveImagesThread  = std::thread([ &, path ]()
     {
-        // FIXME: Why not using the ImageFetchers threads?
         ThreadPool pool(std::thread::hardware_concurrency());
         for (const std::shared_ptr<AhoViewer::Image> &img : *m_ImageList)
         {
@@ -243,6 +242,8 @@ void Page::cancel_save()
 
     if (m_SaveImagesThread.joinable())
         m_SaveImagesThread.join();
+
+    m_Saving = false;
 }
 
 void Page::get_posts()
