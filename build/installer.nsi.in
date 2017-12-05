@@ -4,7 +4,6 @@
 !define Homepage "@PACKAGE_URL@"
 !define ReleaseVersion "@VERSION@"
 !define ReleaseNotes "${Homepage}/releases/${ReleaseVersion}"
-!define Arch "@target_cpu@"
 
 !define AppDir "${DisplayName}"
 !define AppFile "${AppName}.exe"
@@ -203,7 +202,7 @@ Function .onInit
 
     ${If} $InstDir == ""
         ${If} ${RunningX64}
-        ${AndIf} "${Arch}" == "x86_64"
+        ${AndIf} "${Arch}" == "win64"
             StrCpy $InstDir "$PROGRAMFILES64\${AppDir}\"
         ${Else}
             StrCpy $InstDir "$PROGRAMFILES32\${AppDir}\"
