@@ -18,6 +18,7 @@ Image::Image(const std::string &path, const std::string &url,
     m_PostUrl(postUrl),
     m_Tags(tags),
     m_Page(page),
+    m_LastDraw(std::chrono::steady_clock::now()),
     m_Curler(m_Url, page.get_site()->get_share_handle()),
     m_ThumbnailCurler(m_ThumbnailUrl, page.get_site()->get_share_handle()),
     m_PixbufError(false)
