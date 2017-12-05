@@ -238,9 +238,11 @@ std::vector<std::shared_ptr<Site>>& SettingsManager::get_sites()
                             url      = s.exists("url") ? s["url"] : "",
                             username = s.exists("username") ? s["username"] : "",
                             password = s.exists("password") ? s["password"] : "";
-                unsigned int max_cons = 0;
+                int max_cons = 0;
                 s.lookupValue("max_connections", max_cons);
-                max_cons = max_cons == 1 ? 2 : max_cons;
+                // cachesize * 2 + 1 < 6 < max_cons
+                if (max_cons != 0)
+                    max_cons = std::max(max_cons, std::min(get_int("CacheSize") * 2 + 1, 6));
                 m_Sites.push_back(
                         Site::create(name,
                                      url,
