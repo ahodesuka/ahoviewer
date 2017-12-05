@@ -81,6 +81,8 @@ void ImageList::load(const xmlDocument &posts, const Page &page)
 
         if (Image::is_valid_extension(imageUrl))
             m_Images.push_back(std::make_shared<Booru::Image>(imagePath, imageUrl, thumbPath, thumbUrl, postUrl, tags, page));
+        else
+            --m_Size;
     }
 
     if (m_Images.empty())
