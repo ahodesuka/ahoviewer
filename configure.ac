@@ -33,6 +33,44 @@ PKG_CHECK_MODULES([gtkmm], [gtkmm-2.4 >= 2.20.0])
 
 PKG_CHECK_MODULES([libconfig], [libconfig++ >= 1.4])
 
+AC_ARG_ENABLE([ssl],
+    AS_HELP_STRING([--enable-ssl],
+        [Build with OpenSSL backend, (curl must be built with the same backend) @<:@default=auto@:>@]
+    ),
+    [enable_ssl=$enableval],
+    [enable_ssl=auto]
+)
+
+AC_ARG_ENABLE([gnutls],
+    AS_HELP_STRING([--enable-gnutls],
+        [Build with GnuTLS backend, (curl must be built with the same backend) @<:@default=no@:>@]
+    ),
+    [enable_gnutls=$enableval],
+    [enable_gnutls=no]
+)
+
+if test x"$enable_ssl" != xno && test x"$enable_gnutls" != xyes; then
+    PKG_CHECK_MODULES([OpenSSL], [openssl >= 1.0.0],
+        [AC_DEFINE([USE_OPENSSL], [1], [Have OpenSSL])],
+        [
+            if test x"$enable_ssl" = xyes; then
+                AC_MSG_ERROR([OpenSSL not found, but --enable-ssl=yes])
+            fi
+        ]
+    )
+fi
+
+if test x"$enable_gnutls" != xno; then
+    PKG_CHECK_MODULES([GnuTLS], [gnutls],
+        [AC_DEFINE([USE_GNUTLS], [1], [Have GnuTLS])],
+        [
+            if test x"$enable_gnutls" = xyes; then
+                AC_MSG_ERROR([GnuTLS not found, but --enable-gnutls=yes])
+            fi
+        ]
+    )
+fi
+
 LIBCURL_CHECK_CONFIG(, 7.32.0,, [AC_MSG_ERROR([libcurl >= 7.32.0 not found])])
 
 PKG_CHECK_MODULES([libxml2], [libxml-2.0])

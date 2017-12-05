@@ -2,6 +2,7 @@
 #define _BOORUIMAGE_H_
 
 #include <condition_variable>
+#include <shared_mutex>
 
 #include "../image.h"
 #include "curler.h"
