@@ -71,7 +71,7 @@ namespace AhoViewer
             // m_Tags stores tags that are inside the entry
             // while m_SearchTags are the whitespace trimmed tags or *
             std::string m_Tags, m_SearchTags, m_Path;
-            size_t m_Page, m_NumPosts,
+            size_t m_Page,
                    m_SaveImagesTotal;
             std::atomic<size_t> m_SaveImagesCurrent;
             std::atomic<bool> m_Saving;

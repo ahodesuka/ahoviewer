@@ -22,7 +22,6 @@ Page::Page(Gtk::Menu *menu)
     m_ImageList(std::make_shared<ImageList>(this)),
     m_ImageFetcher(std::make_unique<ImageFetcher>()),
     m_Page(0),
-    m_NumPosts(0),
     m_Saving(false),
     m_LastPage(false),
     m_SaveCancel(Gio::Cancellable::create())
@@ -293,14 +292,12 @@ void Page::get_posts()
         {
             m_Posts = std::make_unique<xmlDocument>(
                 reinterpret_cast<char*>(m_Curler.get_data()), m_Curler.get_data_size());
-            m_NumPosts = m_Posts->get_n_nodes();
 
             if (postsCount)
                 m_Posts->set_attribute("count", std::to_string(postsCount));
         }
         else if (!m_Curler.is_cancelled())
         {
-            m_NumPosts = 0;
             std::cerr << "Error while downloading posts on " << m_Curler.get_url() << std::endl
                       << "  " << m_Curler.get_error() << std::endl;
         }
@@ -339,10 +336,26 @@ void Page::on_posts_downloaded()
     {
         m_SignalDownloadError(m_Posts->get_attribute("reason"));
     }
-    else if (m_NumPosts > 0)
+    else if (m_Posts)
     {
-        reserve(m_NumPosts);
-        m_ImageList->load(*m_Posts, *this);
+        auto nPosts = m_Posts->get_n_nodes();
+        if (nPosts > 0)
+        {
+            auto size_before = m_ImageList->get_vector_size();
+            m_ImageList->load(*m_Posts, *this);
+            // Number of posts that actually got added to the image list
+            // ie supported file types
+            nPosts = m_ImageList->get_vector_size() - size_before;
+            reserve(nPosts);
+        }
+
+        if (nPosts == 0)
+        {
+            if (m_Page == 1)
+                m_SignalDownloadError(_("No results found"));
+
+            m_LastPage = true;
+        }
     }
     // 401 = Unauthorized
     else if (m_Curler.get_response_code() == 401)
@@ -352,13 +365,13 @@ void Page::on_posts_downloaded()
                                                  m_Site->get_name());
         m_SignalDownloadError(e);
     }
-    else if (m_Page == 1)
+    // No network connection?
+    else
     {
-        m_SignalDownloadError(_("No results found"));
+        std::string e = Glib::ustring::compose(_("Failed to download posts on %1"),
+                                                 m_Site->get_name());
+        m_SignalDownloadError(e);
     }
-
-    if (m_NumPosts < static_cast<size_t>(Settings.get_int("BooruLimit")))
-        m_LastPage = true;
 
     m_Posts = nullptr;
     m_GetPostsThread.join();

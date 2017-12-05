@@ -79,17 +79,18 @@ void ImageList::load(const xmlDocument &posts, const Page &page)
 
         std::string postUrl = page.get_site()->get_post_url(post.get_attribute("id"));
 
-        m_Images.push_back(std::make_shared<Booru::Image>(imagePath, imageUrl, thumbPath, thumbUrl, postUrl, tags, page));
+        if (Image::is_valid_extension(imageUrl))
+            m_Images.push_back(std::make_shared<Booru::Image>(imagePath, imageUrl, thumbPath, thumbUrl, postUrl, tags, page));
     }
+
+    if (m_Images.empty())
+        return;
 
     // If thumbnails are still loading from the last page
     // the operation needs to be cancelled, all the
     // thumbnails will be loaded in the new thread
-    if (m_ThumbnailThread.joinable())
-    {
-        m_ThumbnailCancel->cancel();
-        m_ThumbnailThread.join();
-    }
+    cancel_thumbnail_thread();
+    AhoViewer::ImageList::cancel_thumbnail_thread();
 
     m_ThumbnailThread = std::thread(sigc::mem_fun(*this, &ImageList::load_thumbnails));
 
