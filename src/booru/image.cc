@@ -224,7 +224,7 @@ void Image::on_progress()
 {
     double c, t;
     m_Curler.get_progress(c, t);
-    m_SignalProgress(c, t);
+    m_SignalProgress(this, c, t);
 }
 
 void Image::on_finished()

@@ -57,6 +57,7 @@ namespace AhoViewer
 
             void close_page(Page *page);
             void on_save_progress(const Page *p);
+            void on_image_progress(const Image *bimage, double c, double t);
 
             bool on_entry_key_press_event(GdkEventKey *e);
             void on_entry_value_changed();

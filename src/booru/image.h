@@ -15,7 +15,9 @@ namespace AhoViewer
         class Image : public AhoViewer::Image,
                       public sigc::trackable
         {
-            using SignalProgressType = sigc::signal<void, double, double>;
+            friend class Browser;
+
+            using SignalProgressType = sigc::signal<void, const Image*, double, double>;
             using SignalDownloadErrorType = sigc::signal<void, const std::string&>;
         public:
             Image(const std::string &path, const std::string &url,
@@ -24,7 +26,6 @@ namespace AhoViewer
                   std::set<std::string> tags, const Page &page);
             virtual ~Image() override;
 
-            time_point_t get_start_time() const { return m_Curler.get_start_time(); }
             std::set<std::string> get_tags() const { return m_Tags; }
 
             std::string get_url() const { return m_Url; }

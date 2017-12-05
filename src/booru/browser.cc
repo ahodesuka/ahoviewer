@@ -269,6 +269,26 @@ void Browser::on_save_progress(const Page *p)
     }
 }
 
+void Browser::on_image_progress(const Image *bimage, double c, double t)
+{
+    double speed = (c / std::chrono::duration<double>(std::chrono::steady_clock::now() -
+                                                      bimage->m_Curler.get_start_time()).count());
+    std::ostringstream ss;
+
+    if (t > 0)
+    {
+        ss << "Downloading " << readable_file_size(c) << " / " << readable_file_size(t) << " @ "
+           << readable_file_size(speed) << "/s";
+        m_StatusBar->set_progress(ss.str(), c / t, StatusBar::Priority::DOWNLOAD, c == t ? 2 : 0);
+    }
+    else
+    {
+         ss << "Downloading " << readable_file_size(c) << " / ?? @ "
+            << readable_file_size(speed) << "/s";
+        m_StatusBar->set_message(ss.str(), StatusBar::Priority::DOWNLOAD, c == t ? 2 : 0);
+    }
+}
+
 // Finds the first page that is currently saving and connects
 // it's progress signal
 // returns true if a page is saving
@@ -299,25 +319,11 @@ void Browser::connect_image_signals(const std::shared_ptr<Image> bimage)
     });
 
     m_ImageProgConn.disconnect();
-    m_ImageProgConn = bimage->signal_progress().connect([ &, bimage ](double c, double t)
-    {
-        double speed = (c / std::chrono::duration<double>(std::chrono::steady_clock::now() -
-                                                          bimage->get_start_time()).count());
-        std::ostringstream ss;
+    m_ImageProgConn = bimage->signal_progress().connect(sigc::mem_fun(*this, &Browser::on_image_progress));
 
-        if (t > 0)
-        {
-            ss << "Downloading " << readable_file_size(c) << " / " << readable_file_size(t) << " @ "
-               << readable_file_size(speed) << "/s";
-            m_StatusBar->set_progress(ss.str(), c / t, StatusBar::Priority::DOWNLOAD, c == t ? 2 : 0);
-        }
-        else
-        {
-             ss << "Downloading " << readable_file_size(c) << " / ?? @ "
-                << readable_file_size(speed) << "/s";
-            m_StatusBar->set_message(ss.str(), StatusBar::Priority::DOWNLOAD, c == t ? 2 : 0);
-        }
-    });
+    // Update progress immediatly when switching to a downloading image
+    if (bimage->m_Curler.is_active())
+        bimage->on_progress();
 }
 
 bool Browser::on_entry_key_press_event(GdkEventKey *e)
