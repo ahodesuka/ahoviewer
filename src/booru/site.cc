@@ -38,10 +38,15 @@ const std::map<Site::Type, std::string> Site::RegisterURI =
     { Type::SHIMMIE,  "/user_admin/create" },
 };
 
+// This is a workaround to have a private/protected constructor
+// and still be able to use make_shared.
+// Site's constructor shouldn't be called directly that's why it's protected.
+// Site::create should be used since it will let us know if the site is actually
+// valid or not
 struct _shared_site : public Site
 {
-    template<typename...Ts>
-    _shared_site(Ts&&...args) : Site(std::forward<Ts>(args)...) { }
+    template<typename... Args>
+    _shared_site(Args&&... v) : Site(std::forward<Args>(v)...) { }
 };
 
 std::shared_ptr<Site> Site::create(const std::string &name, const std::string &url, const Type type,
