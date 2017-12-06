@@ -14,7 +14,8 @@ ImageList::ImageList(Widget *const w)
     m_ThumbnailCancel(Gio::Cancellable::create()),
     // number of threads (cores) times 2 since most of the work is I/O
     m_ThreadPool(std::thread::hardware_concurrency() * 2),
-    m_CacheCancel(Gio::Cancellable::create())
+    m_CacheCancel(Gio::Cancellable::create()),
+    m_CacheStop(false)
 {
     // Sorts indices based on how close they are to m_Index
     m_IndexSort = [=](size_t a, size_t b)
@@ -28,11 +29,31 @@ ImageList::ImageList(Widget *const w)
             sigc::bind(sigc::mem_fun(*this, &ImageList::set_current), true, false));
 
     m_ThumbnailLoadedConn = m_SignalThumbnailLoaded.connect(sigc::mem_fun(*this, &ImageList::on_thumbnail_loaded));
+
+    m_CacheThread = std::thread([&]()
+    {
+        while (!m_CacheStop)
+        {
+            {
+                std::unique_lock<std::mutex> lock(m_CacheMutex);
+                m_CacheCond.wait(lock, [&]() { return !m_CacheQueue.empty() || m_CacheCancel->is_cancelled(); });
+            }
+
+            std::shared_ptr<Image> img = nullptr;
+            while (!m_CacheCancel->is_cancelled() && m_CacheQueue.pop(img))
+                img->load_pixbuf();
+        }
+    });
 }
 
 ImageList::~ImageList()
 {
     reset();
+
+    m_CacheStop = true;
+    m_CacheCancel->cancel();
+    m_CacheCond.notify_one();
+    m_CacheThread.join();
 }
 
 void ImageList::clear()
@@ -216,7 +237,7 @@ void ImageList::load_thumbnails()
                 return;
 
             const Glib::RefPtr<Gdk::Pixbuf> thumb = m_Images[i]->get_thumbnail();
-            m_ThumbnailQueue.push(PixbufPair(i, std::move(thumb)));
+            m_ThumbnailQueue.emplace(i, std::move(thumb));
 
             if (!m_ThumbnailCancel->is_cancelled())
                 m_SignalThumbnailLoaded();
@@ -396,7 +417,7 @@ void ImageList::update_cache()
     if (!m_Cache.empty())
     {
         // Copy the cache to preserve the desired sort order
-        std::vector<size_t> tmp = cache;
+        auto tmp = cache;
         std::sort(m_Cache.begin(), m_Cache.end());
         std::sort(tmp.begin(), tmp.end());
         std::set_difference(m_Cache.begin(), m_Cache.end(),
@@ -404,37 +425,24 @@ void ImageList::update_cache()
     }
 
     cancel_cache();
+    m_Cache = cache;
 
-    for (const size_t i : diff)
+    // Free images that are no longer in the cache
+    for (const auto i : diff)
         if (i < m_Images.size() - 1)
             m_Images[i]->reset_pixbuf();
 
-    // Start the cache loading thread
-    // TODO: Make a persistent thread class that does work when needed and
-    // waits on a coditional variable (returns it) can be used here and for
-    // other places where a single thread is used frequently
-    m_Cache = cache;
-    m_CacheThread = std::thread([&]()
+    // Copy the imgaes into the queue and
+    // tell the cache thread it has some work
+    for (const auto i : m_Cache)
     {
-        for (const size_t i : m_Cache)
-        {
-            if (m_CacheCancel->is_cancelled())
-                break;
-
-            m_Images[i]->load_pixbuf();
-        }
-    });
+        m_CacheQueue.push(m_Images[i]);
+        m_CacheCond.notify_one();
+    }
 }
 
 void ImageList::cancel_cache()
 {
-    if (m_CacheThread.joinable())
-    {
-        m_CacheCancel->cancel();
-
-        m_CacheThread.join();
-        m_CacheCancel->reset();
-
-        m_Cache.clear();
-    }
+    m_Cache.clear();
+    m_CacheQueue.clear();
 }

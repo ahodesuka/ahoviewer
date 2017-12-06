@@ -151,14 +151,19 @@ namespace AhoViewer
         void set_current_relative(const int d);
         void cancel_cache();
 
+        // Indicies of the Images in the current cache
         std::vector<size_t> m_Cache;
+        // A queue of Images that need to be loaded
+        TSQueue<std::shared_ptr<Image>> m_CacheQueue;
         std::unique_ptr<Archive> m_Archive;
         std::vector<std::string> m_ArchiveEntries;
         TSQueue<PixbufPair> m_ThumbnailQueue;
         std::function<int(size_t, size_t)> m_IndexSort;
 
         Glib::RefPtr<Gio::Cancellable> m_CacheCancel;
-        std::mutex m_ThumbnailMutex;
+        std::atomic<bool> m_CacheStop;
+        std::condition_variable m_CacheCond;
+        std::mutex m_CacheMutex, m_ThumbnailMutex;
         std::thread m_CacheThread;
         Glib::RefPtr<Gio::FileMonitor> m_FileMonitor;
 
