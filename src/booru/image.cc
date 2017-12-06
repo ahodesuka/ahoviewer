@@ -28,11 +28,7 @@ Image::Image(const std::string &path, const std::string &url,
     if (!m_isWebM)
         m_Curler.signal_write().connect(sigc::mem_fun(*this, &Image::on_write));
 
-    m_ThumbnailCurler.signal_finished().connect([&]()
-    {
-        std::lock_guard<std::mutex> lock(m_ThumbnailMutex);
-        m_ThumbnailCond.notify_one();
-    });
+    m_ThumbnailCurler.signal_finished().connect([&]() { m_ThumbnailCond.notify_one(); });
     m_Curler.set_referer(m_PostUrl);
     m_Curler.signal_progress().connect(sigc::mem_fun(*this, &Image::on_progress));
     m_Curler.signal_finished().connect(sigc::mem_fun(*this, &Image::on_finished));
@@ -159,23 +155,24 @@ void Image::cancel_download()
 {
     m_Curler.cancel();
 
-    std::lock_guard<std::mutex> lock(m_DownloadMutex);
-    if (m_Loader)
     {
-        try { m_Loader->close(); }
-        catch (...) { }
-        m_Loader.reset();
+        std::lock_guard<std::mutex> lock(m_DownloadMutex);
+        if (m_Loader)
+        {
+            try { m_Loader->close(); }
+            catch (...) { }
+            m_Loader.reset();
+        }
+        m_Curler.clear();
     }
-    m_Curler.clear();
 
-    m_DownloadCond.notify_all();
+    m_DownloadCond.notify_one();
 }
 
 void Image::cancel_thumbnail_download()
 {
     m_ThumbnailCurler.cancel();
-    std::lock_guard<std::mutex> lock(m_ThumbnailMutex);
-    m_ThumbnailCond.notify_all();
+    m_ThumbnailCond.notify_one();
 }
 
 // Returns true if the download was started
@@ -229,8 +226,6 @@ void Image::on_progress()
 
 void Image::on_finished()
 {
-    std::lock_guard<std::mutex> lock(m_DownloadMutex);
-
     if (m_Curler.get_data_size() > 0)
     {
         m_Curler.save_file(m_Path);
@@ -241,15 +236,18 @@ void Image::on_finished()
         std::cerr << "Booru::Image::on_finished: Curler recieved no data yet finished!" << std::endl;
     }
 
-    if (m_Loader)
     {
-        try { m_Loader->close(); }
-        catch (...) { }
-        m_Loader.reset();
+        std::lock_guard<std::mutex> lock(m_DownloadMutex);
+        if (m_Loader)
+        {
+            try { m_Loader->close(); }
+            catch (...) { }
+            m_Loader.reset();
+        }
     }
 
     m_SignalPixbufChanged();
-    m_DownloadCond.notify_all();
+    m_DownloadCond.notify_one();
 }
 
 void Image::on_area_prepared()
