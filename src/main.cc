@@ -64,6 +64,12 @@ void init_gnutls_locks()
 #include <gst/gst.h>
 #endif // HAVE_GSTREAMER
 
+static void glibmm_log_filter(const gchar *ld, GLogLevelFlags ll, const gchar *msg, gpointer ud)
+{
+    if (strcmp(msg, "Dropped dispatcher message as the dispatcher no longer exists") != 0)
+        g_log_default_handler(ld, ll, msg, ud);
+}
+
 extern const unsigned char ahoviewer_ui[];
 extern const unsigned long ahoviewer_ui_size;
 
@@ -74,7 +80,6 @@ int main(int argc, char **argv)
     curl_global_init(CURL_GLOBAL_DEFAULT);
 
     curl_version_info_data *ver_info = curl_version_info(CURLVERSION_NOW);
-
     std::string ssl_lib = ver_info->ssl_version;
 
 #if defined(USE_OPENSSL) && (OPENSSL_VERSION_NUMBER < 0x10100000L)
@@ -86,6 +91,10 @@ int main(int argc, char **argv)
     if (ssl_lib.find("GnuTLS") != std::string::npos)
         init_gnutls_locks();
 #endif // defined(USE_GNUTLS) && GCRYPT_VERSION_NUMBER < 0x010600
+
+    // Get rid of the stupid dispatcher warnings from glibmm
+    // That happen when cancelling downloads
+    g_log_set_handler("glibmm", G_LOG_LEVEL_WARNING, glibmm_log_filter, NULL);
 
 #ifdef _WIN32
     argv = g_win32_get_command_line();
