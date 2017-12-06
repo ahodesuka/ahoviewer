@@ -29,6 +29,9 @@ AX_CXX_COMPILE_STDCXX(14, [noext])
 # Make sure glibmm is up to date for Glib::Threads::Thread::create
 PKG_CHECK_MODULES([glibmm], [glibmm-2.4 >= 2.36.0])
 
+# >= 2.6.0 since we use lambdas with return values
+PKG_CHECK_MODULES([libsigcpp], [sigc++-2.0 >= 2.6.0])
+
 PKG_CHECK_MODULES([gtkmm], [gtkmm-2.4 >= 2.20.0])
 
 PKG_CHECK_MODULES([libconfig], [libconfig++ >= 1.4])
