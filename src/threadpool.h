@@ -40,7 +40,8 @@
 #include <memory>
 #include <future>
 #include <mutex>
-#include <queue>
+
+#include "tsqueue.h"
 
 
 // thread pool to run user's functors with signature
@@ -52,41 +53,6 @@ namespace AhoViewer
 {
     class ThreadPool
     {
-        template <typename T>
-        class Queue
-        {
-        public:
-            bool push(T value)
-            {
-                std::unique_lock<std::mutex> lock(m_mutex);
-                m_queue.push(std::move(value));
-                return true;
-            }
-            // deletes the retrieved element, do not use for non integral types
-            bool pop(T & v)
-            {
-                std::unique_lock<std::mutex> lock(m_mutex);
-                if (m_queue.empty())
-                    return false;
-                v = std::move(m_queue.front());
-                m_queue.pop();
-                return true;
-            }
-            void clear()
-            {
-                std::unique_lock<std::mutex> lock(m_mutex);
-                while (!m_queue.empty()) m_queue.pop();
-            }
-            bool empty()
-            {
-                std::unique_lock<std::mutex> lock(m_mutex);
-                return m_queue.empty();
-            }
-
-        private:
-            std::queue<T> m_queue;
-            std::mutex    m_mutex;
-        };
     public:
         ThreadPool() { init(); }
         ThreadPool(size_t nThreads) : ma_n_idle(0) { init(); resize(nThreads); }
@@ -95,10 +61,7 @@ namespace AhoViewer
         ~ThreadPool()
         {
             ma_shutdown = true;
-            {
-                std::unique_lock<std::mutex> lock(m_mutex);
-                m_cond.notify_all();  // stop all waiting threads
-            }
+            m_cond.notify_all();  // stop all waiting threads
             for (size_t i = 0; i < m_threads.size(); ++i)
             {
                 if (m_threads[i]->joinable())
@@ -147,11 +110,8 @@ namespace AhoViewer
                         m_threads[i]->detach();
                     }
 
-                    {
-                        // stop the detached threads that were waiting
-                        std::unique_lock<std::mutex> lock(m_mutex);
-                        m_cond.notify_all();
-                    }
+                    // stop the detached threads that were waiting
+                    m_cond.notify_all();
 
                     m_threads.resize(nThreads); // safe to delete because the threads are detached
                     m_abort.resize(nThreads); // safe to delete because the threads have copies of shared_ptr of the flags, not originals
@@ -186,7 +146,6 @@ namespace AhoViewer
                 auto _f = std::make_unique<std::function<void()>>([ task ]() { (*task)(); });
 
                 m_queue.push(std::move(_f));
-                std::unique_lock<std::mutex> lock(m_mutex);
                 m_cond.notify_one();
                 return task->get_future();
             }
@@ -217,10 +176,7 @@ namespace AhoViewer
                 ma_interrupt = true;  // give the waiting threads a command to finish
             }
 
-            {
-                std::unique_lock<std::mutex> lock(m_mutex);
-                m_cond.notify_all();  // stop all waiting threads
-            }
+            m_cond.notify_all();  // stop all waiting threads
             // wait for the computing threads to finish
             // if ma_shutdown is set the destructor will wait for the queue to finish
             std::unique_lock<std::mutex> lock(m_imutex);
@@ -235,7 +191,7 @@ namespace AhoViewer
 
         // each thread pops jobs from the queue until:
         //  - its abort flag is set (used when resizing the pool)
-        //  - a global interrupt (shutdown/interrupt) is set, then only idle threads terminate
+        //  - a global shutdown is set, then only idle threads terminate
         void setup_thread(size_t i)
         {
             // a copy of the shared ptr to the abort
@@ -259,13 +215,10 @@ namespace AhoViewer
                             more_tasks = m_queue.pop(_f);
                     }
 
-                    std::unique_lock<std::mutex> lock(m_mutex);
                     ++ma_n_idle;
-                    {
-                        std::unique_lock<std::mutex> lock(m_imutex);
-                        m_icond.notify_one();
-                    }
+                    m_icond.notify_one();
                     // the queue is empty here, wait for the next command
+                    std::unique_lock<std::mutex> lock(m_mutex);
                     m_cond.wait(lock, [&]()
                     {
                         more_tasks = m_queue.pop(_f);
@@ -281,7 +234,7 @@ namespace AhoViewer
 
         std::vector<std::unique_ptr<std::thread>>       m_threads;
         std::vector<std::shared_ptr<std::atomic<bool>>> m_abort;
-        Queue<std::unique_ptr<std::function<void()>>>   m_queue;
+        TSQueue<std::unique_ptr<std::function<void()>>> m_queue;
 
         std::atomic<bool>   ma_interrupt, ma_kill, ma_shutdown;
         std::atomic<size_t> ma_n_idle;
