@@ -259,7 +259,7 @@ void ImageList::cancel_thumbnail_thread()
 // Returns an unsorted vector of the paths to valid T's.
 // T must have a static method ::is_valid_extension, ie Image and Archive
 template <typename T>
-std::vector<std::string> ImageList::get_entries(const std::string &path)
+std::vector<std::string> ImageList::get_entries(const std::string &path) const
 {
     Glib::Dir dir(path);
     std::vector<std::string> entries(dir.begin(), dir.end());

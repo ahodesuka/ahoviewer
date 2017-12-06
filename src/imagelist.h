@@ -141,7 +141,7 @@ namespace AhoViewer
     private:
         void reset();
         template <typename T>
-        std::vector<std::string> get_entries(const std::string &path);
+        std::vector<std::string> get_entries(const std::string &path) const;
 
         void on_thumbnail_loaded();
         void on_directory_changed(const Glib::RefPtr<Gio::File> &file,
