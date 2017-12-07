@@ -196,6 +196,8 @@ void ImageFetcher::read_info()
 
                 if (!curler->is_cancelled())
                     curler->m_SignalFinished();
+                else
+                    curler->clear();
             }
         }
     }

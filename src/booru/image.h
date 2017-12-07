@@ -33,9 +33,9 @@ namespace AhoViewer
 
             virtual bool is_loading() const override;
             virtual std::string get_filename() const override;
-            virtual const Glib::RefPtr<Gdk::Pixbuf>& get_thumbnail() override;
+            virtual const Glib::RefPtr<Gdk::Pixbuf>& get_thumbnail(Glib::RefPtr<Gio::Cancellable>) override;
 
-            virtual void load_pixbuf() override;
+            virtual void load_pixbuf(Glib::RefPtr<Gio::Cancellable> c) override;
             virtual void reset_pixbuf() override;
 
             void save(const std::string &path);

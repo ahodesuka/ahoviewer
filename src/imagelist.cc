@@ -41,7 +41,7 @@ ImageList::ImageList(Widget *const w)
 
             std::shared_ptr<Image> img = nullptr;
             while (!m_CacheCancel->is_cancelled() && m_CacheQueue.pop(img))
-                img->load_pixbuf();
+                img->load_pixbuf(m_CacheCancel);
         }
     });
 }
@@ -231,17 +231,25 @@ void ImageList::load_thumbnails()
 
     for (const size_t i : indices)
     {
-        m_ThreadPool.push([ &, i ]()
-        {
-            if (m_ThumbnailCancel->is_cancelled())
-                return;
+        if (m_ThumbnailCancel->is_cancelled())
+            break;
 
-            const Glib::RefPtr<Gdk::Pixbuf> thumb = m_Images[i]->get_thumbnail();
-            m_ThumbnailQueue.emplace(i, std::move(thumb));
+        // Only load thumbnails that haven't been already
+        auto it = m_Widget->m_ListStore->get_iter(std::to_string(i));
+        if (!it || !it->get_value(m_Widget->m_Columns.pixbuf))
+            m_ThreadPool.push([ &, i ]()
+            {
+                Glib::RefPtr<Gdk::Pixbuf> thumb = m_Images[i]->get_thumbnail(m_ThumbnailCancel);
 
-            if (!m_ThumbnailCancel->is_cancelled())
-                m_SignalThumbnailLoaded();
-        });
+                if (!m_ThumbnailCancel->is_cancelled())
+                {
+                    if (!thumb)
+                        thumb = Image::get_missing_pixbuf();
+
+                    m_ThumbnailQueue.emplace(i, std::move(thumb));
+                    m_SignalThumbnailLoaded();
+                }
+            });
     }
 }
 
@@ -377,7 +385,7 @@ void ImageList::on_directory_changed(const Glib::RefPtr<Gio::File> &file,
         if (index <= m_Index)
             ++m_Index;
 
-        m_Widget->insert(index, img->get_thumbnail());
+        m_Widget->insert(index, img->get_thumbnail(m_ThumbnailCancel));
         m_Images.insert(it, img);
 
         update_cache();

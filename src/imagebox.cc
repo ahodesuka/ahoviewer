@@ -401,8 +401,8 @@ bool ImageBox::on_scroll_event(GdkEventScroll *e)
 
 void ImageBox::draw_image(bool scroll)
 {
-    if (!m_Image || (!m_Image->is_webm() && !m_Image->get_pixbuf()) ||
-        (m_Image->is_webm() && m_Image->is_loading()))
+    if (!m_Image || (!m_Image->get_pixbuf() && m_Image->is_loading())
+        || (m_Image->is_webm() && m_Image->is_loading()))
     {
         m_HScroll->hide();
         m_VScroll->hide();
@@ -413,7 +413,8 @@ void ImageBox::draw_image(bool scroll)
     Glib::RefPtr<Gdk::Pixbuf> origPixbuf, tempPixbuf;
 
     bool hideScrollbars = !Settings.get_bool("ScrollbarsVisible") ||
-                           Settings.get_bool("HideAll") || m_ZoomMode == ZoomMode::AUTO_FIT;
+                           Settings.get_bool("HideAll") || m_ZoomMode == ZoomMode::AUTO_FIT,
+         error = false;
 
     // if the image is still loading we want to draw all requests
     m_Loading = m_Image->is_loading();
@@ -458,32 +459,42 @@ void ImageBox::draw_image(bool scroll)
 #endif // HAVE_GSTREAMER
         Glib::RefPtr<Gdk::PixbufAnimation> pixbuf_anim = m_Image->get_pixbuf();
 
-        if (m_PixbufAnim != pixbuf_anim)
+        if (pixbuf_anim)
         {
-            m_PixbufAnim = pixbuf_anim;
-
-            // https://bugzilla.gnome.org/show_bug.cgi?id=688686
-            if (m_PixbufAnimIter)
+            if (m_PixbufAnim != pixbuf_anim)
             {
-                g_object_unref(m_PixbufAnimIter->gobj());
-                m_PixbufAnimIter.reset();
+                m_PixbufAnim = pixbuf_anim;
+
+                // https://bugzilla.gnome.org/show_bug.cgi?id=688686
+                if (m_PixbufAnimIter)
+                {
+                    g_object_unref(m_PixbufAnimIter->gobj());
+                    m_PixbufAnimIter.reset();
+                }
+
+                m_PixbufAnimIter = m_PixbufAnim->get_iter(NULL);
+
+                m_AnimConn.disconnect();
+
+                if (m_PixbufAnimIter->get_delay_time() >= 0)
+                    m_AnimConn = Glib::signal_timeout().connect(
+                            sigc::mem_fun(*this, &ImageBox::update_animation),
+                            m_PixbufAnimIter->get_delay_time());
             }
 
-            m_PixbufAnimIter = m_PixbufAnim->get_iter(NULL);
+            origPixbuf = m_PixbufAnimIter->get_pixbuf()->copy();
+            tempPixbuf = origPixbuf;
 
-            m_AnimConn.disconnect();
-
-            if (m_PixbufAnimIter->get_delay_time() >= 0)
-                m_AnimConn = Glib::signal_timeout().connect(
-                        sigc::mem_fun(*this, &ImageBox::update_animation),
-                        m_PixbufAnimIter->get_delay_time());
+            m_OrigWidth  = origPixbuf->get_width();
+            m_OrigHeight = origPixbuf->get_height();
         }
-
-        origPixbuf = m_PixbufAnimIter->get_pixbuf()->copy();
-        tempPixbuf = origPixbuf;
-
-        m_OrigWidth  = origPixbuf->get_width();
-        m_OrigHeight = origPixbuf->get_height();
+        else
+        {
+            error = true;
+            tempPixbuf = Image::get_missing_pixbuf();
+            m_OrigWidth  = tempPixbuf->get_width();
+            m_OrigHeight = tempPixbuf->get_height();
+        }
 #ifdef HAVE_GSTREAMER
     }
 #endif // HAVE_GSTREAMER
@@ -508,13 +519,15 @@ void ImageBox::draw_image(bool scroll)
     if ((m_OrigWidth > windowWidth || (m_OrigHeight > windowHeight && m_OrigWidth > layoutWidth)) &&
         (m_ZoomMode == ZoomMode::FIT_WIDTH || (m_ZoomMode == ZoomMode::AUTO_FIT && windowAspect <= imageAspect)))
     {
-        scaledWidth = std::ceil(windowWidth / imageAspect) > windowHeight && !hideScrollbars ? layoutWidth : windowWidth;
+        scaledWidth = std::ceil(windowWidth / imageAspect) > windowHeight
+                        && !hideScrollbars ? layoutWidth : windowWidth;
         scaledHeight = std::ceil(scaledWidth / imageAspect);
     }
     else if ((m_OrigHeight > windowHeight || (m_OrigWidth > windowWidth && m_OrigHeight > layoutHeight)) &&
              (m_ZoomMode == ZoomMode::FIT_HEIGHT || (m_ZoomMode == ZoomMode::AUTO_FIT && windowAspect >= imageAspect)))
     {
-        scaledHeight = std::ceil(windowHeight * imageAspect) > windowWidth && !hideScrollbars ? layoutHeight : windowHeight;
+        scaledHeight = std::ceil(windowHeight * imageAspect) > windowWidth
+                        && !hideScrollbars ? layoutHeight : windowHeight;
         scaledWidth = std::ceil(scaledHeight * imageAspect);
     }
     else if (m_ZoomMode == ZoomMode::MANUAL && m_ZoomPercent != 100)
@@ -523,7 +536,7 @@ void ImageBox::draw_image(bool scroll)
         scaledHeight = m_OrigHeight * static_cast<double>(m_ZoomPercent) / 100;
     }
 
-    if (!m_Image->is_webm() && (scaledWidth != m_OrigWidth || scaledHeight != m_OrigHeight))
+    if (!m_Image->is_webm() && !error && (scaledWidth != m_OrigWidth || scaledHeight != m_OrigHeight))
         tempPixbuf = origPixbuf->scale_simple(scaledWidth, scaledHeight, Gdk::INTERP_BILINEAR);
 
     // Show scrollbars if image is scrollable

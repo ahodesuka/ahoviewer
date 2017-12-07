@@ -32,10 +32,6 @@ Image::Image(const std::string &path, const std::string &url,
     m_Curler.set_referer(m_PostUrl);
     m_Curler.signal_progress().connect(sigc::mem_fun(*this, &Image::on_progress));
     m_Curler.signal_finished().connect(sigc::mem_fun(*this, &Image::on_finished));
-
-    // Danbooru wont give the thumb/img urls if it's a blacklisted post
-    if (m_ThumbnailUrl.empty())
-        m_ThumbnailPixbuf = get_missing_pixbuf();
 }
 
 Image::~Image()
@@ -46,7 +42,8 @@ Image::~Image()
 
 bool Image::is_loading() const
 {
-    return (m_isWebM && !Glib::file_test(m_Path, Glib::FILE_TEST_EXISTS)) || m_Curler.is_active();
+    return (m_isWebM && !Glib::file_test(m_Path, Glib::FILE_TEST_EXISTS))
+        || m_Curler.is_active() || m_Loading;
 }
 
 std::string Image::get_filename() const
@@ -54,7 +51,8 @@ std::string Image::get_filename() const
     return m_Page.get_site()->get_name() + "/" + Glib::path_get_basename(m_Path);
 }
 
-const Glib::RefPtr<Gdk::Pixbuf>& Image::get_thumbnail()
+// Cancellable here will never be used
+const Glib::RefPtr<Gdk::Pixbuf>& Image::get_thumbnail(Glib::RefPtr<Gio::Cancellable>)
 {
     if (!m_ThumbnailPixbuf)
     {
@@ -72,25 +70,15 @@ const Glib::RefPtr<Gdk::Pixbuf>& Image::get_thumbnail()
             m_ThumbnailCurler.save_file(m_ThumbnailPath);
 
             m_ThumbnailLock.lock();
-            try
-            {
-                m_ThumbnailPixbuf = create_pixbuf_at_size(m_ThumbnailPath, 128, 128);
-            }
-            catch (const Gdk::PixbufError &ex)
-            {
-                std::cerr << ex.what() << std::endl;
-                m_ThumbnailPixbuf = get_missing_pixbuf();
-            }
+            // This doesn't need to be cancellable since booru
+            // thumbnails are already small in size
+            m_ThumbnailPixbuf = create_pixbuf_at_size(m_ThumbnailPath, 128, 128, Gio::Cancellable::create());
             m_ThumbnailLock.unlock();
         }
-        else
+        else if (!m_ThumbnailCurler.is_cancelled())
         {
-            if (!m_ThumbnailCurler.is_cancelled())
-                std::cerr << "Error while downloading thumbnail " << m_ThumbnailUrl
-                          << " " << std::endl << "  " << m_ThumbnailCurler.get_error() << std::endl;
-            m_ThumbnailLock.lock();
-            m_ThumbnailPixbuf = get_missing_pixbuf();
-            m_ThumbnailLock.unlock();
+            std::cerr << "Error while downloading thumbnail " << m_ThumbnailUrl << std::endl
+                      << "  " << m_ThumbnailCurler.get_error() << std::endl;
         }
 
         m_ThumbnailCurler.clear();
@@ -99,13 +87,13 @@ const Glib::RefPtr<Gdk::Pixbuf>& Image::get_thumbnail()
     return m_ThumbnailPixbuf;
 }
 
-void Image::load_pixbuf()
+void Image::load_pixbuf(Glib::RefPtr<Gio::Cancellable> c)
 {
-    if (!m_Pixbuf && !m_PixbufError && !m_Url.empty())
+    if (!m_Pixbuf && !m_PixbufError)
     {
         if (Glib::file_test(m_Path, Glib::FILE_TEST_EXISTS))
         {
-            AhoViewer::Image::load_pixbuf();
+            AhoViewer::Image::load_pixbuf(c);
         }
         else if (!start_download() && !m_isWebM && m_Loader && m_Loader->get_animation())
         {
@@ -163,7 +151,6 @@ void Image::cancel_download()
             catch (...) { }
             m_Loader.reset();
         }
-        m_Curler.clear();
     }
 
     m_DownloadCond.notify_one();
@@ -246,6 +233,7 @@ void Image::on_finished()
         }
     }
 
+    m_Loading = false;
     m_SignalPixbufChanged();
     m_DownloadCond.notify_one();
 }

@@ -17,29 +17,23 @@ std::string Archive::Image::get_filename() const
                                 Glib::path_get_basename(m_Path));
 }
 
-const Glib::RefPtr<Gdk::Pixbuf>& Archive::Image::get_thumbnail()
+const Glib::RefPtr<Gdk::Pixbuf>& Archive::Image::get_thumbnail(Glib::RefPtr<Gio::Cancellable> c)
 {
     if (!m_ThumbnailPixbuf)
     {
         extract_file();
-        create_thumbnail();
+        create_thumbnail(c, false);
     }
 
     return m_ThumbnailPixbuf;
 }
 
-void Archive::Image::load_pixbuf()
+void Archive::Image::load_pixbuf(Glib::RefPtr<Gio::Cancellable> c)
 {
     if (!m_Pixbuf)
     {
         extract_file();
-        if (!m_isWebM)
-        {
-            Glib::RefPtr<Gdk::PixbufAnimation> p = Gdk::PixbufAnimation::create_from_file(m_Path);
-            std::lock_guard<std::mutex> lock(m_Mutex);
-            m_Pixbuf = p;
-        }
-        m_SignalPixbufChanged();
+        AhoViewer::Image::load_pixbuf(c);
     }
 }
 

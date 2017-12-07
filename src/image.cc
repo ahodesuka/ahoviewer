@@ -55,6 +55,7 @@ const Glib::RefPtr<Gdk::Pixbuf>& Image::get_missing_pixbuf()
 
 Image::Image(const std::string &path)
   : m_isWebM(Image::is_webm(path)),
+    m_Loading(true),
     m_Path(path)
 {
 
@@ -73,7 +74,7 @@ const Glib::RefPtr<Gdk::PixbufAnimation>& Image::get_pixbuf()
     return m_Pixbuf;
 }
 
-const Glib::RefPtr<Gdk::Pixbuf>& Image::get_thumbnail()
+const Glib::RefPtr<Gdk::Pixbuf>& Image::get_thumbnail(Glib::RefPtr<Gio::Cancellable> c)
 {
     if (m_ThumbnailPixbuf)
         return m_ThumbnailPixbuf;
@@ -85,23 +86,15 @@ const Glib::RefPtr<Gdk::Pixbuf>& Image::get_thumbnail()
 
     if (is_valid(m_ThumbnailPath))
     {
-        Glib::RefPtr<Gdk::Pixbuf> pixbuf;
-        try
-        {
-            pixbuf = Gdk::Pixbuf::create_from_file(m_ThumbnailPath, ThumbnailSize, ThumbnailSize);
-        }
-        catch (const Gdk::PixbufError &ex)
-        {
-            std::cerr << "Error while loading thumbnail " << m_ThumbnailPath
-                      << " for " << get_filename() << ": "<< std::endl
-                      << "  " << ex.what() << std::endl;
-        }
+        Glib::RefPtr<Gdk::Pixbuf> pixbuf = create_pixbuf_at_size(m_ThumbnailPath,
+                                                    ThumbnailSize, ThumbnailSize, c);
 
         if (pixbuf)
         {
             struct stat fileInfo;
             std::string s = pixbuf->get_option("tEXt::Thumb::MTime");
 
+            // Make sure the file hasn't been modified since this thumbnail was created
             if (!s.empty())
             {
                 time_t mtime = strtol(s.c_str(), nullptr, 10);
@@ -114,57 +107,96 @@ const Glib::RefPtr<Gdk::Pixbuf>& Image::get_thumbnail()
 #endif // __linux__
 
     if (!m_ThumbnailPixbuf)
-        create_save_thumbnail();
+        create_thumbnail(c);
 
     return m_ThumbnailPixbuf;
 }
 
-void Image::load_pixbuf()
+void Image::load_pixbuf(Glib::RefPtr<Gio::Cancellable> c)
 {
     if (!m_Pixbuf && !m_isWebM)
     {
-        Glib::RefPtr<Gdk::PixbufAnimation> p = Gdk::PixbufAnimation::create_from_file(m_Path);
+        Glib::RefPtr<Gio::File> file = Gio::File::create_for_path(m_Path);
+        GdkPixbufAnimation *p = gdk_pixbuf_animation_new_from_stream(
+            G_INPUT_STREAM(file->read()->gobj()), c->gobj(), NULL);
+
+        if (c->is_cancelled())
+            return;
+
         {
             std::lock_guard<std::mutex> lock(m_Mutex);
-            m_Pixbuf = std::move(p);
+            m_Pixbuf = Glib::wrap(p);
         }
+
+        m_Loading = false;
         m_SignalPixbufChanged();
     }
 }
 
 void Image::reset_pixbuf()
 {
+    m_Loading = true;
     std::lock_guard<std::mutex> lock(m_Mutex);
     m_Pixbuf.reset();
 }
 
-void Image::create_thumbnail()
+void Image::create_thumbnail(Glib::RefPtr<Gio::Cancellable> c, bool save)
 {
+    Glib::RefPtr<Gdk::Pixbuf> pixbuf;
+    save = save && Settings.get_bool("SaveThumbnails");
+
     if (m_isWebM)
     {
-        m_ThumbnailPixbuf = create_webm_thumbnail(ThumbnailSize, ThumbnailSize);
+        pixbuf = create_webm_thumbnail(128, 128);
+
+#ifdef __linux__
+        if (pixbuf && save)
+            save_thumbnail(pixbuf, "video/webm");
+#endif // __linux__
     }
     else
     {
-        try
+        pixbuf = create_pixbuf_at_size(m_Path, 128, 128, c);
+
+        if (c->is_cancelled() || !pixbuf)
+            return;
+
+#ifdef __linux__
+        int w, h;
+        GdkPixbufFormat *format = gdk_pixbuf_get_file_info(m_Path.c_str(), &w, &h);
+
+        if (save && format && (w > 128 || h > 128))
         {
-            m_ThumbnailPixbuf = create_pixbuf_at_size(m_Path, ThumbnailSize, ThumbnailSize);
+            gchar **mimeTypes = gdk_pixbuf_format_get_mime_types(format);
+            save_thumbnail(pixbuf, mimeTypes[0]);
+            g_strfreev(mimeTypes);
         }
-        catch (const Gdk::PixbufError &ex)
-        {
-            std::cerr << "Error while creating thumbnail for " << get_filename()
-                      << ": " << std::endl << "  " << ex.what() << std::endl;
-            m_ThumbnailPixbuf = get_missing_pixbuf();
-        }
+#endif // __linux__
     }
+
+    if (pixbuf && !c->is_cancelled())
+        m_ThumbnailPixbuf = scale_pixbuf(pixbuf, ThumbnailSize, ThumbnailSize);
 }
 
-// FIXME: https://bugzilla.gnome.org/show_bug.cgi?id=735422 workaround
 Glib::RefPtr<Gdk::Pixbuf> Image::create_pixbuf_at_size(const std::string &path,
-                                                       const int w, const int h) const
+                                                       const int w, const int h,
+                                                       Glib::RefPtr<Gio::Cancellable> c) const
 {
-    Glib::RefPtr<Gdk::Pixbuf> pixbuf = Gdk::Pixbuf::create_from_file(path);
-    return scale_pixbuf(pixbuf, w, h);
+    Glib::RefPtr<Gio::File> file = Gio::File::create_for_path(path);
+    Glib::RefPtr<Gdk::Pixbuf> pixbuf;
+
+    try
+    {
+        pixbuf = Gdk::Pixbuf::create_from_stream_at_scale(file->read(), w, h, true, c);
+    }
+    catch (...)
+    {
+        if (!c->is_cancelled())
+            std::cerr << "Error while loading thumbnail " << path
+                      << " for " << get_filename() << std::endl;
+    }
+
+    return pixbuf;
 }
 
 Glib::RefPtr<Gdk::Pixbuf> Image::scale_pixbuf(Glib::RefPtr<Gdk::Pixbuf> &pixbuf,
@@ -200,7 +232,7 @@ Glib::RefPtr<Gdk::Pixbuf> Image::create_webm_thumbnail(int w, int h) const
         if (pipeline)
             gst_object_unref(pipeline);
 
-        return get_missing_pixbuf();
+        return pixbuf;
     }
 
     GstElement *sink = gst_bin_get_by_name(GST_BIN(pipeline), "sink");
@@ -234,16 +266,7 @@ Glib::RefPtr<Gdk::Pixbuf> Image::create_webm_thumbnail(int w, int h) const
 
         if (!gst_element_seek_simple(pipeline, GST_FORMAT_TIME,
             static_cast<GstSeekFlags>(GST_SEEK_FLAG_KEY_UNIT | GST_SEEK_FLAG_FLUSH), pos))
-        {
-            if (pixbuf)
-                break;
-
-            gst_object_unref(sink);
-            gst_element_set_state(pipeline, GST_STATE_NULL);
-            gst_object_unref(pipeline);
-
-            return get_missing_pixbuf();
-        }
+            break;
 
         g_signal_emit_by_name(sink, "pull-preroll", &sample, NULL);
 
@@ -255,13 +278,8 @@ Glib::RefPtr<Gdk::Pixbuf> Image::create_webm_thumbnail(int w, int h) const
 
             caps = gst_sample_get_caps(sample);
             if (!caps)
-            {
-                gst_object_unref(sink);
-                gst_element_set_state(pipeline, GST_STATE_NULL);
-                gst_object_unref(pipeline);
+                break;
 
-                return get_missing_pixbuf();
-            }
             s = gst_caps_get_structure(caps, 0);
 
             gst_structure_get_int(s, "width", &w);
@@ -291,54 +309,8 @@ Glib::RefPtr<Gdk::Pixbuf> Image::create_webm_thumbnail(int w, int h) const
     return pixbuf;
 }
 
-void Image::create_save_thumbnail()
-{
-#ifdef __linux__
-    Glib::RefPtr<Gdk::Pixbuf> pixbuf;
-
-    if (m_isWebM)
-    {
-        pixbuf = create_webm_thumbnail(128, 128);
-
-        if (pixbuf)
-            save_thumbnail(pixbuf, "video/webm");
-    }
-    else
-    {
-        int w, h;
-        GdkPixbufFormat *format = gdk_pixbuf_get_file_info(m_Path.c_str(), &w, &h);
-        if (format && (w > 128 || h > 128))
-        {
-            try
-            {
-                pixbuf = create_pixbuf_at_size(m_Path, 128, 128);
-            }
-            catch (const Gdk::PixbufError &ex)
-            {
-                std::cerr << "Error while creating thumbnail for " << get_filename()
-                          << ": " << std::endl << "  " << ex.what() << std::endl;
-                m_ThumbnailPixbuf = get_missing_pixbuf();
-                return;
-            }
-
-            gchar **mimeTypes = gdk_pixbuf_format_get_mime_types(format);
-            save_thumbnail(pixbuf, mimeTypes[0]);
-            g_strfreev(mimeTypes);
-        }
-    }
-
-    if (pixbuf && pixbuf != get_missing_pixbuf())
-        m_ThumbnailPixbuf = scale_pixbuf(pixbuf, ThumbnailSize, ThumbnailSize);
-    else
-#endif // __linux__
-        create_thumbnail();
-}
-
 void Image::save_thumbnail(Glib::RefPtr<Gdk::Pixbuf> &pixbuf, const gchar *mimeType) const
 {
-    if (!Settings.get_bool("SaveThumbnails"))
-        return;
-
     struct stat fileInfo;
     if (stat(m_Path.c_str(), &fileInfo) == 0)
     {

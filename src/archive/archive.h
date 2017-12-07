@@ -30,8 +30,8 @@ namespace AhoViewer
         public:
             Image(const std::string &file, const Archive &archive);
             virtual std::string get_filename() const override;
-            virtual const Glib::RefPtr<Gdk::Pixbuf>& get_thumbnail() override;
-            virtual void load_pixbuf() override;
+            virtual const Glib::RefPtr<Gdk::Pixbuf>& get_thumbnail(Glib::RefPtr<Gio::Cancellable> c) override;
+            virtual void load_pixbuf(Glib::RefPtr<Gio::Cancellable> c) override;
 
             void save(const std::string &path);
         private:
