@@ -69,6 +69,7 @@ void StatusBar::set_progress(const std::string &msg, const double fraction,
     // Set message and timeout clean up
     set_message(msg, priority, delay);
 
+    m_ProgressConn.disconnect();
     m_ProgressPriority = priority;
     m_ProgressBar->set_fraction(fraction);
     m_ProgressBar->show();
