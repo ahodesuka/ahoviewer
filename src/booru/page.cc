@@ -20,7 +20,6 @@ Page::Page(Gtk::Menu *menu)
     m_TabLabel(Gtk::manage(new Gtk::Label(_("New Tab")))),
     m_TabButton(Gtk::manage(new Gtk::Button())),
     m_ImageList(std::make_shared<ImageList>(this)),
-    m_ImageFetcher(std::make_unique<ImageFetcher>()),
     m_Page(0),
     m_Saving(false),
     m_LastPage(false),
@@ -87,17 +86,6 @@ Page::~Page()
         m_GetPostsThread.join();
 
     cancel_save();
-
-    // The ImageFetcher must stop accepting new handles and end it's main loop
-    // before the ImageList is cleared, but the ImageFetcher must not be fully
-    // destructed until after the ImageList has done so first
-    //   ImageFetcher.shutdown -> stops accepting new handles and ends it's main loop
-    //   ~ImageList
-    //   ~ImageFetcher
-    // Moving the ImageFetcher into the ImageList might be a good idea
-    m_ImageFetcher->shutdown();
-    m_ImageList.reset();
-    m_ImageFetcher.reset();
 }
 
 void Page::set_selected(const size_t index)
@@ -128,8 +116,8 @@ void Page::search(const std::shared_ptr<Site> &site)
     if (!ask_cancel_save())
         return;
 
-    m_Curler.cancel();
     m_CountsCurler.cancel();
+    m_Curler.cancel();
 
     cancel_save();
     m_ImageList->clear();
@@ -141,7 +129,6 @@ void Page::search(const std::shared_ptr<Site> &site)
     m_Page = 1;
     m_LastPage = false;
     m_SearchTags = m_Tags;
-    m_ImageFetcher->set_max_connections(m_Site->get_max_connections());
 
     // Trim leading and trailing whitespace for tab label
     // and m_SearchTags which is used to display tags in other places

@@ -57,7 +57,7 @@ int ImageFetcher::timer_cb(CURLM*, long timeout_ms, void *userp)
     return 0;
 }
 
-ImageFetcher::ImageFetcher()
+ImageFetcher::ImageFetcher(const int max_cons)
   : m_MainContext(Glib::MainContext::create()),
     m_MainLoop(Glib::MainLoop::create(m_MainContext)),
     m_MultiHandle(curl_multi_init()),
@@ -76,6 +76,7 @@ ImageFetcher::ImageFetcher()
     curl_multi_setopt(m_MultiHandle, CURLMOPT_SOCKETDATA, this);
     curl_multi_setopt(m_MultiHandle, CURLMOPT_TIMERFUNCTION, &ImageFetcher::timer_cb);
     curl_multi_setopt(m_MultiHandle, CURLMOPT_TIMERDATA, this);
+    curl_multi_setopt(m_MultiHandle, CURLMOPT_MAX_HOST_CONNECTIONS, max_cons);
 }
 
 ImageFetcher::~ImageFetcher()
@@ -116,22 +117,11 @@ void ImageFetcher::add_handle(Curler *curler)
         dis->emit();
 }
 
-// Konachan seems to throw a 503 error if you have too many connections
-// This is also indirectly controlled by the image list's threadpool size
-// and the cache size setting. It's only adjustable from the cfg file.
-// 0 = unlimited
-void ImageFetcher::set_max_connections(unsigned int n)
-{
-    curl_multi_setopt(m_MultiHandle, CURLMOPT_MAX_HOST_CONNECTIONS, n);
-}
-
 void ImageFetcher::on_handle_added()
 {
     Curler *curler = nullptr;
     while (!m_Shutdown && m_CurlerQueue.pop(curler))
     {
-        std::lock_guard<std::mutex> lock(m_Mutex);
-
         m_Curlers.push_back(curler);
         curl_multi_add_handle(m_MultiHandle, curler->m_EasyHandle);
         curler->m_StartTime = std::chrono::steady_clock::now();
@@ -143,11 +133,8 @@ void ImageFetcher::remove_handle(Curler *curler)
     if (!curler)
         return;
 
-    {
-        std::lock_guard<std::mutex> lock(m_Mutex);
-        curl_multi_remove_handle(m_MultiHandle, curler->m_EasyHandle);
-        m_Curlers.erase(std::remove(m_Curlers.begin(), m_Curlers.end(), curler), m_Curlers.end());
-    }
+    curl_multi_remove_handle(m_MultiHandle, curler->m_EasyHandle);
+    m_Curlers.erase(std::remove(m_Curlers.begin(), m_Curlers.end(), curler), m_Curlers.end());
 
     curler->m_Active = false;
 }

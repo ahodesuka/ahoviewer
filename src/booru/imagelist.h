@@ -7,7 +7,9 @@ namespace AhoViewer
 {
     namespace Booru
     {
+        class ImageFetcher;
         class Page;
+        class Site;
         class ImageList : public AhoViewer::ImageList
         {
         public:
@@ -25,6 +27,9 @@ namespace AhoViewer
                                      const bool fromWidget = false, const bool force = false) override;
             virtual void cancel_thumbnail_thread() override;
         private:
+            std::unique_ptr<ImageFetcher> m_ImageFetcher;
+            std::shared_ptr<Site> m_Site;
+
             std::string m_Path;
             size_t m_Size;
         };

@@ -138,7 +138,7 @@ void Site::share_unlock_cb(CURL*, curl_lock_data data, void *userp)
 }
 
 Site::Site(const std::string &name, const std::string &url, const Type type,
-           const std::string &user, const std::string &pass, const unsigned int max_cons)
+           const std::string &user, const std::string &pass, const int max_cons)
   : m_Name(name),
     m_Url(url),
     m_Username(user),

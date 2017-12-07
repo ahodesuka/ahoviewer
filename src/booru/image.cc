@@ -7,20 +7,24 @@ using namespace AhoViewer::Booru;
 
 #include "browser.h"
 #include "settings.h"
+#include "site.h"
 
 Image::Image(const std::string &path, const std::string &url,
              const std::string &thumbPath, const std::string &thumbUrl,
              const std::string &postUrl,
-             std::set<std::string> tags, const Page &page)
+             std::set<std::string> tags,
+             std::shared_ptr<Site> site,
+             ImageFetcher &fetcher)
   : AhoViewer::Image(path),
     m_Url(url),
     m_ThumbnailUrl(thumbUrl),
     m_PostUrl(postUrl),
     m_Tags(tags),
-    m_Page(page),
+    m_Site(site),
+    m_ImageFetcher(fetcher),
     m_LastDraw(std::chrono::steady_clock::now()),
-    m_Curler(m_Url, page.get_site()->get_share_handle()),
-    m_ThumbnailCurler(m_ThumbnailUrl, page.get_site()->get_share_handle()),
+    m_Curler(m_Url, m_Site->get_share_handle()),
+    m_ThumbnailCurler(m_ThumbnailUrl, m_Site->get_share_handle()),
     m_PixbufError(false)
 {
     m_ThumbnailPath = thumbPath;
@@ -48,7 +52,7 @@ bool Image::is_loading() const
 
 std::string Image::get_filename() const
 {
-    return m_Page.get_site()->get_name() + "/" + Glib::path_get_basename(m_Path);
+    return m_Site->get_name() + "/" + Glib::path_get_basename(m_Path);
 }
 
 // Cancellable here will never be used
@@ -56,7 +60,7 @@ const Glib::RefPtr<Gdk::Pixbuf>& Image::get_thumbnail(Glib::RefPtr<Gio::Cancella
 {
     if (!m_ThumbnailPixbuf)
     {
-        m_Page.get_image_fetcher().add_handle(&m_ThumbnailCurler);
+        m_ImageFetcher.add_handle(&m_ThumbnailCurler);
 
         {
             std::unique_lock<std::mutex> lock(m_ThumbnailMutex);
@@ -167,7 +171,7 @@ bool Image::start_download()
 {
     if (!m_Curler.is_active())
     {
-        m_Page.get_image_fetcher().add_handle(&m_Curler);
+        m_ImageFetcher.add_handle(&m_Curler);
 
         if (!m_isWebM)
         {

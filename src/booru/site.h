@@ -71,7 +71,7 @@ namespace AhoViewer
             std::string get_cookie();
             void cleanup_cookie() const;
 
-            unsigned int get_max_connections() const { return m_MaxConnections; }
+            int get_max_connections() const { return m_MaxConnections; }
             CURLSH* get_share_handle() const { return m_ShareHandle; }
 
             Glib::RefPtr<Gdk::Pixbuf> get_icon_pixbuf(const bool update = false);
@@ -88,7 +88,7 @@ namespace AhoViewer
                  const Type type,
                  const std::string &user,
                  const std::string &pass,
-                 const unsigned int max_cons);
+                 const int max_cons);
         private:
             static Type get_type_from_url(const std::string &url);
 
@@ -110,7 +110,7 @@ namespace AhoViewer
             bool m_NewAccount;
             uint64_t m_CookieTS;
             std::set<std::string> m_Tags;
-            unsigned int m_MaxConnections;
+            int m_MaxConnections;
             CURLSH *m_ShareHandle;
             std::map<curl_lock_data, std::mutex> m_MutexMap;
             Curler m_Curler;

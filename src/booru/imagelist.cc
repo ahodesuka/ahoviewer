@@ -2,7 +2,9 @@
 using namespace AhoViewer::Booru;
 
 #include "image.h"
+#include "imagefetcher.h"
 #include "page.h"
+#include "site.h"
 #include "tempdir.h"
 
 ImageList::ImageList(Widget *w)
@@ -20,12 +22,16 @@ ImageList::~ImageList()
 // This is also used when reusing the same page with a new query
 void ImageList::clear()
 {
+    if (m_ImageFetcher)
+        m_ImageFetcher->shutdown();
+
     AhoViewer::ImageList::clear();
     if (!m_Path.empty()) {
         TempDir::get_instance().remove_dir(m_Path);
         m_Path.clear();
     }
     m_Size = 0;
+    m_ImageFetcher = nullptr;
 }
 
 std::string ImageList::get_path()
@@ -43,6 +49,11 @@ std::string ImageList::get_path()
 
 void ImageList::load(const xmlDocument &posts, const Page &page)
 {
+    m_Site = page.get_site();
+
+    if (!m_ImageFetcher)
+        m_ImageFetcher = std::make_unique<ImageFetcher>(m_Site->get_max_connections());
+
     std::string c = posts.get_attribute("count");
     if (!c.empty())
        m_Size = std::stoul(c);
@@ -59,14 +70,14 @@ void ImageList::load(const xmlDocument &posts, const Page &page)
         std::istringstream ss(post.get_attribute("tags"));
         std::set<std::string> tags { std::istream_iterator<std::string>(ss),
                                      std::istream_iterator<std::string>() };
-        page.get_site()->add_tags(tags);
+        m_Site->add_tags(tags);
 
         if (thumbUrl[0] == '/')
         {
             if (thumbUrl[1] == '/')
                 thumbUrl = "https:" + thumbUrl;
             else
-                thumbUrl = page.get_site()->get_url() + thumbUrl;
+                thumbUrl = m_Site->get_url() + thumbUrl;
         }
 
         if (imageUrl[0] == '/')
@@ -74,13 +85,16 @@ void ImageList::load(const xmlDocument &posts, const Page &page)
             if (imageUrl[1] == '/')
                 imageUrl = "https:" + imageUrl;
             else
-                imageUrl = page.get_site()->get_url() + imageUrl;
+                imageUrl = m_Site->get_url() + imageUrl;
         }
 
-        std::string postUrl = page.get_site()->get_post_url(post.get_attribute("id"));
+        std::string postUrl = m_Site->get_post_url(post.get_attribute("id"));
 
         if (Image::is_valid_extension(imageUrl))
-            m_Images.push_back(std::make_shared<Booru::Image>(imagePath, imageUrl, thumbPath, thumbUrl, postUrl, tags, page));
+            m_Images.emplace_back(std::make_shared<Image>(imagePath, imageUrl,
+                                                          thumbPath, thumbUrl,
+                                                          postUrl, tags,
+                                                          m_Site, *m_ImageFetcher));
         else
             --m_Size;
     }

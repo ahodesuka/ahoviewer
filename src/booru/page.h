@@ -6,7 +6,6 @@
 
 #include "curler.h"
 #include "site.h"
-#include "imagefetcher.h"
 #include "imagelist.h"
 
 namespace AhoViewer
@@ -26,7 +25,6 @@ namespace AhoViewer
             Page(Gtk::Menu *menu);
             virtual ~Page() override;
 
-            ImageFetcher& get_image_fetcher() const { return *m_ImageFetcher; }
             std::shared_ptr<Site> get_site() const { return m_Site; }
             std::shared_ptr<ImageList> get_imagelist() const { return m_ImageList; }
             size_t get_page_num() const { return m_Page; }
@@ -64,7 +62,6 @@ namespace AhoViewer
             Gtk::Button *m_TabButton;
 
             std::shared_ptr<ImageList> m_ImageList;
-            std::unique_ptr<ImageFetcher> m_ImageFetcher;
             std::shared_ptr<Site> m_Site;
             Curler m_Curler, m_CountsCurler;
 

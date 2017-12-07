@@ -13,14 +13,12 @@ namespace AhoViewer
         class ImageFetcher : public sigc::trackable
         {
         public:
-            ImageFetcher();
+            ImageFetcher(const int max_cons);
             virtual ~ImageFetcher();
 
             void shutdown();
 
             void add_handle(Curler *curler);
-
-            void set_max_connections(unsigned int n);
         private:
             struct SockInfo
             {
@@ -43,7 +41,6 @@ namespace AhoViewer
             Glib::RefPtr<Glib::MainContext> m_MainContext;
             Glib::RefPtr<Glib::MainLoop> m_MainLoop;
             std::thread m_Thread;
-            std::mutex m_Mutex;
 
             CURLM *m_MultiHandle;
             int m_RunningHandles;

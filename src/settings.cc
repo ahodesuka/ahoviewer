@@ -58,11 +58,11 @@ SettingsManager::SettingsManager()
     }),
     DefaultSites(
     {
-        std::make_tuple("Danbooru",   "https://danbooru.donmai.us",  Site::Type::DANBOORU, "", ""),
-        std::make_tuple("Gelbooru",   "https://gelbooru.com",        Site::Type::GELBOORU, "", ""),
-        std::make_tuple("Konachan",   "https://konachan.com",        Site::Type::MOEBOORU, "", ""),
-        std::make_tuple("yande.re",   "https://yande.re",            Site::Type::MOEBOORU, "", ""),
-        std::make_tuple("Safebooru",  "https://safebooru.org",       Site::Type::GELBOORU, "", ""),
+        std::make_tuple("Danbooru",   "https://danbooru.donmai.us",  Site::Type::DANBOORU, "", "", 0),
+        std::make_tuple("Gelbooru",   "https://gelbooru.com",        Site::Type::GELBOORU, "", "", 0),
+        std::make_tuple("Konachan",   "https://konachan.com",        Site::Type::MOEBOORU, "", "", 6),
+        std::make_tuple("yande.re",   "https://yande.re",            Site::Type::MOEBOORU, "", "", 0),
+        std::make_tuple("Safebooru",  "https://safebooru.org",       Site::Type::GELBOORU, "", "", 6),
     }),
     DefaultKeybindings(
     {
@@ -261,7 +261,8 @@ std::vector<std::shared_ptr<Site>>& SettingsManager::get_sites()
                                        std::get<1>(s),
                                        std::get<2>(s),
                                        std::get<3>(s),
-                                       std::get<4>(s)));
+                                       std::get<4>(s),
+                                       std::get<5>(s)));
 
     return m_Sites;
 }

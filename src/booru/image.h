@@ -2,16 +2,18 @@
 #define _BOORUIMAGE_H_
 
 #include <condition_variable>
+#include <set>
 #include <shared_mutex>
 
 #include "../image.h"
 #include "curler.h"
-#include "page.h"
+#include "imagefetcher.h"
 
 namespace AhoViewer
 {
     namespace Booru
     {
+        class Site;
         class Image : public AhoViewer::Image,
                       public sigc::trackable
         {
@@ -23,7 +25,9 @@ namespace AhoViewer
             Image(const std::string &path, const std::string &url,
                   const std::string &thumbPath, const std::string &thumbUrl,
                   const std::string &postUrl,
-                  std::set<std::string> tags, const Page &page);
+                  std::set<std::string> tags,
+                  std::shared_ptr<Site> site,
+                  ImageFetcher &fetcher);
             virtual ~Image() override;
 
             std::set<std::string> get_tags() const { return m_Tags; }
@@ -57,7 +61,8 @@ namespace AhoViewer
 
             std::string m_Url, m_ThumbnailUrl, m_PostUrl;
             std::set<std::string> m_Tags;
-            const Page &m_Page;
+            std::shared_ptr<Site> m_Site;
+            ImageFetcher &m_ImageFetcher;
 
             time_point_t m_LastDraw;
 
