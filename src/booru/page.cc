@@ -261,7 +261,7 @@ void Page::get_posts()
             m_CountsCurler.set_url(m_Site->get_url() + "/counts/posts.xml?tags=" + tags);
             if (m_CountsCurler.perform())
             {
-                xmlDocument doc(reinterpret_cast<char*>(m_CountsCurler.get_data()), m_CountsCurler.get_data_size());
+                xml::Document doc(reinterpret_cast<char*>(m_CountsCurler.get_data()), m_CountsCurler.get_data_size());
                 postsCount = std::stoul(doc.get_children()[0].get_value());
             }
             else if (m_CountsCurler.is_cancelled())
@@ -275,19 +275,29 @@ void Page::get_posts()
         else
             m_Curler.set_http_auth(m_Site->get_username(), m_Site->get_password());
 
-        if (m_Curler.perform(RETRY_COUNT))
+        bool success = false;
+        size_t retryCount = 0;
+        do
         {
-            m_Posts = std::make_unique<xmlDocument>(
-                reinterpret_cast<char*>(m_Curler.get_data()), m_Curler.get_data_size());
+            success = m_Curler.perform();
+            if (success)
+            {
+                m_Posts = std::make_unique<xml::Document>(
+                    reinterpret_cast<char*>(m_Curler.get_data()), m_Curler.get_data_size());
 
-            if (postsCount)
-                m_Posts->set_attribute("count", std::to_string(postsCount));
+                // XXX: Ocassionally Danbooru returns a 500 internal server error
+                // "uninitialized constant LegacyController::Builder"
+                if (m_Posts && m_Site->get_type() == Site::Type::DANBOORU)
+                    success = m_Posts->get_value() != "uninitialized constant LegacyController::Builder";
+            }
         }
-        else if (!m_Curler.is_cancelled())
-        {
+        while (!m_Curler.is_cancelled() && !success && ++retryCount < RETRY_COUNT);
+
+        if (success && m_Posts && postsCount)
+            m_Posts->set_attribute("count", std::to_string(postsCount));
+        else if (!success && !m_Curler.is_cancelled())
             std::cerr << "Error while downloading posts on " << m_Curler.get_url() << std::endl
                       << "  " << m_Curler.get_error() << std::endl;
-        }
 
         if (!m_Curler.is_cancelled())
             m_SignalPostsDownloaded();
@@ -319,9 +329,11 @@ bool Page::get_next_page()
 // Adds the downloaded posts to the image list.
 void Page::on_posts_downloaded()
 {
-    if (m_Posts && m_Posts->get_attribute("success") == "false" && !m_Posts->get_attribute("reason").empty())
+    if (m_Posts && m_Posts->get_attribute("success") == "false" &&
+        (!m_Posts->get_attribute("reason").empty() || !m_Posts->get_value().empty()))
     {
-        m_SignalDownloadError(m_Posts->get_attribute("reason"));
+        auto reason = m_Posts->get_value().empty() ? m_Posts->get_attribute("reason") : m_Posts->get_value();
+        m_SignalDownloadError(reason);
     }
     else if (m_Posts)
     {

@@ -4,11 +4,13 @@
 #include <libxml/parser.h>
 #include <libxml/tree.h>
 
+#include <string>
+#include <vector>
+
 namespace AhoViewer
 {
-    class xmlDocument
+    namespace xml
     {
-    public:
         class Node
         {
         public:
@@ -53,49 +55,46 @@ namespace AhoViewer
 
                 return val;
             }
-        private:
+        protected:
+            Node() = default;
             xmlNodePtr m_xmlNode;
         };
 
-        xmlDocument(const char *buf, const int size)
+        // The Root node
+        class Document : public Node
         {
-            m_xmlDoc = xmlParseMemory(buf, size);
-        }
-        ~xmlDocument()
-        {
-            xmlFreeDoc(m_xmlDoc);
-        }
-
-        unsigned long get_n_nodes() const
-        {
-            return xmlChildElementCount(xmlDocGetRootElement(m_xmlDoc));
-        }
-
-        std::string get_attribute(const std::string &name) const
-        {
-            return xmlDocument::Node(xmlDocGetRootElement(m_xmlDoc)).get_attribute(name);
-        }
-
-        void set_attribute(const std::string &name, const std::string &value)
-        {
-            xmlDocument::Node(xmlDocGetRootElement(m_xmlDoc)).set_attribute(name, value);
-        }
-
-        const std::vector<xmlDocument::Node> get_children() const
-        {
-            std::vector<xmlDocument::Node> children;
-
-            for (xmlNodePtr n = xmlDocGetRootElement(m_xmlDoc)->children; n; n = n->next)
+        public:
+            Document(const char *buf, const int size)
             {
-                if (n->type == XML_ELEMENT_NODE)
-                    children.emplace_back(n);
+                m_xmlDoc = xmlParseMemory(buf, size);
+                m_xmlNode = xmlDocGetRootElement(m_xmlDoc);
+            }
+            ~Document()
+            {
+                xmlFreeDoc(m_xmlDoc);
             }
 
-            return children;
-        }
-    private:
-        xmlDocPtr m_xmlDoc;
-    };
+            unsigned long get_n_nodes() const
+            {
+                return xmlChildElementCount(m_xmlNode);
+            }
+
+            const std::vector<Node> get_children() const
+            {
+                std::vector<Node> children;
+
+                for (xmlNodePtr n = m_xmlNode->children; n; n = n->next)
+                {
+                    if (n->type == XML_ELEMENT_NODE)
+                        children.emplace_back(n);
+                }
+
+                return children;
+            }
+        private:
+            xmlDocPtr m_xmlDoc;
+        };
+    }
 }
 
 #endif /* _XML_H_ */

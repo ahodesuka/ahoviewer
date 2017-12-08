@@ -2,6 +2,7 @@
 #define _BOORUIMAGELIST_H_
 
 #include "../imagelist.h"
+#include "xml.h"
 
 namespace AhoViewer
 {
@@ -21,7 +22,7 @@ namespace AhoViewer
             size_t get_vector_size() const { return m_Images.size(); }
 
             virtual void clear() override;
-            void load(const xmlDocument &posts, const Page &page);
+            void load(const xml::Document &posts, const Page &page);
         protected:
             virtual void set_current(const size_t index,
                                      const bool fromWidget = false, const bool force = false) override;

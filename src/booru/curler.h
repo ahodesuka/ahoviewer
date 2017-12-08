@@ -33,7 +33,7 @@ namespace AhoViewer
             void set_share_handle(CURLSH *s) const;
 
             std::string escape(const std::string &str) const;
-            bool perform(const size_t rCount = 0);
+            bool perform();
 
             void clear() { m_Buffer.clear(); }
             void save_file(const std::string &path) const;

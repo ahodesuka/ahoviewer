@@ -7,7 +7,6 @@
 #include <vector>
 
 #include "archive/archive.h"
-#include "booru/xml.h"
 #include "image.h"
 #include "threadpool.h"
 #include "tsqueue.h"

@@ -47,7 +47,7 @@ std::string ImageList::get_path()
     return m_Path;
 }
 
-void ImageList::load(const xmlDocument &posts, const Page &page)
+void ImageList::load(const xml::Document &posts, const Page &page)
 {
     m_Site = page.get_site();
 
@@ -58,7 +58,7 @@ void ImageList::load(const xmlDocument &posts, const Page &page)
     if (!c.empty())
        m_Size = std::stoul(c);
 
-    for (const xmlDocument::Node &post : posts.get_children())
+    for (const xml::Node &post : posts.get_children())
     {
         std::string thumbUrl  = post.get_attribute("preview_url"),
                     thumbPath = Glib::build_filename(get_path(), "thumbnails",

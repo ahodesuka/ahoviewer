@@ -7,6 +7,7 @@
 #include "curler.h"
 #include "site.h"
 #include "imagelist.h"
+#include "xml.h"
 
 namespace AhoViewer
 {
@@ -73,7 +74,7 @@ namespace AhoViewer
             std::atomic<size_t> m_SaveImagesCurrent;
             std::atomic<bool> m_Saving;
             bool m_LastPage;
-            std::unique_ptr<xmlDocument> m_Posts;
+            std::unique_ptr<xml::Document> m_Posts;
 
             Glib::RefPtr<Gio::Cancellable> m_SaveCancel;
             std::thread m_GetPostsThread,
