@@ -401,7 +401,7 @@ void Page::on_value_changed()
     double value = get_vadjustment()->get_value(),
            limit = get_vadjustment()->get_upper() -
                    get_vadjustment()->get_page_size() -
-                   get_vadjustment()->get_step_increment();
+                   get_vadjustment()->get_step_increment() * 3;
 
     if (value >= limit)
         get_next_page();
