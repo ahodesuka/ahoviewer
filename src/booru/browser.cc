@@ -393,6 +393,12 @@ void Browser::on_switch_page(void*, guint)
     m_ImageListConn = page->get_imagelist()->signal_changed().connect(
             sigc::mem_fun(*this, &Browser::on_imagelist_changed));
 
+    page->get_imagelist()->signal_cleared().connect([&]()
+    {
+        m_StatusBar->clear_progress(StatusBar::Priority::SAVE);
+        m_StatusBar->clear_message(StatusBar::Priority::SAVE);
+    });
+
     if (!check_saving_page())
     {
         m_SaveProgConn.disconnect();
