@@ -44,6 +44,8 @@ or
    * See my comment in [issue #20](https://github.com/ahodesuka/ahoviewer/issues/20#issuecomment-157997909)
 2. **I get *No results found* on Danbooru**
    * Danbooru only allows normal users to use 2 tags, if you have `Maximum post rating` set to anything other than `Explicit` it will count as one tag.
+3. **I wish to use a proxy with ahoviewer**
+   * This can be done by setting the `http_proxy` and `https_proxy` environment variables respectively, this works on both GNU/Linux and Windows.  See my comment in [issue #61](https://github.com/ahodesuka/ahoviewer/issues/61#issuecomment-354694187) for details.
 
 #### Default Keybindings
 | Function                                  | Key             |
