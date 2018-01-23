@@ -64,7 +64,7 @@ namespace AhoViewer
 
             std::shared_ptr<ImageList> m_ImageList;
             std::shared_ptr<Site> m_Site;
-            Curler m_Curler, m_CountsCurler;
+            Curler m_Curler;
 
             // m_Tags stores tags that are inside the entry
             // while m_SearchTags are the whitespace trimmed tags or *

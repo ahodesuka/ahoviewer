@@ -80,7 +80,6 @@ Page::Page(Gtk::Menu *menu)
 Page::~Page()
 {
     m_Curler.cancel();
-    m_CountsCurler.cancel();
 
     if (m_GetPostsThread.joinable())
         m_GetPostsThread.join();
@@ -116,7 +115,6 @@ void Page::search(const std::shared_ptr<Site> &site)
     if (!ask_cancel_save())
         return;
 
-    m_CountsCurler.cancel();
     m_Curler.cancel();
 
     cancel_save();
@@ -148,7 +146,6 @@ void Page::search(const std::shared_ptr<Site> &site)
 
     m_Curler.set_share_handle(m_Site->get_share_handle());
     m_Curler.set_referer(m_Site->get_url());
-    m_CountsCurler.set_referer(m_Site->get_url());
 
     get_posts();
 }
@@ -249,7 +246,6 @@ void Page::get_posts()
     }
 
     tags = m_Curler.escape(tags);
-    m_Curler.set_url(m_Site->get_posts_url(tags, m_Page));
 
     m_GetPostsThread = std::thread([ &, tags ]()
     {
@@ -258,22 +254,24 @@ void Page::get_posts()
         // Get it from thier counts api
         if (m_Page == 1 && m_Site->get_type() == Site::Type::DANBOORU)
         {
-            m_CountsCurler.set_url(m_Site->get_url() + "/counts/posts.xml?tags=" + tags);
-            if (m_CountsCurler.perform())
+            m_Curler.set_url(m_Site->get_url() + "/counts/posts.xml?tags=" + tags);
+            if (m_Curler.perform())
             {
                 try
                 {
-                    xml::Document doc(reinterpret_cast<char*>(m_CountsCurler.get_data()),
-                                      m_CountsCurler.get_data_size());
+                    xml::Document doc(reinterpret_cast<char*>(m_Curler.get_data()),
+                                      m_Curler.get_data_size());
                     postsCount = std::stoul(doc.get_children()[0].get_value());
                 }
                 catch (const std::runtime_error &e) { }
             }
-            else if (m_CountsCurler.is_cancelled())
+            else if (m_Curler.is_cancelled())
             {
                 return;
             }
         }
+
+        m_Curler.set_url(m_Site->get_posts_url(tags, m_Page));
 
         if (m_Site->get_type() == Site::Type::GELBOORU)
             m_Curler.set_cookie_file(m_Site->get_cookie());
