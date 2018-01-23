@@ -261,8 +261,13 @@ void Page::get_posts()
             m_CountsCurler.set_url(m_Site->get_url() + "/counts/posts.xml?tags=" + tags);
             if (m_CountsCurler.perform())
             {
-                xml::Document doc(reinterpret_cast<char*>(m_CountsCurler.get_data()), m_CountsCurler.get_data_size());
-                postsCount = std::stoul(doc.get_children()[0].get_value());
+                try
+                {
+                    xml::Document doc(reinterpret_cast<char*>(m_CountsCurler.get_data()),
+                                      m_CountsCurler.get_data_size());
+                    postsCount = std::stoul(doc.get_children()[0].get_value());
+                }
+                catch (const std::runtime_error &e) { }
             }
             else if (m_CountsCurler.is_cancelled())
             {
@@ -282,8 +287,16 @@ void Page::get_posts()
             success = m_Curler.perform();
             if (success)
             {
-                m_Posts = std::make_unique<xml::Document>(
-                    reinterpret_cast<char*>(m_Curler.get_data()), m_Curler.get_data_size());
+                try
+                {
+                    m_Posts = std::make_unique<xml::Document>(
+                        reinterpret_cast<char*>(m_Curler.get_data()), m_Curler.get_data_size());
+                }
+                catch (const std::runtime_error &e)
+                {
+                    std::cerr << e.what() << std::endl;
+                    m_Posts = nullptr;
+                }
 
                 // XXX: Ocassionally Danbooru returns a 500 internal server error
                 // "uninitialized constant LegacyController::Builder"

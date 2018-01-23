@@ -67,7 +67,11 @@ namespace AhoViewer
             Document(const char *buf, const int size)
             {
                 m_xmlDoc = xmlParseMemory(buf, size);
-                m_xmlNode = xmlDocGetRootElement(m_xmlDoc);
+
+                if (!m_xmlDoc)
+                    throw std::runtime_error("Failed to parse XML");
+                else
+                    m_xmlNode = xmlDocGetRootElement(m_xmlDoc);
             }
             ~Document()
             {
