@@ -368,9 +368,7 @@ void MainWindow::set_active_imagelist(const std::shared_ptr<ImageList> &imageLis
     if (!m_ActiveImageList->empty())
     {
         m_ImageBox->clear_image();
-        m_ImageBox->set_image(m_ActiveImageList->get_current());
-
-        set_sensitives();
+        on_imagelist_changed(m_ActiveImageList->get_current());
     }
     else
     {
@@ -748,9 +746,6 @@ void MainWindow::update_title()
         }
 
         set_title(ss.str());
-
-        m_StatusBar->set_page_info(m_ActiveImageList->get_index() + 1, m_ActiveImageList->get_size());
-        m_StatusBar->set_filename(m_ActiveImageList->get_current()->get_filename());
     }
     else
     {
@@ -765,6 +760,9 @@ bool MainWindow::is_fullscreen() const
 
 void MainWindow::on_imagelist_changed(const std::shared_ptr<Image> &image)
 {
+    m_StatusBar->set_page_info(m_ActiveImageList->get_index() + 1, m_ActiveImageList->get_size());
+    m_StatusBar->set_filename(image->get_filename());
+
     m_ImageBox->set_image(image);
     set_sensitives();
 }
