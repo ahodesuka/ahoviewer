@@ -47,7 +47,7 @@ Image::~Image()
 bool Image::is_loading() const
 {
     return (m_isWebM && !Glib::file_test(m_Path, Glib::FILE_TEST_EXISTS))
-        || m_Curler.is_active() || m_Loading;
+        || m_Curler.is_active() || (m_Loading && !m_isWebM);
 }
 
 std::string Image::get_filename() const
