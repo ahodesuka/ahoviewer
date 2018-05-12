@@ -73,6 +73,14 @@ Page::Page(Gtk::Menu *menu)
     m_SignalPostsDownloaded.connect(sigc::mem_fun(*this, &Page::on_posts_downloaded));
     m_SignalSaveProgressDisp.connect([&](){ m_SignalSaveProgress(this); });
 
+    // Check if next page should be loaded after current finishes
+    m_ImageList->signal_thumbnails_loaded().connect([&]()
+    {
+        on_selection_changed();
+        on_value_changed();
+
+    });
+
     add(*m_IconView);
     show_all();
 }
@@ -319,7 +327,7 @@ bool Page::get_next_page()
 {
     // Do not fetch the next page if this is the last
     // or the current page is still loading
-    if (m_LastPage || m_GetPostsThread.joinable())
+    if (m_LastPage || m_GetPostsThread.joinable() || m_ImageList->is_loading())
         return false;
 
     if (!m_Saving)

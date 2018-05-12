@@ -123,6 +123,7 @@ namespace AhoViewer
         sigc::signal<void> signal_cleared() const { return m_SignalCleared; }
         sigc::signal<void> signal_load_success() const { return m_SignalLoadSuccess; }
         sigc::signal<void> signal_size_changed() const { return m_SignalSizeChanged; }
+        sigc::signal<void> signal_thumbnails_loaded() const { return m_SignalThumbnailsLoaded; }
     protected:
         virtual void load_thumbnails();
         virtual void cancel_thumbnail_thread();
@@ -173,7 +174,8 @@ namespace AhoViewer
         SignalArchiveErrorType      m_SignalArchiveError;
         sigc::signal<void>          m_SignalCleared,
                                     m_SignalLoadSuccess,
-                                    m_SignalSizeChanged;
+                                    m_SignalSizeChanged,
+                                    m_SignalThumbnailsLoaded;
     };
 }
 

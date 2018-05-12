@@ -23,6 +23,7 @@ namespace AhoViewer
 
             virtual void clear() override;
             void load(const xml::Document &posts, const Page &page);
+            bool is_loading() const { return m_ThreadPool.active(); }
         protected:
             virtual void set_current(const size_t index,
                                      const bool fromWidget = false, const bool force = false) override;

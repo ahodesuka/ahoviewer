@@ -318,6 +318,9 @@ void ImageList::on_thumbnail_loaded()
         m_Widget->set_pixbuf(p.first, p.second);
 
     m_ThumbnailLoadedConn.unblock();
+
+    if (m_ThumbnailQueue.empty())
+        m_SignalThumbnailsLoaded();
 }
 
 void ImageList::on_directory_changed(const Glib::RefPtr<Gio::File> &file,

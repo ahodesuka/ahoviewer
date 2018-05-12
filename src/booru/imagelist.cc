@@ -106,7 +106,6 @@ void ImageList::load(const xml::Document &posts, const Page &page)
     // the operation needs to be cancelled, all the
     // thumbnails will be loaded in the new thread
     cancel_thumbnail_thread();
-    AhoViewer::ImageList::cancel_thumbnail_thread();
 
     m_ThumbnailThread = std::thread(sigc::mem_fun(*this, &ImageList::load_thumbnails));
 
@@ -140,4 +139,6 @@ void ImageList::cancel_thumbnail_thread()
         auto bimage = std::static_pointer_cast<Image>(img);
         bimage->cancel_thumbnail_download();
     }
+
+    AhoViewer::ImageList::cancel_thumbnail_thread();
 }
