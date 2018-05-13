@@ -23,6 +23,7 @@ Page::Page(Gtk::Menu *menu)
     m_Page(0),
     m_Saving(false),
     m_LastPage(false),
+    m_KeepAligned(false),
     m_SaveCancel(Gio::Cancellable::create())
 {
     set_policy(Gtk::POLICY_NEVER, Gtk::POLICY_AUTOMATIC);
@@ -54,7 +55,7 @@ Page::Page(Gtk::Menu *menu)
     m_Tab->signal_button_release_event().connect(sigc::mem_fun(*this, &Page::on_tab_button_release_event));
     // }}}
 
-    get_vadjustment()->signal_value_changed().connect(sigc::mem_fun(*this, &Page::on_value_changed));
+    m_ScrollConn = get_vadjustment()->signal_value_changed().connect(sigc::mem_fun(*this, &Page::on_value_changed));
 
     m_IconView->set_model(m_ListStore);
     m_IconView->set_selection_mode(Gtk::SELECTION_BROWSE);
@@ -77,8 +78,8 @@ Page::Page(Gtk::Menu *menu)
     m_ImageList->signal_thumbnails_loaded().connect([&]()
     {
         on_selection_changed();
-        on_value_changed();
-
+        if (!m_KeepAligned)
+            on_value_changed();
     });
 
     add(*m_IconView);
@@ -93,6 +94,18 @@ Page::~Page()
         m_GetPostsThread.join();
 
     cancel_save();
+}
+
+void Page::set_pixbuf(const size_t index, const Glib::RefPtr<Gdk::Pixbuf> &pixbuf)
+{
+    m_ScrollConn.block();
+    ImageList::Widget::set_pixbuf(index, pixbuf);
+    while (Gtk::Main::events_pending())
+        Gtk::Main::iteration();
+    m_ScrollConn.unblock();
+
+    if (m_KeepAligned)
+        scroll_to_selected();
 }
 
 void Page::set_selected(const size_t index)
@@ -114,7 +127,11 @@ void Page::scroll_to_selected()
     {
         Gtk::TreePath path = paths[0];
         if (path)
+        {
+            m_ScrollConn.block();
             m_IconView->scroll_to_path(path, false, 0, 0);
+            m_ScrollConn.unblock();
+        }
     }
 }
 
@@ -240,6 +257,7 @@ void Page::cancel_save()
 void Page::get_posts()
 {
     std::string tags = m_SearchTags;
+    m_KeepAligned = true;
 
     if (m_Tags.find("rating:") == std::string::npos)
     {
@@ -421,6 +439,7 @@ void Page::on_value_changed()
            limit = get_vadjustment()->get_upper() -
                    get_vadjustment()->get_page_size() -
                    get_vadjustment()->get_step_increment() * 3;
+    m_KeepAligned = false;
 
     if (value >= limit)
         get_next_page();

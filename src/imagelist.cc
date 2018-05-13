@@ -319,7 +319,7 @@ void ImageList::on_thumbnail_loaded()
 
     m_ThumbnailLoadedConn.unblock();
 
-    if (m_ThumbnailQueue.empty())
+    if (!m_ThreadPool.active())
         m_SignalThumbnailsLoaded();
 }
 

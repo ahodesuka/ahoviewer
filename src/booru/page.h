@@ -34,6 +34,7 @@ namespace AhoViewer
             SignalDownloadErrorType signal_no_results() const { return m_SignalDownloadError; }
             SignalSaveProgressType signal_save_progress() const { return m_SignalSaveProgress; }
         protected:
+            virtual void set_pixbuf(const size_t index, const Glib::RefPtr<Gdk::Pixbuf> &pixbuf) override;
             virtual void set_selected(const size_t index) override;
             virtual void scroll_to_selected() override;
         private:
@@ -73,7 +74,7 @@ namespace AhoViewer
                    m_SaveImagesTotal;
             std::atomic<size_t> m_SaveImagesCurrent;
             std::atomic<bool> m_Saving;
-            bool m_LastPage;
+            bool m_LastPage, m_KeepAligned;
             std::unique_ptr<xml::Document> m_Posts;
 
             Glib::RefPtr<Gio::Cancellable> m_SaveCancel;
@@ -82,7 +83,8 @@ namespace AhoViewer
             Glib::Dispatcher m_SignalPostsDownloaded,
                              m_SignalSaveProgressDisp;
 
-            sigc::connection m_GetNextPageConn;
+            sigc::connection m_GetNextPageConn,
+                             m_ScrollConn;
 
             SignalClosedType m_SignalClosed;
             SignalDownloadErrorType m_SignalDownloadError;
