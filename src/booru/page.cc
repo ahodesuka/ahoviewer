@@ -290,6 +290,7 @@ void Page::get_posts()
                     postsCount = std::stoul(doc.get_children()[0].get_value());
                 }
                 catch (const std::runtime_error &e) { }
+                catch (const std::invalid_argument &e) { }
             }
             else if (m_Curler.is_cancelled())
             {
