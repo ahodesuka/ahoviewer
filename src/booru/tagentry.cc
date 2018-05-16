@@ -36,17 +36,18 @@ void TagEntry::on_grab_focus()
 
 void TagEntry::on_text_changed()
 {
-    size_t pos = get_text().find_last_of(' ');
+    int spos = get_position();
 
-    int spos, epos;
-    get_selection_bounds(spos, epos);
-
+    size_t pos = get_text().substr(0, spos).find_last_of(' ');
     std::string key = pos == std::string::npos ?
-        get_text() : get_text().substr(pos + 1, spos - pos + 1);
+        get_text().substr(0, spos + 1) : get_text().substr(pos + 1, spos - pos);
+
+    if (key.back() == ' ')
+        key.pop_back();
 
     // Check if key is prefixed
-    if (key[0] == '-')
-        key = key.substr(1);
+    if (key.front() == '-')
+        key.erase(key.begin());
 
     m_Model->clear();
 
@@ -83,35 +84,45 @@ gboolean TagEntry::on_cursor_on_match_c(GtkEntryCompletion*,
 
 void TagEntry::on_cursor_on_match(const std::string &tag)
 {
-    size_t pos = get_text().find_last_of(' ');
-    std::string tags = pos == std::string::npos ? "" : get_text().substr(0, pos + 1),
-                prefix = (pos == std::string::npos ?
-                            get_text()[0] : get_text()[pos + 1]) == '-' ? "-" : "";
-
     int spos, epos;
     get_selection_bounds(spos, epos);
 
+    size_t pos = get_text().substr(0, spos).find_last_of(' ');
+    std::string prefix = pos == std::string::npos ?
+        (get_text()[0] == '-' ? "-" : "") : get_text().substr(0, pos + 1),
+                suffix = get_text().substr(epos);
+
+    if (pos != std::string::npos && get_text().substr(pos + 1, 1) == "-")
+        prefix += '-';
+
     m_ChangedConn.block();
-    set_text(tags + prefix + tag);
+    set_text(prefix + tag + suffix);
     m_ChangedConn.unblock();
 
     // This is needed to keep track of what part of the tag was completed
-    select_region(spos, -1);
+    select_region(spos, tag.size() - (spos - prefix.size()) + spos);
 }
 
 bool TagEntry::on_match_selected(const Gtk::TreeIter &iter)
 {
-    size_t pos = get_text().find_last_of(' ');
-    std::string tag    = iter->get_value(m_Columns.tag_column),
-                tags   = pos == std::string::npos ? "" : get_text().substr(0, pos + 1),
-                prefix = (pos == std::string::npos ? get_text()[0] : get_text()[pos + 1]) == '-' ? "-" : "";
+    int spos, epos;
+    get_selection_bounds(spos, epos);
+
+    size_t pos = get_text().substr(0, spos).find_last_of(' ');
+    std::string prefix = pos == std::string::npos ?
+        (get_text()[0] == '-' ? "-" : "") : get_text().substr(0, pos + 1),
+                tag    = iter->get_value(m_Columns.tag_column),
+                suffix = get_text().substr(epos);
+
+    if (pos != std::string::npos && get_text().substr(pos + 1, 1) == "-")
+        prefix += '-';
 
     m_ChangedConn.block();
-    set_text(tags + prefix + tag + " ");
+    set_text(prefix + tag + " " + suffix);
     m_ChangedConn.unblock();
 
     select_region(0, 0);
-    set_position(-1);
+    set_position(epos + 1);
 
     return true;
 }
