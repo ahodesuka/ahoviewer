@@ -6,20 +6,6 @@ using namespace AhoViewer::Booru;
 
 #include "image.h"
 
-static std::string readable_file_size(double s)
-{
-    gchar *fsize = g_format_size(s);
-    std::string str;
-
-    if (fsize)
-    {
-        str = fsize;
-        g_free(fsize);
-    }
-
-    return str;
-}
-
 Browser::Browser(BaseObjectType *cobj, const Glib::RefPtr<Gtk::Builder> &bldr)
   : Gtk::VPaned(cobj),
     m_MinWidth(0),
@@ -277,14 +263,14 @@ void Browser::on_image_progress(const Image *bimage, double c, double t)
 
     if (t > 0)
     {
-        ss << "Downloading " << readable_file_size(c) << " / " << readable_file_size(t) << " @ "
-           << readable_file_size(speed) << "/s";
+        ss << "Downloading " << Glib::format_size(c) << " / " << Glib::format_size(t) << " @ "
+           << Glib::format_size(speed) << "/s";
         m_StatusBar->set_progress(ss.str(), c / t, StatusBar::Priority::DOWNLOAD, c == t ? 2 : 0);
     }
     else
     {
-         ss << "Downloading " << readable_file_size(c) << " / ?? @ "
-            << readable_file_size(speed) << "/s";
+         ss << "Downloading " << Glib::format_size(c) << " / ?? @ "
+            << Glib::format_size(speed) << "/s";
         m_StatusBar->set_message(ss.str(), StatusBar::Priority::DOWNLOAD, c == t ? 2 : 0);
     }
 }
