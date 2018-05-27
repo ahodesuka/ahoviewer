@@ -4,11 +4,15 @@
 #include "browser.h"
 using namespace AhoViewer::Booru;
 
+#include "application.h"
 #include "image.h"
+#include "mainwindow.h"
+#include "tempdir.h"
 
 Browser::Browser(BaseObjectType *cobj, const Glib::RefPtr<Gtk::Builder> &bldr)
   : Gtk::VPaned(cobj),
     m_MinWidth(0),
+    m_ClosePage(false),
     m_LastSavePath(Settings.get_string("LastSavePath"))
 {
     bldr->get_widget("Booru::Browser::Notebook",          m_Notebook);
@@ -35,10 +39,25 @@ Browser::Browser(BaseObjectType *cobj, const Glib::RefPtr<Gtk::Builder> &bldr)
 
     m_UIManager = Glib::RefPtr<Gtk::UIManager>::cast_static(bldr->get_object("UIManager"));
 
+    m_Notebook->set_group_name(TempDir::get_instance().get_dir());
     m_Notebook->signal_switch_page().connect(sigc::mem_fun(*this, &Browser::on_switch_page));
     m_Notebook->signal_page_removed().connect(sigc::mem_fun(*this, &Browser::on_page_removed));
+    m_Notebook->signal_page_added().connect(sigc::mem_fun(*this, &Browser::on_page_added));
+
+    g_signal_connect(m_Notebook->gobj(), "create-window", G_CALLBACK(on_create_window), this);
 
     set_focus_chain(std::vector<Gtk::Widget*>{ m_TagEntry });
+
+    m_PosChangedConn = property_position().signal_changed().connect([&]()
+    {
+        if (get_realized())
+            Settings.set("TagViewPosition", get_position());
+    });
+}
+
+Browser::~Browser()
+{
+    delete m_Notebook;
 }
 
 std::vector<Page*> Browser::get_pages() const
@@ -83,8 +102,7 @@ void Browser::update_combobox_model()
 
 void Browser::on_new_tab()
 {
-    Page *page = Gtk::manage(new Page(m_PopupMenu));
-    page->signal_closed().connect(sigc::mem_fun(*this, &Browser::close_page));
+    Page *page = Gtk::manage(new Page);
 
     // If you type into the entry when no tab exists and hit
     // enter it will create a new tab for you
@@ -96,6 +114,7 @@ void Browser::on_new_tab()
 
     m_Notebook->set_current_page(page_num);
     m_Notebook->set_tab_reorderable(*page, true);
+    m_Notebook->set_tab_detachable(*page, true);
     gtk_container_child_set(GTK_CONTAINER(m_Notebook->gobj()),
                             GTK_WIDGET(page->gobj()), "tab-expand", TRUE, NULL);
     m_TagEntry->grab_focus();
@@ -191,8 +210,6 @@ void Browser::on_copy_post_url()
 
 void Browser::on_realize()
 {
-    Gtk::VPaned::on_realize();
-
     m_PopupMenu = static_cast<Gtk::Menu*>(m_UIManager->get_widget("/BooruPopupMenu"));
 
     // Connect buttons to their actions
@@ -208,18 +225,19 @@ void Browser::on_realize()
     able = GTK_ACTIVATABLE(m_SaveImagesButton->gobj());
     gtk_activatable_set_related_action(able, m_SaveImagesAction->gobj());
 
+    Gtk::VPaned::on_realize();
+
     get_window()->freeze_updates();
+    m_PosChangedConn.block();
 
-    while (Gtk::Main::events_pending())
-        Gtk::Main::iteration();
+    while (Glib::MainContext::get_default()->pending())
+        Glib::MainContext::get_default()->iteration(true);
 
-    // + 10 is a cheap hack for clean startups
-    // without it the tag entry will not be visible
-    // until the user resizes this widget
-    m_MinWidth = get_allocation().get_width() + 10;
+    m_MinWidth = get_allocation().get_width();
     set_size_request(std::max(Settings.get_int("BooruWidth"), m_MinWidth), -1);
     set_position(Settings.get_int("TagViewPosition"));
 
+    m_PosChangedConn.unblock();
     get_window()->thaw_updates();
 }
 
@@ -235,7 +253,10 @@ void Browser::on_show()
 void Browser::close_page(Page *page)
 {
     if (page->ask_cancel_save())
+    {
+        m_ClosePage = true;
         m_Notebook->remove_page(*page);
+    }
 }
 
 void Browser::on_save_progress(const Page *p)
@@ -251,7 +272,8 @@ void Browser::on_save_progress(const Page *p)
     if (c == t)
     {
         m_SaveProgConn.disconnect();
-        Glib::signal_timeout().connect_seconds_once([&]() { check_saving_page(); }, 2);
+        Glib::signal_timeout().connect_seconds_once(
+            sigc::hide_return(sigc::mem_fun(*this, &Browser::check_saving_page)), 2);
     }
 }
 
@@ -273,6 +295,20 @@ void Browser::on_image_progress(const Image *bimage, double c, double t)
             << Glib::format_size(speed) << "/s";
         m_StatusBar->set_message(ss.str(), StatusBar::Priority::DOWNLOAD, c == t ? 2 : 0);
     }
+}
+
+GtkNotebook* Browser::on_create_window(GtkNotebook*, GtkWidget*,
+                                       gint x, gint y, gpointer*)
+{
+    auto window = Application::get_instance().create_window();
+
+    if (window)
+    {
+        window->move(x, y);
+        return window->m_BooruBrowser->m_Notebook->gobj();
+    }
+
+    return nullptr;
 }
 
 // Finds the first page that is currently saving and connects
@@ -344,8 +380,16 @@ void Browser::on_entry_value_changed()
         get_active_page()->m_Tags = m_TagEntry->get_text();
 }
 
-void Browser::on_page_removed(Gtk::Widget*, guint)
+void Browser::on_page_removed(Gtk::Widget *w, guint)
 {
+    Page *page = static_cast<Page*>(w);
+    auto it = m_PageCloseConns.find(page);
+    if (it != m_PageCloseConns.end())
+    {
+        it->second.disconnect();
+        m_PageCloseConns.erase(it);
+    }
+
     if (m_Notebook->get_n_pages() == 0)
     {
         m_TagEntry->set_text("");
@@ -354,10 +398,45 @@ void Browser::on_page_removed(Gtk::Widget*, guint)
 
         m_SaveProgConn.disconnect();
         m_ImageProgConn.disconnect();
+        m_ImageListConn.disconnect();
+        m_DownloadErrorConn.disconnect();
+
         m_StatusBar->clear_progress(StatusBar::Priority::SAVE);
         m_StatusBar->clear_message(StatusBar::Priority::SAVE);
 
         m_SignalPageChanged(nullptr);
+
+        // This page was removed by being dnd'd to another window
+        // signal_idle is used in case the tab is dnd'd into the same window
+        if (!m_ClosePage)
+            Glib::signal_idle().connect_once([this]()
+            {
+                if (m_Notebook->get_n_pages() != 0)
+                    return;
+
+                MainWindow *w = static_cast<MainWindow*>(get_toplevel());
+                if (w->m_LocalImageList->empty() && !w->m_OriginalWindow)
+                    w->on_quit();
+            });
+    }
+
+    m_ClosePage = false;
+}
+
+void Browser::on_page_added(Gtk::Widget *w, guint)
+{
+    Page *page = static_cast<Page*>(w);
+    page->m_PopupMenu = m_PopupMenu;
+    m_PageCloseConns[page] = page->signal_closed().connect(sigc::mem_fun(*this, &Browser::close_page));
+
+    // This is needed to update a dnd'd page's vertical scrollbar position.
+    // Without it the scrollbar will be in the right position but the page
+    // will display as if the value was set to 0. (aka the top of the page)
+    if (!page->get_imagelist()->empty())
+    {
+        auto v = page->get_vadjustment()->get_value();
+        page->get_vadjustment()->set_value(0);
+        page->get_vadjustment()->set_value(v);
     }
 }
 
@@ -381,8 +460,11 @@ void Browser::on_switch_page(void*, guint)
 
     page->get_imagelist()->signal_cleared().connect([&]()
     {
-        m_StatusBar->clear_progress(StatusBar::Priority::SAVE);
-        m_StatusBar->clear_message(StatusBar::Priority::SAVE);
+        if (!check_saving_page())
+        {
+            m_StatusBar->clear_progress(StatusBar::Priority::SAVE);
+            m_StatusBar->clear_message(StatusBar::Priority::SAVE);
+        }
     });
 
     if (!check_saving_page())

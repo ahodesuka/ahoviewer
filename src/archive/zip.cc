@@ -23,34 +23,20 @@ bool Zip::extract(const std::string &file) const
 
     if (zip)
     {
-        for (size_t i = 0, n = zip_get_num_entries(zip, 0); i < n; ++i)
+        struct zip_stat st;
+        zip_stat_init(&st);
+
+        if (zip_stat(zip, file.c_str(), 0, &st) == 0)
         {
-            struct zip_stat st;
-            zip_stat_init(&st);
+            std::string fPath = Glib::build_filename(m_ExtractedPath, st.name);
 
-            if (zip_stat_index(zip, i, 0, &st) == -1)
+            if (!Glib::file_test(Glib::path_get_dirname(fPath), Glib::FILE_TEST_EXISTS))
+                g_mkdir_with_parents(Glib::path_get_dirname(fPath).c_str(), 0755);
+
+
+            zip_file *zfile = zip_fopen(zip, file.c_str(), 0);
+            if (zfile)
             {
-                std::cerr << "zip_stat_index: Failed to stat file #" << i
-                          << " in '" + m_Path + "'" << std::endl;
-                break;
-            }
-
-            if (st.name == file)
-            {
-                std::string fPath = Glib::build_filename(m_ExtractedPath, st.name);
-
-                if (!Glib::file_test(Glib::path_get_dirname(fPath), Glib::FILE_TEST_EXISTS))
-                    g_mkdir_with_parents(Glib::path_get_dirname(fPath).c_str(), 0755);
-
-
-                zip_file *zfile = zip_fopen_index(zip, i, 0);
-                if (!zfile)
-                {
-                    std::cerr << "zip_fopen_index: Failed to open file #" << i
-                              << " (" << st.name << ") in '" + m_Path + "'" << std::endl;
-                    break;
-                }
-
                 std::vector<char> buf(st.size);
                 int bufSize;
                 if ((bufSize = zip_fread(zfile, &buf[0], st.size)) != -1)
@@ -67,8 +53,17 @@ bool Zip::extract(const std::string &file) const
 
                 zip_fclose(zfile);
                 found = true;
-                break;
             }
+            else
+            {
+                std::cerr << "zip_fopen_index: Failed to open file "
+                          << st.name << " in '" + m_Path + "'" << std::endl;
+            }
+        }
+        else
+        {
+            std::cerr << "zip_stat_index: Failed to stat file " << file
+                      << " in '" + m_Path + "'" << std::endl;
         }
 
         zip_close(zip);

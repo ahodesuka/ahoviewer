@@ -23,7 +23,7 @@ namespace AhoViewer
         {
             std::string path(Glib::build_filename(m_Path, dirPath));
 
-            // Lopp until we have a unique directory name
+            // Loop until we have a unique directory name
             for (size_t i = 1; Glib::file_test(path, Glib::FILE_TEST_EXISTS); ++i)
                 path = Glib::build_filename(m_Path, dirPath + "-" + std::to_string(i));
 
@@ -50,6 +50,10 @@ namespace AhoViewer
                 }
                 g_rmdir(dirPath.c_str());
             }
+        }
+        std::string get_dir() const
+        {
+            return m_Path;
         }
     private:
         TempDir()

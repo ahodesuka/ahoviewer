@@ -26,7 +26,7 @@ namespace AhoViewer
         };
 
         ImageBox(BaseObjectType*, const Glib::RefPtr<Gtk::Builder>&);
-        virtual ~ImageBox() override = default;
+        virtual ~ImageBox() override;
 
         void queue_draw_image(const bool scroll = false);
         void set_image(const std::shared_ptr<Image> &image);
@@ -74,7 +74,9 @@ namespace AhoViewer
         void smooth_scroll(const int, const Glib::RefPtr<Gtk::Adjustment>&);
         bool update_smooth_scroll();
         void zoom(const uint32_t percent);
+
         bool advance_slideshow();
+        bool on_cursor_timeout();
 
         static constexpr double SmoothScrollStep = 1000.0 / 60.0;
 

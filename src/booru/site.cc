@@ -158,8 +158,7 @@ Site::Site(const std::string &name, const std::string &url, const Type type,
 
     // Types of data to share between curlers for this site
     for (auto d : {
-// CURL_LOCK_DATA_CONNECT is currently buggy in >=7.57.0
-// assuming it gets fixed in 7.57.1
+// CURL_LOCK_DATA_CONNECT is broken in 7.57.0
 #if LIBCURL_VERSION_NUM != 0x073900
                     CURL_LOCK_DATA_CONNECT,
 #endif

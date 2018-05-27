@@ -403,7 +403,7 @@
   <object class="GtkAboutDialog" id="AboutDialog">
     <property name="can_focus">False</property>
     <property name="border_width">5</property>
-    <property name="destroy_with_parent">True</property>
+    <property name="destroy_with_parent">False</property>
     <property name="type_hint">dialog</property>
     <property name="transient_for">MainWindow</property>
     <property name="comments" translatable="yes">ahoviewer is a GTK2 image viewer, manga reader, and booru browser.</property>
@@ -432,7 +432,7 @@
     <property name="border_width">4</property>
     <property name="title" translatable="yes">Preferences</property>
     <property name="window_position">center-on-parent</property>
-    <property name="destroy_with_parent">True</property>
+    <property name="destroy_with_parent">False</property>
     <property name="type_hint">dialog</property>
     <property name="transient_for">MainWindow</property>
     <child internal-child="vbox">

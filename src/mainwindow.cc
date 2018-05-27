@@ -11,6 +11,9 @@ using namespace AhoViewer;
 
 extern const char *const ahoviewer_version;
 
+PreferencesDialog *MainWindow::m_PreferencesDialog = nullptr;
+Gtk::AboutDialog *MainWindow::m_AboutDialog = nullptr;
+
 MainWindow::MainWindow(BaseObjectType *cobj, const Glib::RefPtr<Gtk::Builder> &bldr)
   : Gtk::Window(cobj),
     m_Builder(bldr),
@@ -19,7 +22,8 @@ MainWindow::MainWindow(BaseObjectType *cobj, const Glib::RefPtr<Gtk::Builder> &b
     m_Height(0),
     m_HPanedMinPos(0),
     m_HPanedLastPos(0),
-    m_HideAllFullscreen(false)
+    m_HideAllFullscreen(false),
+    m_OriginalWindow(false)
 {
 #ifndef _WIN32
     try
@@ -35,13 +39,14 @@ MainWindow::MainWindow(BaseObjectType *cobj, const Glib::RefPtr<Gtk::Builder> &b
     m_Builder->get_widget_derived("Booru::Browser",     m_BooruBrowser);
     m_Builder->get_widget_derived("ImageBox",           m_ImageBox);
     m_Builder->get_widget_derived("StatusBar",          m_StatusBar);
-    m_Builder->get_widget_derived("PreferencesDialog",  m_PreferencesDialog);
 
-    m_Builder->get_widget("AboutDialog", m_AboutDialog);
+    if (!m_PreferencesDialog)
+        m_Builder->get_widget_derived("PreferencesDialog",  m_PreferencesDialog);
+
     m_Builder->get_widget("MainWindow::HPaned", m_HPaned);
     m_HPaned->property_position().signal_changed().connect([&]()
     {
-        if (!m_BooruBrowser->get_realized())
+        if (!m_BooruBrowser->get_realized() || m_BooruBrowser->get_min_width() == 0)
             return;
 
         if (m_HPaned->get_position() < m_BooruBrowser->get_min_width())
@@ -52,6 +57,7 @@ MainWindow::MainWindow(BaseObjectType *cobj, const Glib::RefPtr<Gtk::Builder> &b
             m_HPanedLastPos = m_HPaned->get_position();
             m_ImageBox->queue_draw_image();
         }
+        Settings.set("BooruWidth", m_HPaned->get_position());
     });
 
     m_UIManager = Glib::RefPtr<Gtk::UIManager>::cast_static(m_Builder->get_object("UIManager"));
@@ -96,51 +102,55 @@ MainWindow::MainWindow(BaseObjectType *cobj, const Glib::RefPtr<Gtk::Builder> &b
             sigc::mem_fun(*this, &MainWindow::on_accel_edited));
 
     // About Dialog {{{
-    m_AboutDialog->signal_response().connect([&](const int) { m_AboutDialog->hide(); });
-
-    try
+    if (!m_AboutDialog)
     {
-#ifdef _WIN32
-        std::string path;
-        gchar *g = g_win32_get_package_installation_directory_of_module(NULL);
-        if (g)
+        m_Builder->get_widget("AboutDialog", m_AboutDialog);
+        m_AboutDialog->signal_response().connect([&](const int) { m_AboutDialog->hide(); });
+
+        try
         {
-            path = Glib::build_filename(g, "share", "pixmaps", "ahoviewer", "ahoviewer-about-logo.png");
-            g_free(g);
-        }
-        Glib::RefPtr<Gdk::Pixbuf> logo = Gdk::Pixbuf::create_from_file(path);
+#ifdef _WIN32
+            std::string path;
+            gchar *g = g_win32_get_package_installation_directory_of_module(NULL);
+            if (g)
+            {
+                path = Glib::build_filename(g, "share", "pixmaps", "ahoviewer", "ahoviewer-about-logo.png");
+                g_free(g);
+            }
+            Glib::RefPtr<Gdk::Pixbuf> logo = Gdk::Pixbuf::create_from_file(path);
 #else
-        Glib::RefPtr<Gdk::Pixbuf> logo =
-            Gdk::Pixbuf::create_from_file(DATADIR "/pixmaps/ahoviewer/ahoviewer-about-logo.png");
+            Glib::RefPtr<Gdk::Pixbuf> logo =
+                Gdk::Pixbuf::create_from_file(DATADIR "/pixmaps/ahoviewer/ahoviewer-about-logo.png");
 #endif // _WIN32
-        m_AboutDialog->set_logo(logo);
+            m_AboutDialog->set_logo(logo);
+        }
+        catch (...) { }
+
+        m_AboutDialog->set_name(PACKAGE);
+        m_AboutDialog->set_version(ahoviewer_version);
+        m_AboutDialog->set_copyright(u8"Copyright \u00A9 2013-2018 ahoka");
+        m_AboutDialog->set_website(PACKAGE_URL);
+
+        m_AboutDialog->set_license(
+            "Copyright (c) 2013-2018 ahoka\n"
+            "\n"
+            "Permission is hereby granted, free of charge, to any person obtaining a copy of\n"
+            "this software and associated documentation files (the \"Software\"), to deal in\n"
+            "the Software without restriction, including without limitation the rights to\n"
+            "use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of\n"
+            "the Software, and to permit persons to whom the Software is furnished to do so,\n"
+            "subject to the following conditions:\n"
+            "\n"
+            "The above copyright notice and this permission notice shall be included in all\n"
+            "copies or substantial portions of the Software.\n"
+            "\n"
+            "THE SOFTWARE IS PROVIDED \"AS IS\", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR\n"
+            "IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS\n"
+            "FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR\n"
+            "COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER\n"
+            "IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN\n"
+            "CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.");
     }
-    catch (...) { }
-
-    m_AboutDialog->set_name(PACKAGE);
-    m_AboutDialog->set_version(ahoviewer_version);
-    m_AboutDialog->set_copyright(u8"Copyright \u00A9 2013-2018 ahoka");
-    m_AboutDialog->set_website(PACKAGE_URL);
-
-    m_AboutDialog->set_license(
-        "Copyright (c) 2013-2018 ahoka\n"
-        "\n"
-        "Permission is hereby granted, free of charge, to any person obtaining a copy of\n"
-        "this software and associated documentation files (the \"Software\"), to deal in\n"
-        "the Software without restriction, including without limitation the rights to\n"
-        "use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of\n"
-        "the Software, and to permit persons to whom the Software is furnished to do so,\n"
-        "subject to the following conditions:\n"
-        "\n"
-        "The above copyright notice and this permission notice shall be included in all\n"
-        "copies or substantial portions of the Software.\n"
-        "\n"
-        "THE SOFTWARE IS PROVIDED \"AS IS\", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR\n"
-        "IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS\n"
-        "FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR\n"
-        "COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER\n"
-        "IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN\n"
-        "CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.");
     // }}}
 
     // Setup drag and drop
@@ -172,6 +182,20 @@ MainWindow::MainWindow(BaseObjectType *cobj, const Glib::RefPtr<Gtk::Builder> &b
 
     if (Settings.get_bool("StartFullscreen"))
         m_ActionGroup->get_action("ToggleFullscreen")->activate();
+}
+
+MainWindow::~MainWindow()
+{
+    m_ActiveImageList.reset();
+    m_LocalImageList.reset();
+
+    delete m_ThumbnailBar;
+    delete m_BooruBrowser;
+    delete m_ImageBox;
+    delete m_HPaned;
+
+    delete m_MenuBar;
+    delete m_StatusBar;
 }
 
 void MainWindow::open_file(const std::string &path, const int index, const bool restore)
@@ -285,14 +309,17 @@ void MainWindow::on_check_resize()
     m_Width = w;
     m_Height = h;
 
+    save_window_geometry();
+
     Gtk::Window::on_check_resize();
 }
 
 bool MainWindow::on_delete_event(GdkEventAny *e)
 {
+    bool r = Gtk::Window::on_delete_event(e);
     on_quit();
 
-    return Gtk::Window::on_delete_event(e);
+    return r;
 }
 
 void MainWindow::on_drag_data_received(const Glib::RefPtr<Gdk::DragContext> &ctx, int, int,
@@ -416,7 +443,7 @@ void MainWindow::create_actions()
     m_ActionGroup->add(Gtk::Action::create("Preferences", Gtk::Stock::PREFERENCES,
                 _("_Preferences"), _("Open the preferences dialog")),
             Gtk::AccelKey(Settings.get_keybinding("File", "Preferences")),
-            sigc::mem_fun(m_PreferencesDialog, &PreferencesDialog::show_all));
+            sigc::mem_fun(*this, &MainWindow::on_show_preferences));
     m_ActionGroup->add(Gtk::Action::create("Close", Gtk::Stock::CLOSE,
                 _("_Close"), _("Close local image list or booru tab")),
             Gtk::AccelKey(Settings.get_keybinding("File", "Close")),
@@ -459,7 +486,7 @@ void MainWindow::create_actions()
             [](){ Gio::AppInfo::launch_default_for_uri(PACKAGE_BUGREPORT); });
     m_ActionGroup->add(Gtk::Action::create("About", Gtk::Stock::ABOUT,
                 _("_About"), _("View information about " PACKAGE)),
-            sigc::mem_fun(m_AboutDialog, &Gtk::AboutDialog::show));
+            sigc::mem_fun(*this, &MainWindow::on_show_about));
 
     m_ActionGroup->add(Gtk::Action::create("ScrollUp"),
             Gtk::AccelKey(Settings.get_keybinding("Scroll", "ScrollUp")),
@@ -865,6 +892,32 @@ void MainWindow::on_open_file_dialog()
 
     if (dialog.run() == Gtk::RESPONSE_OK)
         open_file(dialog.get_filename());
+}
+
+void MainWindow::on_show_preferences()
+{
+    auto w = m_PreferencesDialog->get_transient_for();
+
+    if (m_PreferencesDialog->is_visible() && w == this)
+        return;
+    else if (m_PreferencesDialog->is_visible())
+        m_PreferencesDialog->hide();
+
+    m_PreferencesDialog->set_transient_for(*this);
+    m_PreferencesDialog->show_all();
+}
+
+void MainWindow::on_show_about()
+{
+    auto w = m_AboutDialog->get_transient_for();
+
+    if (m_AboutDialog->is_visible() && w == this)
+        return;
+    else if (m_AboutDialog->is_visible())
+        m_AboutDialog->hide();
+
+    m_AboutDialog->set_transient_for(*this);
+    m_AboutDialog->show_all();
 }
 
 void MainWindow::on_open_recent_file()

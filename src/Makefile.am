@@ -22,6 +22,7 @@ ahoviewer_SOURCES =       \
 	booru/site.cc         \
 	booru/tagentry.cc     \
 	booru/tagview.cc      \
+	application.cc        \
 	image.cc              \
 	imagebox.cc           \
 	imagelist.cc          \

@@ -11,9 +11,9 @@ using namespace AhoViewer::Booru;
 
 #define RETRY_COUNT 5
 
-Page::Page(Gtk::Menu *menu)
+Page::Page()
   : Gtk::ScrolledWindow(),
-    m_PopupMenu(menu),
+    m_PopupMenu(nullptr),
     m_IconView(Gtk::manage(new Gtk::IconView())),
     m_Tab(Gtk::manage(new Gtk::EventBox())),
     m_TabIcon(Gtk::manage(new Gtk::Image(Gtk::Stock::NEW, Gtk::ICON_SIZE_MENU))),
@@ -39,7 +39,7 @@ Page::Page(Gtk::Menu *menu)
     m_TabButton->property_relief() = Gtk::RELIEF_NONE;
     m_TabButton->set_focus_on_click(false);
     m_TabButton->set_tooltip_text(_("Close Tab"));
-    m_TabButton->signal_clicked().connect([=]() { m_SignalClosed(this); });
+    m_TabButton->signal_clicked().connect([this]() { m_SignalClosed(this); });
 
     m_TabLabel->set_alignment(0.0, 0.5);
     m_TabLabel->set_ellipsize(Pango::ELLIPSIZE_END);
@@ -94,17 +94,22 @@ Page::~Page()
         m_GetPostsThread.join();
 
     cancel_save();
+
+    m_ListStore->clear();
+    m_ImageList.reset();
 }
 
 void Page::set_pixbuf(const size_t index, const Glib::RefPtr<Gdk::Pixbuf> &pixbuf)
 {
     m_ScrollConn.block();
     ImageList::Widget::set_pixbuf(index, pixbuf);
-    while (Gtk::Main::events_pending())
-        Gtk::Main::iteration();
+    while (Glib::MainContext::get_default()->pending())
+        Glib::MainContext::get_default()->iteration(true);
     m_ScrollConn.unblock();
 
-    if (m_KeepAligned)
+    // Only keep the thumbnail aligned if the user has not scrolled
+    // and the thumbnail is most likely still being loaded
+    if (m_KeepAligned && m_ImageList->get_index() >= index)
         scroll_to_selected();
 }
 
@@ -197,9 +202,7 @@ void Page::save_images(const std::string &path)
 
     m_Saving            = true;
     m_SaveImagesCurrent = 0;
-    // Blacklisted posts on danbooru will have empty urls
-    m_SaveImagesTotal   = std::count_if(m_ImageList->begin(), m_ImageList->end(),
-        [](auto &i) { return !std::static_pointer_cast<Image>(i)->get_url().empty(); });
+    m_SaveImagesTotal   = m_ImageList->get_vector_size();
     m_SaveImagesThread  = std::thread([ &, path ]()
     {
         ThreadPool pool(std::thread::hardware_concurrency());
@@ -219,6 +222,7 @@ void Page::save_images(const std::string &path)
             });
         }
 
+        m_SignalSaveProgressDisp();
         pool.wait();
         m_Saving = false;
     });
@@ -337,6 +341,7 @@ void Page::get_posts()
             std::cerr << "Error while downloading posts on " << m_Curler.get_url() << std::endl
                       << "  " << m_Curler.get_error() << std::endl;
 
+        m_Curler.clear();
         if (!m_Curler.is_cancelled())
             m_SignalPostsDownloaded();
     });
@@ -457,7 +462,8 @@ bool Page::on_button_press_event(GdkEventButton *e)
             m_IconView->select_path(path);
             m_IconView->scroll_to_path(path, false, 0, 0);
 
-            m_PopupMenu->popup(e->button, e->time);
+            if (m_PopupMenu)
+                m_PopupMenu->popup(e->button, e->time);
 
             return true;
         }

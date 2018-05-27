@@ -6,7 +6,7 @@ A GTK2 image viewer, manga reader, and booru browser.
 ### Dependencies
 * C++ Compiler that supports the C++14 standard is required.
 * gtkmm-2.4 `>= 2.20.0`
-* glibmm-2.4 `>= 2.36.0`
+* glibmm-2.4 `>= 2.46.0`
 * libconfig++ `>= 1.4`
 * libcurl `>= 7.32.0`
 * libxml2

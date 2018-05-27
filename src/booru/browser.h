@@ -20,7 +20,7 @@ namespace AhoViewer
             using SignalPageChangedType = sigc::signal<void, Page*>;
         public:
             Browser(BaseObjectType *cobj, const Glib::RefPtr<Gtk::Builder> &bldr);
-            virtual ~Browser() override = default;
+            virtual ~Browser() override;
 
             std::vector<Page*> get_pages() const;
             Page* get_active_page() const
@@ -62,9 +62,13 @@ namespace AhoViewer
             bool on_entry_key_press_event(GdkEventKey *e);
             void on_entry_value_changed();
             void on_page_removed(Gtk::Widget*, guint);
+            void on_page_added(Gtk::Widget *w, guint);
             void on_switch_page(void*, guint);
             void on_imagelist_changed(const std::shared_ptr<AhoViewer::Image> &image);
             void on_new_tab_tag(const std::string &tag);
+
+            static GtkNotebook* on_create_window(GtkNotebook*, GtkWidget*,
+                                                 gint x, gint y, gpointer*);
 
             bool check_saving_page();
             void connect_image_signals(const std::shared_ptr<Image> bimage);
@@ -87,18 +91,21 @@ namespace AhoViewer
             TagView *m_TagView;
 
             int m_MinWidth;
+            bool m_ClosePage;
             std::string m_LastSavePath;
 
             Glib::RefPtr<Gtk::UIManager> m_UIManager;
             Glib::RefPtr<Gtk::Action> m_SaveImageAction,
                                       m_SaveImagesAction;
 
+            std::map<Page*, sigc::connection> m_PageCloseConns;
             std::vector<sigc::connection> m_SiteIconConns;
             sigc::connection m_ComboChangedConn,
                              m_DownloadErrorConn,
                              m_ImageListConn,
                              m_ImageProgConn,
                              m_ImageErrorConn,
+                             m_PosChangedConn,
                              m_SaveProgConn;
 
             SignalPageChangedType m_SignalPageChanged;

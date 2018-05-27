@@ -76,7 +76,7 @@ namespace AhoViewer
         inline size_t n_idle() const { return ma_n_idle; }
 
         // whether there are any threads
-        inline bool active() const { return ma_n_idle != m_threads.size(); }
+        inline bool active() const { return ma_n_idle != m_threads.size() || !m_queue.empty(); }
 
         // get a specific thread
         inline std::thread & get_thread(size_t i) { return *m_threads.at(i); }

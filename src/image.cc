@@ -48,7 +48,8 @@ bool Image::is_webm(const std::string &path)
 const Glib::RefPtr<Gdk::Pixbuf>& Image::get_missing_pixbuf()
 {
     static const Glib::RefPtr<Gdk::Pixbuf> pixbuf =
-        Gtk::Invisible().render_icon(Gtk::Stock::MISSING_IMAGE, Gtk::ICON_SIZE_DIALOG);
+        Gtk::IconTheme::get_default()->load_icon("image-missing", 48,
+            Gtk::ICON_LOOKUP_USE_BUILTIN | Gtk::ICON_LOOKUP_GENERIC_FALLBACK);
 
     return pixbuf;
 }

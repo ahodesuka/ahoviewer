@@ -23,7 +23,7 @@ namespace AhoViewer
             using SignalDownloadErrorType = sigc::signal<void, const std::string>;
             using SignalSaveProgressType = sigc::signal<void, const Page*>;
         public:
-            Page(Gtk::Menu *menu);
+            Page();
             virtual ~Page() override;
 
             std::shared_ptr<Site> get_site() const { return m_Site; }

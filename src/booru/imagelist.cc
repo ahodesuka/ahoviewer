@@ -16,7 +16,8 @@ ImageList::ImageList(Widget *w)
 
 ImageList::~ImageList()
 {
-    clear();
+    if (!m_Path.empty())
+        TempDir::get_instance().remove_dir(m_Path);
 }
 
 // This is also used when reusing the same page with a new query
@@ -26,7 +27,8 @@ void ImageList::clear()
         m_ImageFetcher->shutdown();
 
     AhoViewer::ImageList::clear();
-    if (!m_Path.empty()) {
+    if (!m_Path.empty())
+    {
         TempDir::get_instance().remove_dir(m_Path);
         m_Path.clear();
     }

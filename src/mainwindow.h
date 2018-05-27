@@ -12,11 +12,14 @@
 
 namespace AhoViewer
 {
+    class Application;
     class MainWindow : public Gtk::Window
     {
+        friend Application;
+        friend Booru::Browser;
     public:
         MainWindow(BaseObjectType *cobj, const Glib::RefPtr<Gtk::Builder> &bldr);
-        virtual ~MainWindow() override = default;
+        virtual ~MainWindow() override;
 
         void open_file(const std::string &path, const int index = 0, const bool restore = false);
         void restore_last_file();
@@ -48,6 +51,8 @@ namespace AhoViewer
 
         // Action callbacks {{{
         void on_open_file_dialog();
+        void on_show_preferences();
+        void on_show_about();
         void on_open_recent_file();
         void on_close();
         void on_quit();
@@ -66,14 +71,15 @@ namespace AhoViewer
         void on_save_image();
         // }}}
 
+        static PreferencesDialog *m_PreferencesDialog;
+        static Gtk::AboutDialog *m_AboutDialog;
+
         Glib::RefPtr<Gtk::Builder> m_Builder;
         Glib::RefPtr<Gtk::ActionGroup> m_ActionGroup;
         Glib::RefPtr<Gtk::UIManager> m_UIManager;
         Gtk::MenuBar *m_MenuBar;
         Glib::RefPtr<Gtk::RecentAction> m_RecentAction;
 
-        Gtk::AboutDialog *m_AboutDialog;
-        PreferencesDialog *m_PreferencesDialog;
         ThumbnailBar *m_ThumbnailBar;
         ImageBox *m_ImageBox;
         StatusBar *m_StatusBar;
@@ -84,7 +90,9 @@ namespace AhoViewer
 
         int m_Width, m_Height, m_HPanedMinPos, m_HPanedLastPos;
         // This keeps track of whether hide all was set automatically
-        bool m_HideAllFullscreen;
+        bool m_HideAllFullscreen,
+        // Tracks whether this was the only window at one point
+             m_OriginalWindow;
 
         std::shared_ptr<ImageList> m_ActiveImageList,
                                    m_LocalImageList;

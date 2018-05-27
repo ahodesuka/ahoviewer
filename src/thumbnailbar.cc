@@ -33,8 +33,8 @@ void ThumbnailBar::set_pixbuf(const size_t index, const Glib::RefPtr<Gdk::Pixbuf
 {
     m_ScrollConn.block();
     ImageList::Widget::set_pixbuf(index, pixbuf);
-    while (Gtk::Main::events_pending())
-        Gtk::Main::iteration();
+    while (Glib::MainContext::get_default()->pending())
+        Glib::MainContext::get_default()->iteration(true);
     m_ScrollConn.unblock();
 
     // Keep the selected image centered while thumbnails are being added
@@ -66,8 +66,8 @@ void ThumbnailBar::scroll_to_selected()
         Gdk::Rectangle rect;
 
         // Make sure everything is updated before getting scroll position
-        while (Gtk::Main::events_pending())
-            Gtk::Main::iteration();
+        while (Glib::MainContext::get_default()->pending())
+            Glib::MainContext::get_default()->iteration(true);
 
         // Center the selected thumbnail
         m_TreeView->get_background_area(path, *column, rect);

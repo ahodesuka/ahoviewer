@@ -443,6 +443,5 @@ void SettingsManager::save_sites()
         set("password", s->get_password(), Setting::TypeString, site);
 #endif // !HAVE_LIBSECRET
         set("max_connections", static_cast<int>(s->get_max_connections()), Setting::TypeInt, site);
-        s->cleanup_cookie();
     }
 }

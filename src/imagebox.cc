@@ -119,6 +119,11 @@ ImageBox::ImageBox(BaseObjectType *cobj, const Glib::RefPtr<Gtk::Builder> &bldr)
     });
 }
 
+ImageBox::~ImageBox()
+{
+    clear_image();
+}
+
 void ImageBox::queue_draw_image(const bool scroll)
 {
     if (!get_realized() || !m_Image || (m_RedrawQueued && !(scroll || m_Loading)))
@@ -170,6 +175,7 @@ void ImageBox::clear_image()
     m_StatusBar->clear_resolution();
     m_Image = nullptr;
     m_PixbufAnim.reset();
+    m_PixbufAnimIter.reset();
 }
 
 void ImageBox::update_background_color()
@@ -187,8 +193,9 @@ void ImageBox::cursor_timeout()
     if (Settings.get_int("CursorHideDelay") <= 0)
         return;
 
-    m_CursorConn = Glib::signal_timeout().connect_seconds(sigc::bind_return([&]()
-                { m_Layout->get_window()->set_cursor(m_BlankCursor); }, false), Settings.get_int("CursorHideDelay"));
+    m_CursorConn = Glib::signal_timeout().connect_seconds(
+                sigc::mem_fun(*this, &ImageBox::on_cursor_timeout),
+            Settings.get_int("CursorHideDelay"));
 }
 
 void ImageBox::reset_slideshow()
@@ -205,7 +212,8 @@ void ImageBox::toggle_slideshow()
     if (!m_SlideshowConn)
     {
         m_SlideshowConn = Glib::signal_timeout().connect_seconds(
-                sigc::mem_fun(*this, &ImageBox::advance_slideshow), Settings.get_int("SlideshowDelay"));
+                sigc::mem_fun(*this, &ImageBox::advance_slideshow),
+            Settings.get_int("SlideshowDelay"));
     }
     else
     {
@@ -465,24 +473,17 @@ void ImageBox::draw_image(bool scroll)
             {
                 m_PixbufAnim = pixbuf_anim;
 
-                // https://bugzilla.gnome.org/show_bug.cgi?id=688686
-                if (m_PixbufAnimIter)
-                {
-                    g_object_unref(m_PixbufAnimIter->gobj());
-                    m_PixbufAnimIter.reset();
-                }
-
-                m_PixbufAnimIter = m_PixbufAnim->get_iter(NULL);
-
                 m_AnimConn.disconnect();
-
+                m_PixbufAnimIter = m_PixbufAnim->get_iter(NULL);
+                // https://bugzilla.gnome.org/show_bug.cgi?id=688686
+                g_object_unref(m_PixbufAnimIter->gobj());
                 if (m_PixbufAnimIter->get_delay_time() >= 0)
                     m_AnimConn = Glib::signal_timeout().connect(
                             sigc::mem_fun(*this, &ImageBox::update_animation),
                             m_PixbufAnimIter->get_delay_time());
             }
 
-            origPixbuf = m_PixbufAnimIter->get_pixbuf()->copy();
+            origPixbuf = m_PixbufAnimIter->get_pixbuf();
             tempPixbuf = origPixbuf;
 
             m_OrigWidth  = origPixbuf->get_width();
@@ -763,4 +764,11 @@ bool ImageBox::advance_slideshow()
     scroll(0, 300, false, true);
 
     return true;
+}
+
+bool ImageBox::on_cursor_timeout()
+{
+    m_Layout->get_window()->set_cursor(m_BlankCursor);
+
+    return false;
 }
