@@ -1,14 +1,14 @@
 !define AppName "@PACKAGE@"
-!define DisplayName "${AppName}"
+!define DisplayName "${AppName} ${ReleaseVersion} (${Bits})"
 !define Author "ahoka"
 !define Homepage "@PACKAGE_URL@"
 !define ReleaseVersion "@VERSION@"
 !define ReleaseNotes "${Homepage}/releases/${ReleaseVersion}"
 
-!define AppDir "${DisplayName}"
+!define AppDir "${AppName}"
 !define AppFile "${AppName}.exe"
-!define InstallerFile "${appname}-v${ReleaseVersion}-${Arch}-installer.exe"
-!define UninstallerFile "Uninstall ${DisplayName}.exe"
+!define InstallerFile "${AppName}-v${ReleaseVersion}-${Arch}-installer.exe"
+!define UninstallerFile "Uninstall ${AppName}.exe"
 
 !define RegKeyInstall "SOFTWARE\${AppName}"
 !define RegKeyUninstall "SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\${AppName}"
@@ -25,9 +25,9 @@ RequestExecutionLevel admin
 !include "FileAssociation.nsh"
 
 # Installer/Uninstaller params
-Name "${DisplayName}"
-Caption "${DisplayName} - v${ReleaseVersion}"
-BrandingText "${DisplayName} - v${ReleaseVersion}"
+Name "${AppName}"
+Caption "${DisplayName}"
+BrandingText "${DisplayName}"
 ShowInstDetails show
 ShowUninstDetails show
 InstallDir ""
@@ -50,12 +50,12 @@ VIAddVersionKey "LegalCopyright" "${Author}"
 
 # GUI
 !define MUI_ICON "..\src\ahoviewer.ico"
-!define MUI_WELCOMEPAGE_TITLE "${DisplayName} - v${ReleaseVersion}"
+!define MUI_WELCOMEPAGE_TITLE "${DisplayName}"
 !define MUI_WELCOMEPAGE_TITLE_3LINES
 !define MUI_ABORTWARNING
 !define MUI_ABORTWARNING_CANCEL_DEFAULT
 !define MUI_FINISHPAGE_NOAUTOCLOSE
-!define MUI_FINISHPAGE_RUN_TEXT "Launch ${DisplayName}"
+!define MUI_FINISHPAGE_RUN_TEXT "Launch ${AppName}"
 !define MUI_FINISHPAGE_RUN "$INSTDIR\${AppFile}"
 !define MUI_FINISHPAGE_NOREBOOTSUPPORT
 !define MUI_FINISHPAGE_SHOWREADME "${ReleaseNotes}"
@@ -103,67 +103,77 @@ SectionEnd
 Section "Create Desktop shortcut" SEC_SHORTCUT_DESKTOP
     ${If} ${SectionIsSelected} ${SEC_SHORTCUT_DESKTOP}
         SetOutPath $INSTDIR
-        CreateShortCut "$DESKTOP\${DisplayName}.lnk" "$INSTDIR\${AppFile}"
+        CreateShortCut "$DESKTOP\${AppName}.lnk" "$INSTDIR\${AppFile}"
     ${EndIf}
 SectionEnd
 
 Section "Create Start Menu shortcut" SEC_SHORTCUT_START
     ${If} ${SectionIsSelected} ${SEC_SHORTCUT_START}
         SetOutPath $INSTDIR
-        CreateShortCut "$SMPROGRAMS\${DisplayName}.lnk" "$INSTDIR\${AppFile}"
+        CreateShortCut "$SMPROGRAMS\${AppName}.lnk" "$INSTDIR\${AppFile}"
     ${EndIf}
 SectionEnd
 
 SectionGroup "File Associations"
     Section ".gif" SEC_FILE_GIF
         ${If} ${SectionIsSelected} ${SEC_FILE_GIF}
-            !insertmacro APP_ASSOCIATE "gif" "${AppName}.AssocFile.GIF" "" "" \
+            !insertmacro APP_ASSOCIATE "gif" "${AppName}.AssocFile.GIF" \
+                "GIF Image File" "" \
                 "&Open with ${DisplayName}" '"$INSTDIR\${AppFile}" "%1"'
         ${EndIf}
     SectionEnd
     Section ".jpg" SEC_FILE_JPG
         ${If} ${SectionIsSelected} ${SEC_FILE_JPG}
-            !insertmacro APP_ASSOCIATE "jpe" "${AppName}.AssocFile.JPE" "" "" \
+            !insertmacro APP_ASSOCIATE "jpe" "${AppName}.AssocFile.JPE" \
+                "JPEG Image File" "" \
                 "&Open with ${DisplayName}" '"$INSTDIR\${AppFile}" "%1"'
-            !insertmacro APP_ASSOCIATE "jpg" "${AppName}.AssocFile.JPG" "" "" \
+            !insertmacro APP_ASSOCIATE "jpg" "${AppName}.AssocFile.JPG" \
+                "JPEG Image File" "" \
                 "&Open with ${DisplayName}" '"$INSTDIR\${AppFile}" "%1"'
-            !insertmacro APP_ASSOCIATE "jpeg" "${AppName}.AssocFile.JPEG" "" "" \
+            !insertmacro APP_ASSOCIATE "jpeg" "${AppName}.AssocFile.JPEG" \
+                "JPEG Image File" "" \
                 "&Open with ${DisplayName}" '"$INSTDIR\${AppFile}" "%1"'
         ${EndIf}
     SectionEnd
     Section ".png" SEC_FILE_PNG
         ${If} ${SectionIsSelected} ${SEC_FILE_PNG}
-            !insertmacro APP_ASSOCIATE "png" "${AppName}.AssocFile.PNG" "" "" \
+            !insertmacro APP_ASSOCIATE "png" "${AppName}.AssocFile.PNG" \
+                "PNG Image File" "" \
                 "&Open with ${DisplayName}" '"$INSTDIR\${AppFile}" "%1"'
         ${EndIf}
     SectionEnd
     Section ".webm" SEC_FILE_WEBM
         ${If} ${SectionIsSelected} ${SEC_FILE_WEBM}
-            !insertmacro APP_ASSOCIATE "webm" "${AppName}.AssocFile.WEBM" "" "" \
+            !insertmacro APP_ASSOCIATE "webm" "${AppName}.AssocFile.WEBM" \
+                "WebM Video File" "" \
                 "&Open with ${DisplayName}" '"$INSTDIR\${AppFile}" "%1"'
         ${EndIf}
     SectionEnd
     Section ".rar" SEC_FILE_RAR
         ${If} ${SectionIsSelected} ${SEC_FILE_RAR}
-            !insertmacro APP_ASSOCIATE "rar" "${AppName}.AssocFile.RAR" "" "" \
+            !insertmacro APP_ASSOCIATE "rar" "${AppName}.AssocFile.RAR" \
+                "RAR Archive" "" \
                 "&Open with ${DisplayName}" '"$INSTDIR\${AppFile}" "%1"'
         ${EndIf}
     SectionEnd
     Section ".cbr" SEC_FILE_CBR
         ${If} ${SectionIsSelected} ${SEC_FILE_CBR}
-            !insertmacro APP_ASSOCIATE "cbr" "${AppName}.AssocFile.CBR" "" "$INSTDIR\${AppFile},0" \
+            !insertmacro APP_ASSOCIATE "cbr" "${AppName}.AssocFile.CBR" \
+                "Comic Book RAR Archive" "$INSTDIR\${AppFile},0" \
                 "&Open with ${DisplayName}" '"$INSTDIR\${AppFile}" "%1"'
         ${EndIf}
     SectionEnd
     Section ".zip" SEC_FILE_ZIP
         ${If} ${SectionIsSelected} ${SEC_FILE_ZIP}
-            !insertmacro APP_ASSOCIATE "zip" "${AppName}.AssocFile.ZIP" "" "" \
+            !insertmacro APP_ASSOCIATE "zip" "${AppName}.AssocFile.ZIP" \
+                "Zip Archive" "" \
                 "&Open with ${DisplayName}" '"$INSTDIR\${AppFile}" "%1"'
         ${EndIf}
     SectionEnd
     Section ".cbz" SEC_FILE_CBZ
         ${If} ${SectionIsSelected} ${SEC_FILE_CBZ}
-            !insertmacro APP_ASSOCIATE "cbz" "${AppName}.AssocFile.CBZ" "" "$INSTDIR\${AppFile},0" \
+            !insertmacro APP_ASSOCIATE "cbz" "${AppName}.AssocFile.CBZ" \
+                "Comic Book Zip Archive" "$INSTDIR\${AppFile},0" \
                 "&Open with ${DisplayName}" '"$INSTDIR\${AppFile}" "%1"'
         ${EndIf}
     SectionEnd
@@ -177,8 +187,8 @@ Section "Uninstall"
     Delete "$INSTDIR\${UninstallerFile}"
     RMDir /r "$INSTDIR"
 
-    Delete "$DESKTOP\${DisplayName}.lnk"
-    Delete "$SMPROGRAMS\${DisplayName}.lnk"
+    Delete "$DESKTOP\${AppName}.lnk"
+    Delete "$SMPROGRAMS\${AppName}.lnk"
 
     !insertmacro APP_UNASSOCIATE "gif"  "${AppName}.AssocFile.GIF"
     !insertmacro APP_UNASSOCIATE "jpe"  "${AppName}.AssocFile.JPE"
@@ -187,7 +197,9 @@ Section "Uninstall"
     !insertmacro APP_UNASSOCIATE "png"  "${AppName}.AssocFile.PNG"
     !insertmacro APP_UNASSOCIATE "webm" "${AppName}.AssocFile.WEBM"
     !insertmacro APP_UNASSOCIATE "rar"  "${AppName}.AssocFile.RAR"
+    !insertmacro APP_UNASSOCIATE "cbr"  "${AppName}.AssocFile.CBR"
     !insertmacro APP_UNASSOCIATE "zip"  "${AppName}.AssocFile.ZIP"
+    !insertmacro APP_UNASSOCIATE "cbz"  "${AppName}.AssocFile.CBZ"
 
     DeleteRegKey HKLM "${RegKeyInstall}"
     DeleteRegKey HKLM "${RegKeyUninstall}"
