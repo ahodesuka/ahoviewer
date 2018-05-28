@@ -63,7 +63,8 @@ std::shared_ptr<Site> Site::create(const std::string &name, const std::string &u
 const Glib::RefPtr<Gdk::Pixbuf>& Site::get_missing_pixbuf()
 {
     static const Glib::RefPtr<Gdk::Pixbuf> pixbuf =
-        Gtk::Invisible().render_icon(Gtk::Stock::MISSING_IMAGE, Gtk::ICON_SIZE_MENU);
+        Gtk::IconTheme::get_default()->load_icon("image-missing", 16,
+            Gtk::ICON_LOOKUP_USE_BUILTIN | Gtk::ICON_LOOKUP_GENERIC_FALLBACK);
 
     return pixbuf;
 }
