@@ -1071,7 +1071,6 @@ void MainWindow::on_toggle_booru_browser()
             tbAction->set_active(false);
             return;
         }
-
     }
 
     update_widgets_visibility();

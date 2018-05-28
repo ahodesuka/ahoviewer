@@ -438,6 +438,19 @@ void Browser::on_page_added(Gtk::Widget *w, guint)
         page->get_vadjustment()->set_value(0);
         page->get_vadjustment()->set_value(v);
     }
+
+    // Make sure the booru browser is visible
+    MainWindow *window = static_cast<MainWindow*>(get_toplevel());
+    auto ha = Glib::RefPtr<Gtk::ToggleAction>::cast_static(
+            window->m_ActionGroup->get_action("ToggleHideAll")),
+         bb = Glib::RefPtr<Gtk::ToggleAction>::cast_static(
+            window->m_ActionGroup->get_action("ToggleBooruBrowser"));
+
+    if (ha->get_active())
+        Glib::signal_idle().connect_once([ha](){ ha->set_active(false); });
+
+    if (!bb->get_active())
+        Glib::signal_idle().connect_once([bb](){ bb->set_active(); });
 }
 
 void Browser::on_switch_page(void*, guint)
