@@ -243,6 +243,10 @@ void MainWindow::open_file(const std::string &path, const int index, const bool 
         if (Gtk::RecentManager::get_default()->has_item(uri))
             Gtk::RecentManager::get_default()->remove_item(uri);
 
+        // Reset this here incase we failed to restore the last open file on
+        // startup
+        m_LocalImageList->set_scroll_position({ -1, -1, ImageBox::ZoomMode::AUTO_FIT });
+
         m_StatusBar->set_message(error);
         return;
     }
@@ -267,6 +271,11 @@ void MainWindow::restore_last_file()
     if (Settings.get_bool("RememberLastFile"))
     {
         std::string path = Settings.get_string("LastOpenFile");
+        m_LocalImageList->set_scroll_position({
+            static_cast<double>(Settings.get_int("ScrollPosH")),
+            static_cast<double>(Settings.get_int("ScrollPosV")),
+            Settings.get_zoom_mode(),
+        });
 
         if (!path.empty())
             open_file(path, Settings.get_int("ArchiveIndex"), true);
@@ -383,6 +392,9 @@ void MainWindow::set_active_imagelist(const std::shared_ptr<ImageList> &imageLis
     if (m_ActiveImageList == imageList)
         return;
 
+    if (m_ActiveImageList && !m_ActiveImageList->empty())
+        m_ActiveImageList->set_scroll_position(m_ImageBox->get_scroll_position());
+
     m_ImageListConn.disconnect();
     m_ImageListClearedConn.disconnect();
     m_ActiveImageList = imageList;
@@ -395,6 +407,7 @@ void MainWindow::set_active_imagelist(const std::shared_ptr<ImageList> &imageLis
     if (!m_ActiveImageList->empty())
     {
         m_ImageBox->clear_image();
+        m_ImageBox->set_restore_scroll_position(m_ActiveImageList->get_scroll_position());
         on_imagelist_changed(m_ActiveImageList->get_current());
     }
     else
@@ -966,11 +979,17 @@ void MainWindow::on_quit()
         }
 
         Settings.set("LastOpenFile", path);
+        auto scrollPos = m_LocalImageList == m_ActiveImageList ?
+            m_ImageBox->get_scroll_position() : m_LocalImageList->get_scroll_position();
+        Settings.set("ScrollPosH", static_cast<int>(scrollPos.h));
+        Settings.set("ScrollPosV", static_cast<int>(scrollPos.v));
     }
     else
     {
-        Settings.remove("LastOpenFile");
         Settings.remove("ArchiveIndex");
+        Settings.remove("LastOpenFile");
+        Settings.remove("ScrollPosH");
+        Settings.remove("ScrollPosV");
     }
 
     if (Settings.get_bool("RememberLastSavePath"))

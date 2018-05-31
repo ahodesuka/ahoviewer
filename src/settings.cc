@@ -41,15 +41,17 @@ SettingsManager::SettingsManager()
     }),
     DefaultInts(
     {
-        { "ArchiveIndex",     -1  },
-        { "CacheSize",        2   },
-        { "SlideshowDelay",   5   },
-        { "CursorHideDelay",  2   },
-        { "TagViewPosition",  560 },
-        { "SelectedBooru",    0   },
-        { "BooruLimit",       50  },
-        { "BooruWidth",       -1  },
-        { "Volume",           100 }
+        { "ArchiveIndex",    -1  },
+        { "CacheSize",       2   },
+        { "SlideshowDelay",  5   },
+        { "CursorHideDelay", 2   },
+        { "TagViewPosition", 560 },
+        { "SelectedBooru",   0   },
+        { "BooruLimit",      50  },
+        { "BooruWidth",      -1  },
+        { "Volume",          100 },
+        { "ScrollPosH",      -1  },
+        { "ScrollPosV",      -1  }
     }),
     DefaultStrings(
     {

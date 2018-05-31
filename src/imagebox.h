@@ -24,6 +24,13 @@ namespace AhoViewer
             FIT_HEIGHT = 'H',
             MANUAL     = 'M',
         };
+        struct ScrollPos
+        {
+            int h, v;
+            ZoomMode zoom;
+            ScrollPos(double h, double v, ZoomMode zoom) :
+                h(h), v(v), zoom(zoom) { }
+        };
 
         ImageBox(BaseObjectType*, const Glib::RefPtr<Gtk::Builder>&);
         virtual ~ImageBox() override;
@@ -45,6 +52,13 @@ namespace AhoViewer
 
         ZoomMode get_zoom_mode() const { return m_ZoomMode; }
         void set_zoom_mode(const ZoomMode);
+
+        ScrollPos get_scroll_position() const
+        {
+            return { m_HAdjust->get_value(), m_VAdjust->get_value(), m_ZoomMode };
+        }
+        // Scrollbar positions to be restored when next image is drawn
+        void set_restore_scroll_position(const ScrollPos &s) { m_RestoreScrollPos = s; }
 
         sigc::signal<void> signal_slideshow_ended() const { return m_SignalSlideshowEnded; }
         sigc::signal<void> signal_image_drawn() const { return m_SignalImageDrawn; }
@@ -121,6 +135,7 @@ namespace AhoViewer
 
         bool m_FirstDraw, m_RedrawQueued, m_Loading, m_ZoomScroll;
         ZoomMode m_ZoomMode;
+        ScrollPos m_RestoreScrollPos;
         uint32_t m_ZoomPercent;
         double m_PressX, m_PreviousX,
                m_PressY, m_PreviousY,

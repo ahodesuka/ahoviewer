@@ -67,6 +67,7 @@ namespace AhoViewer
 
         Glib::RefPtr<Gdk::Pixbuf> create_webm_thumbnail(int w, int h) const;
         void save_thumbnail(Glib::RefPtr<Gdk::Pixbuf> &pixbuf, const gchar *mimeType) const;
+
         static std::string ThumbnailDir;
     };
 }

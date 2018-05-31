@@ -54,6 +54,7 @@ ImageBox::ImageBox(BaseObjectType *cobj, const Glib::RefPtr<Gtk::Builder> &bldr)
     m_RedrawQueued(false),
     m_ZoomScroll(false),
     m_ZoomMode(Settings.get_zoom_mode()),
+    m_RestoreScrollPos(-1, -1, m_ZoomMode),
     m_ZoomPercent(100)
 {
     bldr->get_widget("ImageBox::Layout",       m_Layout);
@@ -590,17 +591,22 @@ void ImageBox::draw_image(bool scroll)
     // Reset the scrollbar positions
     if (scroll || m_FirstDraw)
     {
-        m_VAdjust->set_value(0);
-        if (Settings.get_bool("MangaMode"))
+        if (m_RestoreScrollPos.v != -1 && m_RestoreScrollPos.zoom == m_ZoomMode)
         {
-            // Start at the right side of the image
-            m_HAdjust->set_value(m_HAdjust->get_upper() - m_HAdjust->get_page_size());
+            // Restore and reset stored scrollbar positions
+            m_VAdjust->set_value(m_RestoreScrollPos.v);
+            m_HAdjust->set_value(m_RestoreScrollPos.h);
+            m_RestoreScrollPos = { -1, -1, m_ZoomMode };
         }
         else
         {
-            m_HAdjust->set_value(0);
+            m_VAdjust->set_value(0);
+            if (Settings.get_bool("MangaMode"))
+                // Start at the right side of the image
+                m_HAdjust->set_value(m_HAdjust->get_upper() - m_HAdjust->get_page_size());
+            else
+                m_HAdjust->set_value(0);
         }
-
         m_FirstDraw = false;
     }
     else if (m_ZoomScroll)
