@@ -441,9 +441,9 @@ void SettingsManager::save_sites()
         set("url", s->get_url(), Setting::TypeString, site);
         set("type", static_cast<int>(s->get_type()), Setting::TypeInt, site);
         set("username", s->get_username(), Setting::TypeString, site);
-#ifndef HAVE_LIBSECRET
+#if !defined(HAVE_LIBSECRET) && !defined(_WIN32)
         set("password", s->get_password(), Setting::TypeString, site);
-#endif // !HAVE_LIBSECRET
+#endif // !defined(HAVE_LIBSECRET) && !defined(_WIN32)
         set("max_connections", static_cast<int>(s->get_max_connections()), Setting::TypeInt, site);
     }
 }

@@ -85,9 +85,9 @@ SiteEditor::SiteEditor(BaseObjectType *cobj, const Glib::RefPtr<Gtk::Builder> &b
             m_PasswordConn.unblock();
 
         });
+#endif // HAVE_LIBSECRET
 
     m_PasswordEntry->set_visibility(false);
-#endif // HAVE_LIBSECRET
 
     // Set initial values for entries and linkbutton
     on_cursor_changed();

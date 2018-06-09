@@ -12,6 +12,10 @@ using namespace AhoViewer::Booru;
 #include <libsecret/secret.h>
 #endif // HAVE_LIBSECRET
 
+#ifdef _WIN32
+#include <wincred.h>
+#endif // _WIN32
+
 // 1: page, 2: limit, 3: tags
 const std::map<Site::Type, std::string> Site::RequestURI =
 {
@@ -185,6 +189,45 @@ Site::Site(const std::string &name, const std::string &url, const Type type,
                                NULL);
 #endif // HAVE_LIBSECRET
 
+#ifdef _WIN32
+    if (!m_Username.empty())
+    {
+        PCREDENTIALW pcred;
+
+        std::string target = std::string(PACKAGE_NAME "/") + m_Name;
+        wchar_t *TargetName = reinterpret_cast<wchar_t*>(
+            g_utf8_to_utf16(target.c_str(), -1, NULL, NULL, NULL));
+
+        if (TargetName)
+        {
+            BOOL r = CredReadW(TargetName, CRED_TYPE_GENERIC, 0, &pcred);
+
+            if (!r)
+            {
+                std::cerr << "Failed to read password for " << m_Name << std::endl
+                          << " errno " << GetLastError() << std::endl;
+            }
+            else
+            {
+                wchar_t *UserName = reinterpret_cast<wchar_t*>(
+                    g_utf8_to_utf16(m_Username.c_str(), -1, NULL, NULL, NULL));
+
+                if (UserName)
+                {
+                    if (wcscmp(pcred->UserName, UserName) == 0)
+                        m_Password = (char*)pcred->CredentialBlob;
+
+                    g_free(UserName);
+                }
+
+                CredFree(pcred);
+            }
+
+            g_free(TargetName);
+        }
+    }
+#endif // _WIN32
+
     // Load tags
     if (Glib::file_test(m_TagsPath, Glib::FILE_TEST_EXISTS))
     {
@@ -254,6 +297,41 @@ void Site::set_password(const std::string &s)
                               "server", m_Url.c_str(),
                               NULL);
 #endif // HAVE_LIBSECRET
+
+#ifdef _WIN32
+    if (!m_Username.empty())
+    {
+        std::string target = std::string(PACKAGE_NAME "/") + m_Name;
+        wchar_t *TargetName = reinterpret_cast<wchar_t*>(
+            g_utf8_to_utf16(target.c_str(), -1, NULL, NULL, NULL));
+
+        if (TargetName)
+        {
+            wchar_t *UserName = reinterpret_cast<wchar_t*>(
+                g_utf8_to_utf16(m_Username.c_str(), -1, NULL, NULL, NULL));
+
+            if (UserName)
+            {
+                CREDENTIALW cred = { 0 };
+                cred.Type = CRED_TYPE_GENERIC;
+                cred.TargetName = TargetName;
+                cred.CredentialBlobSize = s.length();
+                cred.CredentialBlob = (LPBYTE)s.c_str();
+                cred.Persist = CRED_PERSIST_LOCAL_MACHINE;
+                cred.UserName = UserName;
+
+                BOOL r = CredWriteW(&cred, 0);
+                if (!r)
+                    std::cerr << "Failed to set password for " << m_Name << std::endl
+                              << " errno " << GetLastError() << std::endl;
+
+                g_free(UserName);
+            }
+
+            g_free(TargetName);
+        }
+    }
+#endif // _WIN32
     m_Password = s;
 }
 
