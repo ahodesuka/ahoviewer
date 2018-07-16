@@ -22,8 +22,11 @@ MainWindow::MainWindow(BaseObjectType *cobj, const Glib::RefPtr<Gtk::Builder> &b
     m_Height(0),
     m_HPanedMinPos(0),
     m_HPanedLastPos(0),
+    m_LastX(0),
+    m_LastY(0),
     m_HideAllFullscreen(false),
-    m_OriginalWindow(false)
+    m_OriginalWindow(false),
+    m_IsMinimized(false)
 {
 #ifndef _WIN32
     try
@@ -166,6 +169,9 @@ MainWindow::MainWindow(BaseObjectType *cobj, const Glib::RefPtr<Gtk::Builder> &b
     int x, y, w, h;
     if (Settings.get_geometry(x, y, w, h))
     {
+        m_LastX = x;
+        m_LastY = y;
+
         if (Settings.get_bool("RememberWindowSize"))
             set_default_size(w, h);
 
@@ -331,6 +337,14 @@ bool MainWindow::on_delete_event(GdkEventAny *e)
     return r;
 }
 
+bool MainWindow::on_window_state_event(GdkEventWindowState *e)
+{
+    m_IsMinimized = (e->changed_mask & Gdk::WindowState::WINDOW_STATE_ICONIFIED)
+        && (e->new_window_state & Gdk::WindowState::WINDOW_STATE_ICONIFIED);
+
+    return Gtk::Window::on_window_state_event(e);
+}
+
 void MainWindow::on_drag_data_received(const Glib::RefPtr<Gdk::DragContext> &ctx, int, int,
                                        const Gtk::SelectionData &data, guint, guint time)
 {
@@ -421,10 +435,16 @@ void MainWindow::save_window_geometry()
     if (is_fullscreen())
         return;
 
-    int x, y, w, h;
+    int x = m_LastX, y = m_LastY, w, h;
 
     get_size(w, h);
-    get_position(x, y);
+    // On Windows this will always return -32000, -32000 when minimized
+    if (!m_IsMinimized)
+    {
+        get_position(x, y);
+        m_LastX = x;
+        m_LastY = y;
+    }
 
     Settings.set_geometry(x, y, w, h);
 }

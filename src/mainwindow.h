@@ -28,6 +28,7 @@ namespace AhoViewer
         virtual void on_realize() override;
         virtual void on_check_resize() override;
         virtual bool on_delete_event(GdkEventAny *e) override;
+        virtual bool on_window_state_event(GdkEventWindowState *e) override;
         virtual void on_drag_data_received(const Glib::RefPtr<Gdk::DragContext> &ctx, int, int,
                                            const Gtk::SelectionData &data, guint, guint time) override;
         virtual bool on_key_press_event(GdkEventKey *e) override;
@@ -88,11 +89,12 @@ namespace AhoViewer
 
         std::string m_LastSavePath;
 
-        int m_Width, m_Height, m_HPanedMinPos, m_HPanedLastPos;
+        int m_Width, m_Height, m_HPanedMinPos, m_HPanedLastPos, m_LastX, m_LastY;
         // This keeps track of whether hide all was set automatically
         bool m_HideAllFullscreen,
         // Tracks whether this was the only window at one point
-             m_OriginalWindow;
+             m_OriginalWindow,
+             m_IsMinimized;
 
         std::shared_ptr<ImageList> m_ActiveImageList,
                                    m_LocalImageList;
