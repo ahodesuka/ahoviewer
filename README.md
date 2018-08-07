@@ -78,4 +78,6 @@ or
 | Save Booru Browser Tab                    | Control+Shift+s |
 | Save Current Booru Image                  | Control+s       |
 | Open Booru Post in Web Browser            | Control+Shift+o |
+| Copy Booru Post URL to Clipboard          | Control+y       |
 | Copy Booru Image URL to Clipboard         | y               |
+| Copy Booru Image Data to Clipboard        | Control+Shift+y |

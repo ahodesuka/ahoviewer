@@ -199,6 +199,25 @@ void Browser::on_copy_image_url()
     m_StatusBar->set_message(_("Copied image URL to clipboard"));
 }
 
+void Browser::on_copy_image_data()
+{
+    const std::shared_ptr<Image> image =
+        std::static_pointer_cast<Image>(get_active_page()->get_imagelist()->get_current());
+
+    if (image->is_loading())
+    {
+        m_StatusBar->set_message(_("Cannot copy image while it is still loading"));
+    }
+    else if (!image->is_webm())
+    {
+        Gtk::Clipboard::get()->set_image(image->get_pixbuf()->get_static_image());
+        // This might not actually do anything, but it's said to make the clipboard
+        // persist even if this program closes (requires a clipboard manager that supports it)
+        Gtk::Clipboard::get()->store();
+        m_StatusBar->set_message(_("Copied image to clipboard"));
+    }
+}
+
 void Browser::on_copy_post_url()
 {
     const std::shared_ptr<Image> image =

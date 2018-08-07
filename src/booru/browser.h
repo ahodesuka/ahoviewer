@@ -42,6 +42,7 @@ namespace AhoViewer
             void on_save_images();
             void on_view_post();
             void on_copy_image_url();
+            void on_copy_image_data();
             void on_copy_post_url();
             // }}}
         protected:

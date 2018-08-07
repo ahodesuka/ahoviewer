@@ -553,6 +553,10 @@ void MainWindow::create_actions()
             _("Copy Image URL"), _("Copy the selected image's URL to your clipboard")),
             Gtk::AccelKey(Settings.get_keybinding("BooruBrowser", "CopyImageURL")),
             sigc::mem_fun(m_BooruBrowser, &Booru::Browser::on_copy_image_url));
+    m_ActionGroup->add(Gtk::Action::create("CopyImageData", Gtk::Stock::COPY,
+            _("Copy Image"), _("Copy the selected image to your clipboard")),
+            Gtk::AccelKey(Settings.get_keybinding("BooruBrowser", "CopyImageData")),
+            sigc::mem_fun(m_BooruBrowser, &Booru::Browser::on_copy_image_data));
     m_ActionGroup->add(Gtk::Action::create("CopyPostURL", Gtk::Stock::COPY,
             _("Copy Post URL"), _("Copy the selected image's post URL to your clipboard")),
             Gtk::AccelKey(Settings.get_keybinding("BooruBrowser", "CopyPostURL")),
@@ -750,6 +754,7 @@ void MainWindow::set_sensitives()
     m_ActionGroup->get_action("ViewPost")->set_sensitive(booru && !page->get_imagelist()->empty());
     m_ActionGroup->get_action("CopyImageURL")->set_sensitive(booru && !page->get_imagelist()->empty());
     m_ActionGroup->get_action("CopyPostURL")->set_sensitive(booru && !page->get_imagelist()->empty());
+    m_ActionGroup->get_action("CopyImageData")->set_sensitive(booru && !page->get_imagelist()->empty());
 }
 
 void MainWindow::update_title()

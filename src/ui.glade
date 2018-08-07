@@ -1893,6 +1893,7 @@
         <separator/>
         <menuitem action="ViewPost"/>
         <menuitem action="CopyImageURL"/>
+        <menuitem action="CopyImageData"/>
         <menuitem action="CopyPostURL"/>
       </popup>
     </ui>
