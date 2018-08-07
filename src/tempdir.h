@@ -4,6 +4,7 @@
 #include <glibmm.h>
 #include <glib/gstdio.h>
 
+#include <cstring>
 #include <iostream>
 
 #include "config.h"
@@ -58,6 +59,18 @@ namespace AhoViewer
     private:
         TempDir()
         {
+            // Clean up previous temp directories if they exist
+            Glib::Dir dir(Glib::get_tmp_dir());
+            std::vector<std::string> dirs(dir.begin(), dir.end());
+
+            for (auto i = dirs.begin(); i != dirs.end(); ++i)
+            {
+                // 7 = strlen(".XXXXXX")
+                if (i->find(PACKAGE ".") != std::string::npos
+                 && i->length() == strlen(PACKAGE) + 7)
+                    remove_dir(Glib::build_filename(Glib::get_tmp_dir(), *i));
+            }
+
             std::string tmpl(Glib::build_filename(Glib::get_tmp_dir(), PACKAGE ".XXXXXX"));
             m_Path = g_mkdtemp(const_cast<char*>(tmpl.c_str()));
         }
