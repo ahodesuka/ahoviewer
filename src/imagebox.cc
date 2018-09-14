@@ -676,6 +676,23 @@ void ImageBox::scroll(const int x, const int y, const bool panning, const bool f
     }
     else
     {
+        // Rounds scroll amount up if the end/start of the adjustment is
+        // within 20% of the initial scroll amount
+        // adjv = adjustment value, adjmax = adjustment max value, v = scroll value
+        static auto round_scroll = [](const int adjv, const int adjmax, const int v)
+        {
+            const int range = std::abs(v * 0.2);
+            // Going down/right
+            if (v > 0 && adjmax - (adjv + v) <= range)
+                return adjmax - adjv;
+            // Going up/left, and not already going to scroll to the end
+            else if (adjv > std::abs(v) && adjv + v <= range)
+                return -adjv;
+
+            return v;
+        };
+
+        // Scroll to next page
         if ((m_HAdjust->get_value() == adjustUpperX && x > 0) ||
             (m_VAdjust->get_value() == adjustUpperY && y > 0))
         {
@@ -686,6 +703,7 @@ void ImageBox::scroll(const int x, const int y, const bool panning, const bool f
             else
                 m_NextAction->activate();
         }
+        // Scroll to previous page
         else if ((m_HAdjust->get_value() == 0 && x < 0) ||
                  (m_VAdjust->get_value() == 0 && y < 0))
         {
@@ -694,11 +712,11 @@ void ImageBox::scroll(const int x, const int y, const bool panning, const bool f
         }
         else if (x != 0)
         {
-            smooth_scroll(x, m_HAdjust);
+            smooth_scroll(round_scroll(m_HAdjust->get_value(), adjustUpperX, x), m_HAdjust);
         }
         else if (y != 0)
         {
-            smooth_scroll(y, m_VAdjust);
+            smooth_scroll(round_scroll(m_VAdjust->get_value(), adjustUpperY, y), m_VAdjust);
         }
     }
 }
