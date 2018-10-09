@@ -49,7 +49,11 @@ ImageList::ImageList(Widget *const w)
 
 ImageList::~ImageList()
 {
+    m_ThumbnailLoadedConn.disconnect();
+
     reset();
+
+    m_ThumbnailCancel.reset();
 
     m_CacheStop = true;
     m_CacheCancel->cancel();
@@ -315,7 +319,7 @@ void ImageList::on_thumbnail_loaded()
     m_ThumbnailLoadedConn.block();
     PixbufPair p;
 
-    while (!m_ThumbnailCancel->is_cancelled() && m_ThumbnailQueue.pop(p))
+    while (m_ThumbnailCancel && !m_ThumbnailCancel->is_cancelled() && m_ThumbnailQueue.pop(p))
         m_Widget->set_pixbuf(p.first, p.second);
 
     m_ThumbnailLoadedConn.unblock();

@@ -130,7 +130,7 @@ namespace AhoViewer
         sigc::signal<void> signal_thumbnails_loaded() const { return m_SignalThumbnailsLoaded; }
     protected:
         virtual void load_thumbnails();
-        virtual void cancel_thumbnail_thread();
+        void cancel_thumbnail_thread();
         void update_cache();
 
         Widget *const m_Widget;
@@ -142,6 +142,7 @@ namespace AhoViewer
         Glib::RefPtr<Gio::Cancellable> m_ThumbnailCancel;
         std::thread m_ThumbnailThread;
         ThreadPool m_ThreadPool;
+        TSQueue<PixbufPair> m_ThumbnailQueue;
 
         SignalChangedType m_SignalChanged;
     private:
@@ -163,7 +164,6 @@ namespace AhoViewer
         TSQueue<std::shared_ptr<Image>> m_CacheQueue;
         std::unique_ptr<Archive> m_Archive;
         std::vector<std::string> m_ArchiveEntries;
-        TSQueue<PixbufPair> m_ThumbnailQueue;
         std::function<int(size_t, size_t)> m_IndexSort;
 
         Glib::RefPtr<Gio::Cancellable> m_CacheCancel;

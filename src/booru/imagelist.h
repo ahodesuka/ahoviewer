@@ -27,7 +27,7 @@ namespace AhoViewer
         protected:
             virtual void set_current(const size_t index,
                                      const bool fromWidget = false, const bool force = false) override;
-            virtual void cancel_thumbnail_thread() override;
+            void cancel_thumbnail_thread();
         private:
             std::unique_ptr<ImageFetcher> m_ImageFetcher;
             std::shared_ptr<Site> m_Site;

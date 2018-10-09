@@ -96,7 +96,6 @@ Page::~Page()
     cancel_save();
 
     m_ListStore->clear();
-    m_ImageList.reset();
 }
 
 void Page::set_pixbuf(const size_t index, const Glib::RefPtr<Gdk::Pixbuf> &pixbuf)

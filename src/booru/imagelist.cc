@@ -16,6 +16,8 @@ ImageList::ImageList(Widget *w)
 
 ImageList::~ImageList()
 {
+    cancel_thumbnail_thread();
+
     if (!m_Path.empty())
         TempDir::get_instance().remove_dir(m_Path);
 }
@@ -104,10 +106,8 @@ void ImageList::load(const xml::Document &posts, const Page &page)
     if (m_Images.empty())
         return;
 
-    // If thumbnails are still loading from the last page
-    // the operation needs to be cancelled, all the
-    // thumbnails will be loaded in the new thread
-    cancel_thumbnail_thread();
+    if (m_ThumbnailThread.joinable())
+        m_ThumbnailThread.join();
 
     m_ThumbnailThread = std::thread(sigc::mem_fun(*this, &ImageList::load_thumbnails));
 
@@ -133,14 +133,18 @@ void ImageList::set_current(const size_t index, const bool fromWidget, const boo
 }
 
 // Cancel all image thumbnail curlers.
-// Base ImageList version will take care of stopping the threads.
 void ImageList::cancel_thumbnail_thread()
 {
+    m_ThumbnailCancel->cancel();
+
     for (auto img : *this)
     {
         auto bimage = std::static_pointer_cast<Image>(img);
         bimage->cancel_thumbnail_download();
     }
 
-    AhoViewer::ImageList::cancel_thumbnail_thread();
+    if (m_ThumbnailThread.joinable())
+        m_ThumbnailThread.join();
+
+    m_ThumbnailQueue.clear();
 }

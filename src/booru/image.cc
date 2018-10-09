@@ -55,10 +55,9 @@ std::string Image::get_filename() const
     return m_Site->get_name() + "/" + Glib::path_get_basename(m_Path);
 }
 
-// Cancellable here will never be used
-const Glib::RefPtr<Gdk::Pixbuf>& Image::get_thumbnail(Glib::RefPtr<Gio::Cancellable>)
+const Glib::RefPtr<Gdk::Pixbuf>& Image::get_thumbnail(Glib::RefPtr<Gio::Cancellable> c)
 {
-    if (!m_ThumbnailPixbuf)
+    if (!m_ThumbnailPixbuf && !c->is_cancelled())
     {
         m_ImageFetcher.add_handle(&m_ThumbnailCurler);
 
@@ -66,7 +65,8 @@ const Glib::RefPtr<Gdk::Pixbuf>& Image::get_thumbnail(Glib::RefPtr<Gio::Cancella
             std::unique_lock<std::mutex> lock(m_ThumbnailMutex);
             m_ThumbnailCond.wait(lock, [&]()
             {
-                return m_ThumbnailCurler.is_cancelled() || !m_ThumbnailCurler.is_active();
+                return m_ThumbnailCurler.is_cancelled()
+                    || !m_ThumbnailCurler.is_active();
             });
         }
         if (!m_ThumbnailCurler.is_cancelled() && m_ThumbnailCurler.get_response() == CURLE_OK)
