@@ -677,11 +677,11 @@ void ImageBox::scroll(const int x, const int y, const bool panning, const bool f
     else
     {
         // Rounds scroll amount up if the end/start of the adjustment is
-        // within 20% of the initial scroll amount
+        // within 50% of the initial scroll amount
         // adjv = adjustment value, adjmax = adjustment max value, v = scroll value
         static auto round_scroll = [](const int adjv, const int adjmax, const int v)
         {
-            const int range = std::abs(v * 0.2);
+            const int range = std::abs(v * 0.5);
             // Going down/right
             if (v > 0 && adjmax - (adjv + v) <= range)
                 return adjmax - adjv;
