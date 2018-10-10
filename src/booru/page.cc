@@ -328,8 +328,9 @@ void Page::get_posts()
 
                 // XXX: Ocassionally Danbooru returns a 500 internal server error
                 // "uninitialized constant LegacyController::Builder"
+                // and sets success to false
                 if (m_Posts && m_Site->get_type() == Site::Type::DANBOORU)
-                    success = m_Posts->get_value() != "uninitialized constant LegacyController::Builder";
+                    success = m_Posts->get_attribute("success") != "false";
             }
         }
         while (!m_Curler.is_cancelled() && !success && ++retryCount < RETRY_COUNT);
