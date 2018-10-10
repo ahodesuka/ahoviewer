@@ -691,14 +691,24 @@ void MainWindow::create_actions()
 
 void MainWindow::update_widgets_visibility()
 {
+    // Get all the visibility settings for this window instead of the global
+    // Settings (which may have been modified by another window)
     bool hideAll = Glib::RefPtr<Gtk::ToggleAction>::cast_static(
-            m_ActionGroup->get_action("ToggleHideAll"))->get_active();
+            m_ActionGroup->get_action("ToggleHideAll"))->get_active(),
+         menuBarVisible = Glib::RefPtr<Gtk::ToggleAction>::cast_static(
+            m_ActionGroup->get_action("ToggleMenuBar"))->get_active(),
+         statusBarVisible = Glib::RefPtr<Gtk::ToggleAction>::cast_static(
+            m_ActionGroup->get_action("ToggleStatusBar"))->get_active(),
+         booruBrowserVisible = Glib::RefPtr<Gtk::ToggleAction>::cast_static(
+            m_ActionGroup->get_action("ToggleBooruBrowser"))->get_active(),
+         thumbnailBarVisible = Glib::RefPtr<Gtk::ToggleAction>::cast_static(
+            m_ActionGroup->get_action("ToggleThumbnailBar"))->get_active();
 
-    m_MenuBar->set_visible(!hideAll && Settings.get_bool("MenuBarVisible"));
-    m_StatusBar->set_visible(!hideAll && Settings.get_bool("StatusBarVisible"));
-    m_BooruBrowser->set_visible(!hideAll && Settings.get_bool("BooruBrowserVisible"));
-    m_ThumbnailBar->set_visible(!hideAll && Settings.get_bool("ThumbnailBarVisible") &&
-                                !m_BooruBrowser->get_visible() && !m_LocalImageList->empty());
+    m_MenuBar->set_visible(!hideAll && menuBarVisible);
+    m_StatusBar->set_visible(!hideAll && statusBarVisible);
+    m_BooruBrowser->set_visible(!hideAll && booruBrowserVisible);
+    m_ThumbnailBar->set_visible(!hideAll && thumbnailBarVisible &&
+                                !booruBrowserVisible && !m_LocalImageList->empty());
 
     m_ImageBox->queue_draw_image();
     set_sensitives();
@@ -980,6 +990,24 @@ void MainWindow::on_quit()
     {
         Settings.set("TagViewPosition", m_BooruBrowser->get_position());
         Settings.set("BooruWidth", m_HPaned->get_position());
+
+        // ActionName => SettingKey
+        std::map<std::string, std::string> widgetVis =
+        {
+            { "ToggleHideAll",      "HideAll"             },
+            { "ToggleMenuBar",      "MenuBarVisible"      },
+            { "ToggleStatusBar",    "StatusBarVisible"    },
+            { "ToggleScrollbars",   "ScrollbarsVisible"   },
+            { "ToggleBooruBrowser", "BooruBrowserVisible" },
+            { "ToggleThumbnailBar", "ThumbnailBarVisible" },
+        };
+
+        for (auto w : widgetVis)
+        {
+            bool v = Glib::RefPtr<Gtk::ToggleAction>::cast_static(
+                m_ActionGroup->get_action(w.first))->get_active();
+            Settings.set(w.second, v);
+        }
     }
 
     Settings.set("SelectedBooru", m_BooruBrowser->get_selected_booru());
