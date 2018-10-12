@@ -1,5 +1,5 @@
 !define AppName "@PACKAGE@"
-!define DisplayName "${AppName} ${ReleaseVersion} (${Bits})"
+!define DisplayName "${AppName} ${ReleaseVersion}"
 !define Author "ahoka"
 !define Homepage "@PACKAGE_URL@"
 !define ReleaseVersion "@VERSION@"
