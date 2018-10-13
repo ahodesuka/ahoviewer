@@ -4,8 +4,8 @@
 #include "zip.h"
 using namespace AhoViewer;
 
-#include <fstream>
 #include <iostream>
+#include <giomm.h>
 #include <zip.h>
 
 const char Zip::Magic[Zip::MagicSize] = { 'P', 'K', 0x03, 0x04 };
@@ -41,14 +41,9 @@ bool Zip::extract(const std::string &file) const
                 int bufSize;
                 if ((bufSize = zip_fread(zfile, &buf[0], st.size)) != -1)
                 {
-                    try
-                    {
-                        Glib::file_set_contents(fPath, buf.data(), bufSize);
-                    }
-                    catch(const Glib::FileError &ex)
-                    {
-                        std::cerr << "Glib::file_set_contents: " << ex.what() << std::endl;
-                    }
+                    auto f = Gio::File::create_for_path(fPath);
+                    auto ofs = f->replace();
+                    ofs->write(buf.data(), bufSize);
                 }
 
                 zip_fclose(zfile);
