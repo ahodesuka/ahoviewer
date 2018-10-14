@@ -130,7 +130,7 @@ namespace AhoViewer
         sigc::signal<void> signal_thumbnails_loaded() const { return m_SignalThumbnailsLoaded; }
     protected:
         virtual void load_thumbnails();
-        void cancel_thumbnail_thread();
+        virtual void cancel_thumbnail_thread();
         void update_cache();
 
         Widget *const m_Widget;
@@ -145,6 +145,7 @@ namespace AhoViewer
         TSQueue<PixbufPair> m_ThumbnailQueue;
 
         SignalChangedType m_SignalChanged;
+        sigc::signal<void> m_SignalCleared;
     private:
         void reset();
         template <typename T>
@@ -178,8 +179,7 @@ namespace AhoViewer
         sigc::connection m_ThumbnailLoadedConn;
 
         SignalArchiveErrorType      m_SignalArchiveError;
-        sigc::signal<void>          m_SignalCleared,
-                                    m_SignalLoadSuccess,
+        sigc::signal<void>          m_SignalLoadSuccess,
                                     m_SignalSizeChanged,
                                     m_SignalThumbnailsLoaded;
     };

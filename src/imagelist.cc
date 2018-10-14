@@ -53,8 +53,6 @@ ImageList::~ImageList()
 
     reset();
 
-    m_ThumbnailCancel.reset();
-
     m_CacheStop = true;
     m_CacheCancel->cancel();
     m_CacheCond.notify_one();

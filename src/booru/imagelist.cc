@@ -16,24 +16,29 @@ ImageList::ImageList(Widget *w)
 
 ImageList::~ImageList()
 {
-    cancel_thumbnail_thread();
-
-    if (!m_Path.empty())
-        TempDir::get_instance().remove_dir(m_Path);
+    // Explicitly clear all signal handlers since we are destroying everything
+    m_SignalCleared.clear();
+    clear();
 }
 
 // This is also used when reusing the same page with a new query
 void ImageList::clear()
 {
+    cancel_thumbnail_thread();
+
+    // This prepares the imagefetcher for a clean death
     if (m_ImageFetcher)
         m_ImageFetcher->shutdown();
 
+    // Clears the image vector and widget (Booru::Page)
     AhoViewer::ImageList::clear();
+
     if (!m_Path.empty())
     {
         TempDir::get_instance().remove_dir(m_Path);
         m_Path.clear();
     }
+
     m_Size = 0;
     m_ImageFetcher = nullptr;
 }
@@ -140,9 +145,4 @@ void ImageList::cancel_thumbnail_thread()
         auto bimage = std::static_pointer_cast<Image>(img);
         bimage->cancel_thumbnail_download();
     }
-
-    if (m_ThumbnailThread.joinable())
-        m_ThumbnailThread.join();
-
-    m_ThumbnailQueue.clear();
 }

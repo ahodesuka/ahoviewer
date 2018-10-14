@@ -27,12 +27,13 @@ namespace AhoViewer
         protected:
             virtual void set_current(const size_t index,
                                      const bool fromWidget = false, const bool force = false) override;
-            void cancel_thumbnail_thread();
+            virtual void cancel_thumbnail_thread() override;
         private:
             std::unique_ptr<ImageFetcher> m_ImageFetcher;
             std::shared_ptr<Site> m_Site;
 
             std::string m_Path;
+            // This is the total number of posts for the given booru query
             size_t m_Size;
         };
     }
