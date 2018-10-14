@@ -20,19 +20,29 @@ namespace AhoViewer
             return i;
         }
 
-        std::string make_dir(const std::string &dirPath)
+        std::string make_dir(std::string dirPath = "")
         {
-            std::string path(Glib::build_filename(m_Path, dirPath));
+            std::string path;
 
-            // Loop until we have a unique directory name
-            for (size_t i = 1; Glib::file_test(path, Glib::FILE_TEST_EXISTS); ++i)
-                path = Glib::build_filename(m_Path, dirPath + "-" + std::to_string(i));
-
-            if (g_mkdir_with_parents(path.c_str(), 0755) == -1)
+            if (dirPath == "")
             {
-                std::cerr << "g_mkdir_with_parents: Failed to create '" << path << "'" << std::endl;
-                return "";
+                std::string tmpl(Glib::build_filename(m_Path, "XXXXXX"));
+                path = g_mkdtemp_full(const_cast<char*>(tmpl.c_str()), 0755);
             }
+            else
+            {
+                path = Glib::build_filename(m_Path, dirPath);
+                // Loop until we have a unique directory name
+                for (size_t i = 1; Glib::file_test(path, Glib::FILE_TEST_EXISTS); ++i)
+                    path = Glib::build_filename(m_Path, dirPath + "-" + std::to_string(i));
+
+                if (g_mkdir_with_parents(path.c_str(), 0755) == -1)
+                {
+                    std::cerr << "g_mkdir_with_parents: Failed to create '" << path << "'" << std::endl;
+                    return "";
+                }
+            }
+
             return path;
         }
         void remove_dir(const std::string &dirPath)

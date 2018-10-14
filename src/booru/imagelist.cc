@@ -40,11 +40,9 @@ void ImageList::clear()
 
 std::string ImageList::get_path()
 {
-    static int id = 1;
-
     if (m_Path.empty())
     {
-        m_Path = TempDir::get_instance().make_dir(std::to_string(id++));
+        m_Path = TempDir::get_instance().make_dir();
         g_mkdir_with_parents(Glib::build_filename(m_Path, "thumbnails").c_str(), 0755);
     }
 
