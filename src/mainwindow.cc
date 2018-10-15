@@ -673,7 +673,11 @@ void MainWindow::create_actions()
         filter.add_pattern("*." + ext);
 
 #ifdef HAVE_GSTREAMER
+#ifdef _WIN32
+    filter.add_pattern("*.webm");
+#else
     filter.add_mime_type("video/webm");
+#endif // _WIN32
 #endif // HAVE_GSTREAMER
 
     m_RecentAction->add_filter(filter);
@@ -909,8 +913,13 @@ void MainWindow::on_open_file_dialog()
     imageFilter.add_pixbuf_formats();
 
 #ifdef HAVE_GSTREAMER
+#ifdef _WIN32
+    filter.add_pattern("*.webm");
+    imageFilter.add_pattern("*.webm");
+#else
     filter.add_mime_type("video/webm");
     imageFilter.add_mime_type("video/webm");
+#endif // _WIN32
 #endif // HAVE_GSTREAMER
 
     for (const std::string &mimeType : Archive::MimeTypes)
