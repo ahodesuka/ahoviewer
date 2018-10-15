@@ -32,7 +32,7 @@ MainWindow::MainWindow(BaseObjectType *cobj, const Glib::RefPtr<Gtk::Builder> &b
     try
     {
         Glib::RefPtr<Gdk::Pixbuf> icon =
-            Gdk::Pixbuf::create_from_file(DATADIR "/icons/hicolor/64x64/apps/ahoviewer.png");
+            Gdk::Pixbuf::create_from_file(AHOVIEWER_DATADIR "/icons/hicolor/64x64/apps/ahoviewer.png");
         set_icon(icon);
     }
     catch (...) { }
@@ -123,7 +123,7 @@ MainWindow::MainWindow(BaseObjectType *cobj, const Glib::RefPtr<Gtk::Builder> &b
             Glib::RefPtr<Gdk::Pixbuf> logo = Gdk::Pixbuf::create_from_file(path);
 #else
             Glib::RefPtr<Gdk::Pixbuf> logo =
-                Gdk::Pixbuf::create_from_file(DATADIR "/pixmaps/ahoviewer/ahoviewer-about-logo.png");
+                Gdk::Pixbuf::create_from_file(AHOVIEWER_DATADIR "/pixmaps/ahoviewer/ahoviewer-about-logo.png");
 #endif // _WIN32
             m_AboutDialog->set_logo(logo);
         }

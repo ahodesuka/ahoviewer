@@ -55,7 +55,7 @@ PHONY: version
 version:
 	@cd .. && ./version.sh > /dev/null 2>&1
 
-ahoviewer_CPPFLAGS = @CPPFLAGS@ @LIBCURL_CPPFLAGS@ -DDATADIR=\"$(datadir)\"
+ahoviewer_CPPFLAGS = @CPPFLAGS@ @LIBCURL_CPPFLAGS@ -DAHOVIEWER_DATADIR=\"$(datadir)\"
 ahoviewer_CXXFLAGS = @CXXFLAGS@ @gtkmm_CFLAGS@ @libconfig_CFLAGS@ @libxml2_CFLAGS@ \
 				@gstreamer_CFLAGS@ @libsecret_CFLAGS@ @libzip_CFLAGS@ \
 				@OpenSSL_CFLAGS@ @GnuTLS_CFLAGS@
