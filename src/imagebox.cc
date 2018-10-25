@@ -139,20 +139,25 @@ void ImageBox::queue_draw_image(const bool scroll)
 
 void ImageBox::set_image(const std::shared_ptr<Image> &image)
 {
-    m_ImageConn.disconnect();
-    reset_slideshow();
+    if (image != m_Image)
+    {
+        m_ImageConn.disconnect();
+        reset_slideshow();
 
 #ifdef HAVE_GSTREAMER
-    gst_element_set_state(m_Playbin, GST_STATE_NULL);
-    m_Playing = false;
-    m_DrawingArea->hide();
+        gst_element_set_state(m_Playbin, GST_STATE_NULL);
+        m_Playing = false;
+        m_DrawingArea->hide();
 #endif // HAVE_GSTREAMER
 
-    m_Image = image;
-    m_FirstDraw = m_Loading = true;
+        m_Image = image;
+        m_FirstDraw = m_Loading = true;
+
+        m_ImageConn = m_Image->signal_pixbuf_changed().connect(
+                sigc::bind(sigc::mem_fun(*this, &ImageBox::queue_draw_image), false));
+    }
+
     queue_draw_image(true);
-    m_ImageConn = m_Image->signal_pixbuf_changed().connect(
-            sigc::bind(sigc::mem_fun(*this, &ImageBox::queue_draw_image), false));
 }
 
 void ImageBox::clear_image()
@@ -464,8 +469,8 @@ void ImageBox::draw_image(bool scroll)
         }
     }
     else
-    {
 #endif // HAVE_GSTREAMER
+    {
         Glib::RefPtr<Gdk::PixbufAnimation> pixbuf_anim = m_Image->get_pixbuf();
 
         if (pixbuf_anim)
@@ -497,9 +502,7 @@ void ImageBox::draw_image(bool scroll)
             m_OrigWidth  = tempPixbuf->get_width();
             m_OrigHeight = tempPixbuf->get_height();
         }
-#ifdef HAVE_GSTREAMER
     }
-#endif // HAVE_GSTREAMER
 
     m_HScroll->hide();
     m_VScroll->hide();
