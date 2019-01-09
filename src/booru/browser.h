@@ -104,6 +104,7 @@ namespace AhoViewer
             sigc::connection m_ComboChangedConn,
                              m_DownloadErrorConn,
                              m_ImageListConn,
+                             m_ImageListClearedConn,
                              m_ImageProgConn,
                              m_ImageErrorConn,
                              m_PosChangedConn,

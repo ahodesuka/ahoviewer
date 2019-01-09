@@ -421,6 +421,7 @@ void Browser::on_page_removed(Gtk::Widget *w, guint)
         m_SaveProgConn.disconnect();
         m_ImageProgConn.disconnect();
         m_ImageListConn.disconnect();
+        m_ImageListClearedConn.disconnect();
         m_DownloadErrorConn.disconnect();
 
         m_StatusBar->clear_progress(StatusBar::Priority::SAVE);
@@ -493,7 +494,8 @@ void Browser::on_switch_page(void*, guint)
     m_ImageListConn = page->get_imagelist()->signal_changed().connect(
             sigc::mem_fun(*this, &Browser::on_imagelist_changed));
 
-    page->get_imagelist()->signal_cleared().connect([&]()
+    m_ImageListClearedConn.disconnect();
+    m_ImageListClearedConn = page->get_imagelist()->signal_cleared().connect([&]()
     {
         if (!check_saving_page())
         {
