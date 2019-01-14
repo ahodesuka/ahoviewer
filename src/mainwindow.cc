@@ -20,7 +20,6 @@ MainWindow::MainWindow(BaseObjectType *cobj, const Glib::RefPtr<Gtk::Builder> &b
     m_LastSavePath(Settings.get_string("LastSavePath")),
     m_Width(0),
     m_Height(0),
-    m_HPanedMinPos(0),
     m_HPanedLastPos(0),
     m_LastX(0),
     m_LastY(0),

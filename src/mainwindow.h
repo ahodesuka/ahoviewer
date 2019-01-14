@@ -89,7 +89,7 @@ namespace AhoViewer
 
         std::string m_LastSavePath;
 
-        int m_Width, m_Height, m_HPanedMinPos, m_HPanedLastPos, m_LastX, m_LastY;
+        int m_Width, m_Height, m_HPanedLastPos, m_LastX, m_LastY;
         // This keeps track of whether hide all was set automatically
         bool m_HideAllFullscreen,
         // Tracks whether this was the only window at one point
