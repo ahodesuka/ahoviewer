@@ -13,6 +13,7 @@ Browser::Browser(BaseObjectType *cobj, const Glib::RefPtr<Gtk::Builder> &bldr)
   : Gtk::VPaned(cobj),
     m_MinWidth(0),
     m_ClosePage(false),
+    m_IconDownloaded(false),
     m_LastSavePath(Settings.get_string("LastSavePath"))
 {
     bldr->get_widget("Booru::Browser::Notebook",          m_Notebook);
@@ -22,6 +23,7 @@ Browser::Browser(BaseObjectType *cobj, const Glib::RefPtr<Gtk::Builder> &bldr)
     bldr->get_widget_derived("Booru::Browser::TagEntry",  m_TagEntry);
     bldr->get_widget_derived("Booru::Browser::TagView",   m_TagView);
     bldr->get_widget_derived("StatusBar",                 m_StatusBar);
+    bldr->get_widget("MainWindow::HPaned",                m_HPaned);
 
     m_TagEntry->signal_key_press_event().connect(
             sigc::mem_fun(*this, &Browser::on_entry_key_press_event), false);
@@ -82,7 +84,20 @@ void Browser::update_combobox_model()
     {
         Gtk::TreeIter it = m_ComboModel->append();
         sigc::connection c = site->signal_icon_downloaded().connect([ &, site, it ]
-                { it->set_value(m_ComboColumns.icon, site->get_icon_pixbuf()); });
+        {
+            it->set_value(m_ComboColumns.icon, site->get_icon_pixbuf());
+            // XXX: This is a terrible hack to fix an issue where the tagentry
+            // gets wrapped and becomes invisible after a site icon is downloaded
+            // and set.  Normally this issue goes away after restarting the
+            // program, but for someone who opens ahoviewer for the first time
+            // and has this problem occur is quite undesirable.
+            if (!m_IconDownloaded)
+            {
+                m_IconDownloaded = true;
+                m_MinWidth += 2;
+                m_HPaned->set_position(m_MinWidth);
+            }
+        });
         m_SiteIconConns.push_back(std::move(c));
 
         it->set_value(m_ComboColumns.icon, site->get_icon_pixbuf());

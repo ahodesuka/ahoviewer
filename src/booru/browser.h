@@ -78,6 +78,7 @@ namespace AhoViewer
                 { return Settings.get_sites()[m_ComboBox->get_active_row_number()]; }
 
             StatusBar *m_StatusBar;
+            Gtk::HPaned *m_HPaned;
 
             Gtk::ToolButton *m_NewTabButton,
                             *m_SaveImagesButton;
@@ -92,7 +93,7 @@ namespace AhoViewer
             TagView *m_TagView;
 
             int m_MinWidth;
-            bool m_ClosePage;
+            bool m_ClosePage, m_IconDownloaded;
             std::string m_LastSavePath;
 
             Glib::RefPtr<Gtk::UIManager> m_UIManager;
