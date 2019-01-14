@@ -25,9 +25,6 @@ make
 sudo make install
 ```
 
-An ebuild can be found
-[here](https://gist.githubusercontent.com/ahodesuka/9c06310db83087f3be2d2a0c4a0ac062/raw)
-
 ## Usage
 
     ahoviewer
