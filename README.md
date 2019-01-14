@@ -25,13 +25,22 @@ make
 sudo make install
 ```
 
+### OpenSSL and GnuTLS
+By default ahoviewer will assume you built libcurl with OpenSSL.  If you
+are using GnuTLS you need to use --enable-gnutls during configuration (bootstrap).
+If you have OpenSSL installed and curl uses an SSL backend other than
+OpenSSL or GnuTLS then you need to use --disable-ssl during configuration
+or you will get linker errors. (This does not disable encryption)
+These configuration checks are used to provide thread-safe locking for older
+versions of OpenSSL and GnuTLS.
+
 ## Usage
 
     ahoviewer
 
 or
 
-    ahoviewer file[.zip|.rar|.webm|.*]
+    ahoviewer file[.zip|.rar|.webm|.(supported gdk-pixbuf file)]
 
 ### Screenshot
 ![Booru Browser](https://camo.githubusercontent.com/ad37a28fc1f47a41d1c79409ab31e3e01a1507e9/68747470733a2f2f692e696d6775722e636f6d2f486e47656368662e676966)
