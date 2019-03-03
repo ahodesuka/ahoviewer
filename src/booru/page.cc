@@ -167,7 +167,8 @@ void Page::search(const std::shared_ptr<Site> &site)
     }
     else
     {
-        m_SearchTags = "*";
+        if (site->get_type() != Site::Type::MOEBOORU)
+            m_SearchTags = "*";
     }
 
     m_TabLabel->set_text(m_Site->get_name() + (m_SearchTags == "*" ? "" : " - " + m_SearchTags));
