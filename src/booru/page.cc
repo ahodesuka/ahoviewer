@@ -171,7 +171,8 @@ void Page::search(const std::shared_ptr<Site> &site)
             m_SearchTags = "*";
     }
 
-    m_TabLabel->set_text(m_Site->get_name() + (m_SearchTags == "*" ? "" : " - " + m_SearchTags));
+    m_TabLabel->set_text(m_Site->get_name() +
+        (m_SearchTags == "*" || m_SearchTags.empty() ? "" : " - " + m_SearchTags));
     m_TabIcon->set(m_Site->get_icon_pixbuf());
 
     m_Curler.set_share_handle(m_Site->get_share_handle());
