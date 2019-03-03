@@ -39,7 +39,8 @@ namespace AhoViewer
                                                 const Type type = Type::UNKNOWN,
                                                 const std::string &user = "",
                                                 const std::string &pass = "",
-                                                const unsigned int max_cons = 0);
+                                                const unsigned int max_cons = 0,
+                                                const bool use_samples = false);
             static const Glib::RefPtr<Gdk::Pixbuf>& get_missing_pixbuf();
 
 #ifdef HAVE_LIBSECRET
@@ -74,6 +75,9 @@ namespace AhoViewer
             int get_max_connections() const { return m_MaxConnections; }
             CURLSH* get_share_handle() const { return m_ShareHandle; }
 
+            bool use_samples() const { return m_UseSamples; }
+            void set_use_samples(const bool s) { m_UseSamples = s; }
+
             Glib::RefPtr<Gdk::Pixbuf> get_icon_pixbuf(const bool update = false);
 
             void save_tags() const;
@@ -88,7 +92,8 @@ namespace AhoViewer
                  const Type type,
                  const std::string &user,
                  const std::string &pass,
-                 const int max_cons);
+                 const int max_cons,
+                 const bool use_samples);
         private:
             static Type get_type_from_url(const std::string &url);
 
@@ -107,7 +112,8 @@ namespace AhoViewer
                         m_TagsPath,
                         m_CookiePath;
             Type m_Type;
-            bool m_NewAccount;
+            bool m_NewAccount,
+                 m_UseSamples;
             uint64_t m_CookieTS;
             std::set<std::string> m_Tags;
             int m_MaxConnections;

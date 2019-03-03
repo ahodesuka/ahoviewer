@@ -70,7 +70,7 @@ void ImageList::load(const xml::Document &posts, const Page &page)
         std::string thumbUrl  = post.get_attribute("preview_url"),
                     thumbPath = Glib::build_filename(get_path(), "thumbnails",
                                                    Glib::uri_unescape_string(Glib::path_get_basename(thumbUrl))),
-                    imageUrl  = post.get_attribute("file_url"),
+                    imageUrl  = post.get_attribute(m_Site->use_samples() ? "sample_url" : "file_url"),
                     imagePath = Glib::build_filename(get_path(),
                                                    Glib::uri_unescape_string(Glib::path_get_basename(imageUrl)));
 

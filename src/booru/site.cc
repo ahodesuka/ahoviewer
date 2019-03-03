@@ -54,12 +54,13 @@ struct _shared_site : public Site
 };
 
 std::shared_ptr<Site> Site::create(const std::string &name, const std::string &url, const Type type,
-                                   const std::string &user, const std::string &pass, const unsigned int max_cons)
+                                   const std::string &user, const std::string &pass, const unsigned int max_cons,
+                                   const bool use_samples)
 {
     Type t = type == Type::UNKNOWN ? get_type_from_url(url) : type;
 
     if (t != Type::UNKNOWN)
-        return std::make_shared<_shared_site>(name, url, t, user, pass, max_cons);
+        return std::make_shared<_shared_site>(name, url, t, user, pass, max_cons, use_samples);
 
     return nullptr;
 }
@@ -143,7 +144,8 @@ void Site::share_unlock_cb(CURL*, curl_lock_data data, void *userp)
 }
 
 Site::Site(const std::string &name, const std::string &url, const Type type,
-           const std::string &user, const std::string &pass, const int max_cons)
+           const std::string &user, const std::string &pass, const int max_cons,
+           const bool use_samples)
   : m_Name(name),
     m_Url(url),
     m_Username(user),
@@ -153,6 +155,7 @@ Site::Site(const std::string &name, const std::string &url, const Type type,
     m_CookiePath(Glib::build_filename(Settings.get_booru_path(), m_Name + "-cookie")),
     m_Type(type),
     m_NewAccount(false),
+    m_UseSamples(use_samples),
     m_CookieTS(0),
     m_MaxConnections(max_cons),
     m_ShareHandle(curl_share_init())

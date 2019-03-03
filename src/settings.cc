@@ -246,13 +246,16 @@ std::vector<std::shared_ptr<Site>>& SettingsManager::get_sites()
                 // cachesize * 2 + 1 < 6 < max_cons
                 if (max_cons != 0)
                     max_cons = std::max(max_cons, std::min(get_int("CacheSize") * 2 + 1, 6));
+                bool use_samples = false;
+                s.lookupValue("use_samples", use_samples);
                 m_Sites.push_back(
                         Site::create(name,
                                      url,
                                      static_cast<Site::Type>(static_cast<int>(s["type"])),
                                      username,
                                      password,
-                                     max_cons));
+                                     max_cons,
+                                     use_samples));
             }
 
             return m_Sites;
@@ -446,5 +449,6 @@ void SettingsManager::save_sites()
         set("password", s->get_password(), Setting::TypeString, site);
 #endif // !defined(HAVE_LIBSECRET) && !defined(_WIN32)
         set("max_connections", static_cast<int>(s->get_max_connections()), Setting::TypeInt, site);
+        set("use_samples", s->use_samples(), Setting::TypeBoolean, site);
     }
 }

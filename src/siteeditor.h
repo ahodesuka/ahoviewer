@@ -115,12 +115,13 @@ namespace AhoViewer
         };/*}}}*/
         struct ModelColumns : public Gtk::TreeModelColumnRecord
         {
-            ModelColumns() { add(icon); add(loading); add(pulse); add(name); add(url); add(site); }
+            ModelColumns() { add(icon); add(loading); add(pulse); add(name); add(url); add(samples); add(site); }
             Gtk::TreeModelColumn<Glib::RefPtr<Gdk::Pixbuf>> icon;
             Gtk::TreeModelColumn<bool> loading;
             Gtk::TreeModelColumn<unsigned int> pulse;
             Gtk::TreeModelColumn<std::string> name;
             Gtk::TreeModelColumn<std::string> url;
+            Gtk::TreeModelColumn<bool> samples;
             Gtk::TreeModelColumn<std::shared_ptr<Booru::Site>> site;
         };
 
@@ -129,6 +130,7 @@ namespace AhoViewer
 
         void on_name_edited(const std::string &p, const std::string &text);
         void on_url_edited(const std::string &p, const std::string &text);
+        void on_samples_toggled(const std::string &p);
 
         bool is_name_unique(const Gtk::TreeIter &iter, const std::string &name) const;
         void add_edit_site(const Gtk::TreeIter &iter);
@@ -143,7 +145,8 @@ namespace AhoViewer
         Glib::RefPtr<Gtk::ListStore> m_Model;
 
         Gtk::TreeViewColumn *m_NameColumn,
-                            *m_UrlColumn;
+                            *m_UrlColumn,
+                            *m_SampleColumn;
         Gtk::LinkButton *m_RegisterButton;
         Gtk::Entry *m_UsernameEntry,
                    *m_PasswordEntry;

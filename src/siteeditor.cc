@@ -16,6 +16,7 @@ SiteEditor::SiteEditor(BaseObjectType *cobj, const Glib::RefPtr<Gtk::Builder> &b
     m_Model(Gtk::ListStore::create(m_Columns)),
     m_NameColumn(Gtk::manage(new Gtk::TreeView::Column(_("Name"), m_Columns.name))),
     m_UrlColumn(Gtk::manage(new Gtk::TreeView::Column(_("Url"), m_Columns.url))),
+    m_SampleColumn(Gtk::manage(new Gtk::TreeView::Column(_("Samples"), m_Columns.samples))),
     m_Sites(Settings.get_sites()),
     m_ErrorPixbuf(Gtk::Invisible().render_icon(Gtk::Stock::DELETE, Gtk::ICON_SIZE_MENU)),
     m_SiteCheckEdit(false),
@@ -35,7 +36,8 @@ SiteEditor::SiteEditor(BaseObjectType *cobj, const Glib::RefPtr<Gtk::Builder> &b
         s->signal_icon_downloaded().connect([ &, iter, s ]()
                 { iter->set_value(m_Columns.icon, s->get_icon_pixbuf()); });
         iter->set_value(m_Columns.name, s->get_name());
-        iter->set_value(m_Columns.url,  s->get_url());
+        iter->set_value(m_Columns.url, s->get_url());
+        iter->set_value(m_Columns.samples, s->use_samples());
         iter->set_value(m_Columns.site, s);
     }
 
@@ -57,7 +59,13 @@ SiteEditor::SiteEditor(BaseObjectType *cobj, const Glib::RefPtr<Gtk::Builder> &b
     textRenderer = static_cast<Gtk::CellRendererText*>(m_UrlColumn->get_first_cell());
     textRenderer->property_editable() = true;
     textRenderer->signal_edited().connect(sigc::mem_fun(*this, &SiteEditor::on_url_edited));
+    m_UrlColumn->set_expand(true);
     append_column(*m_UrlColumn);
+
+    Gtk::CellRendererToggle *toggleRenderer = static_cast<Gtk::CellRendererToggle*>(m_SampleColumn->get_first_cell());
+    toggleRenderer->signal_toggled().connect(sigc::mem_fun(*this, &SiteEditor::on_samples_toggled));
+    toggleRenderer->set_activatable(true);
+    append_column(*m_SampleColumn);
 
     set_model(m_Model);
     get_selection()->select(m_Model->get_iter("0"));
@@ -206,6 +214,18 @@ void SiteEditor::on_url_edited(const std::string &p, const std::string &text)
 
     iter->set_value(m_Columns.url, url);
     add_edit_site(iter);
+}
+
+void SiteEditor::on_samples_toggled(const std::string &p)
+{
+    Gtk::TreePath path(p);
+    Gtk::TreeIter iter = m_Model->get_iter(path);
+    bool active = iter->get_value(m_Columns.samples);
+    iter->set_value(m_Columns.samples, !active);
+
+    std::shared_ptr<Site> s = iter->get_value(m_Columns.site);
+    if (s)
+        s->set_use_samples(iter->get_value(m_Columns.samples));
 }
 
 bool SiteEditor::is_name_unique(const Gtk::TreeIter &iter, const std::string &name) const
