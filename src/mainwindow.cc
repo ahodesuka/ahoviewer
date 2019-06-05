@@ -1218,7 +1218,10 @@ void MainWindow::on_last_image()
 void MainWindow::on_toggle_slideshow()
 {
     m_ImageBox->toggle_slideshow();
-    // update_title();
+    if (m_ImageBox->is_slideshow_running())
+        m_StatusBar->set_message(_("Slideshow started"));
+    else
+        m_StatusBar->set_message(_("Slideshow stopped"));
 }
 
 void MainWindow::on_save_image()
