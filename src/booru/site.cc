@@ -181,6 +181,7 @@ Site::Site(const std::string &name, const std::string &url, const Type type,
         if (d != CURL_LOCK_DATA_SHARE)
             curl_share_setopt(m_ShareHandle, CURLSHOPT_SHARE, d);
     }
+    m_Curler.set_share_handle(m_ShareHandle);
 
 #ifdef HAVE_LIBSECRET
     if (!m_Username.empty())

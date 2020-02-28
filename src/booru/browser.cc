@@ -13,7 +13,6 @@ Browser::Browser(BaseObjectType *cobj, const Glib::RefPtr<Gtk::Builder> &bldr)
   : Gtk::VPaned(cobj),
     m_MinWidth(0),
     m_ClosePage(false),
-    m_IconDownloaded(false),
     m_LastSavePath(Settings.get_string("LastSavePath"))
 {
     bldr->get_widget("Booru::Browser::Notebook",          m_Notebook);
@@ -33,11 +32,10 @@ Browser::Browser(BaseObjectType *cobj, const Glib::RefPtr<Gtk::Builder> &bldr)
 
     m_ComboModel = Gtk::ListStore::create(m_ComboColumns);
     m_ComboBox->set_model(m_ComboModel);
-    update_combobox_model();
 
     m_ComboBox->pack_start(m_ComboColumns.icon, false);
     m_ComboBox->pack_start(m_ComboColumns.name);
-    (*m_ComboBox->get_cells().begin())->set_fixed_size(20, 16);
+    (*m_ComboBox->get_cells().begin())->set_fixed_size(22, 16);
 
     m_UIManager = Glib::RefPtr<Gtk::UIManager>::cast_static(bldr->get_object("UIManager"));
 
@@ -55,6 +53,7 @@ Browser::Browser(BaseObjectType *cobj, const Glib::RefPtr<Gtk::Builder> &bldr)
         if (get_realized())
             Settings.set("TagViewPosition", get_position());
     });
+
 }
 
 Browser::~Browser()
@@ -77,6 +76,7 @@ void Browser::update_combobox_model()
     for (sigc::connection conn : m_SiteIconConns)
         conn.disconnect();
 
+    m_SiteIconConns.clear();
     m_ComboChangedConn.disconnect();
     m_ComboModel->clear();
 
@@ -86,23 +86,11 @@ void Browser::update_combobox_model()
         sigc::connection c = site->signal_icon_downloaded().connect([ &, site, it ]
         {
             it->set_value(m_ComboColumns.icon, site->get_icon_pixbuf());
-            // XXX: This is a terrible hack to fix an issue where the tagentry
-            // gets wrapped and becomes invisible after a site icon is downloaded
-            // and set.  Normally this issue goes away after restarting the
-            // program, but for someone who opens ahoviewer for the first time
-            // and has this problem occur is quite undesirable.
-            if (!m_IconDownloaded)
-            {
-                m_IconDownloaded = true;
-                m_MinWidth += 2;
-                m_HPaned->set_position(m_MinWidth);
-            }
         });
         m_SiteIconConns.push_back(std::move(c));
 
         it->set_value(m_ComboColumns.icon, site->get_icon_pixbuf());
         it->set_value(m_ComboColumns.name, site->get_name());
-
     }
 
     m_ComboChangedConn = m_ComboBox->signal_changed().connect([&]()
@@ -263,6 +251,8 @@ void Browser::on_realize()
 
     get_window()->freeze_updates();
     m_PosChangedConn.block();
+
+    update_combobox_model();
 
     while (Glib::MainContext::get_default()->pending())
         Glib::MainContext::get_default()->iteration(true);

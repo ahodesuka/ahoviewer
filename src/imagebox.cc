@@ -421,7 +421,7 @@ bool ImageBox::on_scroll_event(GdkEventScroll *e)
 void ImageBox::draw_image(bool scroll)
 {
     if (!m_Image ||
-        (!m_Image->get_pixbuf() && !m_Image->is_animated_gif() && m_Image->is_loading()) ||
+        (!m_Image->get_pixbuf() && m_Image->is_loading()) ||
         (m_Image->is_webm() && m_Image->is_loading()))
     {
         m_HScroll->hide();

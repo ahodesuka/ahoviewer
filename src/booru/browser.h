@@ -93,7 +93,7 @@ namespace AhoViewer
             TagView *m_TagView;
 
             int m_MinWidth;
-            bool m_ClosePage, m_IconDownloaded;
+            bool m_ClosePage;
             std::string m_LastSavePath;
 
             Glib::RefPtr<Gtk::UIManager> m_UIManager;
