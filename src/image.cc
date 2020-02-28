@@ -1,4 +1,5 @@
 #include <cctype>
+#include <glib.h>
 #include <iostream>
 
 #include "image.h"
@@ -18,17 +19,29 @@ bool Image::is_valid_extension(const std::string &path)
     std::string ext = path.substr(path.find_last_of('.') + 1);
     std::transform(ext.begin(), ext.end(), ext.begin(), ::tolower);
 
-    for (const Gdk::PixbufFormat &i : Gdk::Pixbuf::get_formats())
-        for (const std::string &j : i.get_extensions())
-            if (ext == j)
-                return true;
-
 #ifdef HAVE_GSTREAMER
     if (ext == "webm")
         return true;
 #endif // HAVE_GSTREAMER
 
-    return false;
+    bool r = false;
+
+    for (Gdk::PixbufFormat i : Gdk::Pixbuf::get_formats())
+    {
+        gchar **extensions = gdk_pixbuf_format_get_extensions(i.gobj());
+        for (int j = 0; extensions[j] != NULL; ++j)
+        {
+            if (strcmp(ext.c_str(), extensions[j]) == 0)
+                r = true;
+        }
+
+        g_strfreev(extensions);
+
+        if (r)
+            break;
+    }
+
+    return r;
 }
 
 bool Image::is_webm(const std::string &path)
@@ -54,12 +67,49 @@ const Glib::RefPtr<Gdk::Pixbuf>& Image::get_missing_pixbuf()
     return pixbuf;
 }
 
+static void* _def_bitmap_create(int width, int height)
+{
+    return new unsigned char[width * height * 4];
+}
+
+static void _def_bitmap_destroy(void *bitmap)
+{
+    if (bitmap)
+    {
+        delete[] static_cast<unsigned char*>(bitmap);
+        bitmap = nullptr;
+    }
+}
+
+static unsigned char* _def_bitmap_get_buffer(void *bitmap)
+{
+    return static_cast<unsigned char*>(bitmap);
+}
+
 Image::Image(const std::string &path)
   : m_isWebM(Image::is_webm(path)),
     m_Loading(true),
-    m_Path(path)
+    m_Path(path),
+    m_GIFanim(nullptr),
+    m_GIFcurFrame(0),
+    m_GIFcurLoop(1)
 {
+    m_BitmapCallbacks.bitmap_create      = _def_bitmap_create;
+    m_BitmapCallbacks.bitmap_destroy     = _def_bitmap_destroy;
+    m_BitmapCallbacks.bitmap_get_buffer  = _def_bitmap_get_buffer;
+    m_BitmapCallbacks.bitmap_test_opaque = nullptr;
+    m_BitmapCallbacks.bitmap_set_opaque  = nullptr;
+    m_BitmapCallbacks.bitmap_modified    = nullptr;
+}
 
+Image::~Image()
+{
+    if (m_GIFanim)
+    {
+        gif_finalise(m_GIFanim);
+        delete m_GIFanim;
+        m_GIFanim = nullptr;
+    }
 }
 
 std::string Image::get_filename() const
@@ -69,9 +119,50 @@ std::string Image::get_filename() const
             Glib::path_get_basename(m_Path));
 }
 
-const Glib::RefPtr<Gdk::PixbufAnimation>& Image::get_pixbuf()
+const Glib::RefPtr<Gdk::Pixbuf>& Image::get_pixbuf()
 {
     std::lock_guard<std::mutex> lock(m_Mutex);
+    // Get the current frame without advancing
+    if (m_GIFanim && m_GIFanim->frame_count > 0)
+        m_Pixbuf = get_gif_frame_pixbuf(false);
+
+    return m_Pixbuf;
+}
+
+const Glib::RefPtr<Gdk::Pixbuf>& Image::get_gif_frame_pixbuf(const bool advance)
+{
+    gif_result result = gif_decode_frame(m_GIFanim, m_GIFcurFrame);
+
+    if (result == GIF_OK)
+    {
+        m_Pixbuf = Gdk::Pixbuf::create_from_data(
+            static_cast<unsigned char*>(m_GIFanim->frame_image), Gdk::COLORSPACE_RGB, true, 8,
+            m_GIFanim->width, m_GIFanim->height, (m_GIFanim->width * 4 + 3) & ~3);
+
+        // Handle frame advacing and looping.
+        if (m_GIFanim->frame_count > 1 && advance)
+        {
+            // Currently on the last frame, reset to first frame unless we finished
+            // the final loop
+            if (m_GIFcurFrame == static_cast<int>(m_GIFanim->frame_count) - 1 && m_GIFcurLoop != m_GIFanim->loop_count)
+            {
+                // Only increment the loop counter if it's not looping forever.
+                if (m_GIFanim->loop_count > 0)
+                    ++m_GIFcurLoop;
+                m_GIFcurFrame = 0;
+            }
+            else if (m_GIFcurFrame < static_cast<int>(m_GIFanim->frame_count) - 1)
+            {
+                ++m_GIFcurFrame;
+            }
+        }
+    }
+    else
+    {
+        std::cerr << "Error while decoding GIF frame " << m_GIFcurFrame << " of " << m_Path << std::endl
+                  << "gif_result: " << result << std::endl;
+    }
+
     return m_Pixbuf;
 }
 
@@ -118,15 +209,49 @@ void Image::load_pixbuf(Glib::RefPtr<Gio::Cancellable> c)
     if (!m_Pixbuf && !m_isWebM)
     {
         Glib::RefPtr<Gio::File> file = Gio::File::create_for_path(m_Path);
-        GdkPixbufAnimation *p = gdk_pixbuf_animation_new_from_stream(
-            G_INPUT_STREAM(file->read()->gobj()), c->gobj(), NULL);
 
-        if (c->is_cancelled())
-            return;
+        std::array<unsigned char, 4> data;
+        file->read()->read(&data, 4);
 
+        if (is_gif(data.data()))
         {
-            std::lock_guard<std::mutex> lock(m_Mutex);
-            m_Pixbuf = Glib::wrap(p);
+            gif_result result;
+            char *gif_data;
+            gsize bufSize;
+            m_GIFanim = new gif_animation;
+
+            gif_create(m_GIFanim, &m_BitmapCallbacks);
+
+            // returns false if c was cancelled
+            if (file->load_contents(c, gif_data, bufSize))
+            {
+                do {
+                    result = gif_initialise(m_GIFanim, bufSize, reinterpret_cast<unsigned char*>(gif_data));
+                    if (result != GIF_OK && result != GIF_WORKING)
+                    {
+                        std::cerr << "Error while loading GIF " << m_Path << std::endl
+                                  << "gif_result: " << result << std::endl;
+                        break;
+                    }
+                    else if (result == GIF_OK)
+                    {
+                        // Load the first frame
+                        m_Pixbuf = get_gif_frame_pixbuf(false);
+                    }
+                } while (result != GIF_OK);
+            }
+        }
+        else
+        {
+            Glib::RefPtr<Gdk::Pixbuf> p = Gdk::Pixbuf::create_from_stream(file->read(), c);
+
+            if (c->is_cancelled())
+                return;
+
+            {
+                std::lock_guard<std::mutex> lock(m_Mutex);
+                m_Pixbuf = p;
+            }
         }
 
         m_Loading = false;
@@ -139,6 +264,46 @@ void Image::reset_pixbuf()
     m_Loading = true;
     std::lock_guard<std::mutex> lock(m_Mutex);
     m_Pixbuf.reset();
+
+    if (m_GIFanim)
+    {
+        gif_finalise(m_GIFanim);
+        delete m_GIFanim;
+
+        m_GIFanim = nullptr;
+        reset_gif_animation();
+    }
+}
+
+void Image::reset_gif_animation()
+{
+    m_GIFcurFrame = 0;
+    m_GIFcurLoop  = 1;
+}
+
+bool Image::get_gif_finished_looping() const
+{
+    return m_GIFanim &&
+           m_GIFcurLoop == m_GIFanim->loop_count &&
+           m_GIFcurFrame == static_cast<int>(m_GIFanim->frame_count) - 1;
+}
+
+unsigned int Image::get_gif_frame_delay() const
+{
+    if (!m_GIFanim)
+        return 0;
+    int delay = m_GIFanim->frames[m_GIFcurFrame].frame_delay;
+    // libnsgif stores delay in centiseconds, convert it to milliseconds.
+    // if delay is 0, use a 100ms delay by default
+    return delay ? delay * 10 : 100;
+}
+
+// This assumes data's length is at least 3
+bool Image::is_gif(const unsigned char *data)
+{
+    return data[0] == 'G' &&
+           data[1] == 'I' &&
+           data[2] == 'F';
 }
 
 void Image::create_thumbnail(Glib::RefPtr<Gio::Cancellable> c, bool save)

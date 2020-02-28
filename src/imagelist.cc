@@ -443,7 +443,7 @@ void ImageList::update_cache()
 
     // Free images that are no longer in the cache
     for (const auto i : diff)
-        if (i < m_Images.size() - 1)
+        if (i <= m_Images.size() - 1)
             m_Images[i]->reset_pixbuf();
 
     // Copy the imgaes into the queue and

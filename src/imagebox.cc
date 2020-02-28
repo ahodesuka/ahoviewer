@@ -141,6 +141,7 @@ void ImageBox::set_image(const std::shared_ptr<Image> &image)
 {
     if (image != m_Image)
     {
+        m_AnimConn.disconnect();
         m_ImageConn.disconnect();
         reset_slideshow();
 
@@ -149,6 +150,11 @@ void ImageBox::set_image(const std::shared_ptr<Image> &image)
         m_Playing = false;
         m_DrawingArea->hide();
 #endif // HAVE_GSTREAMER
+
+        // reset GIF stuff so if it stays cache and is viewed again it will
+        // start from the first frame
+        if (m_Image)
+            m_Image->reset_gif_animation();
 
         m_Image = image;
         m_FirstDraw = m_Loading = true;
@@ -180,8 +186,7 @@ void ImageBox::clear_image()
 
     m_StatusBar->clear_resolution();
     m_Image = nullptr;
-    m_PixbufAnim.reset();
-    m_PixbufAnimIter.reset();
+    m_Pixbuf.reset();
 }
 
 void ImageBox::update_background_color()
@@ -415,8 +420,9 @@ bool ImageBox::on_scroll_event(GdkEventScroll *e)
 
 void ImageBox::draw_image(bool scroll)
 {
-    if (!m_Image || (!m_Image->get_pixbuf() && m_Image->is_loading())
-        || (m_Image->is_webm() && m_Image->is_loading()))
+    if (!m_Image ||
+        (!m_Image->get_pixbuf() && !m_Image->is_animated_gif() && m_Image->is_loading()) ||
+        (m_Image->is_webm() && m_Image->is_loading()))
     {
         m_HScroll->hide();
         m_VScroll->hide();
@@ -471,25 +477,29 @@ void ImageBox::draw_image(bool scroll)
     else
 #endif // HAVE_GSTREAMER
     {
-        Glib::RefPtr<Gdk::PixbufAnimation> pixbuf_anim = m_Image->get_pixbuf();
-
-        if (pixbuf_anim)
+        Glib::RefPtr<Gdk::Pixbuf> pixbuf;
+        if (m_Image->is_animated_gif())
         {
-            if (m_PixbufAnim != pixbuf_anim)
-            {
-                m_PixbufAnim = pixbuf_anim;
+            pixbuf = m_Image->get_gif_frame_pixbuf();
+            m_AnimConn.disconnect();
+            if (!m_Image->get_gif_finished_looping())
+                m_AnimConn = Glib::signal_timeout().connect(
+                        sigc::mem_fun(*this, &ImageBox::update_animation),
+                        m_Image->get_gif_frame_delay());
+        }
+        else
+        {
+            pixbuf = m_Image->get_pixbuf();
+        }
 
-                m_AnimConn.disconnect();
-                m_PixbufAnimIter = m_PixbufAnim->get_iter(NULL);
-                // https://bugzilla.gnome.org/show_bug.cgi?id=688686
-                g_object_unref(m_PixbufAnimIter->gobj());
-                if (m_PixbufAnimIter->get_delay_time() >= 0)
-                    m_AnimConn = Glib::signal_timeout().connect(
-                            sigc::mem_fun(*this, &ImageBox::update_animation),
-                            m_PixbufAnimIter->get_delay_time());
+        if (pixbuf)
+        {
+            if (m_Pixbuf != pixbuf)
+            {
+                m_Pixbuf = pixbuf;
             }
 
-            origPixbuf = m_PixbufAnimIter->get_pixbuf();
+            origPixbuf = m_Pixbuf;
             tempPixbuf = origPixbuf;
 
             m_OrigWidth  = origPixbuf->get_width();
@@ -643,13 +653,12 @@ bool ImageBox::update_animation()
         return true;
 
     m_AnimConn.disconnect();
-    m_PixbufAnimIter->advance();
     queue_draw_image();
 
-    if (m_PixbufAnimIter->get_delay_time() >= 0)
+    if (!m_Image->get_gif_finished_looping())
         m_AnimConn = Glib::signal_timeout().connect(
                 sigc::mem_fun(*this, &ImageBox::update_animation),
-                m_PixbufAnimIter->get_delay_time());
+                m_Image->get_gif_frame_delay());
 
     return false;
 }

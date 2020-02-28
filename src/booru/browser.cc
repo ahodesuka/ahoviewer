@@ -225,7 +225,7 @@ void Browser::on_copy_image_data()
     }
     else if (!image->is_webm())
     {
-        Gtk::Clipboard::get()->set_image(image->get_pixbuf()->get_static_image());
+        Gtk::Clipboard::get()->set_image(image->get_pixbuf());
         // This might not actually do anything, but it's said to make the clipboard
         // persist even if this program closes (requires a clipboard manager that supports it)
         Gtk::Clipboard::get()->store();

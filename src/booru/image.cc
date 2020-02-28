@@ -25,7 +25,8 @@ Image::Image(const std::string &path, const std::string &url,
     m_LastDraw(std::chrono::steady_clock::now()),
     m_Curler(m_Url, m_Site->get_share_handle()),
     m_ThumbnailCurler(m_ThumbnailUrl, m_Site->get_share_handle()),
-    m_PixbufError(false)
+    m_PixbufError(false),
+    m_isGIFChecked(false)
 {
     m_ThumbnailPath = thumbPath;
 
@@ -99,9 +100,9 @@ void Image::load_pixbuf(Glib::RefPtr<Gio::Cancellable> c)
         {
             AhoViewer::Image::load_pixbuf(c);
         }
-        else if (!start_download() && !m_isWebM && m_Loader && m_Loader->get_animation())
+        else if (!start_download() && !m_isWebM && m_Loader && m_Loader->get_pixbuf())
         {
-            m_Pixbuf = m_Loader->get_animation();
+            m_Pixbuf = m_Loader->get_pixbuf();
         }
     }
 }
@@ -191,6 +192,16 @@ void Image::on_write(const unsigned char *d, size_t l)
     if (m_Curler.is_cancelled())
         return;
 
+    if (!m_GIFanim && !m_isGIFChecked && m_Curler.get_data_size() >= 4)
+    {
+        m_isGIFChecked = true;
+        if (is_gif(m_Curler.get_data()))
+        {
+            m_GIFanim = new gif_animation;
+            gif_create(m_GIFanim, &m_BitmapCallbacks);
+        }
+    }
+
     try
     {
         std::lock_guard<std::mutex> lock(m_DownloadMutex);
@@ -219,6 +230,20 @@ void Image::on_finished()
 {
     if (m_Curler.get_data_size() > 0)
     {
+        if (m_GIFanim)
+        {
+            gif_result result;
+            do {
+                result = gif_initialise(m_GIFanim, m_Curler.get_data_size(), m_Curler.get_data());
+                if (result != GIF_OK && result != GIF_WORKING)
+                {
+                    std::cerr << "Error while loading GIF " << m_Path << std::endl
+                              << "gif_result: " << result << std::endl;
+                    break;
+                }
+            } while (result != GIF_OK);
+        }
+
         m_Curler.save_file(m_Path);
         m_Curler.clear();
     }
@@ -257,7 +282,7 @@ void Image::on_area_prepared()
 
     if (!m_Curler.is_cancelled())
     {
-        m_Pixbuf = m_Loader->get_animation();
+        m_Pixbuf = m_Loader->get_pixbuf();
         m_SignalPixbufChanged();
     }
 }

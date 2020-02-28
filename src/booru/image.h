@@ -69,7 +69,7 @@ namespace AhoViewer
             Curler m_Curler,
                    m_ThumbnailCurler;
             Glib::RefPtr<Gdk::PixbufLoader> m_Loader;
-            bool m_PixbufError;
+            bool m_PixbufError, m_isGIFChecked;
             std::shared_timed_mutex m_ThumbnailLock;
 
             std::condition_variable m_DownloadCond, m_ThumbnailCond;

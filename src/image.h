@@ -3,6 +3,7 @@
 
 #include <gdkmm.h>
 #include <glibmm.h>
+#include <libnsgif/libnsgif.h>
 
 #include <atomic>
 #include <mutex>
@@ -20,7 +21,7 @@ namespace AhoViewer
     {
     public:
         Image(const std::string &path);
-        virtual ~Image() = default;
+        virtual ~Image();
 
         static bool is_valid(const std::string &path);
         static bool is_valid_extension(const std::string &path);
@@ -28,6 +29,7 @@ namespace AhoViewer
 
         const std::string get_path() const { return m_Path; }
         bool is_webm() const { return m_isWebM; }
+        bool is_animated_gif() const { return m_GIFanim && m_GIFanim->frame_count > 1; }
 
         // This is used to let the imagebox know that load_pixbuf has been or needs to be
         // called but has not yet finished loading.  When the image has finished loading
@@ -35,11 +37,16 @@ namespace AhoViewer
         // webm files will always return false as gstreamer will determine whether they are valid or not
         virtual bool is_loading() const { return !m_isWebM && m_Loading; }
         virtual std::string get_filename() const;
-        virtual const Glib::RefPtr<Gdk::PixbufAnimation>& get_pixbuf();
+        virtual const Glib::RefPtr<Gdk::Pixbuf>& get_pixbuf();
+        virtual const Glib::RefPtr<Gdk::Pixbuf>& get_gif_frame_pixbuf(const bool advance = true);
         virtual const Glib::RefPtr<Gdk::Pixbuf>& get_thumbnail(Glib::RefPtr<Gio::Cancellable> c);
 
         virtual void load_pixbuf(Glib::RefPtr<Gio::Cancellable> c);
         virtual void reset_pixbuf();
+        virtual void reset_gif_animation();
+
+        bool get_gif_finished_looping() const;
+        unsigned int get_gif_frame_delay() const;
 
         Glib::Dispatcher& signal_pixbuf_changed() { return m_SignalPixbufChanged; }
 
@@ -47,6 +54,7 @@ namespace AhoViewer
     protected:
         static bool is_webm(const std::string&);
 
+        bool is_gif(const unsigned char*);
         void create_thumbnail(Glib::RefPtr<Gio::Cancellable> c, bool save = true);
         Glib::RefPtr<Gdk::Pixbuf> create_pixbuf_at_size(const std::string &path,
                                                         const int w, const int h,
@@ -57,7 +65,11 @@ namespace AhoViewer
         std::string m_Path, m_ThumbnailPath;
 
         Glib::RefPtr<Gdk::Pixbuf> m_ThumbnailPixbuf;
-        Glib::RefPtr<Gdk::PixbufAnimation> m_Pixbuf;
+        Glib::RefPtr<Gdk::Pixbuf> m_Pixbuf;
+
+        gif_animation* m_GIFanim;
+        gif_bitmap_callback_vt m_BitmapCallbacks;
+        int m_GIFcurFrame, m_GIFcurLoop;
 
         std::mutex m_Mutex;
         Glib::Dispatcher m_SignalPixbufChanged;

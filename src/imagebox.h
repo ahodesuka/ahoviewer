@@ -123,8 +123,7 @@ namespace AhoViewer
         double m_Scale;
 
         std::shared_ptr<Image> m_Image;
-        Glib::RefPtr<Gdk::PixbufAnimation> m_PixbufAnim;
-        Glib::RefPtr<Gdk::PixbufAnimationIter> m_PixbufAnimIter;
+        Glib::RefPtr<Gdk::Pixbuf> m_Pixbuf;
         sigc::connection m_AnimConn,
                          m_CursorConn,
                          m_DrawConn,
