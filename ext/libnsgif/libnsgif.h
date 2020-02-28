@@ -18,10 +18,6 @@
 #include <stdbool.h>
 #include <inttypes.h>
 
-#if defined (__cplusplus)
-extern "C" {
-#endif
-
 /* Error return values */
 typedef enum {
         GIF_WORKING = 1,
@@ -183,9 +179,5 @@ gif_result gif_decode_frame(gif_animation *gif, unsigned int frame);
  * Releases any workspace held by a gif
  */
 void gif_finalise(gif_animation *gif);
-
-#if defined (__cplusplus)
-}
-#endif
 
 #endif

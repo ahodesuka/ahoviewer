@@ -9,8 +9,6 @@ CLEANFILES = ui.cc version.h
 BUILT_SOURCES = version
 
 ahoviewer_SOURCES =       \
-	../ext/libnsgif/libnsgif.c \
-	../ext/libnsgif/lzw.c \
 	archive/archive.cc    \
 	archive/image.cc      \
 	archive/rar.cc        \
@@ -52,15 +50,21 @@ ui.cc: ui.glade file2string
 	@./file2string $< $@ ahoviewer_ui
 endif
 
+if !SYSTEM_LIBNSGIF
+ahoviewer_SOURCES += \
+	../ext/libnsgif/libnsgif.c \
+	../ext/libnsgif/lzw.c
+endif
+
 PHONY: version
 
 version:
 	@cd .. && ./version.sh > /dev/null 2>&1
 
-ahoviewer_CPPFLAGS = @CPPFLAGS@ @LIBCURL_CPPFLAGS@ -I$(top_srcdir)/ext -DAHOVIEWER_DATADIR=\"$(datadir)\"
+ahoviewer_CPPFLAGS = @CPPFLAGS@ @LIBCURL_CPPFLAGS@ -DAHOVIEWER_DATADIR=\"$(datadir)\"
 ahoviewer_CXXFLAGS = @CXXFLAGS@ @gtkmm_CFLAGS@ @libconfig_CFLAGS@ @libxml2_CFLAGS@ \
 				@gstreamer_CFLAGS@ @libsecret_CFLAGS@ @libzip_CFLAGS@ \
-				@OpenSSL_CFLAGS@ @GnuTLS_CFLAGS@
+				@OpenSSL_CFLAGS@ @GnuTLS_CFLAGS@ @libnsgif_CFLAGS@
 ahoviewer_LDADD = @LIBS@ @gtkmm_LIBS@ @libconfig_LIBS@ @LIBCURL@ @libxml2_LIBS@ \
 				@gstreamer_LIBS@ @libsecret_LIBS@ @libunrar_LIBS@ @libzip_LIBS@ \
-				@OpenSSL_LIBS@ @GnuTLS_LIBS@
+				@OpenSSL_LIBS@ @GnuTLS_LIBS@ @libnsgif_LIBS@

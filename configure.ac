@@ -23,6 +23,8 @@ AC_SUBST(libsecret_LIBS)
 AC_SUBST(libunrar_LIBS)
 AC_SUBST(libzip_CFLAGS)
 AC_SUBST(libzip_LIBS)
+AC_SUBST(libnsgif_CFLAGS)
+AC_SUBST(libnsgif_LIBS)
 
 AC_PROG_CC
 AC_PROG_CXX
@@ -81,6 +83,14 @@ fi
 LIBCURL_CHECK_CONFIG(, 7.32.0,, [AC_MSG_ERROR([libcurl >= 7.32.0 not found])])
 
 PKG_CHECK_MODULES([libxml2], [libxml-2.0])
+
+PKG_CHECK_MODULES([libnsgif], [libnsgif],
+    AM_CONDITIONAL([SYSTEM_LIBNSGIF], [true]),
+    [
+        libnsgif_CFLAGS="-Iext/libnsgif"
+        AM_CONDITIONAL([SYSTEM_LIBNSGIF], [false])
+    ]
+)
 
 # Windows specific
 case "$target" in

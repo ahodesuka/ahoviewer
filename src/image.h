@@ -3,7 +3,10 @@
 
 #include <gdkmm.h>
 #include <glibmm.h>
-#include <libnsgif/libnsgif.h>
+
+extern "C" {
+#include <libnsgif.h>
+}
 
 #include <atomic>
 #include <mutex>
