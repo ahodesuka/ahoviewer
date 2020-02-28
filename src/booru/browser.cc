@@ -53,7 +53,6 @@ Browser::Browser(BaseObjectType *cobj, const Glib::RefPtr<Gtk::Builder> &bldr)
         if (get_realized())
             Settings.set("TagViewPosition", get_position());
     });
-
 }
 
 Browser::~Browser()

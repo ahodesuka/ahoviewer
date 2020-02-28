@@ -87,7 +87,7 @@ PKG_CHECK_MODULES([libxml2], [libxml-2.0])
 PKG_CHECK_MODULES([libnsgif], [libnsgif],
     AM_CONDITIONAL([SYSTEM_LIBNSGIF], [true]),
     [
-        libnsgif_CFLAGS="-Iext/libnsgif"
+        libnsgif_CFLAGS="-I\${abs_top_srcdir}/ext/libnsgif"
         AM_CONDITIONAL([SYSTEM_LIBNSGIF], [false])
     ]
 )
