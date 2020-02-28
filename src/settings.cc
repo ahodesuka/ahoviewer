@@ -45,7 +45,7 @@ SettingsManager::SettingsManager()
         { "CacheSize",       2   },
         { "SlideshowDelay",  5   },
         { "CursorHideDelay", 2   },
-        { "TagViewPosition", 560 },
+        { "TagViewPosition", 520 },
         { "SelectedBooru",   0   },
         { "BooruLimit",      50  },
         { "BooruWidth",      -1  },
