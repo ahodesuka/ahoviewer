@@ -1018,7 +1018,8 @@ void MainWindow::on_quit()
         }
     }
 
-    Settings.set("SelectedBooru", m_BooruBrowser->get_selected_booru());
+    if (m_BooruBrowser->is_realized())
+        Settings.set("SelectedBooru", m_BooruBrowser->get_selected_booru());
 
     for (const std::shared_ptr<Booru::Site> &site : Settings.get_sites())
         site->save_tags();
