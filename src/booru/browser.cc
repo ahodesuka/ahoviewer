@@ -1,5 +1,8 @@
+#pragma GCC diagnostic ignored "-Wdeprecated-declarations"
+
 #include <iostream>
 #include <glibmm/i18n.h>
+#include <gdk/gdkkeysyms-compat.h>
 
 #include "browser.h"
 using namespace AhoViewer::Booru;
@@ -23,6 +26,18 @@ Browser::Browser(BaseObjectType *cobj, const Glib::RefPtr<Gtk::Builder> &bldr)
     bldr->get_widget_derived("Booru::Browser::TagView",   m_TagView);
     bldr->get_widget_derived("StatusBar",                 m_StatusBar);
     bldr->get_widget("MainWindow::HPaned",                m_HPaned);
+
+    // Make the booru browser borders a little less ugly
+    auto css = Gtk::CssProvider::create();
+    css->load_from_data("notebook.booru-browser, notebook.booru-browser scrolledwindow \
+    {\
+        border-right-width:0;  \
+        border-bottom-width:0; \
+    }\
+    notebook.booru-browser scrolledwindow { border-left-width:0; }\
+    ");
+    get_style_context()->add_provider_for_screen(Gdk::Screen::get_default(),
+        css, GTK_STYLE_PROVIDER_PRIORITY_APPLICATION);
 
     m_TagEntry->signal_key_press_event().connect(
             sigc::mem_fun(*this, &Browser::on_entry_key_press_event), false);
@@ -57,6 +72,7 @@ Browser::Browser(BaseObjectType *cobj, const Glib::RefPtr<Gtk::Builder> &bldr)
 
 Browser::~Browser()
 {
+    m_ClosePage = true;
     delete m_Notebook;
 }
 
@@ -240,11 +256,8 @@ void Browser::on_realize()
     m_SaveImageAction = actionGroup->get_action("SaveImage");
     m_SaveImagesAction = actionGroup->get_action("SaveImages");
 
-    // Gtkmm2 doesn't implement activatable completely
-    GtkActivatable *able = GTK_ACTIVATABLE(m_NewTabButton->gobj());
-    gtk_activatable_set_related_action(able, actionGroup->get_action("NewTab")->gobj());
-    able = GTK_ACTIVATABLE(m_SaveImagesButton->gobj());
-    gtk_activatable_set_related_action(able, m_SaveImagesAction->gobj());
+    m_NewTabButton->set_related_action(actionGroup->get_action("NewTab"));
+    m_SaveImagesButton->set_related_action(m_SaveImagesAction);
 
     Gtk::VPaned::on_realize();
 
@@ -256,8 +269,12 @@ void Browser::on_realize()
     while (Glib::MainContext::get_default()->pending())
         Glib::MainContext::get_default()->iteration(true);
 
-    m_MinWidth = get_allocation().get_width();
-    set_size_request(std::max(Settings.get_int("BooruWidth"), m_MinWidth), -1);
+    Glib::signal_idle().connect_once([this]()
+    {
+        m_MinWidth = get_allocation().get_width();
+        set_size_request(std::max(Settings.get_int("BooruWidth"), m_MinWidth), -1);
+    });
+
     set_position(Settings.get_int("TagViewPosition"));
 
     m_PosChangedConn.unblock();

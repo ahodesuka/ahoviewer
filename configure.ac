@@ -38,7 +38,7 @@ PKG_CHECK_MODULES([glibmm], [glibmm-2.4 >= 2.46.0])
 # >= 2.6.0 since we use lambdas with return values
 PKG_CHECK_MODULES([libsigcpp], [sigc++-2.0 >= 2.6.0])
 
-PKG_CHECK_MODULES([gtkmm], [gtkmm-2.4 >= 2.20.0])
+PKG_CHECK_MODULES([gtkmm], [gtkmm-3.0 >= 3.20.0])
 
 PKG_CHECK_MODULES([libconfig], [libconfig++ >= 1.4])
 

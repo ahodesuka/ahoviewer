@@ -32,10 +32,10 @@ PreferencesDialog::PreferencesDialog(BaseObjectType *cobj, const Glib::RefPtr<Gt
 
     Gtk::ColorButton *bgColor = nullptr;
     bldr->get_widget("BackgroundColor", bgColor);
-    signal_realize().connect([=]() { bgColor->set_color(Settings.get_background_color()); });
+    signal_realize().connect([=]() { bgColor->set_rgba(Settings.get_background_color()); });
     bgColor->signal_color_set().connect([ &, bgColor ]()
     {
-        Settings.set_background_color(bgColor->get_color());
+        Settings.set_background_color(bgColor->get_rgba());
         m_SignalBGColorSet();
     });
 
@@ -44,7 +44,7 @@ PreferencesDialog::PreferencesDialog(BaseObjectType *cobj, const Glib::RefPtr<Gt
     resetBGColorButton->signal_clicked().connect([=]()
     {
         Settings.remove("BackgroundColor");
-        bgColor->set_color(Settings.get_background_color());
+        bgColor->set_rgba(Settings.get_background_color());
         m_SignalBGColorSet();
     });
 

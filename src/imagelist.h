@@ -53,7 +53,9 @@ namespace AhoViewer
 
             virtual void clear()
             {
+                m_CursorConn.block();
                 m_ListStore->clear();
+                m_CursorConn.unblock();
             }
             virtual void set_pixbuf(const size_t index, const Glib::RefPtr<Gdk::Pixbuf> &pixbuf)
             {
@@ -71,6 +73,7 @@ namespace AhoViewer
             ModelColumns m_Columns;
             Glib::RefPtr<Gtk::ListStore> m_ListStore;
             SignalSelectedChangedType m_SignalSelectedChanged;
+            sigc::connection m_CursorConn;
         private:
             void erase(const size_t i)
             {

@@ -1,4 +1,5 @@
 #include <glibmm/i18n.h>
+#include <gdk/gdkkeysyms-compat.h>
 
 #include "siteeditor.h"
 using namespace AhoViewer;
@@ -18,7 +19,6 @@ SiteEditor::SiteEditor(BaseObjectType *cobj, const Glib::RefPtr<Gtk::Builder> &b
     m_UrlColumn(Gtk::manage(new Gtk::TreeView::Column(_("Url"), m_Columns.url))),
     m_SampleColumn(Gtk::manage(new Gtk::TreeView::Column(_("Samples"), m_Columns.samples))),
     m_Sites(Settings.get_sites()),
-    m_ErrorPixbuf(Gtk::Invisible().render_icon(Gtk::Stock::DELETE, Gtk::ICON_SIZE_MENU)),
     m_SiteCheckEdit(false),
     m_SiteCheckEditSuccess(false)
 {
@@ -40,6 +40,9 @@ SiteEditor::SiteEditor(BaseObjectType *cobj, const Glib::RefPtr<Gtk::Builder> &b
         iter->set_value(m_Columns.samples, s->use_samples());
         iter->set_value(m_Columns.site, s);
     }
+
+    m_ErrorPixbuf = Gtk::IconTheme::get_default()->load_icon("action-unavailable",
+        Gtk::ICON_SIZE_MENU, Gtk::ICON_LOOKUP_USE_BUILTIN | Gtk::ICON_LOOKUP_GENERIC_FALLBACK);
 
     CellRendererIcon *iconRenderer = Gtk::manage(new CellRendererIcon(this));
     iconRenderer->property_xpad() = 2;

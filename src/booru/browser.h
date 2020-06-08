@@ -80,8 +80,8 @@ namespace AhoViewer
             StatusBar *m_StatusBar;
             Gtk::HPaned *m_HPaned;
 
-            Gtk::ToolButton *m_NewTabButton,
-                            *m_SaveImagesButton;
+            Gtk::Button *m_NewTabButton,
+                        *m_SaveImagesButton;
             Gtk::ComboBox *m_ComboBox;
             Gtk::Notebook *m_Notebook;
             Gtk::Menu *m_PopupMenu;

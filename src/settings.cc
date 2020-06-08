@@ -354,15 +354,15 @@ std::string SettingsManager::reset_keybinding(const std::string &group, const st
     return m_Keybindings[group][name] = DefaultKeybindings.at(group).at(name);
 }
 
-Gdk::Color SettingsManager::get_background_color() const
+Gdk::RGBA SettingsManager::get_background_color() const
 {
     if (Config.exists("BackgroundColor"))
-        return Gdk::Color(static_cast<const char*>(Config.lookup("BackgroundColor")));
+        return Gdk::RGBA(static_cast<const char*>(Config.lookup("BackgroundColor")));
 
     return ImageBox::DefaultBGColor;
 }
 
-void SettingsManager::set_background_color(const Gdk::Color &value)
+void SettingsManager::set_background_color(const Gdk::RGBA &value)
 {
     set("BackgroundColor", value.to_string());
 }

@@ -16,7 +16,7 @@ ThumbnailBar::ThumbnailBar(BaseObjectType *cobj, const Glib::RefPtr<Gtk::Builder
     m_TreeView->set_model(m_ListStore);
     m_TreeView->append_column("Thumbnail", m_Columns.pixbuf);
     m_TreeView->set_size_request(Image::ThumbnailSize + 9, -1);
-    m_TreeView->signal_cursor_changed().connect(sigc::mem_fun(*this, &ThumbnailBar::on_cursor_changed));
+    m_CursorConn = m_TreeView->signal_cursor_changed().connect(sigc::mem_fun(*this, &ThumbnailBar::on_cursor_changed));
 
     // If the user scrolls the widget, this will keep scroll_to_selected from being
     // called when thumbnails are being loaded

@@ -480,7 +480,7 @@ void Image::save_thumbnail(Glib::RefPtr<Gdk::Pixbuf> &pixbuf, const gchar *mimeT
     struct stat fileInfo;
     if (stat(m_Path.c_str(), &fileInfo) == 0)
     {
-        std::vector<std::string> opts =
+        const std::vector<Glib::ustring> opts =
         {
             "tEXt::Thumb::URI",
             "tEXt::Thumb::MTime",

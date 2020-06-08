@@ -89,14 +89,10 @@ void TagView::set_tags(const std::set<std::string> &tags)
         scroll_to_point(0, 0);
 }
 
-void TagView::on_style_changed(const Glib::RefPtr<Gtk::Style> &s)
+void TagView::on_style_updated()
 {
-    Gtk::TreeView::on_style_changed(s);
-
     m_PrevColor = m_Color;
-    m_Color = get_style()->get_bg(Gtk::STATE_SELECTED);
-
-    if (m_PrevColor != m_Color)
+    if (get_style_context()->lookup_color("theme_selected_bg_color", m_Color) && m_PrevColor != m_Color)
         update_favorite_icons();
 }
 
@@ -178,21 +174,16 @@ void TagView::update_favorite_icons()
 {
     Glib::RefPtr<Gdk::PixbufLoader> loader;
     std::string vgdata;
-    gchar *color = g_strdup_printf("#%02x%02x%02x", (m_Color.get_red()   >> 8) & 0xff,
-                                                    (m_Color.get_green() >> 8) & 0xff,
-                                                    (m_Color.get_blue()  >> 8) & 0xff);
 
     loader = Gdk::PixbufLoader::create("svg");
-    vgdata = Glib::ustring::compose(StarSVG, color);
+    vgdata = Glib::ustring::compose(StarSVG, m_Color.to_string());
     loader->write(reinterpret_cast<const unsigned char*>(vgdata.c_str()), vgdata.size());
     loader->close();
     m_StarPixbuf = loader->get_pixbuf();
 
     loader = Gdk::PixbufLoader::create("svg");
-    vgdata = Glib::ustring::compose(StarOutlineSVG, color);
+    vgdata = Glib::ustring::compose(StarOutlineSVG, m_Color.to_string());
     loader->write(reinterpret_cast<const unsigned char*>(vgdata.c_str()), vgdata.size());
     loader->close();
     m_StarOutlinePixbuf = loader->get_pixbuf();
-
-    g_free(color);
 }

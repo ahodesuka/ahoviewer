@@ -99,7 +99,7 @@ void TagEntry::on_cursor_on_match(const std::string &tag)
     set_text(prefix + tag + suffix);
     m_ChangedConn.unblock();
 
-    // This is needed to keep track of what part of the tag was completed
+    // This is used to keep track of what part of the tag was completed
     select_region(spos, tag.size() - (spos - prefix.size()) + spos);
 }
 

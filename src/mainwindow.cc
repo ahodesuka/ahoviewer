@@ -292,16 +292,16 @@ void MainWindow::get_drawable_area_size(int &w, int &h) const
     get_size(w, h);
 
     if (m_ThumbnailBar->get_visible())
-        w -= m_ThumbnailBar->size_request().width;
+        w -= m_ThumbnailBar->get_width();
 
     if (m_BooruBrowser->get_visible())
         w -= m_HPaned->get_position() + m_HPaned->get_handle_window()->get_width();
 
     if (m_MenuBar->get_visible())
-        h -= m_MenuBar->size_request().height;
+        h -= m_MenuBar->get_height();
 
     if (m_StatusBar->get_visible())
-        h -= m_StatusBar->size_request().height;
+        h -= m_StatusBar->get_height();
 }
 
 void MainWindow::on_realize()
@@ -347,7 +347,7 @@ bool MainWindow::on_window_state_event(GdkEventWindowState *e)
 void MainWindow::on_drag_data_received(const Glib::RefPtr<Gdk::DragContext> &ctx, int, int,
                                        const Gtk::SelectionData &data, guint, guint time)
 {
-    std::vector<std::string> uris = data.get_uris();
+    std::vector<Glib::ustring> uris = data.get_uris();
 
     if (uris.size())
     {
@@ -662,20 +662,20 @@ void MainWindow::create_actions()
     m_RecentAction->set_show_tips();
     m_RecentAction->set_sort_type(Gtk::RECENT_SORT_MRU);
 
-    Gtk::RecentFilter filter;
-    filter.add_pixbuf_formats();
+    Glib::RefPtr<Gtk::RecentFilter> filter = Gtk::RecentFilter::create();
+    filter->add_pixbuf_formats();
 
     for (const std::string &mimeType : Archive::MimeTypes)
-        filter.add_mime_type(mimeType);
+        filter->add_mime_type(mimeType);
 
     for (const std::string &ext : Archive::FileExtensions)
-        filter.add_pattern("*." + ext);
+        filter->add_pattern("*." + ext);
 
 #ifdef HAVE_GSTREAMER
 #ifdef _WIN32
-    filter.add_pattern("*.webm");
+    filter->add_pattern("*.webm");
 #else
-    filter.add_mime_type("video/webm");
+    filter->add_mime_type("video/webm");
 #endif // _WIN32
 #endif // HAVE_GSTREAMER
 
@@ -694,6 +694,7 @@ void MainWindow::create_actions()
 
 void MainWindow::update_widgets_visibility()
 {
+    bool bbRealized = m_BooruBrowser->get_realized();
     // Get all the visibility settings for this window instead of the global
     // Settings (which may have been modified by another window)
     bool hideAll = Glib::RefPtr<Gtk::ToggleAction>::cast_static(
@@ -713,7 +714,10 @@ void MainWindow::update_widgets_visibility()
     m_ThumbnailBar->set_visible(!hideAll && thumbnailBarVisible &&
                                 !booruBrowserVisible && !m_LocalImageList->empty());
 
-    m_ImageBox->queue_draw_image();
+    if (bbRealized)
+        m_ImageBox->queue_draw_image();
+    else
+        m_BooruBrowser->signal_realize().connect([this](){ m_ImageBox->queue_draw_image(); });
     set_sensitives();
 }
 
@@ -899,38 +903,42 @@ void MainWindow::on_connect_proxy(const Glib::RefPtr<Gtk::Action> &action, Gtk::
 void MainWindow::on_open_file_dialog()
 {
     Gtk::FileChooserDialog dialog(*this, "Open", Gtk::FILE_CHOOSER_ACTION_OPEN);
-    Gtk::FileFilter filter, imageFilter, archiveFilter;
+    Glib::RefPtr<Gtk::FileFilter> filter, imageFilter, archiveFilter;
+
+    filter = Gtk::FileFilter::create();
+    imageFilter = Gtk::FileFilter::create();
+    archiveFilter = Gtk::FileFilter::create();
 
     dialog.add_button(Gtk::Stock::CANCEL, Gtk::RESPONSE_CANCEL);
     dialog.add_button("Open", Gtk::RESPONSE_OK);
 
-    filter.set_name(_("All Files"));
-    imageFilter.set_name(_("All Images"));
-    archiveFilter.set_name(_("All Archives"));
+    filter->set_name(_("All Files"));
+    imageFilter->set_name(_("All Images"));
+    archiveFilter->set_name(_("All Archives"));
 
-    filter.add_pixbuf_formats();
-    imageFilter.add_pixbuf_formats();
+    filter->add_pixbuf_formats();
+    imageFilter->add_pixbuf_formats();
 
 #ifdef HAVE_GSTREAMER
 #ifdef _WIN32
-    filter.add_pattern("*.webm");
-    imageFilter.add_pattern("*.webm");
+    filter->add_pattern("*.webm");
+    imageFilter->add_pattern("*.webm");
 #else
-    filter.add_mime_type("video/webm");
-    imageFilter.add_mime_type("video/webm");
+    filter->add_mime_type("video/webm");
+    imageFilter->add_mime_type("video/webm");
 #endif // _WIN32
 #endif // HAVE_GSTREAMER
 
     for (const std::string &mimeType : Archive::MimeTypes)
     {
-        filter.add_mime_type(mimeType);
-        archiveFilter.add_mime_type(mimeType);
+        filter->add_mime_type(mimeType);
+        archiveFilter->add_mime_type(mimeType);
     }
 
     for (const std::string &ext : Archive::FileExtensions)
     {
-        filter.add_pattern("*." + ext);
-        archiveFilter.add_pattern("*." + ext);
+        filter->add_pattern("*." + ext);
+        archiveFilter->add_pattern("*." + ext);
     }
 
     dialog.add_filter(filter);
@@ -996,30 +1004,27 @@ void MainWindow::on_quit()
 {
     if (m_BooruBrowser->get_realized())
     {
-        Settings.set("TagViewPosition", m_BooruBrowser->get_position());
         Settings.set("BooruWidth", m_HPaned->get_position());
-
-        // ActionName => SettingKey
-        std::map<std::string, std::string> widgetVis =
-        {
-            { "ToggleHideAll",      "HideAll"             },
-            { "ToggleMenuBar",      "MenuBarVisible"      },
-            { "ToggleStatusBar",    "StatusBarVisible"    },
-            { "ToggleScrollbars",   "ScrollbarsVisible"   },
-            { "ToggleBooruBrowser", "BooruBrowserVisible" },
-            { "ToggleThumbnailBar", "ThumbnailBarVisible" },
-        };
-
-        for (auto w : widgetVis)
-        {
-            bool v = Glib::RefPtr<Gtk::ToggleAction>::cast_static(
-                m_ActionGroup->get_action(w.first))->get_active();
-            Settings.set(w.second, v);
-        }
+        Settings.set("SelectedBooru", m_BooruBrowser->get_selected_booru());
     }
 
-    if (m_BooruBrowser->is_realized())
-        Settings.set("SelectedBooru", m_BooruBrowser->get_selected_booru());
+    // ActionName => SettingKey
+    std::map<std::string, std::string> widgetVis =
+    {
+        { "ToggleHideAll",      "HideAll"             },
+        { "ToggleMenuBar",      "MenuBarVisible"      },
+        { "ToggleStatusBar",    "StatusBarVisible"    },
+        { "ToggleScrollbars",   "ScrollbarsVisible"   },
+        { "ToggleBooruBrowser", "BooruBrowserVisible" },
+        { "ToggleThumbnailBar", "ThumbnailBarVisible" },
+    };
+
+    for (auto w : widgetVis)
+    {
+        bool v = Glib::RefPtr<Gtk::ToggleAction>::cast_static(
+            m_ActionGroup->get_action(w.first))->get_active();
+        Settings.set(w.second, v);
+    }
 
     for (const std::shared_ptr<Booru::Site> &site : Settings.get_sites())
         site->save_tags();
@@ -1239,23 +1244,21 @@ void MainWindow::on_save_image()
     else if (archive)
     {
         Gtk::Window *window = static_cast<Gtk::Window*>(get_toplevel());
-        Gtk::FileChooserDialog dialog(*window, "Save Image As", Gtk::FILE_CHOOSER_ACTION_SAVE);
-        dialog.set_modal();
+        auto dialog = Gtk::FileChooserNative::create("Save Image As",
+            *window, Gtk::FILE_CHOOSER_ACTION_SAVE, _("Save"), _("Cancel"));
+        dialog->set_modal();
 
         const std::shared_ptr<Archive::Image> image =
             std::static_pointer_cast<Archive::Image>(m_ActiveImageList->get_current());
 
-        dialog.add_button(Gtk::Stock::CANCEL, Gtk::RESPONSE_CANCEL);
-        dialog.add_button("Save", Gtk::RESPONSE_OK);
-
         if (!m_LastSavePath.empty())
-            dialog.set_current_folder(m_LastSavePath);
+            dialog->set_current_folder(m_LastSavePath);
 
-        dialog.set_current_name(Glib::path_get_basename(image->get_filename()));
+        dialog->set_current_name(Glib::path_get_basename(image->get_filename()));
 
-        if (dialog.run() == Gtk::RESPONSE_OK)
+        if (dialog->run() == Gtk::RESPONSE_OK)
         {
-            std::string path = dialog.get_filename();
+            std::string path = dialog->get_filename();
             m_LastSavePath = Glib::path_get_dirname(path);
             image->save(path);
         }

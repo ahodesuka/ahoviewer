@@ -21,7 +21,7 @@ namespace AhoViewer
 
             SignalNewTabTag signal_new_tab_tag() const { return m_SignalNewTabTag; }
         protected:
-            virtual void on_style_changed(const Glib::RefPtr<Gtk::Style> &s) override;
+            virtual void on_style_updated() override;
             virtual bool on_button_press_event(GdkEventButton *e) override;
         private:
             struct ModelColumns : public Gtk::TreeModelColumnRecord
@@ -43,8 +43,8 @@ namespace AhoViewer
             TagEntry *m_TagEntry;
             const std::set<std::string>& m_FavoriteTags;
 
-            Gdk::Color m_Color,
-                       m_PrevColor;
+            Gdk::RGBA m_Color,
+                      m_PrevColor;
             Glib::RefPtr<Gdk::Pixbuf> m_StarPixbuf,
                                       m_StarOutlinePixbuf;
 

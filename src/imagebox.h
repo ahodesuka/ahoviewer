@@ -63,7 +63,7 @@ namespace AhoViewer
         sigc::signal<void> signal_slideshow_ended() const { return m_SignalSlideshowEnded; }
         sigc::signal<void> signal_image_drawn() const { return m_SignalImageDrawn; }
 
-        static Gdk::Color DefaultBGColor;
+        static Gdk::RGBA DefaultBGColor;
 
         // Action callbacks {{{
         void on_zoom_in();
@@ -117,7 +117,7 @@ namespace AhoViewer
         StatusBar *m_StatusBar;
         const MainWindow *m_MainWindow;
 
-        const Gdk::Cursor m_LeftPtrCursor, m_FleurCursor, m_BlankCursor;
+        const Glib::RefPtr<Gdk::Cursor> m_LeftPtrCursor, m_FleurCursor, m_BlankCursor;
 
         int m_OrigWidth, m_OrigHeight;
         double m_Scale;
@@ -130,7 +130,7 @@ namespace AhoViewer
                          m_ImageConn,
                          m_ScrollConn,
                          m_SlideshowConn,
-                         m_StyleChangedConn;
+                         m_StyleUpdatedConn;
 
         bool m_FirstDraw, m_RedrawQueued, m_Loading, m_ZoomScroll;
         ZoomMode m_ZoomMode;

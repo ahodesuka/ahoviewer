@@ -41,8 +41,8 @@ namespace AhoViewer
         bool get_geometry(int &x, int &y, int &w, int &h) const;
         void set_geometry(const int x, const int y, const int w, const int h);
 
-        Gdk::Color get_background_color() const;
-        void set_background_color(const Gdk::Color &value);
+        Gdk::RGBA get_background_color() const;
+        void set_background_color(const Gdk::RGBA &value);
 
         Booru::Site::Rating get_booru_max_rating() const;
         void set_booru_max_rating(const Booru::Site::Rating value);

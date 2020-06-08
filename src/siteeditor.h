@@ -58,36 +58,37 @@ namespace AhoViewer
                 { return m_PulseProperty.get_proxy(); }
             Glib::PropertyProxy<Glib::RefPtr<Gdk::Pixbuf>> property_pixbuf()
                 { return m_PixbufProperty.get_proxy(); }
-        protected:
-            virtual void get_size_vfunc(Gtk::Widget &widget,
-                                        const Gdk::Rectangle *cell_area,
-                                        int *x_offset,
-                                        int *y_offset,
-                                        int *width,
-                                        int *height) const override
+
+            virtual void get_preferred_width_vfunc(Gtk::Widget &widget,
+                                                   int &minimum_width,
+                                                   int &natural_width) const override
             {
                 if (m_LoadingProperty.get_value())
-                    m_SpinnerRenderer->get_size(widget, *cell_area, *x_offset, *y_offset, *width, *height);
+                    m_SpinnerRenderer->get_preferred_width(widget, minimum_width, natural_width);
                 else
-                    m_PixbufRenderer->get_size(widget, *cell_area, *x_offset, *y_offset, *width, *height);
-
-                Gtk::CellRenderer::get_size_vfunc(widget, cell_area, x_offset, y_offset, width, height);
+                    m_PixbufRenderer->get_preferred_width(widget, minimum_width, natural_width);
             }
-            virtual void render_vfunc(const Glib::RefPtr<Gdk::Drawable> &window,
-                                      Widget &widget,
-                                      const Gdk::Rectangle &bg_area,
-                                      const Gdk::Rectangle &cell_area,
-                                      const Gdk::Rectangle &expose_area,
+            virtual void get_preferred_height_vfunc(Gtk::Widget &widget,
+                                                   int &minimum_height,
+                                                   int &natural_height) const override
+            {
+                if (m_LoadingProperty.get_value())
+                    m_SpinnerRenderer->get_preferred_height(widget, minimum_height, natural_height);
+                else
+                    m_PixbufRenderer->get_preferred_height(widget, minimum_height, natural_height);
+            }
+            virtual void render_vfunc(const Cairo::RefPtr< ::Cairo::Context > &cr,
+                                      Gtk::Widget& widget,
+                                      const Gdk::Rectangle& background_area,
+                                      const Gdk::Rectangle& cell_area,
                                       Gtk::CellRendererState flags) override
             {
-                Gtk::CellRenderer::render_vfunc(window, widget, bg_area, cell_area, expose_area, flags);
+                Gtk::CellRenderer::render_vfunc(cr, widget, background_area, cell_area, flags);
 
                 if (m_LoadingProperty.get_value())
-                    m_SpinnerRenderer->render(Glib::RefPtr<Gdk::Window>::cast_static(window), widget,
-                                             bg_area, cell_area, expose_area, flags);
+                    m_SpinnerRenderer->render(cr, widget, background_area, cell_area, flags);
                 else
-                    m_PixbufRenderer->render(Glib::RefPtr<Gdk::Window>::cast_static(window), widget,
-                                             bg_area, cell_area, expose_area, flags);
+                    m_PixbufRenderer->render(cr, widget, background_area, cell_area, flags);
             }
         private:
             bool update_spinner()

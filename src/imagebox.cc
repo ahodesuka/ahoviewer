@@ -44,13 +44,14 @@ gboolean ImageBox::bus_cb(GstBus*, GstMessage *message, void *userp)
 }
 #endif // HAVE_GSTREAMER
 
-Gdk::Color ImageBox::DefaultBGColor = Gdk::Color();
+#include <iostream>
+Gdk::RGBA ImageBox::DefaultBGColor = Gdk::RGBA();
 
 ImageBox::ImageBox(BaseObjectType *cobj, const Glib::RefPtr<Gtk::Builder> &bldr)
   : Gtk::EventBox(cobj),
-    m_LeftPtrCursor(Gdk::LEFT_PTR),
-    m_FleurCursor(Gdk::FLEUR),
-    m_BlankCursor(Gdk::BLANK_CURSOR),
+    m_LeftPtrCursor(Gdk::Cursor::create(Gdk::LEFT_PTR)),
+    m_FleurCursor(Gdk::Cursor::create(Gdk::FLEUR)),
+    m_BlankCursor(Gdk::Cursor::create(Gdk::BLANK_CURSOR)),
     m_RedrawQueued(false),
     m_ZoomScroll(false),
     m_ZoomMode(Settings.get_zoom_mode()),
@@ -114,9 +115,9 @@ ImageBox::ImageBox(BaseObjectType *cobj, const Glib::RefPtr<Gtk::Builder> &bldr)
         });
 #endif // HAVE_GSTREAMER
 
-    m_StyleChangedConn = m_Layout->signal_style_changed().connect([&](const Glib::RefPtr<Gtk::Style>&)
+    m_StyleUpdatedConn = m_Layout->signal_style_updated().connect([&]()
     {
-        DefaultBGColor = m_Layout->get_style()->get_bg(Gtk::STATE_NORMAL);
+        m_Layout->get_style_context()->lookup_color("theme_bg_color", DefaultBGColor);
     });
 }
 
@@ -139,6 +140,9 @@ void ImageBox::queue_draw_image(const bool scroll)
 
 void ImageBox::set_image(const std::shared_ptr<Image> &image)
 {
+    if (!image)
+        return;
+
     if (image != m_Image)
     {
         m_AnimConn.disconnect();
@@ -191,9 +195,10 @@ void ImageBox::clear_image()
 
 void ImageBox::update_background_color()
 {
-    m_StyleChangedConn.block();
-    m_Layout->modify_bg(Gtk::STATE_NORMAL, Settings.get_background_color());
-    m_StyleChangedConn.unblock();
+    auto css = Gtk::CssProvider::create();
+    css->load_from_data(Glib::ustring::compose("widget.imagebox{background:%1;}",
+        Settings.get_background_color().to_string()));
+    get_style_context()->add_provider(css, GTK_STYLE_PROVIDER_PRIORITY_APPLICATION);
 }
 
 void ImageBox::cursor_timeout()
@@ -293,7 +298,7 @@ void ImageBox::on_realize()
     m_NextAction = actionGroup->get_action("NextImage");
     m_PreviousAction = actionGroup->get_action("PreviousImage");
 
-    DefaultBGColor = m_Layout->get_style()->get_bg(Gtk::STATE_NORMAL);
+    m_Layout->get_style_context()->lookup_color("theme_bg_color", DefaultBGColor);
     update_background_color();
 
     Gtk::EventBox::on_realize();
@@ -345,7 +350,7 @@ bool ImageBox::on_button_release_event(GdkEventButton *e)
                 m_MainWindow->get_size(ww, wh);
 
                 if (m_VScroll->get_visible())
-                    w -= m_VScroll->size_request().width;
+                    w -= m_VScroll->get_width();
 
                 m_MainWindow->get_position(x, y);
                 x += ww - w;
@@ -388,12 +393,27 @@ bool ImageBox::on_motion_notify_event(GdkEventMotion *e)
     return Gtk::EventBox::on_motion_notify_event(e);
 }
 
+#include <iostream>
 bool ImageBox::on_scroll_event(GdkEventScroll *e)
 {
     grab_focus();
     cursor_timeout();
 
-    switch (e->direction)
+    GdkScrollDirection direction = GDK_SCROLL_SMOOTH;
+
+    if (e->direction == GDK_SCROLL_SMOOTH)
+    {
+        if (e->delta_y >= 0)
+            direction = GDK_SCROLL_DOWN;
+        else if (e->delta_y < 0)
+            direction = GDK_SCROLL_UP;
+        else if (e->delta_x < 0)
+            direction = GDK_SCROLL_LEFT;
+        else if (e->delta_x >= 0)
+            direction = GDK_SCROLL_RIGHT;
+    }
+
+    switch (direction)
     {
         case GDK_SCROLL_UP:
             if ((e->state & GDK_CONTROL_MASK) == GDK_CONTROL_MASK)
@@ -413,6 +433,8 @@ bool ImageBox::on_scroll_event(GdkEventScroll *e)
         case GDK_SCROLL_RIGHT:
             scroll(300, 0);
             return true;
+        case GDK_SCROLL_SMOOTH:
+            return false;
     }
 
     return Gtk::EventBox::on_scroll_event(e);
@@ -520,8 +542,8 @@ void ImageBox::draw_image(bool scroll)
     int windowWidth, windowHeight;
     m_MainWindow->get_drawable_area_size(windowWidth, windowHeight);
 
-    int layoutWidth  = windowWidth - m_VScroll->size_request().width,
-        layoutHeight = windowHeight - m_HScroll->size_request().height;
+    int layoutWidth  = windowWidth - m_VScroll->get_width(),
+        layoutHeight = windowHeight - m_HScroll->get_height();
 
     int w            = windowWidth,
         h            = windowHeight,
