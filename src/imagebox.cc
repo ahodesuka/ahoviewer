@@ -44,7 +44,6 @@ gboolean ImageBox::bus_cb(GstBus*, GstMessage *message, void *userp)
 }
 #endif // HAVE_GSTREAMER
 
-#include <iostream>
 Gdk::RGBA ImageBox::DefaultBGColor = Gdk::RGBA();
 
 ImageBox::ImageBox(BaseObjectType *cobj, const Glib::RefPtr<Gtk::Builder> &bldr)
@@ -393,7 +392,6 @@ bool ImageBox::on_motion_notify_event(GdkEventMotion *e)
     return Gtk::EventBox::on_motion_notify_event(e);
 }
 
-#include <iostream>
 bool ImageBox::on_scroll_event(GdkEventScroll *e)
 {
     grab_focus();
