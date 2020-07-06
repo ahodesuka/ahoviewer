@@ -7,11 +7,6 @@ using namespace AhoViewer::Booru;
 
 #include "settings.h"
 
-// Fixes issue with winnt.h
-#ifdef DELETE
-#undef DELETE
-#endif
-
 SiteEditor::SiteEditor(BaseObjectType *cobj, const Glib::RefPtr<Gtk::Builder> &bldr)
   : Gtk::TreeView(cobj),
     m_Model(Gtk::ListStore::create(m_Columns)),
@@ -41,7 +36,7 @@ SiteEditor::SiteEditor(BaseObjectType *cobj, const Glib::RefPtr<Gtk::Builder> &b
         iter->set_value(m_Columns.site, s);
     }
 
-    m_ErrorPixbuf = Gtk::IconTheme::get_default()->load_icon("action-unavailable",
+    m_ErrorPixbuf = Gtk::IconTheme::get_default()->load_icon("edit-delete",
         Gtk::ICON_SIZE_MENU, Gtk::ICON_LOOKUP_USE_BUILTIN | Gtk::ICON_LOOKUP_GENERIC_FALLBACK);
 
     CellRendererIcon *iconRenderer = Gtk::manage(new CellRendererIcon(this));
