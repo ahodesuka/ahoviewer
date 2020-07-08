@@ -14,7 +14,7 @@ namespace AhoViewer
 {
     class MainWindow;
     class StatusBar;
-    class ImageBox : public Gtk::EventBox
+    class ImageBox : public Gtk::ScrolledWindow
     {
     public:
         enum class ZoomMode : char
@@ -95,8 +95,8 @@ namespace AhoViewer
         static constexpr double SmoothScrollStep = 1000.0 / 60.0;
 
         Gtk::Layout *m_Layout;
-        Gtk::HScrollbar *m_HScroll;
-        Gtk::VScrollbar *m_VScroll;
+        Gtk::Scrollbar *m_HScroll;
+        Gtk::Scrollbar *m_VScroll;
         Gtk::Image *m_GtkImage;
         Gtk::DrawingArea *m_DrawingArea;
         Gtk::Menu *m_PopupMenu;

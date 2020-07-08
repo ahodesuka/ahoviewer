@@ -47,7 +47,7 @@ gboolean ImageBox::bus_cb(GstBus*, GstMessage *message, void *userp)
 Gdk::RGBA ImageBox::DefaultBGColor = Gdk::RGBA();
 
 ImageBox::ImageBox(BaseObjectType *cobj, const Glib::RefPtr<Gtk::Builder> &bldr)
-  : Gtk::EventBox(cobj),
+  : Gtk::ScrolledWindow(cobj),
     m_LeftPtrCursor(Gdk::Cursor::create(Gdk::LEFT_PTR)),
     m_FleurCursor(Gdk::Cursor::create(Gdk::FLEUR)),
     m_BlankCursor(Gdk::Cursor::create(Gdk::BLANK_CURSOR)),
@@ -58,15 +58,15 @@ ImageBox::ImageBox(BaseObjectType *cobj, const Glib::RefPtr<Gtk::Builder> &bldr)
     m_ZoomPercent(100)
 {
     bldr->get_widget("ImageBox::Layout",       m_Layout);
-    bldr->get_widget("ImageBox::HScroll",      m_HScroll);
-    bldr->get_widget("ImageBox::VScroll",      m_VScroll);
     bldr->get_widget("ImageBox::Image",        m_GtkImage);
     bldr->get_widget("ImageBox::DrawingArea",  m_DrawingArea);
     bldr->get_widget_derived("StatusBar",      m_StatusBar);
     bldr->get_widget_derived("MainWindow",     m_MainWindow);
 
-    m_HAdjust = Glib::RefPtr<Gtk::Adjustment>::cast_static(bldr->get_object("ImageBox::HAdjust"));
-    m_VAdjust = Glib::RefPtr<Gtk::Adjustment>::cast_static(bldr->get_object("ImageBox::VAdjust"));
+    m_HScroll = get_hscrollbar();
+    m_VScroll = get_vscrollbar();
+    m_HAdjust = get_hadjustment();
+    m_VAdjust = get_vadjustment();
     m_UIManager = Glib::RefPtr<Gtk::UIManager>::cast_static(bldr->get_object("UIManager"));
 
 #ifdef HAVE_GSTREAMER
@@ -200,7 +200,7 @@ void ImageBox::clear_image()
 void ImageBox::update_background_color()
 {
     auto css = Gtk::CssProvider::create();
-    css->load_from_data(Glib::ustring::compose("widget.imagebox{background:%1;}",
+    css->load_from_data(Glib::ustring::compose("scrolledwindow#ImageBox{background:%1;}",
         Settings.get_background_color().to_string()));
     get_style_context()->add_provider(css, GTK_STYLE_PROVIDER_PRIORITY_APPLICATION);
 }
@@ -305,7 +305,7 @@ void ImageBox::on_realize()
     m_Layout->get_style_context()->lookup_color("theme_bg_color", DefaultBGColor);
     update_background_color();
 
-    Gtk::EventBox::on_realize();
+    Gtk::ScrolledWindow::on_realize();
 }
 
 bool ImageBox::on_button_press_event(GdkEventButton *e)
@@ -336,7 +336,7 @@ bool ImageBox::on_button_press_event(GdkEventButton *e)
         }
     }
 
-    return Gtk::EventBox::on_button_press_event(e);
+    return Gtk::ScrolledWindow::on_button_press_event(e);
 }
 
 bool ImageBox::on_button_release_event(GdkEventButton *e)
@@ -373,7 +373,7 @@ bool ImageBox::on_button_release_event(GdkEventButton *e)
         return true;
     }
 
-    return Gtk::EventBox::on_button_release_event(e);
+    return Gtk::ScrolledWindow::on_button_release_event(e);
 }
 
 bool ImageBox::on_motion_notify_event(GdkEventMotion *e)
@@ -394,7 +394,7 @@ bool ImageBox::on_motion_notify_event(GdkEventMotion *e)
         cursor_timeout();
     }
 
-    return Gtk::EventBox::on_motion_notify_event(e);
+    return Gtk::ScrolledWindow::on_motion_notify_event(e);
 }
 
 bool ImageBox::on_scroll_event(GdkEventScroll *e)
@@ -440,7 +440,7 @@ bool ImageBox::on_scroll_event(GdkEventScroll *e)
             return false;
     }
 
-    return Gtk::EventBox::on_scroll_event(e);
+    return Gtk::ScrolledWindow::on_scroll_event(e);
 }
 
 void ImageBox::draw_image(bool scroll)

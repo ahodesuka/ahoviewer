@@ -15,7 +15,7 @@ namespace AhoViewer
 {
     namespace Booru
     {
-        class Browser : public Gtk::VPaned
+        class Browser : public Gtk::Paned
         {
             using SignalPageChangedType = sigc::signal<void, Page*>;
         public:
@@ -27,7 +27,6 @@ namespace AhoViewer
                 { return static_cast<Page*>(m_Notebook->get_nth_page(m_Notebook->get_current_page())); }
             int get_selected_booru() const { return m_ComboBox->get_active_row_number(); }
             Gtk::Entry* get_tag_entry() const { return m_TagEntry; }
-            int get_min_width() const { return m_MinWidth; }
             std::string get_last_save_path() const { return m_LastSavePath; }
 
             void update_combobox_model();
@@ -78,7 +77,6 @@ namespace AhoViewer
                 { return Settings.get_sites()[m_ComboBox->get_active_row_number()]; }
 
             StatusBar *m_StatusBar;
-            Gtk::HPaned *m_HPaned;
 
             Gtk::Button *m_NewTabButton,
                         *m_SaveImagesButton;
@@ -92,7 +90,6 @@ namespace AhoViewer
             TagEntry *m_TagEntry;
             TagView *m_TagView;
 
-            int m_MinWidth;
             bool m_ClosePage;
             std::string m_LastSavePath;
 

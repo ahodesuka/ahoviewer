@@ -43,7 +43,7 @@ namespace AhoViewer
                    *m_Resolution,
                    *m_Filename,
                    *m_Message;
-        Gtk::VSeparator *m_FilenameSeparator;
+        Gtk::Separator *m_FilenameSeparator;
         Gtk::ProgressBar *m_ProgressBar;
         Priority m_MessagePriority,
                  m_ProgressPriority;

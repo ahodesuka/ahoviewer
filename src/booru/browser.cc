@@ -1,8 +1,6 @@
-#pragma GCC diagnostic ignored "-Wdeprecated-declarations"
-
 #include <iostream>
 #include <glibmm/i18n.h>
-#include <gdk/gdkkeysyms-compat.h>
+#include <gdk/gdkkeysyms.h>
 
 #include "browser.h"
 using namespace AhoViewer::Booru;
@@ -13,8 +11,7 @@ using namespace AhoViewer::Booru;
 #include "tempdir.h"
 
 Browser::Browser(BaseObjectType *cobj, const Glib::RefPtr<Gtk::Builder> &bldr)
-  : Gtk::VPaned(cobj),
-    m_MinWidth(0),
+  : Gtk::Paned(cobj),
     m_ClosePage(false),
     m_LastSavePath(Settings.get_string("LastSavePath"))
 {
@@ -25,7 +22,6 @@ Browser::Browser(BaseObjectType *cobj, const Glib::RefPtr<Gtk::Builder> &bldr)
     bldr->get_widget_derived("Booru::Browser::TagEntry",  m_TagEntry);
     bldr->get_widget_derived("Booru::Browser::TagView",   m_TagView);
     bldr->get_widget_derived("StatusBar",                 m_StatusBar);
-    bldr->get_widget("MainWindow::HPaned",                m_HPaned);
 
     // Make the booru browser borders a little less ugly
     auto css = Gtk::CssProvider::create();
@@ -259,7 +255,7 @@ void Browser::on_realize()
     m_NewTabButton->set_related_action(actionGroup->get_action("NewTab"));
     m_SaveImagesButton->set_related_action(m_SaveImagesAction);
 
-    Gtk::VPaned::on_realize();
+    Gtk::Paned::on_realize();
 
     get_window()->freeze_updates();
     m_PosChangedConn.block();
@@ -269,12 +265,6 @@ void Browser::on_realize()
     while (Glib::MainContext::get_default()->pending())
         Glib::MainContext::get_default()->iteration(true);
 
-    Glib::signal_idle().connect_once([this]()
-    {
-        m_MinWidth = get_allocation().get_width();
-        set_size_request(std::max(Settings.get_int("BooruWidth"), m_MinWidth), -1);
-    });
-
     set_position(Settings.get_int("TagViewPosition"));
 
     m_PosChangedConn.unblock();
@@ -283,7 +273,7 @@ void Browser::on_realize()
 
 void Browser::on_show()
 {
-    Gtk::VPaned::on_show();
+    Gtk::Paned::on_show();
     Page *page = get_active_page();
 
     if (page)
@@ -391,7 +381,7 @@ void Browser::connect_image_signals(const std::shared_ptr<Image> bimage)
 bool Browser::on_entry_key_press_event(GdkEventKey *e)
 {
     // we only care if enter/return was pressed while shift or no modifier was down
-    if ((e->keyval == GDK_Return || e->keyval == GDK_ISO_Enter || e->keyval == GDK_KP_Enter) &&
+    if ((e->keyval == GDK_KEY_Return || e->keyval == GDK_KEY_ISO_Enter || e->keyval == GDK_KEY_KP_Enter) &&
         ((e->state & GDK_SHIFT_MASK) == GDK_SHIFT_MASK || (e->state & Gtk::AccelGroup::get_default_mod_mask()) == 0))
     {
         std::string tags = m_TagEntry->get_text();
@@ -409,7 +399,7 @@ bool Browser::on_entry_key_press_event(GdkEventKey *e)
         m_TagView->clear();
         get_active_page()->search(get_active_site());
     }
-    else if (e->keyval == GDK_Escape)
+    else if (e->keyval == GDK_KEY_Escape)
     {
         m_SignalEntryBlur();
     }

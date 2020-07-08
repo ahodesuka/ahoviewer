@@ -48,18 +48,15 @@ MainWindow::MainWindow(BaseObjectType *cobj, const Glib::RefPtr<Gtk::Builder> &b
     m_Builder->get_widget("MainWindow::HPaned", m_HPaned);
     m_HPaned->property_position().signal_changed().connect([&]()
     {
-        if (!m_BooruBrowser->get_realized() || m_BooruBrowser->get_min_width() == 0)
+        if (!m_BooruBrowser->get_realized())
             return;
-
-        if (m_HPaned->get_position() < m_BooruBrowser->get_min_width())
-            m_HPaned->set_position(m_BooruBrowser->get_min_width());
 
         if (m_HPanedLastPos != m_HPaned->get_position())
         {
             m_HPanedLastPos = m_HPaned->get_position();
+            Settings.set("BooruWidth", m_HPanedLastPos);
             m_ImageBox->queue_draw_image();
         }
-        Settings.set("BooruWidth", m_HPaned->get_position());
     });
 
     m_UIManager = Glib::RefPtr<Gtk::UIManager>::cast_static(m_Builder->get_object("UIManager"));
@@ -684,12 +681,13 @@ void MainWindow::create_actions()
     // Add the accel group to the window.
     add_accel_group(m_UIManager->get_accel_group());
 
-    // Finally attach the menubar to the main window's table
-    Gtk::Table *table = nullptr;
-    m_Builder->get_widget("MainWindow::Table", table);
+    // Finally attach the menubar to the main window's grid
+    Gtk::Grid *grid = nullptr;
+    m_Builder->get_widget("MainWindow::Grid", grid);
 
     m_MenuBar = static_cast<Gtk::MenuBar*>(m_UIManager->get_widget("/MenuBar"));
-    table->attach(*m_MenuBar, 0, 2, 0, 1, Gtk::EXPAND | Gtk::FILL, Gtk::SHRINK | Gtk::FILL);
+    m_MenuBar->set_hexpand();
+    grid->attach(*m_MenuBar, 0, 0, 2, 1);
 }
 
 void MainWindow::update_widgets_visibility()

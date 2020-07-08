@@ -85,7 +85,7 @@ namespace AhoViewer
         ImageBox *m_ImageBox;
         StatusBar *m_StatusBar;
         Booru::Browser *m_BooruBrowser;
-        Gtk::HPaned *m_HPaned;
+        Gtk::Paned *m_HPaned;
 
         std::string m_LastSavePath;
 
