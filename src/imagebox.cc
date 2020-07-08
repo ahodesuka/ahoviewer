@@ -154,7 +154,7 @@ void ImageBox::set_image(const std::shared_ptr<Image> &image)
         m_DrawingArea->hide();
 #endif // HAVE_GSTREAMER
 
-        // reset GIF stuff so if it stays cache and is viewed again it will
+        // reset GIF stuff so if it stays cached and is viewed again it will
         // start from the first frame
         if (m_Image)
             m_Image->reset_gif_animation();
@@ -164,9 +164,14 @@ void ImageBox::set_image(const std::shared_ptr<Image> &image)
 
         m_ImageConn = m_Image->signal_pixbuf_changed().connect(
                 sigc::bind(sigc::mem_fun(*this, &ImageBox::queue_draw_image), false));
+
+        queue_draw_image(true);
+    }
+    else
+    {
+        queue_draw_image();
     }
 
-    queue_draw_image(true);
 }
 
 void ImageBox::clear_image()
