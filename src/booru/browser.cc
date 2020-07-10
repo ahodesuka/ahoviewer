@@ -25,13 +25,11 @@ Browser::Browser(BaseObjectType *cobj, const Glib::RefPtr<Gtk::Builder> &bldr)
 
     // Make the booru browser borders a little less ugly
     auto css = Gtk::CssProvider::create();
-    css->load_from_data("notebook.booru-browser, notebook.booru-browser scrolledwindow \
+    css->load_from_data("notebook.booru-browser \
     {\
         border-right-width:0;  \
         border-bottom-width:0; \
-    }\
-    notebook.booru-browser scrolledwindow { border-left-width:0; }\
-    ");
+    }");
     get_style_context()->add_provider_for_screen(Gdk::Screen::get_default(),
         css, GTK_STYLE_PROVIDER_PRIORITY_APPLICATION);
 
@@ -51,7 +49,7 @@ Browser::Browser(BaseObjectType *cobj, const Glib::RefPtr<Gtk::Builder> &bldr)
     m_UIManager = Glib::RefPtr<Gtk::UIManager>::cast_static(bldr->get_object("UIManager"));
 
     m_Notebook->set_group_name(TempDir::get_instance().get_dir());
-    m_Notebook->signal_switch_page().connect(sigc::mem_fun(*this, &Browser::on_switch_page));
+    m_PageSwitchedConn = m_Notebook->signal_switch_page().connect(sigc::mem_fun(*this, &Browser::on_switch_page));
     m_Notebook->signal_page_removed().connect(sigc::mem_fun(*this, &Browser::on_page_removed));
     m_Notebook->signal_page_added().connect(sigc::mem_fun(*this, &Browser::on_page_added));
 
@@ -68,6 +66,10 @@ Browser::Browser(BaseObjectType *cobj, const Glib::RefPtr<Gtk::Builder> &bldr)
 
 Browser::~Browser()
 {
+    // Why isn't automatically disconnected immediatly in the notebook
+    // destructor?  Because GTK A SHIT
+    m_PageSwitchedConn.disconnect();
+
     delete m_Notebook;
 }
 
@@ -490,9 +492,9 @@ void Browser::on_page_added(Gtk::Widget *w, guint)
         Glib::signal_idle().connect_once([bb](){ bb->set_active(); });
 }
 
-void Browser::on_switch_page(void*, guint)
+void Browser::on_switch_page(Gtk::Widget *w, guint)
 {
-    Page *page = get_active_page();
+    Page *page = static_cast<Page*>(w);
     std::shared_ptr<Image> bimage = nullptr;
 
     if (!page->get_imagelist()->empty())

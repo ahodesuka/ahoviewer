@@ -64,7 +64,7 @@ namespace AhoViewer
             void on_page_removed(Gtk::Widget*, guint);
             void on_page_removed_cleanup();
             void on_page_added(Gtk::Widget *w, guint);
-            void on_switch_page(void*, guint);
+            void on_switch_page(Gtk::Widget*, guint);
             void on_imagelist_changed(const std::shared_ptr<AhoViewer::Image> &image);
             void on_new_tab_tag(const std::string &tag);
 
@@ -107,7 +107,8 @@ namespace AhoViewer
                              m_ImageProgConn,
                              m_ImageErrorConn,
                              m_PosChangedConn,
-                             m_SaveProgConn;
+                             m_SaveProgConn,
+                             m_PageSwitchedConn;
 
             SignalPageChangedType m_SignalPageChanged;
             sigc::signal<void> m_SignalEntryBlur;
