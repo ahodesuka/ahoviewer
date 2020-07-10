@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<!-- Generated with glade 3.22.2 -->
+<!-- Generated with glade 3.36.0 -->
 <interface>
-  <requires lib="gtk+" version="3.20"/>
+  <requires lib="gtk+" version="3.22"/>
   <object class="GtkEntryCompletion" id="Booru::Browser::TagEntryCompletion">
     <property name="minimum_key_length">3</property>
     <property name="inline_completion">True</property>
@@ -44,15 +44,12 @@
     <property name="step_increment">1</property>
     <property name="page_increment">10</property>
   </object>
-  <object class="GtkWindow" id="MainWindow">
+  <object class="GtkApplicationWindow" id="MainWindow">
     <property name="can_focus">False</property>
     <property name="title">ahoviewer</property>
     <property name="window_position">center</property>
     <property name="default_width">1000</property>
     <property name="default_height">740</property>
-    <child type="titlebar">
-      <placeholder/>
-    </child>
     <child>
       <object class="GtkGrid" id="MainWindow::Grid">
         <property name="visible">True</property>
@@ -87,6 +84,8 @@
           <object class="GtkPaned" id="MainWindow::HPaned">
             <property name="visible">True</property>
             <property name="can_focus">True</property>
+            <property name="hexpand">True</property>
+            <property name="vexpand">True</property>
             <property name="wide_handle">True</property>
             <child>
               <object class="GtkPaned" id="Booru::Browser">
@@ -192,6 +191,7 @@
                                 <property name="primary_icon_activatable">False</property>
                                 <property name="secondary_icon_activatable">False</property>
                                 <property name="placeholder_text" translatable="yes">search...</property>
+                                <property name="completion">Booru::Browser::TagEntryCompletion</property>
                               </object>
                               <packing>
                                 <property name="expand">True</property>
@@ -432,10 +432,10 @@
         <child>
           <placeholder/>
         </child>
-        <child>
-          <placeholder/>
-        </child>
       </object>
+    </child>
+    <child type="titlebar">
+      <placeholder/>
     </child>
   </object>
   <object class="GtkAboutDialog" id="AboutDialog">
@@ -445,9 +445,6 @@
     <property name="transient_for">MainWindow</property>
     <property name="comments" translatable="yes">ahoviewer is a GTK image viewer, manga reader, and booru browser.</property>
     <property name="logo_icon_name">image-missing</property>
-    <child type="titlebar">
-      <placeholder/>
-    </child>
     <child internal-child="vbox">
       <object class="GtkBox" id="dialog-vbox2">
         <property name="visible">True</property>
@@ -468,6 +465,9 @@
         </child>
       </object>
     </child>
+    <child type="titlebar">
+      <placeholder/>
+    </child>
   </object>
   <object class="GtkDialog" id="PreferencesDialog">
     <property name="can_focus">False</property>
@@ -478,9 +478,6 @@
     <property name="default_height">-1</property>
     <property name="type_hint">dialog</property>
     <property name="transient_for">MainWindow</property>
-    <child type="titlebar">
-      <placeholder/>
-    </child>
     <child internal-child="vbox">
       <object class="GtkBox" id="dialog-vbox3">
         <property name="visible">True</property>
@@ -1786,6 +1783,9 @@
     <action-widgets>
       <action-widget response="0">PreferencesDialog::CloseButton</action-widget>
     </action-widgets>
+    <child type="titlebar">
+      <placeholder/>
+    </child>
   </object>
   <object class="GtkUIManager" id="UIManager">
     <ui>

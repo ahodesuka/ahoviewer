@@ -459,8 +459,7 @@ bool Page::on_button_press_event(GdkEventButton *e)
             m_IconView->select_path(path);
             m_IconView->scroll_to_path(path, false, 0, 0);
 
-            if (m_PopupMenu)
-                m_PopupMenu->popup(e->button, e->time);
+            m_PopupMenu->popup_at_pointer((GdkEvent*)e);
 
             return true;
         }

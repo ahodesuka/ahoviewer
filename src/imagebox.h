@@ -55,7 +55,7 @@ namespace AhoViewer
 
         ScrollPos get_scroll_position() const
         {
-            return { m_HAdjust->get_value(), m_VAdjust->get_value(), m_ZoomMode };
+            return { get_hadjustment()->get_value(), get_vadjustment()->get_value(), m_ZoomMode };
         }
         // Scrollbar positions to be restored when next image is drawn
         void set_restore_scroll_position(const ScrollPos &s) { m_RestoreScrollPos = s; }
@@ -95,12 +95,10 @@ namespace AhoViewer
         static constexpr double SmoothScrollStep = 1000.0 / 60.0;
 
         Gtk::Layout *m_Layout;
-        Gtk::Scrollbar *m_HScroll;
-        Gtk::Scrollbar *m_VScroll;
         Gtk::Image *m_GtkImage;
         Gtk::DrawingArea *m_DrawingArea;
         Gtk::Menu *m_PopupMenu;
-        Glib::RefPtr<Gtk::Adjustment> m_HAdjust, m_VAdjust, m_ScrollAdjust;
+        Glib::RefPtr<Gtk::Adjustment> m_ScrollAdjust;
         Glib::RefPtr<Gtk::UIManager> m_UIManager;
         Glib::RefPtr<Gtk::Action> m_NextAction, m_PreviousAction;
 

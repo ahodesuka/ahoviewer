@@ -36,8 +36,11 @@ SiteEditor::SiteEditor(BaseObjectType *cobj, const Glib::RefPtr<Gtk::Builder> &b
         iter->set_value(m_Columns.site, s);
     }
 
-    m_ErrorPixbuf = Gtk::IconTheme::get_default()->load_icon("edit-delete",
-        Gtk::ICON_SIZE_MENU, Gtk::ICON_LOOKUP_USE_BUILTIN | Gtk::ICON_LOOKUP_GENERIC_FALLBACK);
+    try {
+        m_ErrorPixbuf = Gtk::IconTheme::get_default()->load_icon("edit-delete",
+            Gtk::ICON_SIZE_MENU, Gtk::ICON_LOOKUP_USE_BUILTIN | Gtk::ICON_LOOKUP_GENERIC_FALLBACK);
+    // TODO: Capture and print something useful
+    } catch (...) { }
 
     CellRendererIcon *iconRenderer = Gtk::manage(new CellRendererIcon(this));
     iconRenderer->property_xpad() = 2;

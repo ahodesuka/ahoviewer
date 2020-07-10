@@ -13,7 +13,7 @@
 namespace AhoViewer
 {
     class Application;
-    class MainWindow : public Gtk::Window
+    class MainWindow : public Gtk::ApplicationWindow
     {
         friend Application;
         friend Booru::Browser;

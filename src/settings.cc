@@ -48,7 +48,6 @@ SettingsManager::SettingsManager()
         { "TagViewPosition", 520 },
         { "SelectedBooru",   0   },
         { "BooruLimit",      50  },
-        { "BooruWidth",      -1  },
         { "Volume",          100 },
         { "ScrollPosH",      -1  },
         { "ScrollPosV",      -1  }
@@ -308,9 +307,9 @@ std::string SettingsManager::get_keybinding(const std::string &group, const std:
 // TODO: Add support for multiple keybindings per action
 bool SettingsManager::clear_keybinding(const std::string &value, std::string &group, std::string &name)
 {
-    for (const std::pair<std::string, std::map<std::string, std::string>> &i : m_Keybindings)
+    for (const std::pair<std::string, std::map<std::string, std::string>> i : m_Keybindings)
     {
-        for (const std::pair<std::string, std::string> &j : i.second)
+        for (const std::pair<std::string, std::string> j : i.second)
         {
             if (j.second == value)
             {
@@ -405,11 +404,11 @@ void SettingsManager::load_keybindings()
     {
         Setting &keys = Config.lookup("Keybindings");
 
-        for (const std::pair<std::string, std::map<std::string, std::string>> &i : DefaultKeybindings)
+        for (const std::pair<std::string, std::map<std::string, std::string>> i : DefaultKeybindings)
         {
             if (keys.exists(i.first))
             {
-                for (const std::pair<std::string, std::string> &j : i.second)
+                for (const std::pair<std::string, std::string> j : i.second)
                 {
                     if (keys[i.first.c_str()].exists(j.first))
                     {

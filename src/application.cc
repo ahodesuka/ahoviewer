@@ -72,9 +72,6 @@ static void glibmm_log_filter(const gchar *ld, GLogLevelFlags ll, const gchar *m
         g_log_default_handler(ld, ll, msg, ud);
 }
 
-extern const unsigned char ahoviewer_ui[];
-extern const unsigned long ahoviewer_ui_size;
-
 Application::Application()
   : Gio::Application("com.github.ahodesuka.ahoviewer", Gio::APPLICATION_HANDLES_OPEN)
 {
@@ -114,12 +111,11 @@ MainWindow* Application::create_window()
 
     try
     {
-        builder->add_from_string(reinterpret_cast<const char*>(ahoviewer_ui),
-                                 ahoviewer_ui_size);
+        builder->add_from_resource("/ui/ahoviewer.ui");
     }
     catch (const Glib::Error &ex)
     {
-        std::cerr << "Gtk::Builder::add_from_string: " << ex.what() << std::endl;
+        std::cerr << "Gtk::Builder::add_from_resource: " << ex.what() << std::endl;
         return nullptr;
     }
 

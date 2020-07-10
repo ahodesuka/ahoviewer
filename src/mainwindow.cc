@@ -15,7 +15,7 @@ PreferencesDialog *MainWindow::m_PreferencesDialog = nullptr;
 Gtk::AboutDialog *MainWindow::m_AboutDialog = nullptr;
 
 MainWindow::MainWindow(BaseObjectType *cobj, const Glib::RefPtr<Gtk::Builder> &bldr)
-  : Gtk::Window(cobj),
+  : Gtk::ApplicationWindow(cobj),
     m_Builder(bldr),
     m_LastSavePath(Settings.get_string("LastSavePath")),
     m_Width(0),
@@ -215,7 +215,7 @@ void MainWindow::open_file(const std::string &path, const int index, const bool 
     else
     {
         try { absolutePath = Glib::filename_from_uri(path); }
-        catch (Glib::ConvertError) { }
+        catch (Glib::ConvertError&) { }
 
         // From relative path
         if (absolutePath.empty())
@@ -303,7 +303,7 @@ void MainWindow::get_drawable_area_size(int &w, int &h) const
 
 void MainWindow::on_realize()
 {
-    Gtk::Window::on_realize();
+    Gtk::ApplicationWindow::on_realize();
 
     update_widgets_visibility();
 }
@@ -322,12 +322,12 @@ void MainWindow::on_check_resize()
 
     save_window_geometry();
 
-    Gtk::Window::on_check_resize();
+    Gtk::ApplicationWindow::on_check_resize();
 }
 
 bool MainWindow::on_delete_event(GdkEventAny *e)
 {
-    bool r = Gtk::Window::on_delete_event(e);
+    bool r = Gtk::ApplicationWindow::on_delete_event(e);
     on_quit();
 
     return r;
@@ -338,7 +338,7 @@ bool MainWindow::on_window_state_event(GdkEventWindowState *e)
     m_IsMinimized = (e->changed_mask & Gdk::WindowState::WINDOW_STATE_ICONIFIED)
         && (e->new_window_state & Gdk::WindowState::WINDOW_STATE_ICONIFIED);
 
-    return Gtk::Window::on_window_state_event(e);
+    return Gtk::ApplicationWindow::on_window_state_event(e);
 }
 
 void MainWindow::on_drag_data_received(const Glib::RefPtr<Gdk::DragContext> &ctx, int, int,
@@ -394,7 +394,7 @@ bool MainWindow::on_key_press_event(GdkEventKey *e)
         return m_BooruBrowser->get_tag_entry()->event(reinterpret_cast<GdkEvent*>(e));
     }
 
-    return Gtk::Window::on_key_press_event(e);
+    return Gtk::ApplicationWindow::on_key_press_event(e);
 }
 
 void MainWindow::set_active_imagelist(const std::shared_ptr<ImageList> &imageList)
@@ -1241,9 +1241,8 @@ void MainWindow::on_save_image()
     }
     else if (archive)
     {
-        Gtk::Window *window = static_cast<Gtk::Window*>(get_toplevel());
         auto dialog = Gtk::FileChooserNative::create("Save Image As",
-            *window, Gtk::FILE_CHOOSER_ACTION_SAVE, _("Save"), _("Cancel"));
+            *this, Gtk::FILE_CHOOSER_ACTION_SAVE, _("Save"), _("Cancel"));
         dialog->set_modal();
 
         const std::shared_ptr<Archive::Image> image =

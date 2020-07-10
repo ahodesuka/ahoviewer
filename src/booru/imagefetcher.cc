@@ -22,9 +22,9 @@ int ImageFetcher::socket_cb(CURL*, curl_socket_t s, int action, void *userp, voi
             fdp->chan = Glib::IOChannel::create_from_fd(s);
         }
 
-        Glib::IOCondition kind;
-        if (action & CURL_POLL_IN)  kind |= Glib::IO_IN;
-        if (action & CURL_POLL_OUT) kind |= Glib::IO_OUT;
+        Glib::IOCondition kind = static_cast<Glib::IOCondition>(
+            ((action & CURL_POLL_IN) ? Glib::IO_IN : 0) |
+            ((action & CURL_POLL_OUT) ? Glib::IO_OUT : 0));
 
         Glib::RefPtr<Glib::IOSource> source = fdp->chan->create_watch(kind);
         fdp->sockfd = s;

@@ -1,10 +1,6 @@
 bin_PROGRAMS = ahoviewer
 
-if !WINDOWS
-noinst_PROGRAM = file2string
-endif
-
-CLEANFILES = ui.cc version.h
+CLEANFILES = resources.cc version.h
 
 BUILT_SOURCES = version
 
@@ -30,11 +26,11 @@ ahoviewer_SOURCES =       \
 	main.cc               \
 	mainwindow.cc         \
 	preferences.cc        \
+	resources.cc          \
 	settings.cc           \
 	siteeditor.cc         \
 	statusbar.cc          \
 	thumbnailbar.cc       \
-	ui.cc                 \
 	version.cc
 
 if WINDOWS
@@ -42,13 +38,9 @@ ahoviewer_SOURCES += ahoviewer.rc
 SUFFIXES: .rc
 .rc.o:
 	$(target)-windres $^ -o $@
-
-ui.cc: ui.glade
-	@./file2string $< $@ ahoviewer_ui
-else
-ui.cc: ui.glade file2string
-	@./file2string $< $@ ahoviewer_ui
 endif
+resources.cc: ahoviewer.resources.xml ui/ahoviewer.ui
+	@glib-compile-resources --target=$@ --generate-source $<
 
 if !SYSTEM_LIBNSGIF
 ahoviewer_SOURCES += \

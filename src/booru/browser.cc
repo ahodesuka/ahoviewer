@@ -68,7 +68,6 @@ Browser::Browser(BaseObjectType *cobj, const Glib::RefPtr<Gtk::Builder> &bldr)
 
 Browser::~Browser()
 {
-    m_ClosePage = true;
     delete m_Notebook;
 }
 
@@ -440,21 +439,25 @@ void Browser::on_page_removed(Gtk::Widget *w, guint)
 
         m_SignalPageChanged(nullptr);
 
-        // This page was removed by being dnd'd to another window
         // signal_idle is used in case the tab is dnd'd into the same window
         if (!m_ClosePage)
-            Glib::signal_idle().connect_once([this]()
-            {
-                if (m_Notebook->get_n_pages() != 0)
-                    return;
-
-                MainWindow *w = static_cast<MainWindow*>(get_toplevel());
-                if (w->m_LocalImageList->empty() && !w->m_OriginalWindow)
-                    w->on_quit();
-            });
+            Glib::signal_idle().connect_once(
+                sigc::mem_fun(*this, &Browser::on_page_removed_cleanup));
     }
 
     m_ClosePage = false;
+}
+
+// This closes windows if a page was moved from them to a new window and the
+// window does not have anything else loaded and is not the "original window"
+void Browser::on_page_removed_cleanup()
+{
+    if (m_Notebook->get_n_pages() != 0)
+        return;
+
+    MainWindow *w = static_cast<MainWindow*>(get_toplevel());
+    if (w->m_LocalImageList->empty() && !w->m_OriginalWindow)
+        w->on_quit();
 }
 
 void Browser::on_page_added(Gtk::Widget *w, guint)

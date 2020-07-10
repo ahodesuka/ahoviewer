@@ -63,10 +63,6 @@ ImageBox::ImageBox(BaseObjectType *cobj, const Glib::RefPtr<Gtk::Builder> &bldr)
     bldr->get_widget_derived("StatusBar",      m_StatusBar);
     bldr->get_widget_derived("MainWindow",     m_MainWindow);
 
-    m_HScroll = get_hscrollbar();
-    m_VScroll = get_vscrollbar();
-    m_HAdjust = get_hadjustment();
-    m_VAdjust = get_vadjustment();
     m_UIManager = Glib::RefPtr<Gtk::UIManager>::cast_static(bldr->get_object("UIManager"));
 
 #ifdef HAVE_GSTREAMER
@@ -189,8 +185,8 @@ void ImageBox::clear_image()
     m_Playing = false;
 #endif // HAVE_GSTREAMER
 
-    m_HScroll->hide();
-    m_VScroll->hide();
+    get_hscrollbar()->hide();
+    get_vscrollbar()->hide();
 
     m_StatusBar->clear_resolution();
     m_Image = nullptr;
@@ -324,7 +320,7 @@ bool ImageBox::on_button_press_event(GdkEventButton *e)
                 m_PressY = m_PreviousY = e->y_root;
                 return true;
             case 3:
-                m_PopupMenu->popup(e->button, e->time);
+                m_PopupMenu->popup_at_pointer((GdkEvent*)e);
                 m_CursorConn.disconnect();
                 return true;
             case 8: // Back
@@ -353,8 +349,8 @@ bool ImageBox::on_button_release_event(GdkEventButton *e)
                 m_MainWindow->get_drawable_area_size(w, h);
                 m_MainWindow->get_size(ww, wh);
 
-                if (m_VScroll->get_visible())
-                    w -= m_VScroll->get_width();
+                if (get_vscrollbar()->get_visible())
+                    w -= get_vscrollbar()->get_width();
 
                 m_MainWindow->get_position(x, y);
                 x += ww - w;
@@ -449,8 +445,8 @@ void ImageBox::draw_image(bool scroll)
         (!m_Image->get_pixbuf() && m_Image->is_loading()) ||
         (m_Image->is_webm() && m_Image->is_loading()))
     {
-        m_HScroll->hide();
-        m_VScroll->hide();
+        get_hscrollbar()->hide();
+        get_vscrollbar()->hide();
         m_RedrawQueued = false;
         return;
     }
@@ -539,14 +535,14 @@ void ImageBox::draw_image(bool scroll)
         }
     }
 
-    m_HScroll->hide();
-    m_VScroll->hide();
+    get_hscrollbar()->hide();
+    get_vscrollbar()->hide();
 
     int windowWidth, windowHeight;
     m_MainWindow->get_drawable_area_size(windowWidth, windowHeight);
 
-    int layoutWidth  = windowWidth - m_VScroll->get_width(),
-        layoutHeight = windowHeight - m_HScroll->get_height();
+    int layoutWidth  = windowWidth - get_vscrollbar()->get_width(),
+        layoutHeight = windowHeight - get_hscrollbar()->get_height();
 
     int w            = windowWidth,
         h            = windowHeight,
@@ -585,7 +581,7 @@ void ImageBox::draw_image(bool scroll)
         (m_ZoomMode == ZoomMode::FIT_HEIGHT && scaledHeight == layoutHeight) ||
         (scaledWidth > layoutWidth && scaledHeight > windowHeight)))
     {
-        m_HScroll->show();
+        get_hscrollbar()->show();
         h = layoutHeight;
     }
 
@@ -593,19 +589,20 @@ void ImageBox::draw_image(bool scroll)
         (m_ZoomMode == ZoomMode::FIT_WIDTH && scaledWidth == layoutWidth) ||
         (scaledHeight > layoutHeight && scaledWidth > windowWidth)))
     {
-        m_VScroll->show();
+        get_vscrollbar()->show();
         w = layoutWidth;
     }
 
     int x = std::max(0, (w - scaledWidth) / 2),
         y = std::max(0, (h - scaledHeight) / 2);
-    double hAdjustVal, vAdjustVal;
+    double hAdjustVal = 0,
+           vAdjustVal = 0;
 
     // Used to keep the adjustments centered when manual zooming
     if (m_ZoomScroll)
     {
-        hAdjustVal = m_HAdjust->get_value() / std::max(m_HAdjust->get_upper() - m_HAdjust->get_page_size(), 1.0);
-        vAdjustVal = m_VAdjust->get_value() / std::max(m_VAdjust->get_upper() - m_VAdjust->get_page_size(), 1.0);
+        hAdjustVal = get_hadjustment()->get_value() / std::max(get_hadjustment()->get_upper() - get_hadjustment()->get_page_size(), 1.0);
+        vAdjustVal = get_vadjustment()->get_value() / std::max(get_vadjustment()->get_upper() - get_vadjustment()->get_page_size(), 1.0);
     }
 
     get_window()->freeze_updates();
@@ -632,25 +629,25 @@ void ImageBox::draw_image(bool scroll)
         if (m_RestoreScrollPos.v != -1 && m_RestoreScrollPos.zoom == m_ZoomMode)
         {
             // Restore and reset stored scrollbar positions
-            m_VAdjust->set_value(m_RestoreScrollPos.v);
-            m_HAdjust->set_value(m_RestoreScrollPos.h);
+            get_vadjustment()->set_value(m_RestoreScrollPos.v);
+            get_hadjustment()->set_value(m_RestoreScrollPos.h);
             m_RestoreScrollPos = { -1, -1, m_ZoomMode };
         }
         else
         {
-            m_VAdjust->set_value(0);
+            get_vadjustment()->set_value(0);
             if (Settings.get_bool("MangaMode"))
                 // Start at the right side of the image
-                m_HAdjust->set_value(m_HAdjust->get_upper() - m_HAdjust->get_page_size());
+                get_hadjustment()->set_value(get_hadjustment()->get_upper() - get_hadjustment()->get_page_size());
             else
-                m_HAdjust->set_value(0);
+                get_hadjustment()->set_value(0);
         }
         m_FirstDraw = false;
     }
     else if (m_ZoomScroll)
     {
-        m_HAdjust->set_value(std::max(hAdjustVal * (m_HAdjust->get_upper() - m_HAdjust->get_page_size()), 0.0));
-        m_VAdjust->set_value(std::max(vAdjustVal * (m_VAdjust->get_upper() - m_VAdjust->get_page_size()), 0.0));
+        get_hadjustment()->set_value(std::max(hAdjustVal * (get_hadjustment()->get_upper() - get_hadjustment()->get_page_size()), 0.0));
+        get_vadjustment()->set_value(std::max(vAdjustVal * (get_vadjustment()->get_upper() - get_vadjustment()->get_page_size()), 0.0));
         m_ZoomScroll = false;
     }
 
@@ -690,22 +687,22 @@ bool ImageBox::update_animation()
 
 void ImageBox::scroll(const int x, const int y, const bool panning, const bool fromSlideshow)
 {
-    int adjustUpperX = std::max(0, static_cast<int>((m_HAdjust->get_upper()) - m_HAdjust->get_page_size())),
-        adjustUpperY = std::max(0, static_cast<int>((m_VAdjust->get_upper()) - m_VAdjust->get_page_size()));
+    int adjustUpperX = std::max(0, static_cast<int>((get_hadjustment()->get_upper()) - get_hadjustment()->get_page_size())),
+        adjustUpperY = std::max(0, static_cast<int>((get_vadjustment()->get_upper()) - get_vadjustment()->get_page_size()));
 
     if (!fromSlideshow)
         reset_slideshow();
 
     if (panning)
     {
-        int nX = m_HAdjust->get_value() + x,
-            nY = m_VAdjust->get_value() + y;
+        int nX = get_hadjustment()->get_value() + x,
+            nY = get_vadjustment()->get_value() + y;
 
         if (nX <= adjustUpperX)
-            m_HAdjust->set_value(nX);
+            get_hadjustment()->set_value(nX);
 
         if (nY <= adjustUpperY)
-            m_VAdjust->set_value(nY);
+            get_vadjustment()->set_value(nY);
 #ifdef HAVE_GSTREAMER
         if (m_Playing && m_Image->is_webm())
             gst_video_overlay_expose(GST_VIDEO_OVERLAY(m_VideoSink));
@@ -730,8 +727,8 @@ void ImageBox::scroll(const int x, const int y, const bool panning, const bool f
         };
 
         // Scroll to next page
-        if ((m_HAdjust->get_value() == adjustUpperX && x > 0) ||
-            (m_VAdjust->get_value() == adjustUpperY && y > 0))
+        if ((get_hadjustment()->get_value() == adjustUpperX && x > 0) ||
+            (get_vadjustment()->get_value() == adjustUpperY && y > 0))
         {
             m_ScrollConn.disconnect();
 
@@ -741,19 +738,19 @@ void ImageBox::scroll(const int x, const int y, const bool panning, const bool f
                 m_NextAction->activate();
         }
         // Scroll to previous page
-        else if ((m_HAdjust->get_value() == 0 && x < 0) ||
-                 (m_VAdjust->get_value() == 0 && y < 0))
+        else if ((get_hadjustment()->get_value() == 0 && x < 0) ||
+                 (get_vadjustment()->get_value() == 0 && y < 0))
         {
             m_ScrollConn.disconnect();
             m_PreviousAction->activate();
         }
         else if (x != 0)
         {
-            smooth_scroll(round_scroll(m_HAdjust->get_value(), adjustUpperX, x), m_HAdjust);
+            smooth_scroll(round_scroll(get_hadjustment()->get_value(), adjustUpperX, x), get_hadjustment());
         }
         else if (y != 0)
         {
-            smooth_scroll(round_scroll(m_VAdjust->get_value(), adjustUpperY, y), m_VAdjust);
+            smooth_scroll(round_scroll(get_vadjustment()->get_value(), adjustUpperY, y), get_vadjustment());
         }
     }
 }

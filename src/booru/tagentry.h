@@ -28,9 +28,7 @@ namespace AhoViewer
                                    const Gtk::TreeModel::const_iterator&) { return true; }
 
             void on_text_changed();
-            static gboolean on_cursor_on_match_c(GtkEntryCompletion*, GtkTreeModel*,
-                                                 GtkTreeIter*, TagEntry*);
-            void on_cursor_on_match(const std::string &tag);
+            bool on_cursor_on_match(const Gtk::TreeIter &iter);
             bool on_match_selected(const Gtk::TreeIter &iter);
 
             // These are the tags used for completion

@@ -8,15 +8,12 @@ TagEntry::TagEntry(BaseObjectType *cobj, const Glib::RefPtr<Gtk::Builder> &bldr)
             bldr->get_object("Booru::Browser::TagEntryCompletion"));
 
     m_Model = Gtk::ListStore::create(m_Columns);
-    set_completion(m_TagCompletion);
 
     m_TagCompletion->set_match_func(sigc::mem_fun(*this, &TagEntry::match_func));
     m_TagCompletion->set_model(m_Model);
     m_TagCompletion->set_text_column(m_Columns.tag_column);
     m_TagCompletion->signal_match_selected().connect(sigc::mem_fun(*this, &TagEntry::on_match_selected), false);
-
-    // XXX: gtkmm's cursor-on-match signal seems to be broken.
-    g_signal_connect(m_TagCompletion->gobj(), "cursor-on-match", G_CALLBACK(on_cursor_on_match_c), this);
+    m_TagCompletion->signal_cursor_on_match().connect(sigc::mem_fun(*this, &TagEntry::on_cursor_on_match), false);
 
     m_ChangedConn = signal_changed().connect(sigc::mem_fun(*this, &TagEntry::on_text_changed));
 }
@@ -71,19 +68,9 @@ void TagEntry::on_text_changed()
     m_TagCompletion->complete();
 }
 
-gboolean TagEntry::on_cursor_on_match_c(GtkEntryCompletion*,
-        GtkTreeModel *model, GtkTreeIter *iter, TagEntry *entry)
+bool TagEntry::on_cursor_on_match(const Gtk::TreeIter &iter)
 {
-    GValue value = G_VALUE_INIT;
-    gtk_tree_model_get_value(model, iter, 0, &value);
-    entry->on_cursor_on_match(static_cast<const char*>(g_value_get_string(&value)));
-    g_value_unset(&value);
-
-    return TRUE;
-}
-
-void TagEntry::on_cursor_on_match(const std::string &tag)
-{
+    const std::string tag = iter->get_value(m_Columns.tag_column);
     int spos, epos;
     get_selection_bounds(spos, epos);
 
@@ -101,6 +88,8 @@ void TagEntry::on_cursor_on_match(const std::string &tag)
 
     // This is used to keep track of what part of the tag was completed
     select_region(spos, tag.size() - (spos - prefix.size()) + spos);
+
+    return true;
 }
 
 bool TagEntry::on_match_selected(const Gtk::TreeIter &iter)
@@ -117,9 +106,7 @@ bool TagEntry::on_match_selected(const Gtk::TreeIter &iter)
     if (pos != std::string::npos && get_text().substr(pos + 1, 1) == "-")
         prefix += '-';
 
-    m_ChangedConn.block();
     set_text(prefix + tag + " " + suffix);
-    m_ChangedConn.unblock();
 
     select_region(0, 0);
     set_position(epos + 1);
