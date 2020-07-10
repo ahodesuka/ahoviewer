@@ -100,8 +100,8 @@
                       <object class="GtkBox">
                         <property name="visible">True</property>
                         <property name="can_focus">False</property>
-                        <property name="margin_left">4</property>
-                        <property name="margin_right">4</property>
+                        <property name="margin_start">4</property>
+                        <property name="margin_end">4</property>
                         <property name="margin_top">4</property>
                         <property name="margin_bottom">4</property>
                         <child>
@@ -221,6 +221,7 @@
                         <property name="visible">True</property>
                         <property name="can_focus">True</property>
                         <property name="scrollable">True</property>
+                        <property name="enable_popup">True</property>
                         <style>
                           <class name="booru-browser"/>
                         </style>
@@ -428,6 +429,9 @@
             <property name="top_attach">2</property>
             <property name="width">2</property>
           </packing>
+        </child>
+        <child>
+          <placeholder/>
         </child>
         <child>
           <placeholder/>

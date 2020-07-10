@@ -167,7 +167,6 @@ void ImageBox::set_image(const std::shared_ptr<Image> &image)
     {
         queue_draw_image();
     }
-
 }
 
 void ImageBox::clear_image()

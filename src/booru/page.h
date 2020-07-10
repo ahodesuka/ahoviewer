@@ -29,6 +29,7 @@ namespace AhoViewer
             std::shared_ptr<Site> get_site() const { return m_Site; }
             std::shared_ptr<ImageList> get_imagelist() const { return m_ImageList; }
             size_t get_page_num() const { return m_Page; }
+            Gtk::Label* get_menu_label() const { return m_MenuLabel; }
 
             SignalClosedType signal_closed() const { return m_SignalClosed; }
             SignalDownloadErrorType signal_no_results() const { return m_SignalDownloadError; }
@@ -60,7 +61,7 @@ namespace AhoViewer
             Gtk::IconView *m_IconView;
             Gtk::EventBox *m_Tab;
             Gtk::Image *m_TabIcon;
-            Gtk::Label *m_TabLabel;
+            Gtk::Label *m_TabLabel, *m_MenuLabel;
             Gtk::Button *m_TabButton;
 
             std::shared_ptr<ImageList> m_ImageList;

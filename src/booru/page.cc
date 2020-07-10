@@ -14,11 +14,12 @@ using namespace AhoViewer::Booru;
 Page::Page()
   : Gtk::ScrolledWindow(),
     m_PopupMenu(nullptr),
-    m_IconView(Gtk::manage(new Gtk::IconView())),
-    m_Tab(Gtk::manage(new Gtk::EventBox())),
+    m_IconView(Gtk::manage(new Gtk::IconView)),
+    m_Tab(Gtk::manage(new Gtk::EventBox)),
     m_TabIcon(Gtk::manage(new Gtk::Image(Gtk::Stock::NEW, Gtk::ICON_SIZE_MENU))),
     m_TabLabel(Gtk::manage(new Gtk::Label(_("New Tab")))),
-    m_TabButton(Gtk::manage(new Gtk::Button())),
+    m_MenuLabel(Gtk::manage(new Gtk::Label(_("New Tab")))),
+    m_TabButton(Gtk::manage(new Gtk::Button)),
     m_ImageList(std::make_shared<ImageList>(this)),
     m_Page(0),
     m_Saving(false),
@@ -38,6 +39,9 @@ Page::Page()
 
     m_TabLabel->set_alignment(0.0, 0.5);
     m_TabLabel->set_ellipsize(Pango::ELLIPSIZE_END);
+
+    m_MenuLabel->set_alignment(0.0, 0.5);
+    m_MenuLabel->set_ellipsize(Pango::ELLIPSIZE_END);
 
     Gtk::HBox *hbox = Gtk::manage(new Gtk::HBox());
     hbox->pack_start(*m_TabIcon, false, false);
@@ -165,9 +169,10 @@ void Page::search(const std::shared_ptr<Site> &site)
         if (site->get_type() != Site::Type::MOEBOORU)
             m_SearchTags = "*";
     }
-
-    m_TabLabel->set_text(m_Site->get_name() +
-        (m_SearchTags == "*" || m_SearchTags.empty() ? "" : " - " + m_SearchTags));
+    std::string label = m_Site->get_name() +
+        (m_SearchTags == "*" || m_SearchTags.empty() ? "" : " - " + m_SearchTags);
+    m_TabLabel->set_text(label);
+    m_MenuLabel->set_text(label);
     m_TabIcon->set(m_Site->get_icon_pixbuf());
 
     m_Curler.set_share_handle(m_Site->get_share_handle());

@@ -66,7 +66,7 @@ Browser::Browser(BaseObjectType *cobj, const Glib::RefPtr<Gtk::Builder> &bldr)
 
 Browser::~Browser()
 {
-    // Why isn't automatically disconnected immediatly in the notebook
+    // Why isn't this automatically disconnected immediatly in the notebook
     // destructor?  Because GTK A SHIT
     m_PageSwitchedConn.disconnect();
 
@@ -125,7 +125,7 @@ void Browser::on_new_tab()
     if (m_Notebook->get_n_pages() == 0)
         page->m_Tags = m_TagEntry->get_text();
 
-    int page_num = m_Notebook->append_page(*page, *page->get_tab());
+    int page_num = m_Notebook->append_page(*page, *page->get_tab(), *page->get_menu_label());
 
     m_Notebook->set_current_page(page_num);
     m_Notebook->set_tab_reorderable(*page, true);
