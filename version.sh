@@ -24,8 +24,10 @@ fi
 if [ "$VERSION" != "$OLD_VERSION" ] || [ ! -f "src/version.h" ]
 then
     cat <<EOF > src/version.h
+#ifndef _VERSION_H_
 #define AHOVIEWER_VERSION "$VERSION"
 extern const char *const ahoviewer_version;
+#endif // _VERSION_H_
 EOF
 fi
 

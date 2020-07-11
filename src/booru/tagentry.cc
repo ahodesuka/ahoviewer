@@ -21,6 +21,7 @@ TagEntry::TagEntry(BaseObjectType *cobj, const Glib::RefPtr<Gtk::Builder> &bldr)
 void TagEntry::set_tags(const std::set<std::string> &tags)
 {
     m_Tags = &tags;
+
 }
 
 void TagEntry::on_grab_focus()
