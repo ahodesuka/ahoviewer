@@ -1,15 +1,15 @@
 # ahoviewer
 
-A GTK2 image viewer, manga reader, and booru browser.
+A GTK image viewer, manga reader, and booru browser.
 
 ## Building
 ### Dependencies
 * C++ Compiler that supports the C++14 standard is required.
-* gtkmm-2.4 `>= 2.20.0`
+* gtkmm-3.0 `>= 3.22.0`
 * glibmm-2.4 `>= 2.46.0`
 * libgsic++ `>= 2.6.0`
 * libconfig++ `>= 1.4`
-* libcurl `>= 7.32.0`
+* libcurl `>= 7.58.0`
 * libxml2
 * gstreamer-1.0 `optional`
     * gst-plugins-base `runtime`
@@ -21,19 +21,11 @@ A GTK2 image viewer, manga reader, and booru browser.
 * libzip `optional`
 
 ```
-./bootstrap
-make
-sudo make install
+meson build
+cd build
+ninja
+sudo ninja install
 ```
-
-### OpenSSL and GnuTLS
-By default ahoviewer will assume you built libcurl with OpenSSL.  If you
-are using GnuTLS you need to use --enable-gnutls during configuration (bootstrap).
-If you have OpenSSL installed and curl uses an SSL backend other than
-OpenSSL or GnuTLS then you need to use --disable-ssl during configuration
-or you will get linker errors. (This does not disable encryption)
-These configuration checks are used to provide thread-safe locking for older
-versions of OpenSSL and GnuTLS.
 
 ## Usage
 
