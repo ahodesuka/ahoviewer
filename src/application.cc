@@ -57,7 +57,7 @@ GCRY_THREAD_OPTION_PTHREAD_IMPL;
 
 void init_gnutls_locks()
 {
-    gcry_control(GCRYCTL_SET_THREAD_CBS);
+    gcry_control(GCRYCTL_SET_THREAD_CBS, &gcry_threads_pthread);
 }
 #endif // GCRYPT_VERSION_NUMBER < 0x010600
 #endif // USE_GNUTLS
