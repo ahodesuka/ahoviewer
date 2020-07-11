@@ -2,7 +2,7 @@
 
 [ -f "VERSION" ] && OLD_VERSION=$(cat VERSION)
 
-if [ -n "$1" ]
+if [ -n "$1" ] && [ "$1" != "--" ]
 then
     VERSION="$1"
 elif [ -d '.git' ]
@@ -21,7 +21,7 @@ else
     VERSION="UNKNOWN"
 fi
 
-if [ "$VERSION" != "$OLD_VERSION" ] || [ ! -f "src/version.h" ]
+if ([ "$VERSION" != "$OLD_VERSION" ] || [ ! -f "src/version.h" ]) && [ "$1" != "--" ]
 then
     cat <<EOF > src/version.h
 #ifndef _VERSION_H_

@@ -1,5 +1,5 @@
 project('ahoviewer', ['c', 'cpp'],
-    version : run_command('git', 'describe', '--dirty').stdout().strip(),
+    version : run_command('sh', 'version.sh', '--').stdout().strip(),
     license : 'MIT',
     meson_version : '>= 0.47.0',
     default_options : ['cpp_std=c++14'])
