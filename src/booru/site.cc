@@ -198,7 +198,7 @@ Site::Site(const std::string &name, const std::string &url, const Type type,
     {
         PCREDENTIALW pcred;
 
-        std::string target = std::string(PACKAGE_NAME "/") + m_Name;
+        std::string target = std::string(PACKAGE "/") + m_Name;
         wchar_t *TargetName = reinterpret_cast<wchar_t*>(
             g_utf8_to_utf16(target.c_str(), -1, NULL, NULL, NULL));
 
@@ -305,7 +305,7 @@ void Site::set_password(const std::string &s)
 #ifdef _WIN32
     if (!m_Username.empty())
     {
-        std::string target = std::string(PACKAGE_NAME "/") + m_Name;
+        std::string target = std::string(PACKAGE "/") + m_Name;
         wchar_t *TargetName = reinterpret_cast<wchar_t*>(
             g_utf8_to_utf16(target.c_str(), -1, NULL, NULL, NULL));
 

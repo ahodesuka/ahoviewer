@@ -9,6 +9,7 @@ Makefile.in
 aclocal.m4
 autom4te.cache/
 build/
+mingw-build/
 build-mingw.sh
 config.*
 configure
@@ -24,7 +25,7 @@ src/**/.deps/
 src/**/.dirstamp
 src/ahoviewer
 src/ahoviewer.exe
-src/resources.cc
+src/resources.c
 src/version.h
 stamp-h1
 vgdump

@@ -490,11 +490,11 @@ void Image::save_thumbnail(Glib::RefPtr<Gdk::Pixbuf> &pixbuf, const gchar *mimeT
         },
         vals =
         {
-            Glib::filename_to_uri(m_Path),      // URI
-            std::to_string(fileInfo.st_mtime),  // MTime
-            std::to_string(fileInfo.st_size),   // Size
-            mimeType,                           // Mimetype
-            PACKAGE_STRING                      // Software
+            Glib::filename_to_uri(m_Path),     // URI
+            std::to_string(fileInfo.st_mtime), // MTime
+            std::to_string(fileInfo.st_size),  // Size
+            mimeType,                          // Mimetype
+            PACKAGE                            // Software
         };
 
         if (!Glib::file_test(ThumbnailDir, Glib::FILE_TEST_EXISTS))

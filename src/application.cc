@@ -96,7 +96,7 @@ Application::Application()
         ResumeThread(pi.hThread);
     }
 #endif // _WIN32
-    Glib::set_application_name(PACKAGE_NAME);
+    Glib::set_application_name(PACKAGE);
 }
 
 Application& Application::get_instance()

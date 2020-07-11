@@ -34,6 +34,7 @@ AC_LANG([C++])
 AX_CXX_COMPILE_STDCXX(14, [noext])
 
 PKG_CHECK_MODULES([glibmm], [glibmm-2.4 >= 2.46.0])
+PKG_CHECK_MODULES([glib], [glib-2.0 >= 2.46.0])
 
 # >= 2.6.0 since we use lambdas with return values
 PKG_CHECK_MODULES([libsigcpp], [sigc++-2.0 >= 2.6.0])
@@ -219,11 +220,11 @@ fi
 
 AC_CONFIG_FILES([
      Makefile
-     pixmaps/Makefile
+     data/Makefile
      po/Makefile
      src/Makefile
 ])
 if test x"$windows" == xtrue; then
-    AC_CONFIG_FILES([build/installer.nsi])
+    AC_CONFIG_FILES([installer/installer.nsi])
 fi
 AC_OUTPUT

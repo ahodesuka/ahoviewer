@@ -1,6 +1,6 @@
 bin_PROGRAMS = ahoviewer
 
-CLEANFILES = resources.cc version.h
+CLEANFILES = resources.c version.h
 
 BUILT_SOURCES = version
 
@@ -26,7 +26,7 @@ ahoviewer_SOURCES =       \
 	main.cc               \
 	mainwindow.cc         \
 	preferences.cc        \
-	resources.cc          \
+	resources.c           \
 	settings.cc           \
 	siteeditor.cc         \
 	statusbar.cc          \
@@ -39,7 +39,7 @@ SUFFIXES: .rc
 .rc.o:
 	$(target)-windres $^ -o $@
 endif
-resources.cc: ahoviewer.resources.xml ui/ahoviewer.ui
+resources.c: ahoviewer.gresource.xml ui/ahoviewer.ui
 	@glib-compile-resources --target=$@ --generate-source $<
 
 if !SYSTEM_LIBNSGIF
@@ -53,6 +53,7 @@ PHONY: version
 version:
 	@cd .. && ./version.sh > /dev/null 2>&1
 
+ahoviewer_CFLAGS = @CFLAGS@ @glib_CFLAGS@
 ahoviewer_CPPFLAGS = @CPPFLAGS@ @LIBCURL_CPPFLAGS@ -DAHOVIEWER_DATADIR=\"$(datadir)\"
 ahoviewer_CXXFLAGS = @CXXFLAGS@ @gtkmm_CFLAGS@ @libconfig_CFLAGS@ @libxml2_CFLAGS@ \
 				@gstreamer_CFLAGS@ @libsecret_CFLAGS@ @libzip_CFLAGS@ \

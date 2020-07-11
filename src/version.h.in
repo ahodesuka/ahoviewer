@@ -1,0 +1,4 @@
+#ifndef _VERSION_H_
+#define AHOVIEWER_VERSION "@VCS_TAG@"
+extern const char *const ahoviewer_version;
+#endif // _VERSION_H_
