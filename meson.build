@@ -61,6 +61,7 @@ libnsgif = dependency('libnsgif', required : false)
 
 # Runtime dependencies
 dependency('gstreamer-plugins-base-1.0', required : get_option('gstreamer'))
+dependency('gstreamer-plugins-good-1.0', required : get_option('gstreamer'))
 
 # Needed for d3dvideosink
 if host_machine.system() == 'windows'
