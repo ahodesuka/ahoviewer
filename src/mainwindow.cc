@@ -25,15 +25,7 @@ Gtk::AboutDialog *MainWindow::m_AboutDialog = nullptr;
 MainWindow::MainWindow(BaseObjectType *cobj, const Glib::RefPtr<Gtk::Builder> &bldr)
   : Gtk::ApplicationWindow(cobj),
     m_Builder(bldr),
-    m_LastSavePath(Settings.get_string("LastSavePath")),
-    m_Width(0),
-    m_Height(0),
-    m_HPanedLastPos(0),
-    m_LastX(0),
-    m_LastY(0),
-    m_HideAllFullscreen(false),
-    m_OriginalWindow(false),
-    m_IsMinimized(false)
+    m_LastSavePath(Settings.get_string("LastSavePath"))
 {
 #ifndef _WIN32
     try
@@ -174,8 +166,8 @@ MainWindow::MainWindow(BaseObjectType *cobj, const Glib::RefPtr<Gtk::Builder> &b
     int x, y, w, h;
     if (Settings.get_geometry(x, y, w, h))
     {
-        m_LastX = x;
-        m_LastY = y;
+        m_LastXPos = x;
+        m_LastYPos = y;
 
         if (Settings.get_bool("RememberWindowSize"))
             set_default_size(w, h);
@@ -435,20 +427,21 @@ void MainWindow::set_active_imagelist(const std::shared_ptr<ImageList> &imageLis
     }
 }
 
+// Called when before quitting and before fullscreening
 void MainWindow::save_window_geometry()
 {
     if (is_fullscreen())
         return;
 
-    int x = m_LastX, y = m_LastY, w, h;
+    int x = m_LastXPos, y = m_LastYPos, w, h;
 
     get_size(w, h);
     // On Windows this will always return -32000, -32000 when minimized
     if (!m_IsMinimized)
     {
         get_position(x, y);
-        m_LastX = x;
-        m_LastY = y;
+        m_LastXPos = x;
+        m_LastYPos = y;
     }
 
     Settings.set_geometry(x, y, w, h);
@@ -598,7 +591,7 @@ void MainWindow::create_actions()
             _("_Scrollbars"), _("Toggle scrollbar visibility"), Settings.get_bool("ScrollbarsVisible"));
     m_ActionGroup->add(toggleAction,
             Gtk::AccelKey(Settings.get_keybinding("UserInterface", "ToggleScrollbars")),
-            sigc::mem_fun(m_ImageBox, &ImageBox::on_toggle_scrollbars));
+            sigc::mem_fun(*this, &MainWindow::on_toggle_scrollbars));
 
     toggleAction = Gtk::ToggleAction::create("ToggleBooruBrowser",
             _("_Booru Browser"), _("Toggle booru browser visibility"), Settings.get_bool("BooruBrowserVisible"));
@@ -701,7 +694,6 @@ void MainWindow::create_actions()
 
 void MainWindow::update_widgets_visibility()
 {
-    bool bbRealized = m_BooruBrowser->get_realized();
     // Get all the visibility settings for this window instead of the global
     // Settings (which may have been modified by another window)
     bool hideAll = Glib::RefPtr<Gtk::ToggleAction>::cast_static(
@@ -710,6 +702,8 @@ void MainWindow::update_widgets_visibility()
             m_ActionGroup->get_action("ToggleMenuBar"))->get_active(),
          statusBarVisible = Glib::RefPtr<Gtk::ToggleAction>::cast_static(
             m_ActionGroup->get_action("ToggleStatusBar"))->get_active(),
+         scrollBarsVisible = Glib::RefPtr<Gtk::ToggleAction>::cast_static(
+            m_ActionGroup->get_action("ToggleScrollbars"))->get_active(),
          booruBrowserVisible = Glib::RefPtr<Gtk::ToggleAction>::cast_static(
             m_ActionGroup->get_action("ToggleBooruBrowser"))->get_active(),
          thumbnailBarVisible = Glib::RefPtr<Gtk::ToggleAction>::cast_static(
@@ -717,14 +711,14 @@ void MainWindow::update_widgets_visibility()
 
     m_MenuBar->set_visible(!hideAll && menuBarVisible);
     m_StatusBar->set_visible(!hideAll && statusBarVisible);
+    // The scrollbars are independent of the hideall setting
+    m_ImageBox->get_hscrollbar()->set_visible(scrollBarsVisible);
+    m_ImageBox->get_vscrollbar()->set_visible(scrollBarsVisible);
     m_BooruBrowser->set_visible(!hideAll && booruBrowserVisible);
     m_ThumbnailBar->set_visible(!hideAll && thumbnailBarVisible &&
                                 !booruBrowserVisible && !m_LocalImageList->empty());
 
-    if (bbRealized)
-        m_ImageBox->queue_draw_image();
-    else
-        m_BooruBrowser->signal_realize().connect([this](){ m_ImageBox->queue_draw_image(); });
+    m_ImageBox->queue_draw_image();
     set_sensitives();
 }
 
@@ -736,7 +730,6 @@ void MainWindow::set_sensitives()
     {
         "ToggleMenuBar",
         "ToggleStatusBar",
-        "ToggleScrollbars",
         "ToggleBooruBrowser",
     };
 
@@ -1084,7 +1077,7 @@ void MainWindow::on_toggle_fullscreen()
 {
     if (is_fullscreen())
     {
-        if (Settings.get_bool("HideAllFullscreen") && m_HideAllFullscreen)
+        if (Settings.get_bool("HideAllFullscreen") && m_HideAllFullscreen && !m_WasHideAll)
         {
             m_HideAllFullscreen = false;
             Glib::RefPtr<Gtk::ToggleAction>::cast_static(m_ActionGroup->
@@ -1098,8 +1091,10 @@ void MainWindow::on_toggle_fullscreen()
         if (Settings.get_bool("HideAllFullscreen"))
         {
             m_HideAllFullscreen = true;
-            Glib::RefPtr<Gtk::ToggleAction>::cast_static(m_ActionGroup->
-                    get_action("ToggleHideAll"))->set_active();
+            auto a = Glib::RefPtr<Gtk::ToggleAction>::cast_static(m_ActionGroup->
+                    get_action("ToggleHideAll"));
+            m_WasHideAll = a->get_active();
+            a->set_active();
         }
 
         // Save this here in case the program is closed when fullscreen
@@ -1134,6 +1129,15 @@ void MainWindow::on_toggle_status_bar()
         Glib::RefPtr<Gtk::ToggleAction>::cast_static(m_ActionGroup->get_action("ToggleStatusBar"));
 
     Settings.set("StatusBarVisible", a->get_active());
+
+    update_widgets_visibility();
+}
+
+void MainWindow::on_toggle_scrollbars()
+{
+    Glib::RefPtr<Gtk::ToggleAction> a =
+        Glib::RefPtr<Gtk::ToggleAction>::cast_static(m_ActionGroup->get_action("ToggleScrollbars"));
+    Settings.set("ScrollbarsVisible", a->get_active());
 
     update_widgets_visibility();
 }

@@ -51,11 +51,8 @@ ImageBox::ImageBox(BaseObjectType *cobj, const Glib::RefPtr<Gtk::Builder> &bldr)
     m_LeftPtrCursor(Gdk::Cursor::create(Gdk::LEFT_PTR)),
     m_FleurCursor(Gdk::Cursor::create(Gdk::FLEUR)),
     m_BlankCursor(Gdk::Cursor::create(Gdk::BLANK_CURSOR)),
-    m_RedrawQueued(false),
-    m_ZoomScroll(false),
     m_ZoomMode(Settings.get_zoom_mode()),
-    m_RestoreScrollPos(-1, -1, m_ZoomMode),
-    m_ZoomPercent(100)
+    m_RestoreScrollPos(-1, -1, m_ZoomMode)
 {
     bldr->get_widget("ImageBox::Layout",       m_Layout);
     bldr->get_widget("ImageBox::Image",        m_GtkImage);
@@ -184,12 +181,8 @@ void ImageBox::clear_image()
     m_Playing = false;
 #endif // HAVE_GSTREAMER
 
-    get_hscrollbar()->hide();
-    get_vscrollbar()->hide();
-
     m_StatusBar->clear_resolution();
     m_Image = nullptr;
-    m_Pixbuf.reset();
 }
 
 void ImageBox::update_background_color()
@@ -259,12 +252,6 @@ void ImageBox::on_zoom_out()
 void ImageBox::on_reset_zoom()
 {
     zoom(100);
-}
-
-void ImageBox::on_toggle_scrollbars()
-{
-    Settings.set("ScrollbarsVisible", !Settings.get_bool("ScrollbarsVisible"));
-    queue_draw_image();
 }
 
 void ImageBox::on_scroll_up()
@@ -347,10 +334,6 @@ bool ImageBox::on_button_release_event(GdkEventButton *e)
                 int w, h, x, y, ww, wh;
                 m_MainWindow->get_drawable_area_size(w, h);
                 m_MainWindow->get_size(ww, wh);
-
-                if (get_vscrollbar()->get_visible())
-                    w -= get_vscrollbar()->get_width();
-
                 m_MainWindow->get_position(x, y);
                 x += ww - w;
 
@@ -437,6 +420,46 @@ bool ImageBox::on_scroll_event(GdkEventScroll *e)
     return Gtk::ScrolledWindow::on_scroll_event(e);
 }
 
+// This must be called after m_Orig(Width/Height) are set
+// It sets the values of w, h to their scaled values, and x, y to center
+// coordinates for m_Layout to use
+void ImageBox::get_scale_and_position(int &w, int &h, int &x, int &y)
+{
+    int ww, wh;
+    m_MainWindow->get_drawable_area_size(ww, wh);
+
+    w = m_OrigWidth;
+    h = m_OrigHeight;
+
+    double windowAspect = static_cast<double>(ww) / wh,
+           imageAspect  = static_cast<double>(w) / h;
+
+    // These do not take the scrollbar size in to account, because I assume that
+    // overlay scrollbars are enabled
+    if (w > ww &&
+        (m_ZoomMode == ZoomMode::FIT_WIDTH ||
+         (m_ZoomMode == ZoomMode::AUTO_FIT && windowAspect <= imageAspect)))
+    {
+        w = ww;
+        h = std::ceil(w / imageAspect);
+    }
+    else if (h > wh &&
+             (m_ZoomMode == ZoomMode::FIT_HEIGHT ||
+              (m_ZoomMode == ZoomMode::AUTO_FIT && windowAspect >= imageAspect)))
+    {
+        h = wh;
+        w = std::ceil(h * imageAspect);
+    }
+    else if (m_ZoomMode == ZoomMode::MANUAL && m_ZoomPercent != 100)
+    {
+        w *= static_cast<double>(m_ZoomPercent) / 100;
+        h *= static_cast<double>(m_ZoomPercent) / 100;
+    }
+
+    x = std::max(0, (ww - w) / 2);
+    y = std::max(0, (wh - h) / 2);
+}
+
 void ImageBox::draw_image(bool scroll)
 {
     // Don't draw images that don't exist (obviously)
@@ -448,17 +471,13 @@ void ImageBox::draw_image(bool scroll)
         (m_Image->is_loading() &&
          (m_Image->is_animated_gif() || !m_Image->get_pixbuf() || m_Image->is_webm())))
     {
-        get_hscrollbar()->hide();
-        get_vscrollbar()->hide();
         m_RedrawQueued = false;
         return;
     }
 
-    Glib::RefPtr<Gdk::Pixbuf> origPixbuf, tempPixbuf;
-
-    bool hideScrollbars = !Settings.get_bool("ScrollbarsVisible") ||
-                           Settings.get_bool("HideAll") || m_ZoomMode == ZoomMode::AUTO_FIT,
-         error = false;
+    // Temporary pixbuf used when scaling is needed
+    Glib::RefPtr<Gdk::Pixbuf> tempPixbuf;
+    bool error { false };
 
     // if the image is still loading we want to draw all requests
     // Only booru images will do this
@@ -493,9 +512,7 @@ void ImageBox::draw_image(bool scroll)
         }
         else
         {
-            tempPixbuf = Image::get_missing_pixbuf();
-            m_OrigWidth  = tempPixbuf->get_width();
-            m_OrigHeight = tempPixbuf->get_height();
+            error = true;
             m_DrawingArea->hide();
         }
     }
@@ -517,99 +534,46 @@ void ImageBox::draw_image(bool scroll)
 
         if (pixbuf)
         {
-            if (m_Pixbuf != pixbuf)
-            {
-                m_Pixbuf = pixbuf;
-            }
+            // Set this here incase we dont need to scale
+            tempPixbuf = pixbuf;
 
-            origPixbuf = m_Pixbuf;
-            tempPixbuf = origPixbuf;
-
-            m_OrigWidth  = origPixbuf->get_width();
-            m_OrigHeight = origPixbuf->get_height();
+            m_OrigWidth  = pixbuf->get_width();
+            m_OrigHeight = pixbuf->get_height();
         }
         else
         {
             error = true;
-            tempPixbuf = Image::get_missing_pixbuf();
-            m_OrigWidth  = tempPixbuf->get_width();
-            m_OrigHeight = tempPixbuf->get_height();
         }
     }
 
-    get_hscrollbar()->hide();
-    get_vscrollbar()->hide();
-
-    int windowWidth, windowHeight;
-    m_MainWindow->get_drawable_area_size(windowWidth, windowHeight);
-
-    int layoutWidth  = windowWidth - get_vscrollbar()->get_width(),
-        layoutHeight = windowHeight - get_hscrollbar()->get_height();
-
-    int w            = windowWidth,
-        h            = windowHeight,
-        scaledWidth  = m_OrigWidth,
-        scaledHeight = m_OrigHeight;
-
-    double windowAspect = static_cast<double>(windowWidth) / windowHeight,
-           imageAspect  = static_cast<double>(m_OrigWidth) / m_OrigHeight;
-
-    if ((m_OrigWidth > windowWidth || (m_OrigHeight > windowHeight && m_OrigWidth > layoutWidth)) &&
-        (m_ZoomMode == ZoomMode::FIT_WIDTH || (m_ZoomMode == ZoomMode::AUTO_FIT && windowAspect <= imageAspect)))
+    if (error)
     {
-        scaledWidth = std::ceil(windowWidth / imageAspect) > windowHeight
-                        && !hideScrollbars ? layoutWidth : windowWidth;
-        scaledHeight = std::ceil(scaledWidth / imageAspect);
-    }
-    else if ((m_OrigHeight > windowHeight || (m_OrigWidth > windowWidth && m_OrigHeight > layoutHeight)) &&
-             (m_ZoomMode == ZoomMode::FIT_HEIGHT || (m_ZoomMode == ZoomMode::AUTO_FIT && windowAspect >= imageAspect)))
-    {
-        scaledHeight = std::ceil(windowHeight * imageAspect) > windowWidth
-                        && !hideScrollbars ? layoutHeight : windowHeight;
-        scaledWidth = std::ceil(scaledHeight * imageAspect);
-    }
-    else if (m_ZoomMode == ZoomMode::MANUAL && m_ZoomPercent != 100)
-    {
-        scaledWidth = m_OrigWidth * static_cast<double>(m_ZoomPercent) / 100;
-        scaledHeight = m_OrigHeight * static_cast<double>(m_ZoomPercent) / 100;
+        tempPixbuf   = Image::get_missing_pixbuf();
+        m_OrigWidth  = tempPixbuf->get_width();
+        m_OrigHeight = tempPixbuf->get_height();
     }
 
-    if (!m_Image->is_webm() && !error && (scaledWidth != m_OrigWidth || scaledHeight != m_OrigHeight))
-        tempPixbuf = origPixbuf->scale_simple(scaledWidth, scaledHeight, Gdk::INTERP_BILINEAR);
+    int w, h, x, y;
+    get_scale_and_position(w, h, x, y);
 
-    // Show scrollbars if image is scrollable
-    // or needed for padding in FIT_[WIDTH|HEIGHT]
-    if (!hideScrollbars && (scaledWidth > windowWidth ||
-        (m_ZoomMode == ZoomMode::FIT_HEIGHT && scaledHeight == layoutHeight) ||
-        (scaledWidth > layoutWidth && scaledHeight > windowHeight)))
-    {
-        get_hscrollbar()->show();
-        h = layoutHeight;
-    }
+    if (!m_Image->is_webm() && !error && (w != m_OrigWidth || h != m_OrigHeight))
+        tempPixbuf = m_Image->get_pixbuf()->scale_simple(w, h, Gdk::INTERP_BILINEAR);
 
-    if (!hideScrollbars && (scaledHeight > windowHeight ||
-        (m_ZoomMode == ZoomMode::FIT_WIDTH && scaledWidth == layoutWidth) ||
-        (scaledHeight > layoutHeight && scaledWidth > windowWidth)))
-    {
-        get_vscrollbar()->show();
-        w = layoutWidth;
-    }
-
-    int x = std::max(0, (w - scaledWidth) / 2),
-        y = std::max(0, (h - scaledHeight) / 2);
-    double hAdjustVal = 0,
-           vAdjustVal = 0;
+    double hAdjustVal { 0 },
+           vAdjustVal { 0 };
 
     // Used to keep the adjustments centered when manual zooming
     if (m_ZoomScroll)
     {
-        hAdjustVal = get_hadjustment()->get_value() / std::max(get_hadjustment()->get_upper() - get_hadjustment()->get_page_size(), 1.0);
-        vAdjustVal = get_vadjustment()->get_value() / std::max(get_vadjustment()->get_upper() - get_vadjustment()->get_page_size(), 1.0);
+        hAdjustVal = get_hadjustment()->get_value() / std::max(
+            get_hadjustment()->get_upper() - get_hadjustment()->get_page_size(), 1.0);
+        vAdjustVal = get_vadjustment()->get_value() / std::max(
+            get_vadjustment()->get_upper() - get_vadjustment()->get_page_size(), 1.0);
     }
 
     get_window()->freeze_updates();
 
-    m_Layout->set_size(scaledWidth, scaledHeight);
+    m_Layout->set_size(w, h);
 
     if (tempPixbuf)
     {
@@ -620,7 +584,7 @@ void ImageBox::draw_image(bool scroll)
     else
     {
         m_Layout->move(*m_DrawingArea, x, y);
-        m_DrawingArea->set_size_request(scaledWidth, scaledHeight);
+        m_DrawingArea->set_size_request(w, h);
         gst_video_overlay_expose(GST_VIDEO_OVERLAY(m_VideoSink));
     }
 #endif // HAVE_GSTREAMER
@@ -657,7 +621,7 @@ void ImageBox::draw_image(bool scroll)
     m_RedrawQueued = false;
 
     m_Scale = m_ZoomMode == ZoomMode::MANUAL ? m_ZoomPercent :
-                        static_cast<double>(scaledWidth) / m_OrigWidth * 100;
+                        static_cast<double>(w) / m_OrigWidth * 100;
     m_StatusBar->set_resolution(m_OrigWidth, m_OrigHeight, m_Scale, m_ZoomMode);
 
 #ifdef HAVE_GSTREAMER

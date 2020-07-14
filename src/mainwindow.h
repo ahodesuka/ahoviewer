@@ -61,6 +61,7 @@ namespace AhoViewer
         void on_toggle_manga_mode();
         void on_toggle_menu_bar();
         void on_toggle_status_bar();
+        void on_toggle_scrollbars();
         void on_toggle_booru_browser();
         void on_toggle_thumbnail_bar();
         void on_toggle_hide_all();
@@ -89,12 +90,20 @@ namespace AhoViewer
 
         std::string m_LastSavePath;
 
-        int m_Width, m_Height, m_HPanedLastPos, m_LastX, m_LastY;
-        // This keeps track of whether hide all was set automatically
-        bool m_HideAllFullscreen,
+        int m_Width         { 0 },
+            m_Height        { 0 },
+            m_HPanedLastPos { 0 },
+            m_LastXPos      { 0 },
+            m_LastYPos      { 0 };
+        // This keeps track of whether hide all was set automatically to prevent
+        // the setting entry from being set
+        bool m_HideAllFullscreen { false },
+        // This is to prevent hideall from being toggled off after unfullscreening
+        // if it was set manually before fullscreening
+             m_WasHideAll        { false },
         // Tracks whether this was the only window at one point
-             m_OriginalWindow,
-             m_IsMinimized;
+             m_OriginalWindow    { false },
+             m_IsMinimized       { false };
 
         std::shared_ptr<ImageList> m_ActiveImageList,
                                    m_LocalImageList;

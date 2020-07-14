@@ -97,6 +97,8 @@ Application::Application()
         ResumeThread(pi.hThread);
     }
 #endif // _WIN32
+    // The ImageBox needs this, disabling it is silly unless proven otherwise
+    Glib::setenv("GTK_OVERLAY_SCROLLING", "", true);
     Glib::set_application_name(PACKAGE);
 }
 
