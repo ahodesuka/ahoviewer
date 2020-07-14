@@ -55,7 +55,6 @@ namespace AhoViewer
         void on_zoom_in();
         void on_zoom_out();
         void on_reset_zoom();
-        void on_toggle_scrollbars();
         void on_scroll_up();
         void on_scroll_down();
         void on_scroll_left();
@@ -68,6 +67,7 @@ namespace AhoViewer
         virtual bool on_motion_notify_event(GdkEventMotion *e) override;
         virtual bool on_scroll_event(GdkEventScroll *e) override;
     private:
+        void get_scale_and_position(int &w, int &h, int &x, int &y);
         void draw_image(bool scroll);
         bool update_animation();
         void scroll(const int x, const int y, const bool panning = false, const bool fromSlideshow = false);
@@ -92,10 +92,10 @@ namespace AhoViewer
         static GstBusSyncReply create_window(GstBus*, GstMessage *message, void *userp);
         static gboolean bus_cb(GstBus*, GstMessage *message, void *userp);
 
-        GstElement *m_Playbin,
-                   *m_VideoSink;
-        guintptr m_WindowHandle;
-        bool m_Playing = false;
+        GstElement *m_Playbin   { nullptr },
+                   *m_VideoSink { nullptr };
+        guintptr m_WindowHandle { 0 };
+        bool m_Playing { false };
 #endif // HAVE_GSTREAMER
 
         StatusBar *m_StatusBar;
@@ -103,11 +103,10 @@ namespace AhoViewer
 
         const Glib::RefPtr<Gdk::Cursor> m_LeftPtrCursor, m_FleurCursor, m_BlankCursor;
 
-        int m_OrigWidth, m_OrigHeight;
-        double m_Scale;
+        int m_OrigWidth  { 0 },
+            m_OrigHeight { 0 };
 
         std::shared_ptr<Image> m_Image;
-        Glib::RefPtr<Gdk::Pixbuf> m_Pixbuf;
         sigc::connection m_AnimConn,
                          m_CursorConn,
                          m_DrawConn,
@@ -116,11 +115,16 @@ namespace AhoViewer
                          m_SlideshowConn,
                          m_StyleUpdatedConn;
 
-        bool m_FirstDraw, m_RedrawQueued, m_Loading, m_ZoomScroll;
+        bool m_FirstDraw    { false },
+             m_RedrawQueued { false },
+             m_Loading      { false },
+             m_ZoomScroll   { false };
         ZoomMode m_ZoomMode;
         ScrollPos m_RestoreScrollPos;
-        uint32_t m_ZoomPercent;
-        double m_PressX, m_PreviousX,
+        // TODO: add setting for this
+        uint32_t m_ZoomPercent { 100 };
+        double m_Scale { 0 },
+               m_PressX, m_PreviousX,
                m_PressY, m_PreviousY,
                m_ScrollTime, m_ScrollDuration,
                m_ScrollStart, m_ScrollTarget;
