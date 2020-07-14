@@ -1,6 +1,7 @@
 #ifndef _IMAGEBOX_H_
 #define _IMAGEBOX_H_
 
+#include <epoxy/gl.h>
 #include <gtkmm.h>
 
 #include "config.h"
@@ -17,6 +18,35 @@ namespace AhoViewer
     class StatusBar;
     class ImageBox : public Gtk::ScrolledWindow
     {
+        class GLArea : public Gtk::GLArea
+        {
+        public:
+            GLArea(BaseObjectType*, const Glib::RefPtr<Gtk::Builder>&);
+            virtual ~GLArea() = default;
+            void clear();
+
+            void set_image(const Glib::RefPtr<Gdk::Pixbuf> &pixbuf);
+            void set_filtering(const bool f) { m_Filtering = f; }
+        protected:
+            virtual void on_realize() override;
+            virtual void on_unrealize() override;
+            virtual bool on_render(const Glib::RefPtr<Gdk::GLContext>&) override;
+            virtual void on_resize(int w, int h) override;
+        private:
+            GLuint compile_shader(GLenum type, const GLchar *source);
+
+            bool m_Filtering {false};
+            GLuint m_Texture { 0 },
+                   m_Filter  { 0 },
+                   m_Vao     { 0 },
+                   m_Mvp     { 0 },
+                   m_VBuffer { 0 },
+                   m_TBuffer { 0 },
+                   m_Program { 0 },
+                   m_Model   { 0 },
+                   m_View    { 0 },
+                   m_Proj    { 0 };
+        };
     public:
         ImageBox(BaseObjectType*, const Glib::RefPtr<Gtk::Builder>&);
         virtual ~ImageBox() override;
@@ -77,24 +107,23 @@ namespace AhoViewer
 
         bool advance_slideshow();
         bool on_cursor_timeout();
+        void on_pixbuf_changed();
 
         static constexpr double SmoothScrollStep = 1000.0 / 60.0;
 
         Gtk::Layout *m_Layout;
         Gtk::Image *m_GtkImage;
-        Gtk::DrawingArea *m_DrawingArea;
+        Gtk::Widget *m_GstWidget;
+        ImageBox::GLArea *m_GLArea;
         Gtk::Menu *m_PopupMenu;
         Glib::RefPtr<Gtk::Adjustment> m_ScrollAdjust;
         Glib::RefPtr<Gtk::UIManager> m_UIManager;
         Glib::RefPtr<Gtk::Action> m_NextAction, m_PreviousAction;
 
 #ifdef HAVE_GSTREAMER
-        static GstBusSyncReply create_window(GstBus*, GstMessage *message, void *userp);
         static gboolean bus_cb(GstBus*, GstMessage *message, void *userp);
 
-        GstElement *m_Playbin   { nullptr },
-                   *m_VideoSink { nullptr };
-        guintptr m_WindowHandle { 0 };
+        GstElement *m_Playbin { nullptr };
         bool m_Playing { false };
 #endif // HAVE_GSTREAMER
 
@@ -132,6 +161,8 @@ namespace AhoViewer
         sigc::signal<void> m_SignalSlideshowEnded,
                            m_SignalImageDrawn;
     };
+
+    const bool use_opengl { true };
 }
 
 

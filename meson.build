@@ -12,6 +12,7 @@ glibmm = dependency('glibmm-2.4', version : ['>=2.46.0'])
 # >= 2.6.0 since we use lambdas with return values
 sigcpp = dependency('sigc++-2.0', version : ['>=2.6.0'])
 gtkmm = dependency('gtkmm-3.0', version : ['>=3.22.0'])
+epoxy = dependency('epoxy')
 libconfig = dependency('libconfig++', version : ['>=1.4'])
 libxml = dependency('libxml-2.0')
 
@@ -41,6 +42,8 @@ endif
 
 # Optional dependencies
 gstreamer = dependency('gstreamer-1.0', required : get_option('gstreamer'))
+gstgl = dependency('gstreamer-gl-1.0', required : get_option('gstreamer'))
+# Still needed?
 gstvideo = dependency('gstreamer-video-1.0', required : get_option('gstreamer'))
 libsecret = dependency('libsecret-1', required : get_option('libsecret'))
 libunrar = dependency('libunrar', required : get_option('libunrar'))
@@ -71,11 +74,6 @@ libnsgif = dependency('libnsgif', required : false)
 dependency('gstreamer-plugins-base-1.0', required : get_option('gstreamer'))
 # Provides the gtk(gl)sink, vpx(8/9) decoders
 dependency('gstreamer-plugins-good-1.0', required : get_option('gstreamer'))
-
-# Needed for d3dvideosink
-if host_machine.system() == 'windows'
-  dependency('gstreamer-plugins-bad-1.0', required : get_option('gstreamer'))
-endif
 
 prefix = get_option('prefix')
 datadir = join_paths(prefix, get_option('datadir'))

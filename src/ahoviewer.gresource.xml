@@ -2,5 +2,7 @@
 <gresources>
   <gresource prefix="/">
     <file preprocess="xml-stripblanks">ui/ahoviewer.ui</file>
+    <file>vertex.glsl</file>
+    <file>fragment.glsl</file>
   </gresource>
 </gresources>

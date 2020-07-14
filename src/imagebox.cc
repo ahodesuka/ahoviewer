@@ -14,19 +14,6 @@ using namespace AhoViewer;
 #include <gdk/gdkwin32.h>
 #endif // GDK_WINDOWING_WIN32
 
-GstBusSyncReply ImageBox::create_window(GstBus*, GstMessage *message, void *userp)
-{
-    if (!gst_is_video_overlay_prepare_window_handle_message(message))
-        return GST_BUS_PASS;
-
-    ImageBox *self = static_cast<ImageBox*>(userp);
-    gst_video_overlay_set_window_handle(GST_VIDEO_OVERLAY(self->m_VideoSink), self->m_WindowHandle);
-
-    gst_message_unref(message);
-
-    return GST_BUS_DROP;
-}
-
 gboolean ImageBox::bus_cb(GstBus*, GstMessage *message, void *userp)
 {
     ImageBox *self = static_cast<ImageBox*>(userp);
@@ -46,6 +33,218 @@ gboolean ImageBox::bus_cb(GstBus*, GstMessage *message, void *userp)
 
 Gdk::RGBA ImageBox::DefaultBGColor = Gdk::RGBA();
 
+#include <iostream>
+
+ImageBox::GLArea::GLArea(BaseObjectType *cobj, const Glib::RefPtr<Gtk::Builder>&)
+  : Gtk::GLArea(cobj)
+{
+    set_required_version(3, 3);
+}
+
+void ImageBox::GLArea::clear()
+{
+    glDeleteTextures(1, &m_Texture);
+    m_Texture = 0;
+
+    set_size_request(0, 0);
+
+    queue_render();
+}
+
+void ImageBox::GLArea::set_image(const Glib::RefPtr<Gdk::Pixbuf> &pixbuf)
+{
+    if (!pixbuf)
+        return;
+
+    GLenum format;
+    switch (pixbuf->get_n_channels())
+    {
+    case 1:
+        format = GL_LUMINANCE;
+        break;
+    case 2:
+        format = GL_LUMINANCE_ALPHA;
+        break;
+    case 3:
+        format = GL_RGB;
+        break;
+    case 4:
+        format = GL_RGBA;
+        break;
+    default:
+        format = GL_RGBA;
+        std::cerr << "unknown format" << std::endl;
+        break;
+    }
+
+    if (!m_Texture)
+        glGenTextures(1, &m_Texture);
+
+    glBindTexture(GL_TEXTURE_2D, m_Texture);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, pixbuf->get_width(), pixbuf->get_height(),
+                 0, format, GL_UNSIGNED_BYTE, pixbuf->get_pixels());
+
+    queue_render();
+}
+
+void ImageBox::GLArea::on_realize()
+{
+    Gtk::GLArea::on_realize();
+
+    make_current();
+
+    const GLubyte *version = glGetString(GL_VERSION);
+    std::cout << "OpenGL version supported " <<  version << std::endl;
+
+    GLint maxTexture;
+    glGetIntegerv(GL_MAX_TEXTURE_SIZE, &maxTexture);
+    std::cout << "  GL_MAX_TEXTURE_SIZE: " <<  std::to_string(maxTexture) << std::endl;
+    std::cout << "  Using opengl renderer: " << (use_opengl ? "Yes" : "No") << std::endl;
+
+    glGenVertexArrays(1, &m_Vao);
+    glBindVertexArray(m_Vao);
+
+    static GLfloat vc[] = {
+        1.0f,  1.0f,
+       -1.0f,  1.0f,
+        1.0f, -1.0f,
+       -1.0f, -1.0f,
+    };
+    static GLfloat tc[] = {
+        1.0f,  0.0f,
+        0.0f,  0.0f,
+        1.0f,  1.0f,
+        0.0f,  1.0f,
+    };
+    glGenBuffers(1, &m_VBuffer);
+    glBindBuffer(GL_ARRAY_BUFFER, m_VBuffer);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(vc), vc, GL_STATIC_DRAW);
+    glGenBuffers(1, &m_TBuffer);
+    glBindBuffer(GL_ARRAY_BUFFER, m_TBuffer);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(tc), tc, GL_STATIC_DRAW);
+
+    auto vs_source = Gio::Resource::lookup_data_global("/vertex.glsl");
+    auto fs_source = Gio::Resource::lookup_data_global("/fragment.glsl");
+
+    gsize vs_size { vs_source->get_size() };
+    gsize fs_size { fs_source->get_size() };
+    GLuint vs = compile_shader(GL_VERTEX_SHADER,
+        static_cast<const GLchar*>(vs_source->get_data(vs_size)));
+
+    GLuint fs = compile_shader(GL_FRAGMENT_SHADER,
+        static_cast<const GLchar*>(fs_source->get_data(fs_size)));
+
+    m_Program = glCreateProgram();
+    glAttachShader(m_Program, vs);
+    glAttachShader(m_Program, fs);
+    glLinkProgram(m_Program);
+    GLint status;
+    glGetProgramiv(m_Program, GL_LINK_STATUS, &status);
+    if (status == GL_FALSE)
+    {
+        int log_len;
+        glGetProgramiv(m_Program, GL_INFO_LOG_LENGTH, &log_len);
+
+        std::string log_space(log_len+1, ' ');
+        glGetProgramInfoLog(m_Program, log_len, nullptr, (GLchar*)log_space.c_str());
+
+        std::cerr << "Linking failure: " << log_space << std::endl;
+
+        glDeleteProgram(m_Program);
+        m_Program = 0;
+    }
+
+    glUseProgram(m_Program);
+    static GLfloat model[16], view[16], proj[16];
+    for (int i = 0; i < 4*4; i += 5)
+        model[i] = view[i] = proj[i] = 1.0f;
+    m_Model = glGetUniformLocation(m_Program, "model");
+    glUniformMatrix4fv(m_Model, 1, GL_FALSE, model);
+
+    m_View = glGetUniformLocation(m_Program, "view");
+    glUniformMatrix4fv(m_View, 1, GL_FALSE, view);
+
+    m_Proj = glGetUniformLocation(m_Program, "proj");
+    glUniformMatrix4fv(m_Proj, 1, GL_FALSE, proj);
+
+    GLuint vc_index = glGetAttribLocation(m_Program, "vcoords");
+    glEnableVertexAttribArray(vc_index);
+    glBindBuffer(GL_ARRAY_BUFFER, m_VBuffer);
+    glVertexAttribPointer(vc_index, 2, GL_FLOAT, GL_FALSE, 0, NULL);
+
+    GLuint tc_index = glGetAttribLocation(m_Program, "tcoords");
+    glEnableVertexAttribArray(tc_index);
+    glBindBuffer(GL_ARRAY_BUFFER, m_TBuffer);
+    glVertexAttribPointer(tc_index, 2, GL_FLOAT, GL_FALSE, 0, NULL);
+
+    m_Filter = glGetUniformLocation(m_Program, "shouldFilter");
+}
+
+void ImageBox::GLArea::on_unrealize()
+{
+    make_current();
+
+    glDeleteBuffers(1, &m_Vao);
+    glDeleteProgram(m_Program);
+
+    Gtk::GLArea::on_unrealize();
+}
+
+bool ImageBox::GLArea::on_render(const Glib::RefPtr<Gdk::GLContext>&)
+{
+    glUseProgram(m_Program);
+
+    glUniform1i(m_Filter, m_Filtering);
+
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+    glEnable(GL_BLEND);
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+
+    glActiveTexture(GL_TEXTURE0);
+    glBindTexture(GL_TEXTURE_2D, m_Texture);
+    glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
+
+    return true;
+}
+
+void ImageBox::GLArea::on_resize(int w, int h)
+{
+    Gtk::GLArea::on_resize(w, h);
+}
+
+GLuint ImageBox::GLArea::compile_shader(GLenum type, const GLchar *source)
+{
+    GLint compile_ok = GL_FALSE;
+    GLsizei logsize = 0;
+
+    GLuint shader = glCreateShader(type);
+    if (!shader)
+    {
+        std::cerr << "Could not create shader program" << std::endl;
+        return 0;
+    }
+
+    glShaderSource(shader, 1, &source, NULL);
+    glCompileShader(shader);
+
+    glGetShaderiv(shader, GL_COMPILE_STATUS, &compile_ok);
+    if (compile_ok == GL_FALSE)
+    {
+        glGetShaderiv(shader, GL_INFO_LOG_LENGTH, &logsize);
+        GLchar log[logsize];
+
+        glGetShaderInfoLog(shader, logsize, 0, log);
+        glDeleteShader(shader);
+        std::cerr << log << std::endl;
+
+        return 0;
+    }
+
+    return shader;
+}
+
 ImageBox::ImageBox(BaseObjectType *cobj, const Glib::RefPtr<Gtk::Builder> &bldr)
   : Gtk::ScrolledWindow(cobj),
     m_LeftPtrCursor(Gdk::Cursor::create(Gdk::LEFT_PTR)),
@@ -54,28 +253,32 @@ ImageBox::ImageBox(BaseObjectType *cobj, const Glib::RefPtr<Gtk::Builder> &bldr)
     m_ZoomMode(Settings.get_zoom_mode()),
     m_RestoreScrollPos(-1, -1, m_ZoomMode)
 {
-    bldr->get_widget("ImageBox::Layout",       m_Layout);
-    bldr->get_widget("ImageBox::Image",        m_GtkImage);
-    bldr->get_widget("ImageBox::DrawingArea",  m_DrawingArea);
-    bldr->get_widget_derived("StatusBar",      m_StatusBar);
-    bldr->get_widget_derived("MainWindow",     m_MainWindow);
+    bldr->get_widget("ImageBox::Layout",         m_Layout);
+    bldr->get_widget("ImageBox::Image",          m_GtkImage);
+    bldr->get_widget_derived("ImageBox::GLArea", m_GLArea);
+    bldr->get_widget_derived("StatusBar",        m_StatusBar);
+    bldr->get_widget_derived("MainWindow",       m_MainWindow);
 
     m_UIManager = Glib::RefPtr<Gtk::UIManager>::cast_static(bldr->get_object("UIManager"));
 
 #ifdef HAVE_GSTREAMER
-    m_Playbin   = gst_element_factory_make("playbin", "playbin"),
-#ifdef GDK_WINDOWING_X11
-    m_VideoSink = gst_element_factory_make("xvimagesink", "videosink");
-    if (!m_VideoSink)
-        m_VideoSink = gst_element_factory_make("ximagesink", "videosink");
-#endif // GDK_WINDOWING_X11
-#if defined GDK_WINDOWING_WIN32
-    m_VideoSink = gst_element_factory_make("d3dvideosink", "videosink");
-#endif // GDK_WINDOWING_WIN32
+    GstElement /*glupload       { nullptr },
+               *glcolorconvert { nullptr },
+               */
+               *gtkglsink      { nullptr },
+               *videosink      { nullptr };
+    GError *error { nullptr };
 
-    // Last resort
-    if (!m_VideoSink)
-        m_VideoSink = gst_element_factory_make("autovideosink", "videosink");
+    m_Playbin = gst_element_factory_make("playbin", "playbin");
+    videosink = gst_parse_bin_from_description(
+        "glupload ! glcolorconvert ! gtkglsink name=gtksink", true, &error);
+    gtkglsink = gst_bin_get_by_name(GST_BIN(videosink), "gtksink");
+
+    GtkWidget *widget { nullptr };
+    g_object_get(gtkglsink, "widget", &widget, NULL);
+    m_GstWidget = Glib::wrap(widget);
+    m_Layout->add(*m_GstWidget);
+    g_object_unref(widget);
 
     g_object_set(m_Playbin,
             // For now users can put
@@ -83,7 +286,7 @@ ImageBox::ImageBox(BaseObjectType *cobj, const Glib::RefPtr<Gtk::Builder> &bldr)
             // into the config file and have sound if they have the correct gstreamer plugins
             // Can also set Volume = 0-100; in config to control it
             "audio-sink", gst_element_factory_make(Settings.get_string("AudioSink").c_str(), "audiosink"),
-            "video-sink", m_VideoSink,
+            "video-sink", videosink,
             "volume", static_cast<double>(Settings.get_int("Volume")) / 100,
             // draw_image takes care of it
             "force-aspect-ratio", FALSE,
@@ -91,20 +294,7 @@ ImageBox::ImageBox(BaseObjectType *cobj, const Glib::RefPtr<Gtk::Builder> &bldr)
 
     GstBus *bus = gst_pipeline_get_bus(GST_PIPELINE(m_Playbin));
     gst_bus_add_watch(bus, &ImageBox::bus_cb, this);
-    gst_bus_set_sync_handler(bus, &ImageBox::create_window, this, NULL);
     g_object_unref(bus);
-
-    if (m_VideoSink)
-        m_DrawingArea->signal_realize().connect([&]()
-        {
-#ifdef GDK_WINDOWING_X11
-            m_WindowHandle = GDK_WINDOW_XID(m_DrawingArea->get_window()->gobj());
-#endif // GDK_WINDOWING_X11
-#ifdef GDK_WINDOWING_WIN32
-            m_WindowHandle = (guintptr)GDK_WINDOW_HWND(m_DrawingArea->get_window()->gobj());
-#endif // GDK_WINDOWING_WIN32
-            gst_element_set_state(m_Playbin, GST_STATE_READY);
-        });
 #endif // HAVE_GSTREAMER
 
     m_StyleUpdatedConn = m_Layout->signal_style_updated().connect([&]()
@@ -144,7 +334,7 @@ void ImageBox::set_image(const std::shared_ptr<Image> &image)
 #ifdef HAVE_GSTREAMER
         gst_element_set_state(m_Playbin, GST_STATE_NULL);
         m_Playing = false;
-        m_DrawingArea->hide();
+        m_GstWidget->hide();
 #endif // HAVE_GSTREAMER
 
         // reset GIF stuff so if it stays cached and is viewed again it will
@@ -155,9 +345,10 @@ void ImageBox::set_image(const std::shared_ptr<Image> &image)
         m_Image = image;
         m_FirstDraw = m_Loading = true;
 
+        if (use_opengl)
+            m_GLArea->set_image(m_Image->get_pixbuf());
         m_ImageConn = m_Image->signal_pixbuf_changed().connect(
-                sigc::bind(sigc::mem_fun(*this, &ImageBox::queue_draw_image), false));
-
+                sigc::mem_fun(*this, &ImageBox::on_pixbuf_changed));
         queue_draw_image(true);
     }
     else
@@ -166,14 +357,21 @@ void ImageBox::set_image(const std::shared_ptr<Image> &image)
     }
 }
 
+void ImageBox::on_pixbuf_changed()
+{
+    m_GLArea->set_image(m_Image->get_pixbuf());
+    queue_draw_image();
+}
+
 void ImageBox::clear_image()
 {
     m_SlideshowConn.disconnect();
     m_ImageConn.disconnect();
     m_DrawConn.disconnect();
     m_AnimConn.disconnect();
+    m_GLArea->clear();
     m_GtkImage->clear();
-    m_DrawingArea->hide();
+    m_GstWidget->hide();
     m_Layout->set_size(0, 0);
 
 #ifdef HAVE_GSTREAMER
@@ -456,6 +654,9 @@ void ImageBox::get_scale_and_position(int &w, int &h, int &x, int &y)
         h *= static_cast<double>(m_ZoomPercent) / 100;
     }
 
+    if (use_opengl)
+        m_GLArea->set_filtering(w != m_OrigWidth || h != m_OrigHeight);
+
     x = std::max(0, (ww - w) / 2);
     y = std::max(0, (wh - h) / 2);
 }
@@ -489,7 +690,7 @@ void ImageBox::draw_image(bool scroll)
         if (!m_Playing)
         {
             m_GtkImage->clear();
-            m_DrawingArea->show();
+            m_GstWidget->show();
 
             g_object_set(m_Playbin, "uri", Glib::filename_to_uri(m_Image->get_path()).c_str(), NULL);
             gst_element_set_state(m_Playbin, GST_STATE_PAUSED);
@@ -513,7 +714,7 @@ void ImageBox::draw_image(bool scroll)
         else
         {
             error = true;
-            m_DrawingArea->hide();
+            m_GstWidget->hide();
         }
     }
     else
@@ -577,15 +778,26 @@ void ImageBox::draw_image(bool scroll)
 
     if (tempPixbuf)
     {
-        m_Layout->move(*m_GtkImage, x, y);
-        m_GtkImage->set(tempPixbuf);
+        if (use_opengl)
+        {
+            m_Layout->move(*m_GLArea, x, y);
+            m_GLArea->set_size_request(w, h);
+            if (error)
+                m_GLArea->set_image(tempPixbuf);
+            m_GLArea->queue_render();
+        }
+        else
+        {
+            m_Layout->move(*m_GtkImage, x, y);
+            m_GtkImage->set(tempPixbuf);
+        }
     }
 #ifdef HAVE_GSTREAMER
     else
     {
-        m_Layout->move(*m_DrawingArea, x, y);
-        m_DrawingArea->set_size_request(w, h);
-        gst_video_overlay_expose(GST_VIDEO_OVERLAY(m_VideoSink));
+        m_GLArea->clear();
+        m_Layout->move(*m_GstWidget, x, y);
+        m_GstWidget->set_size_request(w, h);
     }
 #endif // HAVE_GSTREAMER
 
@@ -668,10 +880,6 @@ void ImageBox::scroll(const int x, const int y, const bool panning, const bool f
 
         if (nY <= adjustUpperY)
             get_vadjustment()->set_value(nY);
-#ifdef HAVE_GSTREAMER
-        if (m_Playing && m_Image->is_webm())
-            gst_video_overlay_expose(GST_VIDEO_OVERLAY(m_VideoSink));
-#endif // HAVE_GSTREAMER
     }
     else
     {

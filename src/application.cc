@@ -3,6 +3,10 @@
 #include <curl/curl.h>
 #include <libxml/parser.h>
 
+#if GST_GL_HAVE_WINDOW_X11 && defined (GDK_WINDOWING_X11)
+#include <gst/gl/x11/gstgldisplay_x11.h>
+#endif
+
 #include "application.h"
 using namespace AhoViewer;
 
@@ -139,10 +143,13 @@ int Application::run(int argc, char **argv)
 
     if (!is_remote())
     {
-        gtk_init(&argc, &argv);
 #ifdef HAVE_GSTREAMER
+#if GST_GL_HAVE_WINDOW_X11 && defined(GDK_WINDOWING_X11)
+        XInitThreads();
+#endif
         gst_init(&argc, &argv);
 #endif // HAVE_GSTREAMER
+        gtk_init(&argc, &argv);
     }
 
     return Gio::Application::run(argc, argv);
