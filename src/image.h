@@ -41,15 +41,15 @@ namespace AhoViewer
         virtual bool is_loading() const { return !m_isWebM && m_Loading; }
         virtual std::string get_filename() const;
         virtual const Glib::RefPtr<Gdk::Pixbuf>& get_pixbuf();
-        virtual const Glib::RefPtr<Gdk::Pixbuf>& get_gif_frame_pixbuf(const bool advance = true);
         virtual const Glib::RefPtr<Gdk::Pixbuf>& get_thumbnail(Glib::RefPtr<Gio::Cancellable> c);
 
         virtual void load_pixbuf(Glib::RefPtr<Gio::Cancellable> c);
         virtual void reset_pixbuf();
-        virtual void reset_gif_animation();
 
+        bool gif_advance_frame();
         bool get_gif_finished_looping() const;
         unsigned int get_gif_frame_delay() const;
+        void reset_gif_animation();
 
         Glib::Dispatcher& signal_pixbuf_changed() { return m_SignalPixbufChanged; }
 
@@ -57,6 +57,7 @@ namespace AhoViewer
     protected:
         static bool is_webm(const std::string&);
 
+        void create_gif_frame_pixbuf();
         bool is_gif(const unsigned char*);
         void create_thumbnail(Glib::RefPtr<Gio::Cancellable> c, bool save = true);
         Glib::RefPtr<Gdk::Pixbuf> create_pixbuf_at_size(const std::string &path,
@@ -64,15 +65,15 @@ namespace AhoViewer
                                                         Glib::RefPtr<Gio::Cancellable> c) const;
 
         bool m_isWebM;
-        std::atomic<bool> m_Loading;
+        std::atomic<bool> m_Loading {true};
         std::string m_Path, m_ThumbnailPath;
 
         Glib::RefPtr<Gdk::Pixbuf> m_ThumbnailPixbuf;
         Glib::RefPtr<Gdk::Pixbuf> m_Pixbuf;
 
-        gif_animation* m_GIFanim;
+        gif_animation* m_GIFanim {nullptr};
         gif_bitmap_callback_vt m_BitmapCallbacks;
-        int m_GIFcurFrame, m_GIFcurLoop;
+        int m_GIFcurFrame {0}, m_GIFcurLoop {1};
 
         std::mutex m_Mutex;
         Glib::Dispatcher m_SignalPixbufChanged;
