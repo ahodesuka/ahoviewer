@@ -4,11 +4,19 @@ conf.set_quoted('PACKAGE', meson.project_name())
 conf.set_quoted('PACKAGE_URL', project_url)
 conf.set_quoted('PACKAGE_BUGREPORT', project_bugreport)
 
-if openssl.found()
+deps = [
+  threads, glibmm, sigcpp, gtkmm, libconfig, libxml, curl,
+  gstreamer, gstvideo, libsecret, libunrar, libzip, libnsgif
+]
+incdirs = [ ]
+
+if curl_openssl and openssl.found()
   conf.set('USE_OPENSSL', 1)
+  deps += openssl
 endif
-if libgcrypt.found()
+if curl_gnutls and libgcrypt.found()
   conf.set('USE_GNUTLS', 1)
+  deps += libgcrypt
 endif
 if gstreamer.found()
   conf.set('HAVE_GSTREAMER', 1)
@@ -80,14 +88,14 @@ if not libnsgif.found()
     '../ext/libnsgif/libnsgif.c',
     '../ext/libnsgif/lzw.c'
   ]
+  incdirs += include_directories('../ext/libnsgif')
 endif
 
 executable(
   meson.project_name(),
   sources,
-  dependencies : [ threads, glibmm, sigcpp, gtkmm, libconfig, libxml, curl,
-    openssl, libgcrypt, gstreamer, gstvideo, libsecret, libunrar, libzip, libnsgif
-  ],
+  dependencies : deps,
+  include_directories : incdirs,
   gui_app : true,
   install : true
 )
