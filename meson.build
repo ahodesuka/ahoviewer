@@ -23,12 +23,17 @@ curl = dependency('libcurl', version : '>= 7.58.0')
 curl_ssl_backend = run_command(
   [get_option('curl-config'), '--ssl-backends']).stdout().strip().to_lower()
 
+curl_openssl = false
+curl_gnutls = false
+
 if curl_ssl_backend.contains('openssl')
+  curl_openssl = true
   # Check if we need to setup thread locks for older OpenSSL
   openssl = dependency('openssl', version : ['<1.1.0'], required : false)
   # USE_OPENSSL is defined in src/meson.build if above is found
 endif
 if curl_ssl_backend.contains('gnutls')
+  curl_gnutls = true
   # Older versions of libgcrypt require some lock setup to be thread safe
   libgcrypt = dependency('libgcrypt', version : ['<1.6.0'], required : false)
   # USE_GNUTLS is defined in src/meson.build if above is found
@@ -42,6 +47,8 @@ libunrar = dependency('libunrar', required : get_option('libunrar'))
 # libunrar doesn't package a .pc file so we need to find it manually
 # worse yet not all distros put the header into the same directory
 if not libunrar.found() and not get_option('libunrar').disabled()
+  libunrar_dll_hpp = false
+  unrar_dll_hpp = false
   cpp = meson.get_compiler('cpp')
   libunrar = cpp.find_library('libunrar', required : get_option('libunrar'))
   if cpp.has_header('dll.hpp', args : '-I/usr/include/libunrar')
@@ -60,7 +67,9 @@ libzip = dependency('libzip', required : get_option('libzip'))
 libnsgif = dependency('libnsgif', required : false)
 
 # Runtime dependencies
+# Provides the matroska demuxer and basic audio/video pipeline elements
 dependency('gstreamer-plugins-base-1.0', required : get_option('gstreamer'))
+# Provides the gtk(gl)sink, vpx(8/9) decoders
 dependency('gstreamer-plugins-good-1.0', required : get_option('gstreamer'))
 
 # Needed for d3dvideosink
