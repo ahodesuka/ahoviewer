@@ -1,6 +1,7 @@
 #ifndef _SETTINGS_H_
 #define _SETTINGS_H_
 
+#include <gdkmm.h>
 #include <glibmm.h>
 #include <libconfig.h++>
 using libconfig::Setting;
@@ -8,14 +9,14 @@ using libconfig::Setting;
 #include <map>
 #include <set>
 
-#include "booru/site.h"
-#include "imagebox.h"
+#include "util.h"
 
 namespace AhoViewer
 {
+    namespace Booru { class Site; }
     class SettingsManager
     {
-        using SiteTuple = std::tuple<std::string, std::string, Booru::Site::Type, std::string, std::string, int>;
+        using SiteTuple = std::tuple<std::string, std::string, Booru::Type, std::string, std::string, int>;
     public:
         SettingsManager();
         ~SettingsManager();
@@ -44,11 +45,11 @@ namespace AhoViewer
         Gdk::RGBA get_background_color() const;
         void set_background_color(const Gdk::RGBA &value);
 
-        Booru::Site::Rating get_booru_max_rating() const;
-        void set_booru_max_rating(const Booru::Site::Rating value);
+        Booru::Rating get_booru_max_rating() const;
+        void set_booru_max_rating(const Booru::Rating value);
 
-        ImageBox::ZoomMode get_zoom_mode() const;
-        void set_zoom_mode(const ImageBox::ZoomMode value);
+        ZoomMode get_zoom_mode() const;
+        void set_zoom_mode(const ZoomMode value);
 
         const std::string get_booru_path() const { return BooruPath; }
 
@@ -85,8 +86,8 @@ namespace AhoViewer
         const std::map<std::string, std::string> DefaultStrings;
         const std::vector<SiteTuple> DefaultSites;
         const std::map<std::string, std::map<std::string, std::string>> DefaultKeybindings;
-        const Booru::Site::Rating DefaultBooruMaxRating = Booru::Site::Rating::EXPLICIT;
-        const ImageBox::ZoomMode DefaultZoomMode = ImageBox::ZoomMode::MANUAL;
+        const Booru::Rating DefaultBooruMaxRating { Booru::Rating::EXPLICIT };
+        const ZoomMode DefaultZoomMode { ZoomMode::MANUAL };
 
         std::vector<std::shared_ptr<Booru::Site>> m_Sites;
         std::map<std::string, std::map<std::string, std::string>> m_Keybindings;

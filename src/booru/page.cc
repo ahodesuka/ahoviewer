@@ -166,7 +166,7 @@ void Page::search(const std::shared_ptr<Site> &site)
     }
     else
     {
-        if (site->get_type() != Site::Type::MOEBOORU)
+        if (site->get_type() != Type::MOEBOORU)
             m_SearchTags = "*";
     }
     std::string label = m_Site->get_name() +
@@ -266,11 +266,11 @@ void Page::get_posts()
 
     if (m_Tags.find("rating:") == std::string::npos)
     {
-        if (Settings.get_booru_max_rating() == Site::Rating::SAFE)
+        if (Settings.get_booru_max_rating() == Rating::SAFE)
         {
             tags += " rating:safe";
         }
-        else if (Settings.get_booru_max_rating() == Site::Rating::QUESTIONABLE)
+        else if (Settings.get_booru_max_rating() == Rating::QUESTIONABLE)
         {
             tags += " -rating:explicit";
         }
@@ -283,7 +283,7 @@ void Page::get_posts()
         size_t postsCount = 0;
         // Danbooru doesn't give the post count with the posts
         // Get it from thier counts api
-        if (m_Page == 1 && m_Site->get_type() == Site::Type::DANBOORU)
+        if (m_Page == 1 && m_Site->get_type() == Type::DANBOORU)
         {
             m_Curler.set_url(m_Site->get_url() + "/counts/posts.xml?tags=" + tags);
             if (m_Curler.perform())
@@ -305,7 +305,7 @@ void Page::get_posts()
 
         m_Curler.set_url(m_Site->get_posts_url(tags, m_Page));
 
-        if (m_Site->get_type() == Site::Type::GELBOORU)
+        if (m_Site->get_type() == Type::GELBOORU)
             m_Curler.set_cookie_file(m_Site->get_cookie());
         else
             m_Curler.set_http_auth(m_Site->get_username(), m_Site->get_password());
@@ -331,7 +331,7 @@ void Page::get_posts()
                 // XXX: Ocassionally Danbooru returns a 500 internal server error
                 // "uninitialized constant LegacyController::Builder"
                 // and sets success to false
-                if (m_Posts && m_Site->get_type() == Site::Type::DANBOORU)
+                if (m_Posts && m_Site->get_type() == Type::DANBOORU)
                     success = m_Posts->get_attribute("success") != "false";
             }
         }

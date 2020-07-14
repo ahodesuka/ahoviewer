@@ -8,6 +8,7 @@
 
 #include "config.h"
 #include "curler.h"
+#include "util.h"
 
 namespace AhoViewer
 {
@@ -16,22 +17,6 @@ namespace AhoViewer
         class Site
         {
         public:
-            enum class Rating
-            {
-                SAFE = 0,
-                QUESTIONABLE,
-                EXPLICIT,
-            };
-
-            enum class Type
-            {
-                UNKNOWN = -1,
-                DANBOORU,
-                GELBOORU,
-                MOEBOORU,
-                SHIMMIE,
-            };
-
             ~Site();
 
             static std::shared_ptr<Site> create(const std::string &name,

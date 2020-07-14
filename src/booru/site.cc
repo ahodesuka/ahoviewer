@@ -2,6 +2,7 @@
 #include <fstream>
 #include <iostream>
 #include <glib/gstdio.h>
+#include <gtkmm.h>
 
 #include "site.h"
 using namespace AhoViewer::Booru;
@@ -17,7 +18,7 @@ using namespace AhoViewer::Booru;
 #endif // _WIN32
 
 // 1: page, 2: limit, 3: tags
-const std::map<Site::Type, std::string> Site::RequestURI =
+const std::map<Type, std::string> Site::RequestURI =
 {
     { Type::DANBOORU, "/post/index.xml?page=%1&limit=%2&tags=%3" },
     { Type::GELBOORU, "/index.php?page=dapi&s=post&q=index&pid=%1&limit=%2&tags=%3" },
@@ -26,7 +27,7 @@ const std::map<Site::Type, std::string> Site::RequestURI =
 };
 
 // 1: id
-const std::map<Site::Type, std::string> Site::PostURI =
+const std::map<Type, std::string> Site::PostURI =
 {
     { Type::DANBOORU, "/posts/%1" },
     { Type::GELBOORU, "/index.php?page=post&s=view&id=%1" },
@@ -34,7 +35,7 @@ const std::map<Site::Type, std::string> Site::PostURI =
     { Type::SHIMMIE,  "/post/view/%1" },
 };
 
-const std::map<Site::Type, std::string> Site::RegisterURI =
+const std::map<Type, std::string> Site::RegisterURI =
 {
     { Type::DANBOORU, "/users/new" },
     { Type::GELBOORU, "/index.php?page=account&s=reg" },
@@ -110,7 +111,7 @@ void Site::on_password_stored(GObject*, GAsyncResult *result, gpointer ptr)
 }
 #endif // HAVE_LIBSECRET
 
-Site::Type Site::get_type_from_url(const std::string &url)
+Type Site::get_type_from_url(const std::string &url)
 {
     Curler curler;
     curler.set_no_body();

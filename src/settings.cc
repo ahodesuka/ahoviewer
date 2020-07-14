@@ -5,9 +5,11 @@
 
 #include "settings.h"
 using namespace AhoViewer;
+#include "booru/site.h"
 using namespace AhoViewer::Booru;
 
 #include "config.h"
+#include "imagebox.h"
 
 SettingsManager AhoViewer::Settings;
 
@@ -59,11 +61,11 @@ SettingsManager::SettingsManager()
     }),
     DefaultSites(
     {
-        std::make_tuple("Danbooru",   "https://danbooru.donmai.us",  Site::Type::DANBOORU, "", "", 0),
-        std::make_tuple("Gelbooru",   "https://gelbooru.com",        Site::Type::GELBOORU, "", "", 0),
-        std::make_tuple("Konachan",   "https://konachan.com",        Site::Type::MOEBOORU, "", "", 6),
-        std::make_tuple("yande.re",   "https://yande.re",            Site::Type::MOEBOORU, "", "", 0),
-        std::make_tuple("Safebooru",  "https://safebooru.org",       Site::Type::GELBOORU, "", "", 6),
+        std::make_tuple("Danbooru",   "https://danbooru.donmai.us",  Type::DANBOORU, "", "", 0),
+        std::make_tuple("Gelbooru",   "https://gelbooru.com",        Type::GELBOORU, "", "", 0),
+        std::make_tuple("Konachan",   "https://konachan.com",        Type::MOEBOORU, "", "", 6),
+        std::make_tuple("yande.re",   "https://yande.re",            Type::MOEBOORU, "", "", 0),
+        std::make_tuple("Safebooru",  "https://safebooru.org",       Type::GELBOORU, "", "", 6),
     }),
     DefaultKeybindings(
     {
@@ -250,7 +252,7 @@ std::vector<std::shared_ptr<Site>>& SettingsManager::get_sites()
                 m_Sites.push_back(
                         Site::create(name,
                                      url,
-                                     static_cast<Site::Type>(static_cast<int>(s["type"])),
+                                     static_cast<Type>(static_cast<int>(s["type"])),
                                      username,
                                      password,
                                      max_cons,
@@ -366,28 +368,28 @@ void SettingsManager::set_background_color(const Gdk::RGBA &value)
     set("BackgroundColor", value.to_string());
 }
 
-Site::Rating SettingsManager::get_booru_max_rating() const
+Rating SettingsManager::get_booru_max_rating() const
 {
     if (Config.exists("BooruMaxRating"))
-        return Site::Rating(static_cast<int>(Config.lookup("BooruMaxRating")));
+        return Rating(static_cast<int>(Config.lookup("BooruMaxRating")));
 
     return DefaultBooruMaxRating;
 }
 
-void SettingsManager::set_booru_max_rating(const Site::Rating value)
+void SettingsManager::set_booru_max_rating(const Rating value)
 {
     set("BooruMaxRating", static_cast<int>(value));
 }
 
-ImageBox::ZoomMode SettingsManager::get_zoom_mode() const
+ZoomMode SettingsManager::get_zoom_mode() const
 {
     if (Config.exists("ZoomMode"))
-        return ImageBox::ZoomMode(static_cast<const char*>(Config.lookup("ZoomMode"))[0]);
+        return ZoomMode(static_cast<const char*>(Config.lookup("ZoomMode"))[0]);
 
     return DefaultZoomMode;
 }
 
-void SettingsManager::set_zoom_mode(const ImageBox::ZoomMode value)
+void SettingsManager::set_zoom_mode(const ZoomMode value)
 {
     set("ZoomMode", std::string(1, static_cast<char>(value)));
 }

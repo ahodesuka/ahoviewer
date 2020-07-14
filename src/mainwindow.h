@@ -3,16 +3,16 @@
 
 #include <gtkmm.h>
 
-#include "booru/browser.h"
-#include "imagebox.h"
-#include "imagelist.h"
-#include "preferences.h"
-#include "statusbar.h"
-#include "thumbnailbar.h"
-
 namespace AhoViewer
 {
     class Application;
+    class Image;
+    class ImageBox;
+    class ImageList;
+    class PreferencesDialog;
+    class StatusBar;
+    class ThumbnailBar;
+    namespace Booru { class Browser; }
     class MainWindow : public Gtk::ApplicationWindow
     {
         friend Application;

@@ -8,9 +8,9 @@
 
 #include "archive/archive.h"
 #include "image.h"
-#include "imagebox.h"
 #include "threadpool.h"
 #include "tsqueue.h"
+#include "util.h"
 
 namespace AhoViewer
 {
@@ -115,8 +115,8 @@ namespace AhoViewer
         bool empty() const { return m_Images.empty(); }
         bool from_archive() const { return !!m_Archive; }
 
-        void set_scroll_position(const ImageBox::ScrollPos &s) { m_ScrollPos = s; }
-        const ImageBox::ScrollPos& get_scroll_position() const { return m_ScrollPos; }
+        void set_scroll_position(const ScrollPos &s) { m_ScrollPos = s; }
+        const ScrollPos& get_scroll_position() const { return m_ScrollPos; }
 
         virtual void set_current(const size_t index, const bool fromWidget = false, const bool force = false);
 
@@ -140,7 +140,7 @@ namespace AhoViewer
         ImageVector m_Images;
         size_t m_Index;
 
-        ImageBox::ScrollPos m_ScrollPos;
+        ScrollPos m_ScrollPos;
 
         Glib::RefPtr<Gio::Cancellable> m_ThumbnailCancel;
         std::thread m_ThumbnailThread;
