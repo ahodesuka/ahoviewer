@@ -362,7 +362,6 @@ bool ImageBox::on_button_release_event(GdkEventButton *e)
             }
 
             m_NextAction->activate();
-
         }
 
         return true;
@@ -440,9 +439,14 @@ bool ImageBox::on_scroll_event(GdkEventScroll *e)
 
 void ImageBox::draw_image(bool scroll)
 {
+    // Don't draw images that don't exist (obviously)
+    // Don't draw loading animated GIFs
+    // Don't draw loading images that haven't created a pixbuf yet
+    // Don't draw loading webm files (only booru images can have a loading webm)
+    // The pixbuf_changed signal will fire when the above images are ready to be drawn
     if (!m_Image ||
-        (!m_Image->get_pixbuf() && m_Image->is_loading()) ||
-        (m_Image->is_webm() && m_Image->is_loading()))
+        (m_Image->is_loading() &&
+         (m_Image->is_animated_gif() || !m_Image->get_pixbuf() || m_Image->is_webm())))
     {
         get_hscrollbar()->hide();
         get_vscrollbar()->hide();
@@ -457,6 +461,7 @@ void ImageBox::draw_image(bool scroll)
          error = false;
 
     // if the image is still loading we want to draw all requests
+    // Only booru images will do this
     m_Loading = m_Image->is_loading();
 
 #ifdef HAVE_GSTREAMER
@@ -498,19 +503,17 @@ void ImageBox::draw_image(bool scroll)
 #endif // HAVE_GSTREAMER
     {
         Glib::RefPtr<Gdk::Pixbuf> pixbuf;
-        if (m_Image->is_animated_gif())
+        // Start animation if this is a new animated GIF
+        if (m_Image->is_animated_gif() && !m_AnimConn)
         {
-            pixbuf = m_Image->get_gif_frame_pixbuf();
             m_AnimConn.disconnect();
             if (!m_Image->get_gif_finished_looping())
                 m_AnimConn = Glib::signal_timeout().connect(
                         sigc::mem_fun(*this, &ImageBox::update_animation),
                         m_Image->get_gif_frame_delay());
         }
-        else
-        {
-            pixbuf = m_Image->get_pixbuf();
-        }
+
+        pixbuf = m_Image->get_pixbuf();
 
         if (pixbuf)
         {
@@ -673,10 +676,9 @@ bool ImageBox::update_animation()
     if (m_Image->is_loading())
         return true;
 
-    m_AnimConn.disconnect();
-    queue_draw_image();
+    bool gif_finished = m_Image->gif_advance_frame();
 
-    if (!m_Image->get_gif_finished_looping())
+    if (!gif_finished)
         m_AnimConn = Glib::signal_timeout().connect(
                 sigc::mem_fun(*this, &ImageBox::update_animation),
                 m_Image->get_gif_frame_delay());

@@ -90,11 +90,7 @@ static unsigned char* _def_bitmap_get_buffer(void *bitmap)
 
 Image::Image(const std::string &path)
   : m_isWebM(Image::is_webm(path)),
-    m_Loading(true),
-    m_Path(path),
-    m_GIFanim(nullptr),
-    m_GIFcurFrame(0),
-    m_GIFcurLoop(1)
+    m_Path(path)
 {
     m_BitmapCallbacks.bitmap_create      = _def_bitmap_create;
     m_BitmapCallbacks.bitmap_destroy     = _def_bitmap_destroy;
@@ -124,15 +120,14 @@ std::string Image::get_filename() const
 const Glib::RefPtr<Gdk::Pixbuf>& Image::get_pixbuf()
 {
     std::lock_guard<std::mutex> lock(m_Mutex);
-    // Get the current frame without advancing
-    if (m_GIFanim && m_GIFanim->frame_count > 0)
-        m_Pixbuf = get_gif_frame_pixbuf(false);
-
     return m_Pixbuf;
 }
 
-const Glib::RefPtr<Gdk::Pixbuf>& Image::get_gif_frame_pixbuf(const bool advance)
+// Private method used internally by gif_advance_frame
+// and by get_pixbuf when m_Pixbuf is null
+void Image::create_gif_frame_pixbuf()
 {
+    std::lock_guard<std::mutex> lock(m_Mutex);
     gif_result result = gif_decode_frame(m_GIFanim, m_GIFcurFrame);
 
     if (result == GIF_OK)
@@ -140,32 +135,13 @@ const Glib::RefPtr<Gdk::Pixbuf>& Image::get_gif_frame_pixbuf(const bool advance)
         m_Pixbuf = Gdk::Pixbuf::create_from_data(
             static_cast<unsigned char*>(m_GIFanim->frame_image), Gdk::COLORSPACE_RGB, true, 8,
             m_GIFanim->width, m_GIFanim->height, (m_GIFanim->width * 4 + 3) & ~3);
-
-        // Handle frame advacing and looping.
-        if (m_GIFanim->frame_count > 1 && advance)
-        {
-            // Currently on the last frame, reset to first frame unless we finished
-            // the final loop
-            if (m_GIFcurFrame == static_cast<int>(m_GIFanim->frame_count) - 1 && m_GIFcurLoop != m_GIFanim->loop_count)
-            {
-                // Only increment the loop counter if it's not looping forever.
-                if (m_GIFanim->loop_count > 0)
-                    ++m_GIFcurLoop;
-                m_GIFcurFrame = 0;
-            }
-            else if (m_GIFcurFrame < static_cast<int>(m_GIFanim->frame_count) - 1)
-            {
-                ++m_GIFcurFrame;
-            }
-        }
+        m_SignalPixbufChanged();
     }
     else
     {
         std::cerr << "Error while decoding GIF frame " << m_GIFcurFrame << " of " << m_Path << std::endl
                   << "gif_result: " << result << std::endl;
     }
-
-    return m_Pixbuf;
 }
 
 const Glib::RefPtr<Gdk::Pixbuf>& Image::get_thumbnail(Glib::RefPtr<Gio::Cancellable> c)
@@ -238,7 +214,7 @@ void Image::load_pixbuf(Glib::RefPtr<Gio::Cancellable> c)
                     else if (result == GIF_OK)
                     {
                         // Load the first frame
-                        m_Pixbuf = get_gif_frame_pixbuf(false);
+                        create_gif_frame_pixbuf();
                     }
                 } while (result != GIF_OK);
             }
@@ -277,10 +253,29 @@ void Image::reset_pixbuf()
     }
 }
 
-void Image::reset_gif_animation()
+bool Image::gif_advance_frame()
 {
-    m_GIFcurFrame = 0;
-    m_GIFcurLoop  = 1;
+    // Handle frame advacing and looping.
+    if (m_GIFanim->frame_count > 1)
+    {
+        // Currently on the last frame, reset to first frame unless we finished
+        // the final loop
+        if (m_GIFcurFrame == static_cast<int>(m_GIFanim->frame_count) - 1 && m_GIFcurLoop != m_GIFanim->loop_count)
+        {
+            // Only increment the loop counter if it's not looping forever.
+            if (m_GIFanim->loop_count > 0)
+                ++m_GIFcurLoop;
+            m_GIFcurFrame = 0;
+        }
+        else if (m_GIFcurFrame < static_cast<int>(m_GIFanim->frame_count) - 1)
+        {
+            ++m_GIFcurFrame;
+        }
+    }
+
+    create_gif_frame_pixbuf();
+
+    return get_gif_finished_looping();
 }
 
 bool Image::get_gif_finished_looping() const
@@ -298,6 +293,13 @@ unsigned int Image::get_gif_frame_delay() const
     // libnsgif stores delay in centiseconds, convert it to milliseconds.
     // if delay is 0, use a 100ms delay by default
     return delay ? delay * 10 : 100;
+}
+
+void Image::reset_gif_animation()
+{
+    m_GIFcurFrame = 0;
+    m_GIFcurLoop  = 1;
+    m_Pixbuf.reset();
 }
 
 // This assumes data's length is at least 3
