@@ -5,10 +5,9 @@
 
 #include <thread>
 
-#include "booru/site.h"
-
 namespace AhoViewer
 {
+    namespace Booru { class Site; }
     class SiteEditor : public Gtk::TreeView
     {
     public:

@@ -11,7 +11,7 @@ using namespace AhoViewer;
 ImageList::ImageList(Widget *const w)
   : m_Widget(w),
     m_Index(0),
-    m_ScrollPos(-1, -1, ImageBox::ZoomMode::AUTO_FIT),
+    m_ScrollPos(-1, -1, ZoomMode::AUTO_FIT),
     m_ThumbnailCancel(Gio::Cancellable::create()),
     // number of threads (cores) times 2 since most of the work is I/O
     m_ThreadPool(std::thread::hardware_concurrency() * 2),

@@ -5,6 +5,7 @@
 
 #include "config.h"
 #include "image.h"
+#include "util.h"
 
 #ifdef HAVE_GSTREAMER
 #include <gst/gst.h>
@@ -17,21 +18,6 @@ namespace AhoViewer
     class ImageBox : public Gtk::ScrolledWindow
     {
     public:
-        enum class ZoomMode : char
-        {
-            AUTO_FIT   = 'A',
-            FIT_WIDTH  = 'W',
-            FIT_HEIGHT = 'H',
-            MANUAL     = 'M',
-        };
-        struct ScrollPos
-        {
-            int h, v;
-            ZoomMode zoom;
-            ScrollPos(double h, double v, ZoomMode zoom) :
-                h(h), v(v), zoom(zoom) { }
-        };
-
         ImageBox(BaseObjectType*, const Glib::RefPtr<Gtk::Builder>&);
         virtual ~ImageBox() override;
 

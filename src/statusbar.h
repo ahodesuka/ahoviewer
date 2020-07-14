@@ -3,7 +3,7 @@
 
 #include <gtkmm.h>
 
-#include "imagebox.h"
+#include "util.h"
 
 namespace AhoViewer
 {
@@ -23,7 +23,7 @@ namespace AhoViewer
 
         void set_page_info(const size_t page, const size_t total);
         void set_resolution(const int w, const int h, const double scale,
-                            const ImageBox::ZoomMode zoom_mode);
+                            const ZoomMode zoom_mode);
         void set_filename(const std::string &filename);
         void set_message(const std::string &msg,
                          const Priority priority = Priority::MESSAGE,

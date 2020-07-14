@@ -1,5 +1,7 @@
 #include <cctype>
 #include <glib.h>
+#include <gtkmm.h>
+#include <giomm.h>
 #include <iostream>
 
 #include "image.h"

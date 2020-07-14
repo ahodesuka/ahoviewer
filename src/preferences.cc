@@ -126,5 +126,5 @@ PreferencesDialog::PreferencesDialog(BaseObjectType *cobj, const Glib::RefPtr<Gt
     comboBox->set_model(comboModel);
     comboBox->set_active(static_cast<int>(Settings.get_booru_max_rating()));
     comboBox->signal_changed().connect([ comboBox ]()
-            { Settings.set_booru_max_rating(static_cast<Booru::Site::Rating>(comboBox->get_active_row_number())); });
+            { Settings.set_booru_max_rating(static_cast<Booru::Rating>(comboBox->get_active_row_number())); });
 }

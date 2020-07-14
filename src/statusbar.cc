@@ -23,7 +23,7 @@ void StatusBar::set_page_info(const size_t page, const size_t total)
 }
 
 void StatusBar::set_resolution(const int w, const int h, const double scale,
-                               const ImageBox::ZoomMode zoom_mode)
+                               const ZoomMode zoom_mode)
 {
     std::ostringstream ss;
     ss << std::setprecision(1) << std::fixed;

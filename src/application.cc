@@ -7,6 +7,7 @@
 using namespace AhoViewer;
 
 #include "config.h"
+#include "imagelist.h"
 #include "mainwindow.h"
 
 #ifdef USE_OPENSSL

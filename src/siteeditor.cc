@@ -5,7 +5,9 @@
 using namespace AhoViewer;
 using namespace AhoViewer::Booru;
 
+#include "booru/site.h"
 #include "settings.h"
+#include "util.h"
 
 SiteEditor::SiteEditor(BaseObjectType *cobj, const Glib::RefPtr<Gtk::Builder> &bldr)
   : Gtk::TreeView(cobj),
@@ -159,7 +161,7 @@ void SiteEditor::on_cursor_changed()
     m_UsernameEntry->set_sensitive(!!s);
     m_PasswordEntry->set_sensitive(!!s);
 
-    if (!s || s->get_type() == Site::Type::GELBOORU)
+    if (!s || s->get_type() == Type::GELBOORU)
         m_PasswordLabel->set_text(_("Password:"));
     else
         m_PasswordLabel->set_text(_("API Key:"));
