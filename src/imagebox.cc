@@ -137,6 +137,8 @@ ImageBox::ImageBox(BaseObjectType *cobj, const Glib::RefPtr<Gtk::Builder> &bldr)
 ImageBox::~ImageBox()
 {
     clear_image();
+    // This will also unref all of it's owned objects
+    gst_object_unref(GST_OBJECT(m_Playbin));
 }
 
 void ImageBox::queue_draw_image(const bool scroll)
