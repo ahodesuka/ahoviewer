@@ -11,7 +11,10 @@ threads = dependency('threads')
 glibmm = dependency('glibmm-2.4', version : ['>=2.46.0'])
 # >= 2.6.0 since we use lambdas with return values
 sigcpp = dependency('sigc++-2.0', version : ['>=2.6.0'])
-gtkmm = dependency('gtkmm-3.0', version : ['>=3.22.0'])
+gtkmm = [ dependency('gtkmm-3.0', version : ['>=3.22.0']) ]
+if host_machine.system() != 'windows'
+  gtkmm += dependency('x11')
+endif
 libconfig = dependency('libconfig++', version : ['>=1.4'])
 libxml = dependency('libxml-2.0')
 

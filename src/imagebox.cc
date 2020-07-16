@@ -63,9 +63,28 @@ ImageBox::ImageBox(BaseObjectType *cobj, const Glib::RefPtr<Gtk::Builder> &bldr)
     m_UIManager = Glib::RefPtr<Gtk::UIManager>::cast_static(bldr->get_object("UIManager"));
 
 #ifdef HAVE_GSTREAMER
-    m_Playbin   = gst_element_factory_make("playbin", "playbin"),
+    m_Playbin   = gst_element_factory_make("playbin", "playbin");
 #ifdef GDK_WINDOWING_X11
-    m_VideoSink = gst_element_factory_make("xvimagesink", "videosink");
+    bool haveXVideo { false };
+    int nextens;
+    char **extensions = XListExtensions(
+        gdk_x11_display_get_xdisplay(Gdk::Display::get_default()->gobj()), &nextens);
+
+    for (int i = 0; extensions != nullptr && i < nextens; ++i)
+    {
+        if (strcmp(extensions[i], "XVideo") == 0)
+        {
+            haveXVideo = true;
+            break;
+        }
+    }
+
+    if (extensions)
+        XFreeExtensionList(extensions);
+
+    if (haveXVideo)
+        m_VideoSink = gst_element_factory_make("xvimagesink", "videosink");
+
     if (!m_VideoSink)
         m_VideoSink = gst_element_factory_make("ximagesink", "videosink");
 #endif // GDK_WINDOWING_X11
@@ -74,6 +93,8 @@ ImageBox::ImageBox(BaseObjectType *cobj, const Glib::RefPtr<Gtk::Builder> &bldr)
 #endif // GDK_WINDOWING_WIN32
 
     // Last resort
+    // Note that this will probably cause some errors when trying to embed,
+    // because the autovideosink doesnt implement the GstVideoOverlay interface
     if (!m_VideoSink)
         m_VideoSink = gst_element_factory_make("autovideosink", "videosink");
 
