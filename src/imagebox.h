@@ -91,6 +91,7 @@ namespace AhoViewer
 #ifdef HAVE_GSTREAMER
         static GstBusSyncReply create_window(GstBus*, GstMessage *message, void *userp);
         static gboolean bus_cb(GstBus*, GstMessage *message, void *userp);
+        void create_video_sink(const std::string &name);
 
         GstElement *m_Playbin   { nullptr },
                    *m_VideoSink { nullptr };

@@ -5,7 +5,10 @@ using namespace AhoViewer;
 #include "settings.h"
 #include "statusbar.h"
 
+#include <iostream>
+
 #ifdef HAVE_GSTREAMER
+#include <gst/audio/streamvolume.h>
 #include <gst/video/videooverlay.h>
 #ifdef GDK_WINDOWING_X11
 #include <gdk/gdkx.h>
@@ -42,6 +45,14 @@ gboolean ImageBox::bus_cb(GstBus*, GstMessage *message, void *userp)
 
     return TRUE;
 }
+
+// Attempts to create a GstElement of type @name, and prints a message if it fails
+void ImageBox::create_video_sink(const std::string &name)
+{
+    m_VideoSink = gst_element_factory_make(name.c_str(), "videosink");
+    if (!m_VideoSink)
+        std::cerr << "Failed to create videosink of type '" << name << "'" << std::endl;
+}
 #endif // HAVE_GSTREAMER
 
 Gdk::RGBA ImageBox::DefaultBGColor = Gdk::RGBA();
@@ -64,39 +75,80 @@ ImageBox::ImageBox(BaseObjectType *cobj, const Glib::RefPtr<Gtk::Builder> &bldr)
 
 #ifdef HAVE_GSTREAMER
     m_Playbin   = gst_element_factory_make("playbin", "playbin");
-#ifdef GDK_WINDOWING_X11
-    bool haveXVideo { false };
-    int nextens;
-    char **extensions = XListExtensions(
-        gdk_x11_display_get_xdisplay(Gdk::Display::get_default()->gobj()), &nextens);
 
-    for (int i = 0; extensions != nullptr && i < nextens; ++i)
+#ifdef GDK_WINDOWING_X11
+    create_video_sink("xvimagesink");
+    // Make sure the X server has the X video extension enabled
+    if (m_VideoSink)
     {
-        if (strcmp(extensions[i], "XVideo") == 0)
+        bool haveXVideo { false };
+        int nextens;
+        char **extensions = XListExtensions(
+            gdk_x11_display_get_xdisplay(Gdk::Display::get_default()->gobj()), &nextens);
+
+        for (int i = 0; extensions != nullptr && i < nextens; ++i)
         {
-            haveXVideo = true;
-            break;
+            if (strcmp(extensions[i], "XVideo") == 0)
+            {
+                haveXVideo = true;
+                break;
+            }
+        }
+
+        if (extensions)
+            XFreeExtensionList(extensions);
+
+        if (!haveXVideo)
+        {
+            gst_object_unref(GST_OBJECT(m_VideoSink));
+            m_VideoSink = nullptr;
+            std::cerr << "xvimagesink created, but X video extension not supported by X server!" << std::endl;
         }
     }
 
-    if (extensions)
-        XFreeExtensionList(extensions);
-
-    if (haveXVideo)
-        m_VideoSink = gst_element_factory_make("xvimagesink", "videosink");
-
     if (!m_VideoSink)
-        m_VideoSink = gst_element_factory_make("ximagesink", "videosink");
+        create_video_sink("ximagesink");
 #endif // GDK_WINDOWING_X11
+
 #if defined GDK_WINDOWING_WIN32
-    m_VideoSink = gst_element_factory_make("d3dvideosink", "videosink");
+    if (!m_VideoSink)
+        create_video_sink("d3dvideosink");
 #endif // GDK_WINDOWING_WIN32
 
-    // Last resort
-    // Note that this will probably cause some errors when trying to embed,
-    // because the autovideosink doesnt implement the GstVideoOverlay interface
+    // glimagesink should work on all platforms
     if (!m_VideoSink)
-        m_VideoSink = gst_element_factory_make("autovideosink", "videosink");
+    {
+        create_video_sink("glimagesink");
+        if (m_VideoSink)
+        {
+            // Prevent glimagesink from handling events so the right click menu
+            // can be shown when clicking on the drawing area
+            // This makes us have to call gst_video_overlay_expose, when we want the
+            // video to be drawn after resize events
+            g_object_set(m_VideoSink, "handle-events", false, NULL);
+        }
+    }
+
+    GstBus *bus = gst_pipeline_get_bus(GST_PIPELINE(m_Playbin));
+
+    if (m_VideoSink)
+    {
+        // This will pass the window handle to gstreamer when it's ready
+        gst_bus_set_sync_handler(bus, &ImageBox::create_window, this, NULL);
+
+        // Store the window handle in order to use it in ::create_window
+        m_DrawingArea->signal_realize().connect([&]()
+        {
+#ifdef GDK_WINDOWING_X11
+            m_WindowHandle = GDK_WINDOW_XID(m_DrawingArea->get_window()->gobj());
+#endif // GDK_WINDOWING_X11
+
+#ifdef GDK_WINDOWING_WIN32
+            m_WindowHandle = (guintptr)GDK_WINDOW_HWND(m_DrawingArea->get_window()->gobj());
+#endif // GDK_WINDOWING_WIN32
+            gst_element_set_state(m_Playbin, GST_STATE_READY);
+        });
+    }
 
     g_object_set(m_Playbin,
             // For now users can put
@@ -104,28 +156,14 @@ ImageBox::ImageBox(BaseObjectType *cobj, const Glib::RefPtr<Gtk::Builder> &bldr)
             // into the config file and have sound if they have the correct gstreamer plugins
             // Can also set Volume = 0-100; in config to control it
             "audio-sink", gst_element_factory_make(Settings.get_string("AudioSink").c_str(), "audiosink"),
+            // If m_VideoSink is null it will fallback to autovideosink
             "video-sink", m_VideoSink,
-            "volume", static_cast<double>(Settings.get_int("Volume")) / 100,
             // draw_image takes care of it
-            "force-aspect-ratio", FALSE,
+            "force-aspect-ratio", false,
             NULL);
 
-    GstBus *bus = gst_pipeline_get_bus(GST_PIPELINE(m_Playbin));
     gst_bus_add_watch(bus, &ImageBox::bus_cb, this);
-    gst_bus_set_sync_handler(bus, &ImageBox::create_window, this, NULL);
     g_object_unref(bus);
-
-    if (m_VideoSink)
-        m_DrawingArea->signal_realize().connect([&]()
-        {
-#ifdef GDK_WINDOWING_X11
-            m_WindowHandle = GDK_WINDOW_XID(m_DrawingArea->get_window()->gobj());
-#endif // GDK_WINDOWING_X11
-#ifdef GDK_WINDOWING_WIN32
-            m_WindowHandle = (guintptr)GDK_WINDOW_HWND(m_DrawingArea->get_window()->gobj());
-#endif // GDK_WINDOWING_WIN32
-            gst_element_set_state(m_Playbin, GST_STATE_READY);
-        });
 #endif // HAVE_GSTREAMER
 
     m_StyleUpdatedConn = m_Layout->signal_style_updated().connect([&]()
@@ -515,7 +553,9 @@ void ImageBox::draw_image(bool scroll)
             m_DrawingArea->show();
 
             g_object_set(m_Playbin, "uri", Glib::filename_to_uri(m_Image->get_path()).c_str(), NULL);
-            g_object_set(m_Playbin, "volume", static_cast<double>(Settings.get_int("Volume")) / 100, NULL);
+            gst_stream_volume_set_volume(
+                GST_STREAM_VOLUME(m_Playbin), GST_STREAM_VOLUME_FORMAT_CUBIC,
+                std::min(static_cast<double>(Settings.get_int("Volume")) / 100, 1.0));
             gst_element_set_state(m_Playbin, GST_STATE_PAUSED);
             // Wait for the above changes to actually happen
             gst_element_get_state(m_Playbin, NULL, NULL, GST_CLOCK_TIME_NONE);

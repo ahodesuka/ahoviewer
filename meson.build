@@ -6,7 +6,9 @@ project('ahoviewer', ['c', 'cpp'],
 project_url = 'https://github.com/ahodesuka/ahoviewer'
 project_bugreport = 'https://github.com/ahodesuka/ahoviewer/issues'
 
-# Required dependencies
+#################################
+###   Required dependencies   ###
+#################################
 threads = dependency('threads')
 glibmm = dependency('glibmm-2.4', version : ['>=2.46.0'])
 # >= 2.6.0 since we use lambdas with return values
@@ -42,8 +44,11 @@ if curl_ssl_backend.contains('gnutls')
   # USE_GNUTLS is defined in src/meson.build if above is found
 endif
 
-# Optional dependencies
+#################################
+###   Optional dependencies   ###
+#################################
 gstreamer = dependency('gstreamer-1.0', required : get_option('gstreamer'))
+gstaudio = dependency('gstreamer-audio-1.0', required : get_option('gstreamer'))
 gstvideo = dependency('gstreamer-video-1.0', required : get_option('gstreamer'))
 libsecret = dependency('libsecret-1', required : get_option('libsecret'))
 libunrar = dependency('libunrar', required : get_option('libunrar'))
@@ -69,15 +74,19 @@ libzip = dependency('libzip', required : get_option('libzip'))
 # ahoviewer
 libnsgif = dependency('libnsgif', required : false)
 
-# Runtime dependencies
-# Provides the matroska demuxer and basic audio/video pipeline elements
+##################################
+###    Runtime dependencies    ###
+##################################
+# Provides the matroska demuxer, glimagesink, x(v)imagesink, audio sinks,
+# opus and vorbis decoders, and other basic elements
 dependency('gstreamer-plugins-base-1.0', required : get_option('gstreamer'))
-# Provides the gtk(gl)sink, vpx(8/9) decoders
+# Provides the vpx(8/9) decoders
 dependency('gstreamer-plugins-good-1.0', required : get_option('gstreamer'))
 
-# Needed for d3dvideosink
+# Needed for d3dvideosink, no longer required but will be used instead of
+# glimagesink on Windows if found, left here just to be documented
 if host_machine.system() == 'windows'
-  dependency('gstreamer-plugins-bad-1.0', required : get_option('gstreamer'))
+  dependency('gstreamer-plugins-bad-1.0', required : false)
 endif
 
 prefix = get_option('prefix')
