@@ -448,7 +448,10 @@ Glib::RefPtr<Gdk::Pixbuf> Image::create_webm_thumbnail(int w, int h) const
 
             caps = gst_sample_get_caps(sample);
             if (!caps)
+            {
+                gst_sample_unref(sample);
                 break;
+            }
 
             s = gst_caps_get_structure(caps, 0);
 
@@ -463,6 +466,7 @@ Glib::RefPtr<Gdk::Pixbuf> Image::create_webm_thumbnail(int w, int h) const
 
             /* save the pixbuf */
             gst_buffer_unmap (buffer, &map);
+            gst_sample_unref(sample);
 
             if (dur == -1 || is_pixbuf_interesting(pixbuf))
                 break;
