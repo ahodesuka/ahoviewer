@@ -513,7 +513,9 @@ void ImageBox::draw_image(bool scroll)
             m_DrawingArea->show();
 
             g_object_set(m_Playbin, "uri", Glib::filename_to_uri(m_Image->get_path()).c_str(), NULL);
+            g_object_set(m_Playbin, "volume", static_cast<double>(Settings.get_int("Volume")) / 100, NULL);
             gst_element_set_state(m_Playbin, GST_STATE_PAUSED);
+            // Wait for the above changes to actually happen
             gst_element_get_state(m_Playbin, NULL, NULL, GST_CLOCK_TIME_NONE);
         }
 
