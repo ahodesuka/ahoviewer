@@ -50,6 +50,7 @@ SettingsManager::SettingsManager()
         { "TagViewPosition", 520 },
         { "SelectedBooru",   0   },
         { "BooruLimit",      50  },
+        { "BooruWidth",      -1  },
         { "Volume",          50  },
         { "ScrollPosH",      -1  },
         { "ScrollPosV",      -1  }
