@@ -14,7 +14,7 @@ glibmm = dependency('glibmm-2.4', version : ['>=2.46.0'])
 # >= 2.6.0 since we use lambdas with return values
 sigcpp = dependency('sigc++-2.0', version : ['>=2.6.0'])
 gtkmm = [ dependency('gtkmm-3.0', version : ['>=3.22.0']) ]
-if host_machine.system() != 'windows'
+if host_machine.system() != 'windows' and not get_option('gstreamer').disabled()
   gtkmm += dependency('x11')
 endif
 libconfig = dependency('libconfig++', version : ['>=1.4'])
@@ -73,21 +73,6 @@ libzip = dependency('libzip', required : get_option('libzip'))
 # If not found on system the version found in ext directory will be built into
 # ahoviewer
 libnsgif = dependency('libnsgif', required : false)
-
-##################################
-###    Runtime dependencies    ###
-##################################
-# Provides the matroska demuxer, glimagesink, x(v)imagesink, audio sinks,
-# opus and vorbis decoders, and other basic elements
-dependency('gstreamer-plugins-base-1.0', required : get_option('gstreamer'))
-# Provides the vpx(8/9) decoders
-dependency('gstreamer-plugins-good-1.0', required : get_option('gstreamer'))
-
-# Needed for d3dvideosink, no longer required but will be used instead of
-# glimagesink on Windows if found, left here just to be documented
-if host_machine.system() == 'windows'
-  dependency('gstreamer-plugins-bad-1.0', required : false)
-endif
 
 prefix = get_option('prefix')
 datadir = join_paths(prefix, get_option('datadir'))
