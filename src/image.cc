@@ -102,12 +102,7 @@ Image::Image(const std::string &path)
 
 Image::~Image()
 {
-    if (m_GIFanim)
-    {
-        gif_finalise(m_GIFanim);
-        delete m_GIFanim;
-        m_GIFanim = nullptr;
-    }
+    reset_pixbuf();
 }
 
 std::string Image::get_filename() const
@@ -193,30 +188,18 @@ void Image::load_pixbuf(Glib::RefPtr<Gio::Cancellable> c)
 
         if (is_gif(data.data()))
         {
-            gif_result result;
-            char *gif_data;
-            gsize bufSize;
             m_GIFanim = new gif_animation;
-
             gif_create(m_GIFanim, &m_BitmapCallbacks);
 
-            // returns false if c was cancelled
-            if (file->load_contents(c, gif_data, bufSize))
+            char* buffer;
+            // returns false if c was cancelled, and frees the buffer for us?
+            if (file->load_contents(c, buffer, m_GIFdataSize))
             {
-                do {
-                    result = gif_initialise(m_GIFanim, bufSize, reinterpret_cast<unsigned char*>(gif_data));
-                    if (result != GIF_OK && result != GIF_WORKING)
-                    {
-                        std::cerr << "Error while loading GIF " << m_Path << std::endl
-                                  << "gif_result: " << result << std::endl;
-                        break;
-                    }
-                    else if (result == GIF_OK)
-                    {
-                        // Load the first frame
-                        create_gif_frame_pixbuf();
-                    }
-                } while (result != GIF_OK);
+                m_GIFdata = new unsigned char[m_GIFdataSize];
+                memcpy(m_GIFdata, buffer, m_GIFdataSize);
+                free(buffer);
+
+                load_gif();
             }
         }
         else
@@ -237,6 +220,26 @@ void Image::load_pixbuf(Glib::RefPtr<Gio::Cancellable> c)
     }
 }
 
+// Call this once m_GIFdata has been set
+void Image::load_gif()
+{
+        gif_result result;
+        do {
+            result = gif_initialise(m_GIFanim, m_GIFdataSize, m_GIFdata);
+            if (result != GIF_OK && result != GIF_WORKING)
+            {
+                std::cerr << "Error while loading GIF " << m_Path << std::endl
+                    << "gif_result: " << result << std::endl;
+                break;
+            }
+            else if (result == GIF_OK)
+            {
+                // Load the first frame
+                create_gif_frame_pixbuf();
+            }
+        } while (result != GIF_OK);
+}
+
 void Image::reset_pixbuf()
 {
     m_Loading = true;
@@ -247,8 +250,14 @@ void Image::reset_pixbuf()
     {
         gif_finalise(m_GIFanim);
         delete m_GIFanim;
-
         m_GIFanim = nullptr;
+
+        if (m_GIFdata)
+        {
+            delete[] m_GIFdata;
+            m_GIFdata = nullptr;
+        }
+
         reset_gif_animation();
     }
 }

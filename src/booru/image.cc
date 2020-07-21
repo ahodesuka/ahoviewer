@@ -226,30 +226,25 @@ void Image::on_progress()
     m_SignalProgress(this, c, t);
 }
 
+// This is called from the ImageFetcher when the doawnload finished and was not cancelled
 void Image::on_finished()
 {
     if (m_Curler.get_data_size() > 0)
     {
         if (m_GIFanim)
         {
-            gif_result result;
-            do {
-                result = gif_initialise(m_GIFanim, m_Curler.get_data_size(), m_Curler.get_data());
-                if (result != GIF_OK && result != GIF_WORKING)
-                {
-                    std::cerr << "Error while loading GIF " << m_Path << std::endl
-                              << "gif_result: " << result << std::endl;
-                    break;
-                }
-            } while (result != GIF_OK);
-        }
+            m_GIFdataSize = m_Curler.get_data_size();
+            m_GIFdata = new unsigned char[m_GIFdataSize];
+            memcpy(m_GIFdata, m_Curler.get_data(), m_GIFdataSize);
 
+            AhoViewer::Image::load_gif();
+        }
         m_Curler.save_file(m_Path);
         m_Curler.clear();
     }
     else
     {
-        std::cerr << "Booru::Image::on_finished: Curler recieved no data yet finished!" << std::endl;
+        std::cerr << "Booru::Image::on_finished: Curler received no data yet finished!" << std::endl;
     }
 
     {

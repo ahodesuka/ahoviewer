@@ -35,7 +35,7 @@ namespace AhoViewer
             std::string escape(const std::string &str) const;
             bool perform();
 
-            void clear() { m_Buffer.clear(); }
+            void clear() { m_Buffer.clear(); std::vector<unsigned char>().swap(m_Buffer); }
             void save_file(const std::string &path) const;
 
             void get_progress(double &current, double &total);
