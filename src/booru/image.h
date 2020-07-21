@@ -52,6 +52,7 @@ namespace AhoViewer
             static const size_t BooruThumbnailSize = 150;
         private:
             bool start_download();
+            void close_loader();
 
             void on_write(const unsigned char *d, size_t l);
             void on_progress();

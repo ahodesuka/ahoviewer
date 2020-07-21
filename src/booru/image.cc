@@ -147,16 +147,7 @@ void Image::save(const std::string &path)
 void Image::cancel_download()
 {
     m_Curler.cancel();
-
-    {
-        std::lock_guard<std::mutex> lock(m_DownloadMutex);
-        if (m_Loader)
-        {
-            try { m_Loader->close(); }
-            catch (...) { }
-            m_Loader.reset();
-        }
-    }
+    close_loader();
 
     m_DownloadCond.notify_one();
 }
@@ -187,6 +178,17 @@ bool Image::start_download()
     return false;
 }
 
+void Image::close_loader()
+{
+    std::lock_guard<std::mutex> lock(m_DownloadMutex);
+    if (m_Loader)
+    {
+        try { m_Loader->close(); }
+        catch (...) { }
+        m_Loader.reset();
+    }
+}
+
 void Image::on_write(const unsigned char *d, size_t l)
 {
     if (m_Curler.is_cancelled())
@@ -199,6 +201,8 @@ void Image::on_write(const unsigned char *d, size_t l)
         {
             m_GIFanim = new gif_animation;
             gif_create(m_GIFanim, &m_BitmapCallbacks);
+            m_Pixbuf.reset();
+            close_loader();
         }
     }
 
@@ -247,15 +251,7 @@ void Image::on_finished()
         std::cerr << "Booru::Image::on_finished: Curler received no data yet finished!" << std::endl;
     }
 
-    {
-        std::lock_guard<std::mutex> lock(m_DownloadMutex);
-        if (m_Loader)
-        {
-            try { m_Loader->close(); }
-            catch (...) { }
-            m_Loader.reset();
-        }
-    }
+    close_loader();
 
     m_Loading = false;
     m_SignalPixbufChanged();
