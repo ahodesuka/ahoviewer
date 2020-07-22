@@ -673,8 +673,10 @@ void MainWindow::create_actions()
 #ifdef HAVE_GSTREAMER
 #ifdef _WIN32
     filter->add_pattern("*.webm");
+    filter->add_pattern("*.mp4");
 #else
     filter->add_mime_type("video/webm");
+    filter->add_mime_type("video/mp4");
 #endif // _WIN32
 #endif // HAVE_GSTREAMER
 
@@ -923,9 +925,13 @@ void MainWindow::on_open_file_dialog()
 #ifdef _WIN32
     filter->add_pattern("*.webm");
     imageFilter->add_pattern("*.webm");
+    filter->add_pattern("*.mp4");
+    imageFilter->add_pattern("*.mp4");
 #else
     filter->add_mime_type("video/webm");
     imageFilter->add_mime_type("video/webm");
+    filter->add_mime_type("video/mp4");
+    imageFilter->add_mime_type("video/mp4");
 #endif // _WIN32
 #endif // HAVE_GSTREAMER
 

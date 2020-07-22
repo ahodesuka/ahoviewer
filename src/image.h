@@ -37,8 +37,7 @@ namespace AhoViewer
         // This is used to let the imagebox know that load_pixbuf has been or needs to be
         // called but has not yet finished loading.  When the image has finished loading
         // and get_pixbuf() returns a nullptr the imagebox will show the missing pixbuf
-        // webm files will always return false as gstreamer will determine whether they are valid or not
-        virtual bool is_loading() const { return !m_isWebM && m_Loading; }
+        virtual bool is_loading() const { return m_Loading; }
         virtual std::string get_filename() const;
         virtual const Glib::RefPtr<Gdk::Pixbuf>& get_pixbuf();
         virtual const Glib::RefPtr<Gdk::Pixbuf>& get_thumbnail(Glib::RefPtr<Gio::Cancellable> c);

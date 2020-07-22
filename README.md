@@ -12,9 +12,11 @@ A GTK image viewer, manga reader, and booru browser.
 * libcurl `>= 7.58.0`
 * libxml2
 * gstreamer-1.0 `optional`
+    * gst-plugins-bad `runtime`
     * gst-plugins-base `runtime`
     * gst-plugins-good `runtime`
-    * gst-plugins-vpx or gst-plugins-libav `runtime`
+    * gst-plugins-vpx `runtime`
+    * gst-plugins-libav `runtime`
 * libsecret `optional`
     * gnome-keyring `runtime`
 * libunrar `optional`
@@ -27,6 +29,10 @@ ninja
 sudo ninja install
 ```
 
+If you don't want to compile with debug symbols replace the first command with:
+```
+meson build -Dbuildtype=release
+```
 ## Usage
 
     ahoviewer

@@ -6,7 +6,7 @@ conf.set_quoted('PACKAGE_BUGREPORT', project_bugreport)
 
 deps = [
   threads, glibmm, sigcpp, gtkmm, libconfig, libxml, curl,
-  gstreamer, gstaudio, gstvideo, libsecret, libunrar, libzip, libnsgif
+  gstreamer, gstapp, gstaudio, gstvideo, libsecret, libunrar, libzip, libnsgif
 ]
 incdirs = [ ]
 

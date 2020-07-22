@@ -45,10 +45,11 @@ Image::~Image()
     cancel_thumbnail_download();
 }
 
+// True if the data is being downloaded by the curler
+// or if the pixbuf is being loaded from the saved local file
 bool Image::is_loading() const
 {
-    return (m_isWebM && !Glib::file_test(m_Path, Glib::FILE_TEST_EXISTS))
-        || m_Curler.is_active() || (m_Loading && !m_isWebM);
+    return m_Curler.is_active() || AhoViewer::Image::is_loading();
 }
 
 std::string Image::get_filename() const
@@ -63,7 +64,7 @@ const Glib::RefPtr<Gdk::Pixbuf>& Image::get_thumbnail(Glib::RefPtr<Gio::Cancella
         m_ImageFetcher.add_handle(&m_ThumbnailCurler);
 
         {
-            std::unique_lock<std::mutex> lock(m_ThumbnailMutex);
+            std::unique_lock<std::mutex> lock{ m_ThumbnailMutex };
             m_ThumbnailCond.wait(lock, [&]()
             {
                 return m_ThumbnailCurler.is_cancelled()
@@ -96,10 +97,14 @@ void Image::load_pixbuf(Glib::RefPtr<Gio::Cancellable> c)
 {
     if (!m_Pixbuf && !m_PixbufError)
     {
+        // Load the local file
         if (Glib::file_test(m_Path, Glib::FILE_TEST_EXISTS))
         {
             AhoViewer::Image::load_pixbuf(c);
         }
+        // This will either start the download and do nothing, or if the
+        // download is already started and the pixbuf loader has created a
+        // pixbuf set m_Pixbuf to that loader pixbuf
         else if (!start_download() && !m_isWebM && m_Loader && m_Loader->get_pixbuf())
         {
             m_Pixbuf = m_Loader->get_pixbuf();
@@ -113,6 +118,8 @@ void Image::reset_pixbuf()
         cancel_download();
 
     AhoViewer::Image::reset_pixbuf();
+    // webms that are downloaded will set m_Loading to false, otherwise this is true
+    m_Loading = !(m_isWebM && Glib::file_test(m_Path, Glib::FILE_TEST_EXISTS));
 }
 
 void Image::save(const std::string &path)
@@ -121,7 +128,7 @@ void Image::save(const std::string &path)
     {
         start_download();
 
-        std::unique_lock<std::mutex> lock(m_DownloadMutex);
+        std::unique_lock<std::mutex> lock{ m_DownloadMutex };
         m_DownloadCond.wait(lock, [&]()
         {
             return m_Curler.is_cancelled() || Glib::file_test(m_Path, Glib::FILE_TEST_EXISTS);
@@ -225,7 +232,7 @@ void Image::on_write(const unsigned char *d, size_t l)
 
 void Image::on_progress()
 {
-    double c, t;
+    long c, t;
     m_Curler.get_progress(c, t);
     m_SignalProgress(this, c, t);
 }
@@ -243,8 +250,22 @@ void Image::on_finished()
 
             AhoViewer::Image::load_gif();
         }
-        m_Curler.save_file(m_Path);
-        m_Curler.clear();
+        m_Curler.save_file_async(m_Path, [&](Glib::RefPtr<Gio::AsyncResult> &r)
+        {
+            try
+            {
+                m_Curler.save_file_finish(r);
+                m_Loading = false;
+                m_SignalPixbufChanged();
+                m_DownloadCond.notify_one();
+            }
+            catch (const Gio::Error &e)
+            {
+                if (e.code() != Gio::Error::CANCELLED)
+                    std::cerr << "Failed to save file '" << get_filename() << "'" << std::endl
+                              << "  Error code: " << e.code() << std::endl;
+            }
+        });
     }
     else
     {
@@ -252,10 +273,6 @@ void Image::on_finished()
     }
 
     close_loader();
-
-    m_Loading = false;
-    m_SignalPixbufChanged();
-    m_DownloadCond.notify_one();
 }
 
 void Image::on_area_prepared()

@@ -294,7 +294,6 @@
                     <child>
                       <object class="GtkDrawingArea" id="ImageBox::DrawingArea">
                         <property name="can_focus">False</property>
-                        <property name="no_show_all">True</property>
                         <property name="double_buffered">False</property>
                       </object>
                     </child>

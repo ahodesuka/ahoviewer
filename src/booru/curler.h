@@ -13,6 +13,7 @@ namespace AhoViewer
     {
         using time_point_t = std::chrono::time_point<std::chrono::steady_clock>;
 
+        class ImageFetcher;
         class Curler
         {
             friend class ImageFetcher;
@@ -35,22 +36,32 @@ namespace AhoViewer
             std::string escape(const std::string &str) const;
             bool perform();
 
+            void set_imagefetcher(ImageFetcher *f) { m_ImageFetcher = f; }
             void clear() { m_Buffer.clear(); std::vector<unsigned char>().swap(m_Buffer); }
             void save_file(const std::string &path) const;
+            void save_file_async(const std::string &path, const Gio::SlotAsyncReady &cb);
+            void save_file_finish(const Glib::RefPtr<Gio::AsyncResult> &r);
 
-            void get_progress(double &current, double &total);
+            void get_progress(curl_off_t &current, curl_off_t &total);
 
             bool is_active() const { return m_Active; }
             std::string get_url() const { return m_Url; }
 
             unsigned char* get_data() { return m_Buffer.data(); }
             size_t get_data_size() const { return m_Buffer.size(); }
+            std::mutex& get_mutex() { return m_Mutex; }
 
             std::string get_error() const  { return curl_easy_strerror(m_Response); }
             CURLcode get_response() const { return m_Response; }
             // HTTP reponse code
             long get_response_code() const;
             time_point_t get_start_time() const { return m_StartTime; }
+
+            void pause();
+            // These will either unpause immediatly, or queue the handle
+            // to be do the unpase in the ImageFether thread.
+            // Currently only used when it's the 2nd scenerio
+            void unpause();
 
             void cancel() { m_Cancel->cancel(); }
             bool is_cancelled() const { return m_Cancel->is_cancelled(); }
@@ -68,12 +79,15 @@ namespace AhoViewer
             CURLcode m_Response;
             std::string m_Url;
             std::vector<unsigned char> m_Buffer;
+            std::mutex m_Mutex;
 
-            std::atomic<bool> m_Active;
-            std::atomic<double> m_DownloadTotal,
-                                m_DownloadCurrent;
+            std::atomic<bool> m_Active { false },
+                              m_Pause  { false };
+            std::atomic<curl_off_t> m_DownloadTotal   { 0 },
+                                    m_DownloadCurrent { 0 };
             time_point_t m_StartTime;
 
+            ImageFetcher *m_ImageFetcher { nullptr };
             Glib::RefPtr<Gio::Cancellable> m_Cancel;
 
             SignalWriteType m_SignalWrite;

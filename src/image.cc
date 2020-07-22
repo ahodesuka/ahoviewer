@@ -22,7 +22,7 @@ bool Image::is_valid_extension(const std::string &path)
     std::transform(ext.begin(), ext.end(), ext.begin(), ::tolower);
 
 #ifdef HAVE_GSTREAMER
-    if (ext == "webm")
+    if (ext == "webm" || ext == "mp4")
         return true;
 #endif // HAVE_GSTREAMER
 
@@ -53,7 +53,7 @@ bool Image::is_webm(const std::string &path)
     std::string ct       = Gio::content_type_guess(path, NULL, 0, uncertain);
     std::string mimeType = Gio::content_type_get_mime_type(ct);
 
-    return mimeType == "video/webm";
+    return mimeType == "video/webm" || mimeType == "video/mp4";
 #else
     (void)path;
     return false;
@@ -92,6 +92,10 @@ Image::Image(const std::string &path)
   : m_isWebM(Image::is_webm(path)),
     m_Path(path)
 {
+    // Gstreamer will handle the loading of webm files in a multithreaded manor
+    if (m_isWebM)
+        m_Loading = !Glib::file_test(m_Path, Glib::FILE_TEST_EXISTS);
+
     m_BitmapCallbacks.bitmap_create      = _def_bitmap_create;
     m_BitmapCallbacks.bitmap_destroy     = _def_bitmap_destroy;
     m_BitmapCallbacks.bitmap_get_buffer  = _def_bitmap_get_buffer;
@@ -242,7 +246,8 @@ void Image::load_gif()
 
 void Image::reset_pixbuf()
 {
-    m_Loading = true;
+    // Set this back to true unless it's a webm
+    m_Loading = !m_isWebM;
     std::lock_guard<std::mutex> lock(m_Mutex);
     m_Pixbuf.reset();
 

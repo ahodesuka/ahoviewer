@@ -66,9 +66,15 @@ ImageFetcher::ImageFetcher(const int max_cons)
 {
     m_Thread = std::thread([&]()
     {
-        std::shared_ptr<Glib::Dispatcher> dis = std::make_shared<Glib::Dispatcher>(m_MainContext);
-        dis->connect(sigc::mem_fun(*this, &ImageFetcher::on_handle_added));
-        m_SignalHandleAdded = dis;
+        auto added_dis   = std::make_shared<Glib::Dispatcher>(m_MainContext),
+             unpause_dis = std::make_shared<Glib::Dispatcher>(m_MainContext);
+
+        added_dis->connect(sigc::mem_fun(*this, &ImageFetcher::on_handle_added));
+        unpause_dis->connect(sigc::mem_fun(*this, &ImageFetcher::on_handle_unpause));
+
+        m_SignalHandleAdded   = added_dis;
+        m_SignalHandleUnpause = unpause_dis;
+
         m_MainLoop->run();
     });
 
@@ -77,6 +83,8 @@ ImageFetcher::ImageFetcher(const int max_cons)
     curl_multi_setopt(m_MultiHandle, CURLMOPT_TIMERFUNCTION, &ImageFetcher::timer_cb);
     curl_multi_setopt(m_MultiHandle, CURLMOPT_TIMERDATA, this);
     curl_multi_setopt(m_MultiHandle, CURLMOPT_MAX_HOST_CONNECTIONS, max_cons);
+    // Enable HTTP/2 multiplexing (this is on by default with curl >=7.62.0)
+    curl_multi_setopt(m_MultiHandle, CURLMOPT_PIPELINING, CURLPIPE_MULTIPLEX);
 }
 
 ImageFetcher::~ImageFetcher()
@@ -117,14 +125,37 @@ void ImageFetcher::add_handle(Curler *curler)
         dis->emit();
 }
 
+void ImageFetcher::unpause_handle(Curler *curler)
+{
+    if (m_Shutdown)
+        return;
+
+    m_CurlerUnpauseQueue.push(curler);
+
+    if (auto dis = m_SignalHandleUnpause.lock())
+        dis->emit();
+}
+
 void ImageFetcher::on_handle_added()
 {
     Curler *curler = nullptr;
     while (!m_Shutdown && m_CurlerQueue.pop(curler))
     {
         m_Curlers.push_back(curler);
-        curl_multi_add_handle(m_MultiHandle, curler->m_EasyHandle);
+        curler->set_imagefetcher(this);
+        curler->m_DownloadCurrent = curler->m_DownloadTotal = 0;
         curler->m_StartTime = std::chrono::steady_clock::now();
+        curl_multi_add_handle(m_MultiHandle, curler->m_EasyHandle);
+    }
+}
+
+void ImageFetcher::on_handle_unpause()
+{
+    Curler *curler = nullptr;
+    while (!m_Shutdown && m_CurlerUnpauseQueue.pop(curler))
+    {
+        curler->m_Pause = false;
+        curl_easy_pause(curler->m_EasyHandle, CURLPAUSE_CONT);
     }
 }
 
@@ -137,6 +168,7 @@ void ImageFetcher::remove_handle(Curler *curler)
     m_Curlers.erase(std::remove(m_Curlers.begin(), m_Curlers.end(), curler), m_Curlers.end());
 
     curler->m_Active = false;
+    curler->set_imagefetcher(nullptr);
 }
 
 bool ImageFetcher::event_cb(curl_socket_t sockfd, Glib::IOCondition cond)

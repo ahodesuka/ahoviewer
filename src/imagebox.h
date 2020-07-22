@@ -89,14 +89,45 @@ namespace AhoViewer
         Glib::RefPtr<Gtk::Action> m_NextAction, m_PreviousAction;
 
 #ifdef HAVE_GSTREAMER
-        static GstBusSyncReply create_window(GstBus*, GstMessage *message, void *userp);
-        static gboolean bus_cb(GstBus*, GstMessage *message, void *userp);
-        void create_video_sink(const std::string &name);
+        static GstBusSyncReply create_window(GstBus *bus, GstMessage *msg, void *userp);
+        static gboolean bus_cb(GstBus*, GstMessage *msg, void *userp);
+        static GstPadProbeReturn buffer_probe_cb(GstPad*, GstPadProbeInfo*, void *userp);
+        static void on_about_to_finish(GstElement*, void *userp);
+        static void on_source_setup(GstElement*, GstElement *source, void *userp);
+        static void on_need_data(GstElement*, guint, void *userp);
+        static void on_enough_data(GstElement*, void *userp);
+        static void on_video_changed(GstElement*, void *userp);
+
+        void create_playbin();
+        void reset_gstreamer_pipeline();
+        GstElement* create_video_sink(const std::string &name);
+
+        void on_streams_selected(GstMessage *msg);
+        void on_curler_write(const unsigned char *d, size_t l);
+        void on_curler_finished();
+        void on_set_volume();
+        void on_application_message(GstMessage *msg);
 
         GstElement *m_Playbin   { nullptr },
-                   *m_VideoSink { nullptr };
+                   *m_VideoSink { nullptr },
+                   *m_AppSrc    { nullptr };
+
         guintptr m_WindowHandle { 0 };
-        bool m_Playing { false };
+        gulong m_PadProbeID    { 0 },
+               m_SourceSetupID { 0 },
+               m_NeedDataID    { 0 },
+               m_EnoughDataID  { 0 };
+        GstPad *m_VideoPad { nullptr };
+
+        bool m_Playing          { false },
+             // Used to tell the draw_image method that we were waiting for
+             // enough data to know if the video is playable
+             m_Prerolling       { false },
+             // Whether we are waiting for the streams to be selected during
+             // initial playback startup
+             m_WaitingForStream { false },
+             // Keeps track of whether we have sent the appsrc any data yet
+             m_FirstFill        { true };
 #endif // HAVE_GSTREAMER
 
         StatusBar *m_StatusBar;
@@ -114,7 +145,9 @@ namespace AhoViewer
                          m_ImageConn,
                          m_ScrollConn,
                          m_SlideshowConn,
-                         m_StyleUpdatedConn;
+                         m_StyleUpdatedConn,
+                         m_CurlerWriteConn,
+                         m_CurlerFinishedConn;
 
         bool m_FirstDraw    { false },
              m_RedrawQueued { false },
