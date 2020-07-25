@@ -157,7 +157,8 @@ namespace AhoViewer
 
         std::shared_ptr<Booru::Site> m_SiteCheckSite;
         Gtk::TreeIter m_SiteCheckIter;
-        bool m_SiteCheckEdit, m_SiteCheckEditSuccess;
+        bool m_SiteCheckEdit        { false },
+             m_SiteCheckEditSuccess { false };
 
         std::thread m_SiteCheckThread;
         Glib::Dispatcher m_SignalSiteChecked;

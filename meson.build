@@ -2,7 +2,7 @@ project('ahoviewer', ['c', 'cpp'],
     version : run_command('sh', 'version.sh', '--').stdout().strip(),
     license : 'MIT',
     meson_version : '>= 0.47.0',
-    default_options : ['cpp_std=c++14'])
+    default_options : ['cpp_std=c++17'])
 project_url = 'https://github.com/ahodesuka/ahoviewer'
 project_bugreport = 'https://github.com/ahodesuka/ahoviewer/issues'
 

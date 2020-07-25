@@ -15,9 +15,7 @@ SiteEditor::SiteEditor(BaseObjectType *cobj, const Glib::RefPtr<Gtk::Builder> &b
     m_NameColumn(Gtk::manage(new Gtk::TreeView::Column(_("Name"), m_Columns.name))),
     m_UrlColumn(Gtk::manage(new Gtk::TreeView::Column(_("Url"), m_Columns.url))),
     m_SampleColumn(Gtk::manage(new Gtk::TreeView::Column(_("Samples"), m_Columns.samples))),
-    m_Sites(Settings.get_sites()),
-    m_SiteCheckEdit(false),
-    m_SiteCheckEditSuccess(false)
+    m_Sites(Settings.get_sites())
 {
     bldr->get_widget("BooruRegisterLinkButton", m_RegisterButton);
     bldr->get_widget("BooruUsernameEntry", m_UsernameEntry);

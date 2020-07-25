@@ -34,7 +34,7 @@ namespace AhoViewer
 
             std::string m_Path;
             // This is the total number of posts for the given booru query
-            size_t m_Size;
+            size_t m_Size { 0 };
         };
     }
 }

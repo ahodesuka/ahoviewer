@@ -47,7 +47,7 @@ namespace AhoViewer
             std::thread m_Thread;
 
             CURLM *m_MultiHandle;
-            int m_RunningHandles;
+            int m_RunningHandles { 0 };
             TSQueue<Curler*> m_CurlerQueue,
                              m_CurlerPauseQueue,
                              m_CurlerUnpauseQueue;
@@ -57,7 +57,7 @@ namespace AhoViewer
                                             m_SignalHandlePause,
                                             m_SignalHandleUnpause;
 
-            std::atomic<bool> m_Shutdown;
+            std::atomic<bool> m_Shutdown { false };
             std::mutex m_Mutex;
 
             sigc::connection m_TimeoutConn;

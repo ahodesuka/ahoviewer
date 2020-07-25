@@ -111,7 +111,7 @@ void ImageBox::on_source_setup(GstElement*, GstElement *source, void *userp)
         {
             // Wait for/block any on_write signals from the curler so we can get
             // the full data buffer before anything else is inserted into it
-            std::lock_guard<std::mutex> lock{ bimage->get_curler().get_mutex() };
+            std::scoped_lock lock{ bimage->get_curler().get_mutex() };
 
             auto data = bimage->get_curler().get_data();
             long l = bimage->get_curler().get_data_size();
@@ -293,7 +293,7 @@ void ImageBox::reset_gstreamer_pipeline()
     if (m_Image && m_CurlerFinishedConn)
     {
         auto bimage = std::static_pointer_cast<Booru::Image>(m_Image);
-        std::lock_guard<std::mutex> lock{ bimage->get_curler().get_mutex() };
+        std::scoped_lock lock{ bimage->get_curler().get_mutex() };
 
         m_CurlerWriteConn.disconnect();
         m_CurlerFinishedConn.disconnect();

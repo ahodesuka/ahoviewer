@@ -60,9 +60,7 @@ int ImageFetcher::timer_cb(CURLM*, long timeout_ms, void *userp)
 ImageFetcher::ImageFetcher(const int max_cons)
   : m_MainContext(Glib::MainContext::create()),
     m_MainLoop(Glib::MainLoop::create(m_MainContext)),
-    m_MultiHandle(curl_multi_init()),
-    m_RunningHandles(0),
-    m_Shutdown(false)
+    m_MultiHandle(curl_multi_init())
 {
     m_Thread = std::thread([&]()
     {

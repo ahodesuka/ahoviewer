@@ -91,7 +91,7 @@ namespace AhoViewer
             TagEntry *m_TagEntry;
             TagView *m_TagView;
 
-            bool m_ClosePage;
+            bool m_ClosePage { false };
             std::string m_LastSavePath;
 
             Glib::RefPtr<Gtk::UIManager> m_UIManager;

@@ -6,8 +6,7 @@ using namespace AhoViewer;
 #include "image.h"
 
 ThumbnailBar::ThumbnailBar(BaseObjectType *cobj, const Glib::RefPtr<Gtk::Builder> &bldr)
-  : Gtk::ScrolledWindow(cobj),
-    m_KeepAligned(true)
+  : Gtk::ScrolledWindow(cobj)
 {
     bldr->get_widget("ThumbnailBar::TreeView", m_TreeView);
 
@@ -73,7 +72,7 @@ void ThumbnailBar::scroll_to_selected()
         m_TreeView->get_background_area(path, *column, rect);
         double value = m_VAdjust->get_value() + rect.get_y() +
             (rect.get_height() / 2) - (m_VAdjust->get_page_size() / 2);
-        value = std::round(std::min(std::max(value, 0.0), m_VAdjust->get_upper() - m_VAdjust->get_page_size()));
+        value = std::round(std::clamp(value, 0.0, m_VAdjust->get_upper() - m_VAdjust->get_page_size()));
 
         m_ScrollConn.block();
         m_VAdjust->set_value(value);

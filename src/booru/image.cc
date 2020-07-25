@@ -24,9 +24,7 @@ Image::Image(const std::string &path, const std::string &url,
     m_ImageFetcher(fetcher),
     m_LastDraw(std::chrono::steady_clock::now()),
     m_Curler(m_Url, m_Site->get_share_handle()),
-    m_ThumbnailCurler(m_ThumbnailUrl, m_Site->get_share_handle()),
-    m_PixbufError(false),
-    m_isGIFChecked(false)
+    m_ThumbnailCurler(m_ThumbnailUrl, m_Site->get_share_handle())
 {
     m_ThumbnailPath = thumbPath;
 
@@ -187,7 +185,7 @@ bool Image::start_download()
 
 void Image::close_loader()
 {
-    std::lock_guard<std::mutex> lock(m_DownloadMutex);
+    std::scoped_lock lock{ m_DownloadMutex };
     if (m_Loader)
     {
         try { m_Loader->close(); }
@@ -215,7 +213,7 @@ void Image::on_write(const unsigned char *d, size_t l)
 
     try
     {
-        std::lock_guard<std::mutex> lock(m_DownloadMutex);
+        std::scoped_lock lock{ m_DownloadMutex };
         if (!m_Loader)
             return;
 
@@ -302,7 +300,7 @@ void Image::on_area_updated(int, int, int, int)
     // A better solution might be to have a drawn signal or flag and check that
     // but knowing for sure when gtk draws something seems impossible
     Glib::RefPtr<Gdk::Pixbuf> p = m_Loader->get_pixbuf();
-    int ms = std::min(std::max((p->get_width() + p->get_height()) / 60.f, 100.f), 800.f);
+    int ms = std::clamp((p->get_width() + p->get_height()) / 60.f, 100.f, 800.f);
     if (!m_Curler.is_cancelled() && steady_clock::now() >= m_LastDraw + milliseconds(ms))
     {
         m_SignalPixbufChanged();

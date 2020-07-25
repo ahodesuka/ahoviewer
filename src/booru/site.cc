@@ -155,9 +155,7 @@ Site::Site(const std::string &name, const std::string &url, const Type type,
     m_TagsPath(Glib::build_filename(Settings.get_booru_path(), m_Name + "-tags")),
     m_CookiePath(Glib::build_filename(Settings.get_booru_path(), m_Name + "-cookie")),
     m_Type(type),
-    m_NewAccount(false),
     m_UseSamples(use_samples),
-    m_CookieTS(0),
     m_MaxConnections(max_cons),
     m_ShareHandle(curl_share_init())
 {

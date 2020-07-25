@@ -45,8 +45,8 @@ namespace AhoViewer
                    *m_Message;
         Gtk::Separator *m_FilenameSeparator;
         Gtk::ProgressBar *m_ProgressBar;
-        Priority m_MessagePriority,
-                 m_ProgressPriority;
+        Priority m_MessagePriority  { Priority::UNUSED },
+                 m_ProgressPriority { Priority::UNUSED };
         sigc::connection m_MessageConn,
                          m_ProgressConn;
     };

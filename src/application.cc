@@ -17,7 +17,7 @@ using namespace AhoViewer;
 #include <shared_mutex>
 #include <deque>
 
-std::deque<std::shared_timed_mutex> locks;
+std::deque<std::shared_mutex> locks;
 
 static void lock_callback(int mode, int type, const char*, int)
 {

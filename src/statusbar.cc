@@ -5,9 +5,7 @@
 using namespace AhoViewer;
 
 StatusBar::StatusBar(BaseObjectType *cobj, const Glib::RefPtr<Gtk::Builder> &bldr)
-  : Gtk::Frame(cobj),
-    m_MessagePriority(Priority::UNUSED),
-    m_ProgressPriority(Priority::UNUSED)
+  : Gtk::Frame(cobj)
 {
     bldr->get_widget("PageInfoLabel",      m_PageInfo);
     bldr->get_widget("ResolutionLabel",    m_Resolution);

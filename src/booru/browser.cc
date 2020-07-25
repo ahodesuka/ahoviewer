@@ -12,7 +12,6 @@ using namespace AhoViewer::Booru;
 
 Browser::Browser(BaseObjectType *cobj, const Glib::RefPtr<Gtk::Builder> &bldr)
   : Gtk::Paned(cobj),
-    m_ClosePage(false),
     m_LastSavePath(Settings.get_string("LastSavePath"))
 {
     bldr->get_widget("Booru::Browser::Notebook",          m_Notebook);

@@ -54,8 +54,7 @@ namespace AhoViewer
     class ThreadPool
     {
     public:
-        ThreadPool() { init(); }
-        ThreadPool(size_t nThreads) : ma_n_idle(0) { init(); resize(nThreads); }
+        ThreadPool(size_t nThreads = std::thread::hardware_concurrency() - 1) { resize(nThreads); }
 
         // the destructor waits for all tasks in the queue to be finished
         ~ThreadPool()
@@ -79,7 +78,7 @@ namespace AhoViewer
         inline bool active() const { return ma_n_idle != m_threads.size() || !m_queue.empty(); }
 
         // get a specific thread
-        inline std::thread & get_thread(size_t i) { return *m_threads.at(i); }
+        inline std::thread& get_thread(size_t i) { return *m_threads.at(i); }
 
         // change the number of threads in the pool
         // should be called from one thread, otherwise be careful to not interleave, also with interrupt()
@@ -134,8 +133,7 @@ namespace AhoViewer
         }
 
         template<typename F, typename... Args>
-        auto push(F && f, Args&&... args)
-            -> std::future<typename std::result_of<F(Args...)>::type>
+        decltype(auto) push(F&& f, Args&&... args)
         {
             using return_type = typename std::result_of<F(Args...)>::type;
             if (!ma_interrupt && !ma_kill)
@@ -153,11 +151,11 @@ namespace AhoViewer
         }
 
     private:
-        // deleted
+        // delete copy and move constructors
         ThreadPool(const ThreadPool&) = delete;
         ThreadPool(ThreadPool&&) = delete;
-        ThreadPool & operator=(const ThreadPool&) = delete;
-        ThreadPool & operator=(ThreadPool&&) = delete;
+        ThreadPool& operator=(const ThreadPool&) = delete;
+        ThreadPool& operator=(ThreadPool&&) = delete;
 
         // wait for all computing threads to finish
         // may be called asynchronously to not pause the calling thread while waiting
@@ -199,8 +197,8 @@ namespace AhoViewer
 
             auto f = [ &, abort_ptr ]()
             {
-                std::atomic<bool> & abort = *abort_ptr;
-                std::unique_ptr<std::function<void()>> _f = nullptr;
+                std::atomic<bool> &abort{ *abort_ptr };
+                std::unique_ptr<std::function<void()>> _f{ nullptr };
                 bool more_tasks = m_queue.pop(_f);
 
                 while (true)
@@ -218,12 +216,14 @@ namespace AhoViewer
                     ++ma_n_idle;
                     m_icond.notify_one();
                     // the queue is empty here, wait for the next command
-                    std::unique_lock<std::mutex> lock(m_mutex);
-                    m_cond.wait(lock, [&]()
                     {
-                        more_tasks = m_queue.pop(_f);
-                        return abort || ma_shutdown || more_tasks;
-                    });
+                        std::unique_lock<std::mutex> lock(m_mutex);
+                        m_cond.wait(lock, [&]()
+                        {
+                            more_tasks = m_queue.pop(_f);
+                            return abort || ma_shutdown || more_tasks;
+                        });
+                    }
                     --ma_n_idle;
                     if (!more_tasks && (ma_shutdown || abort)) return;
                 }
@@ -236,8 +236,8 @@ namespace AhoViewer
         std::vector<std::shared_ptr<std::atomic<bool>>> m_abort;
         TSQueue<std::unique_ptr<std::function<void()>>> m_queue;
 
-        std::atomic<bool>   ma_interrupt, ma_kill, ma_shutdown;
-        std::atomic<size_t> ma_n_idle;
+        std::atomic<bool>   ma_interrupt{ false }, ma_kill{ false }, ma_shutdown{ false };
+        std::atomic<size_t> ma_n_idle{ 0 };
 
         std::mutex              m_mutex, m_imutex;
         std::condition_variable m_cond, m_icond;

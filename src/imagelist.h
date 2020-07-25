@@ -138,7 +138,7 @@ namespace AhoViewer
 
         Widget *const m_Widget;
         ImageVector m_Images;
-        size_t m_Index;
+        size_t m_Index { 0 };
 
         ScrollPos m_ScrollPos;
 
@@ -171,7 +171,7 @@ namespace AhoViewer
         std::function<int(size_t, size_t)> m_IndexSort;
 
         Glib::RefPtr<Gio::Cancellable> m_CacheCancel;
-        std::atomic<bool> m_CacheStop;
+        std::atomic<bool> m_CacheStop { false };
         std::condition_variable m_CacheCond;
         std::mutex m_CacheMutex, m_ThumbnailMutex;
         std::thread m_CacheThread;

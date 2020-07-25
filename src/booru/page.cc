@@ -21,10 +21,6 @@ Page::Page()
     m_MenuLabel(Gtk::manage(new Gtk::Label(_("New Tab")))),
     m_TabButton(Gtk::manage(new Gtk::Button)),
     m_ImageList(std::make_shared<ImageList>(this)),
-    m_Page(0),
-    m_Saving(false),
-    m_LastPage(false),
-    m_KeepAligned(false),
     m_SaveCancel(Gio::Cancellable::create())
 {
     set_policy(Gtk::POLICY_NEVER, Gtk::POLICY_AUTOMATIC);

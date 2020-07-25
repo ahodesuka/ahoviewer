@@ -8,8 +8,7 @@ using namespace AhoViewer::Booru;
 #include "tempdir.h"
 
 ImageList::ImageList(Widget *w)
-  : AhoViewer::ImageList(w),
-    m_Size(0)
+  : AhoViewer::ImageList(w)
 {
 
 }

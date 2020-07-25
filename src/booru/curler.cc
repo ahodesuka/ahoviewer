@@ -29,7 +29,7 @@ size_t Curler::write_cb(const unsigned char *ptr, size_t size, size_t nmemb, voi
     size_t len{ size * nmemb };
 
     {
-        std::lock_guard<std::mutex> lock{ self->m_Mutex };
+        std::scoped_lock lock{ self->m_Mutex };
 
         if (self->m_Pause)
             return CURL_WRITEFUNC_PAUSE;
@@ -181,7 +181,7 @@ long Curler::get_response_code() const
 void Curler::pause()
 {
     // Wait for the buffer to finish writting data if it doing so
-    std::lock_guard<std::mutex> lock{ m_Mutex };
+    std::scoped_lock lock{ m_Mutex };
     m_Pause = true;
 }
 

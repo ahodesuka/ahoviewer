@@ -26,7 +26,7 @@ namespace AhoViewer
 
         Gtk::TreeView *m_TreeView;
         Glib::RefPtr<Gtk::Adjustment> m_VAdjust;
-        bool m_KeepAligned;
+        bool m_KeepAligned { true };
         sigc::connection m_ScrollConn;
     };
 }

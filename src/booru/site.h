@@ -97,9 +97,9 @@ namespace AhoViewer
                         m_TagsPath,
                         m_CookiePath;
             Type m_Type;
-            bool m_NewAccount,
+            bool m_NewAccount { false },
                  m_UseSamples;
-            uint64_t m_CookieTS;
+            uint64_t m_CookieTS { 0 };
             std::set<std::string> m_Tags;
             int m_MaxConnections;
             CURLSH *m_ShareHandle;

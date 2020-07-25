@@ -4,7 +4,7 @@ A GTK image viewer, manga reader, and booru browser.
 
 ## Building
 ### Dependencies
-* C++ Compiler that supports the C++14 standard is required.
+* C++ Compiler that supports the C++17 standard is required. (g++ 7, clang 5)
 * gtkmm-3.0 `>= 3.22.0`
 * glibmm-2.4 `>= 2.46.0`
 * libgsic++ `>= 2.6.0`

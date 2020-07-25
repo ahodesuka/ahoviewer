@@ -118,7 +118,7 @@ std::string Image::get_filename() const
 
 const Glib::RefPtr<Gdk::Pixbuf>& Image::get_pixbuf()
 {
-    std::lock_guard<std::mutex> lock(m_Mutex);
+    std::scoped_lock lock{ m_Mutex };
     return m_Pixbuf;
 }
 
@@ -126,7 +126,7 @@ const Glib::RefPtr<Gdk::Pixbuf>& Image::get_pixbuf()
 // and by get_pixbuf when m_Pixbuf is null
 void Image::create_gif_frame_pixbuf()
 {
-    std::lock_guard<std::mutex> lock(m_Mutex);
+    std::scoped_lock lock{ m_Mutex };
     gif_result result = gif_decode_frame(m_GIFanim, m_GIFcurFrame);
 
     if (result == GIF_OK)
@@ -214,7 +214,7 @@ void Image::load_pixbuf(Glib::RefPtr<Gio::Cancellable> c)
                 return;
 
             {
-                std::lock_guard<std::mutex> lock(m_Mutex);
+                std::scoped_lock lock{ m_Mutex };
                 m_Pixbuf = p;
             }
         }
@@ -248,7 +248,7 @@ void Image::reset_pixbuf()
 {
     // Set this back to true unless it's a webm
     m_Loading = !m_isWebM;
-    std::lock_guard<std::mutex> lock(m_Mutex);
+    std::scoped_lock lock{ m_Mutex };
     m_Pixbuf.reset();
 
     if (m_GIFanim)
