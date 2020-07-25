@@ -12,13 +12,13 @@ KeybindingEditor::KeybindingEditor(BaseObjectType *cobj, const Glib::RefPtr<Gtk:
   : Gtk::TreeView(cobj),
     m_Model(Gtk::TreeStore::create(m_Columns))
 {
-    for (const std::pair<std::string, std::map<std::string, std::string>> &i : Settings.get_keybindings())
+    for (const auto &i : Settings.get_keybindings())
     {
         Gtk::TreeIter parentIter = m_Model->append();
         parentIter->set_value(m_Columns.editable, false);
         parentIter->set_value(m_Columns.name, i.first);
 
-        for (const std::pair<std::string, std::string> &j : i.second)
+        for (const auto &j : i.second)
         {
             Gtk::TreeIter iter = m_Model->append(parentIter->children());
             iter->set_value(m_Columns.editable, true);

@@ -310,9 +310,9 @@ std::string SettingsManager::get_keybinding(const std::string &group, const std:
 // TODO: Add support for multiple keybindings per action
 bool SettingsManager::clear_keybinding(const std::string &value, std::string &group, std::string &name)
 {
-    for (const std::pair<std::string, std::map<std::string, std::string>> i : m_Keybindings)
+    for (const auto &i : m_Keybindings)
     {
-        for (const std::pair<std::string, std::string> j : i.second)
+        for (const auto &j : i.second)
         {
             if (j.second == value)
             {
