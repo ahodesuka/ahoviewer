@@ -66,7 +66,7 @@ SettingsManager::SettingsManager()
         std::make_tuple("Gelbooru",   "https://gelbooru.com",        Type::GELBOORU, "", "", 0),
         std::make_tuple("Konachan",   "https://konachan.com",        Type::MOEBOORU, "", "", 6),
         std::make_tuple("yande.re",   "https://yande.re",            Type::MOEBOORU, "", "", 0),
-        std::make_tuple("Safebooru",  "https://safebooru.org",       Type::GELBOORU, "", "", 6),
+        std::make_tuple("Safebooru",  "https://safebooru.org",       Type::GELBOORU, "", "", 0),
     }),
     DefaultKeybindings(
     {
