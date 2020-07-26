@@ -146,23 +146,21 @@ void Browser::on_save_image()
         return;
 
     Gtk::Window *window = static_cast<Gtk::Window*>(get_toplevel());
-    Gtk::FileChooserDialog dialog(*window, "Save Image As", Gtk::FILE_CHOOSER_ACTION_SAVE);
-    dialog.set_modal();
+    auto dialog{ Gtk::FileChooserNative::create(
+            "Save Image As", *window, Gtk::FILE_CHOOSER_ACTION_SAVE) };
+    dialog->set_modal();
 
     const std::shared_ptr<Image> image =
         std::static_pointer_cast<Image>(get_active_page()->get_imagelist()->get_current());
 
-    dialog.add_button(Gtk::Stock::CANCEL, Gtk::RESPONSE_CANCEL);
-    dialog.add_button("Save", Gtk::RESPONSE_OK);
-
     if (!m_LastSavePath.empty())
-        dialog.set_current_folder(m_LastSavePath);
+        dialog->set_current_folder(m_LastSavePath);
 
-    dialog.set_current_name(Glib::path_get_basename(image->get_filename()));
+    dialog->set_current_name(Glib::path_get_basename(image->get_filename()));
 
-    if (dialog.run() == Gtk::RESPONSE_OK)
+    if (dialog->run() == Gtk::RESPONSE_ACCEPT)
     {
-        std::string path = dialog.get_filename();
+        std::string path = dialog->get_filename();
         m_LastSavePath = Glib::path_get_dirname(path);
         get_active_page()->save_image(path, image);
     }
@@ -174,18 +172,16 @@ void Browser::on_save_images()
         return;
 
     Gtk::Window *window = static_cast<Gtk::Window*>(get_toplevel());
-    Gtk::FileChooserDialog dialog(*window, "Save Images", Gtk::FILE_CHOOSER_ACTION_SELECT_FOLDER);
-    dialog.set_modal();
-
-    dialog.add_button(Gtk::Stock::CANCEL, Gtk::RESPONSE_CANCEL);
-    dialog.add_button("Save", Gtk::RESPONSE_OK);
+    auto dialog{ Gtk::FileChooserNative::create(
+            "Save Image As", *window, Gtk::FILE_CHOOSER_ACTION_SELECT_FOLDER, _("Save")) };
+    dialog->set_modal();
 
     if (!m_LastSavePath.empty())
-        dialog.set_current_folder(m_LastSavePath);
+        dialog->set_current_folder(m_LastSavePath);
 
-    if (dialog.run() == Gtk::RESPONSE_OK)
+    if (dialog->run() == Gtk::RESPONSE_ACCEPT)
     {
-        std::string path = dialog.get_filename();
+        std::string path = dialog->get_filename();
         m_LastSavePath = path;
         Page *page = get_active_page();
 

@@ -671,13 +671,10 @@ void MainWindow::create_actions()
         filter->add_pattern("*." + ext);
 
 #ifdef HAVE_GSTREAMER
-#ifdef _WIN32
     filter->add_pattern("*.webm");
     filter->add_pattern("*.mp4");
-#else
     filter->add_mime_type("video/webm");
     filter->add_mime_type("video/mp4");
-#endif // _WIN32
 #endif // HAVE_GSTREAMER
 
     m_RecentAction->add_filter(filter);
@@ -904,15 +901,12 @@ void MainWindow::on_connect_proxy(const Glib::RefPtr<Gtk::Action> &action, Gtk::
 
 void MainWindow::on_open_file_dialog()
 {
-    Gtk::FileChooserDialog dialog(*this, "Open", Gtk::FILE_CHOOSER_ACTION_OPEN);
+    auto dialog{ Gtk::FileChooserNative::create("Open", *this, Gtk::FILE_CHOOSER_ACTION_OPEN) };
     Glib::RefPtr<Gtk::FileFilter> filter, imageFilter, archiveFilter;
 
     filter = Gtk::FileFilter::create();
     imageFilter = Gtk::FileFilter::create();
     archiveFilter = Gtk::FileFilter::create();
-
-    dialog.add_button(Gtk::Stock::CANCEL, Gtk::RESPONSE_CANCEL);
-    dialog.add_button("Open", Gtk::RESPONSE_OK);
 
     filter->set_name(_("All Files"));
     imageFilter->set_name(_("All Images"));
@@ -947,21 +941,21 @@ void MainWindow::on_open_file_dialog()
         archiveFilter->add_pattern("*." + ext);
     }
 
-    dialog.add_filter(filter);
-    dialog.add_filter(imageFilter);
+    dialog->add_filter(filter);
+    dialog->add_filter(imageFilter);
 #if defined(HAVE_LIBZIP) || defined(HAVE_LIBUNRAR)
-    dialog.add_filter(archiveFilter);
+    dialog->add_filter(archiveFilter);
 #endif
 
     if (!m_LocalImageList->empty())
     {
         std::string path = m_LocalImageList->from_archive() ?
             m_LocalImageList->get_archive().get_path() : m_LocalImageList->get_current()->get_path();
-        dialog.set_filename(path);
+        dialog->set_filename(path);
     }
 
-    if (dialog.run() == Gtk::RESPONSE_OK)
-        open_file(dialog.get_filename());
+    if (dialog->run() == Gtk::RESPONSE_ACCEPT)
+        open_file(dialog->get_filename());
 }
 
 void MainWindow::on_show_preferences()
@@ -1260,8 +1254,8 @@ void MainWindow::on_save_image()
     }
     else if (archive)
     {
-        auto dialog = Gtk::FileChooserNative::create("Save Image As",
-            *this, Gtk::FILE_CHOOSER_ACTION_SAVE, _("Save"), _("Cancel"));
+        auto dialog{ Gtk::FileChooserNative::create(
+                "Save Image As", *this, Gtk::FILE_CHOOSER_ACTION_SAVE) };
         dialog->set_modal();
 
         const std::shared_ptr<Archive::Image> image =
@@ -1272,7 +1266,7 @@ void MainWindow::on_save_image()
 
         dialog->set_current_name(Glib::path_get_basename(image->get_filename()));
 
-        if (dialog->run() == Gtk::RESPONSE_OK)
+        if (dialog->run() == Gtk::RESPONSE_ACCEPT)
         {
             std::string path = dialog->get_filename();
             m_LastSavePath = Glib::path_get_dirname(path);
