@@ -33,6 +33,7 @@
 *
 *********************************************************/
 
+#include <algorithm>
 #include <functional>
 #include <thread>
 #include <atomic>
@@ -54,7 +55,11 @@ namespace AhoViewer
     class ThreadPool
     {
     public:
-        ThreadPool(size_t nThreads = std::thread::hardware_concurrency() - 1) { resize(nThreads); }
+        ThreadPool(size_t nThreads = std::thread::hardware_concurrency() - 1)
+        {
+            nThreads = std::max(nThreads, size_t{1});
+            resize(nThreads);
+        }
 
         // the destructor waits for all tasks in the queue to be finished
         ~ThreadPool()
@@ -84,6 +89,9 @@ namespace AhoViewer
         // should be called from one thread, otherwise be careful to not interleave, also with interrupt()
         void resize(size_t nThreads)
         {
+            if (nThreads == 0)
+                throw std::runtime_error("ThreadPool::resize with size 0 is not allowed");
+
             if (!ma_interrupt && !ma_kill)
             {
                 size_t oldNThreads = m_threads.size();

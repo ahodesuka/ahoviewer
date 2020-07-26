@@ -202,7 +202,7 @@ void Page::save_images(const std::string &path)
     m_SaveImagesTotal   = m_ImageList->get_vector_size();
     m_SaveImagesThread  = std::thread([ &, path ]()
     {
-        ThreadPool pool(std::thread::hardware_concurrency());
+        ThreadPool pool;
         for (const std::shared_ptr<AhoViewer::Image> &img : *m_ImageList)
         {
             pool.push([ &, path, img ]()

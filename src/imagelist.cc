@@ -12,7 +12,6 @@ ImageList::ImageList(Widget *const w)
   : m_Widget(w),
     m_ScrollPos(-1, -1, ZoomMode::AUTO_FIT),
     m_ThumbnailCancel(Gio::Cancellable::create()),
-    m_ThreadPool(std::thread::hardware_concurrency() - 1),
     m_CacheCancel(Gio::Cancellable::create())
 {
     // Sorts indices based on how close they are to m_Index
