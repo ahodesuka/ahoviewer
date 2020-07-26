@@ -94,6 +94,12 @@ void ImageList::load(const xml::Document &posts, const Page &page)
                 imageUrl = m_Site->get_url() + imageUrl;
         }
 
+        // safebooru.org provides the wrong file extension for thumbnails
+        // All their thumbnails are .jpg, but their api gives links to with the
+        // same exntension as the original images exnteion
+        if (thumbUrl.find("safebooru.org") != std::string::npos)
+            thumbUrl = thumbUrl.substr(0, thumbUrl.find_last_of('.')) + ".jpg";
+
         std::string postUrl = m_Site->get_post_url(post.get_attribute("id"));
 
         if (Image::is_valid_extension(imageUrl))
