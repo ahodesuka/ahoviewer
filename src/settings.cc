@@ -143,7 +143,7 @@ SettingsManager::SettingsManager()
     })
 // }}}
 {
-    Config.setTabWidth(4); // this is very important
+    Config.setTabWidth(4);
     if (Glib::file_test(ConfigFilePath, Glib::FILE_TEST_EXISTS))
     {
         try
@@ -407,11 +407,11 @@ void SettingsManager::load_keybindings()
     {
         Setting &keys = Config.lookup("Keybindings");
 
-        for (const std::pair<std::string, std::map<std::string, std::string>> i : DefaultKeybindings)
+        for (auto &i : DefaultKeybindings)
         {
             if (keys.exists(i.first))
             {
-                for (const std::pair<std::string, std::string> j : i.second)
+                for (auto &j : i.second)
                 {
                     if (keys[i.first.c_str()].exists(j.first))
                     {
