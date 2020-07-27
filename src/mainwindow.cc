@@ -902,11 +902,10 @@ void MainWindow::on_connect_proxy(const Glib::RefPtr<Gtk::Action> &action, Gtk::
 void MainWindow::on_open_file_dialog()
 {
     auto dialog{ Gtk::FileChooserNative::create("Open", *this, Gtk::FILE_CHOOSER_ACTION_OPEN) };
-    Glib::RefPtr<Gtk::FileFilter> filter, imageFilter, archiveFilter;
-
-    filter = Gtk::FileFilter::create();
-    imageFilter = Gtk::FileFilter::create();
-    archiveFilter = Gtk::FileFilter::create();
+    auto filter{ Gtk::FileFilter::create() },
+         imageFilter{ Gtk::FileFilter::create() },
+         videoFilter{ Gtk::FileFilter::create() },
+         archiveFilter{ Gtk::FileFilter::create() };
 
     filter->set_name(_("All Files"));
     imageFilter->set_name(_("All Images"));
@@ -916,17 +915,15 @@ void MainWindow::on_open_file_dialog()
     imageFilter->add_pixbuf_formats();
 
 #ifdef HAVE_GSTREAMER
-#ifdef _WIN32
     filter->add_pattern("*.webm");
-    imageFilter->add_pattern("*.webm");
-    filter->add_pattern("*.mp4");
-    imageFilter->add_pattern("*.mp4");
-#else
     filter->add_mime_type("video/webm");
-    imageFilter->add_mime_type("video/webm");
+    filter->add_pattern("*.mp4");
     filter->add_mime_type("video/mp4");
-    imageFilter->add_mime_type("video/mp4");
-#endif // _WIN32
+
+    videoFilter->add_pattern("*.webm");
+    videoFilter->add_mime_type("video/webm");
+    videoFilter->add_pattern("*.mp4");
+    videoFilter->add_mime_type("video/mp4");
 #endif // HAVE_GSTREAMER
 
     for (const std::string &mimeType : Archive::MimeTypes)
@@ -943,14 +940,19 @@ void MainWindow::on_open_file_dialog()
 
     dialog->add_filter(filter);
     dialog->add_filter(imageFilter);
+#ifdef HAVE_GSTREAMER
+    dialog->add_filter(videoFilter);
+#endif // HAVE_GSTREAMER
 #if defined(HAVE_LIBZIP) || defined(HAVE_LIBUNRAR)
     dialog->add_filter(archiveFilter);
 #endif
 
     if (!m_LocalImageList->empty())
     {
-        std::string path = m_LocalImageList->from_archive() ?
-            m_LocalImageList->get_archive().get_path() : m_LocalImageList->get_current()->get_path();
+        // Set the starting location to the current file
+        std::string path{ m_LocalImageList->from_archive() ?
+            m_LocalImageList->get_archive().get_path() :
+            m_LocalImageList->get_current()->get_path() };
         dialog->set_filename(path);
     }
 
