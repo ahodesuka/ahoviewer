@@ -329,12 +329,21 @@ void Image::create_thumbnail(Glib::RefPtr<Gio::Cancellable> c, bool save)
     Glib::RefPtr<Gdk::Pixbuf> pixbuf;
     save = save && Settings.get_bool("SaveThumbnails");
 
+    if (!save)
+    {
+        m_ThumbnailPixbuf = m_isWebM ?
+            create_webm_thumbnail(ThumbnailSize, ThumbnailSize) :
+            create_pixbuf_at_size(m_Path, ThumbnailSize, ThumbnailSize, c);
+        return;
+    }
+
     if (m_isWebM)
     {
         pixbuf = create_webm_thumbnail(128, 128);
 
 #ifdef __linux__
-        if (pixbuf && save)
+        // FIXME: video/mp4 for mp4 files
+        if (pixbuf)
             save_thumbnail(pixbuf, "video/webm");
 #endif // __linux__
     }
@@ -349,7 +358,7 @@ void Image::create_thumbnail(Glib::RefPtr<Gio::Cancellable> c, bool save)
         int w, h;
         GdkPixbufFormat *format = gdk_pixbuf_get_file_info(m_Path.c_str(), &w, &h);
 
-        if (save && format && (w > 128 || h > 128))
+        if (format && (w > 128 || h > 128))
         {
             gchar **mimeTypes = gdk_pixbuf_format_get_mime_types(format);
             save_thumbnail(pixbuf, mimeTypes[0]);
@@ -366,7 +375,7 @@ Glib::RefPtr<Gdk::Pixbuf> Image::create_pixbuf_at_size(const std::string &path,
                                                        const int w, const int h,
                                                        Glib::RefPtr<Gio::Cancellable> c) const
 {
-    Glib::RefPtr<Gio::File> file = Gio::File::create_for_path(path);
+    Glib::RefPtr<Gio::File> file{ Gio::File::create_for_path(path) };
     Glib::RefPtr<Gdk::Pixbuf> pixbuf;
 
     try
@@ -394,6 +403,7 @@ Glib::RefPtr<Gdk::Pixbuf> Image::scale_pixbuf(Glib::RefPtr<Gdk::Pixbuf> &pixbuf,
                                 Gdk::INTERP_BILINEAR);
 }
 
+// TODO: make this cancellable
 Glib::RefPtr<Gdk::Pixbuf> Image::create_webm_thumbnail(int w, int h) const
 {
     Glib::RefPtr<Gdk::Pixbuf> pixbuf;
