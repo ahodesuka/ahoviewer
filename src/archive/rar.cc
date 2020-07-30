@@ -42,8 +42,6 @@ std::string utf16_to_utf8(const std::wstring &s)
     return r;
 }
 
-const char Rar::Magic[Rar::MagicSize] = { 'R', 'a', 'r', '!', 0x1A, 0x07 };
-
 Rar::Rar(const std::string &path, const std::string &exDir)
   : Archive::Archive(path, exDir)
 {

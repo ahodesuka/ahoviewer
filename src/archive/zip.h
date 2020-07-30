@@ -15,8 +15,8 @@ namespace AhoViewer
         virtual bool has_valid_files(const FileType t) const override;
         virtual std::vector<std::string> get_entries(const FileType t) const override;
 
-        static const int MagicSize = 4;
-        static const char Magic[MagicSize];
+        static constexpr int MagicSize { 4 };
+        static constexpr char Magic[MagicSize] { 'P', 'K', 0x03, 0x04 };
     };
 }
 

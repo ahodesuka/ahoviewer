@@ -24,8 +24,8 @@ namespace AhoViewer
             ARCHIVES = (1 << 1),
         };
 
-        // Simple Image class that overrides get_filename and get_thumbnail
-        class Image : public AhoViewer::Image
+        // Simple Image class that represents a image from an archive
+        class Image final : public AhoViewer::Image
         {
         public:
             Image(const std::string &file, const Archive &archive);
@@ -64,7 +64,7 @@ namespace AhoViewer
         static Type get_type(const std::string &path);
 
         // Matches the largest archive MagicSize
-        static const int MagicSize = 6;
+        static constexpr int MagicSize { 6 };
     };
 }
 

@@ -8,8 +8,6 @@ using namespace AhoViewer;
 #include <giomm.h>
 #include <zip.h>
 
-const char Zip::Magic[Zip::MagicSize] = { 'P', 'K', 0x03, 0x04 };
-
 Zip::Zip(const std::string &path, const std::string &exDir)
   : Archive::Archive(path, exDir)
 {
@@ -18,8 +16,8 @@ Zip::Zip(const std::string &path, const std::string &exDir)
 
 bool Zip::extract(const std::string &file) const
 {
-    bool found = false;
-    zip *zip = zip_open(m_Path.c_str(), 0, NULL);
+    bool found{ false };
+    zip *zip{ zip_open(m_Path.c_str(), ZIP_RDONLY | ZIP_CHECKCONS, NULL) };
 
     if (zip)
     {
@@ -28,22 +26,22 @@ bool Zip::extract(const std::string &file) const
 
         if (zip_stat(zip, file.c_str(), 0, &st) == 0)
         {
-            std::string fPath = Glib::build_filename(m_ExtractedPath, st.name);
+            std::string fPath{ Glib::build_filename(m_ExtractedPath, st.name) };
 
             if (!Glib::file_test(Glib::path_get_dirname(fPath), Glib::FILE_TEST_EXISTS))
                 g_mkdir_with_parents(Glib::path_get_dirname(fPath).c_str(), 0755);
 
 
-            zip_file *zfile = zip_fopen(zip, file.c_str(), 0);
+            zip_file *zfile{ zip_fopen(zip, file.c_str(), 0) };
             if (zfile)
             {
                 std::vector<char> buf(st.size);
-                int bufSize;
-                if ((bufSize = zip_fread(zfile, &buf[0], st.size)) != -1)
+                zip_int64_t bufSize{ zip_fread(zfile, buf.data(), st.size) };
+                if (bufSize != -1)
                 {
-                    auto f = Gio::File::create_for_path(fPath);
-                    auto ofs = f->replace();
-                    ofs->write(buf.data(), bufSize);
+                    auto f{ Gio::File::create_for_path(fPath) };
+                    std::string etag;
+                    f->replace_contents(buf.data(), bufSize, "", etag);
                 }
 
                 zip_fclose(zfile);
@@ -79,11 +77,11 @@ bool Zip::has_valid_files(const FileType t) const
 std::vector<std::string> Zip::get_entries(const FileType t) const
 {
     std::vector<std::string> entries;
-    zip *zip = zip_open(m_Path.c_str(), 0, NULL);
+    zip *zip{ zip_open(m_Path.c_str(), ZIP_RDONLY | ZIP_CHECKCONS, NULL) };
 
     if (zip)
     {
-        for (size_t i = 0, n = zip_get_num_entries(zip, 0); i < n; ++i)
+        for (zip_int64_t i{ 0 }, n{ zip_get_num_entries(zip, 0) }; i < n; ++i)
         {
             struct zip_stat st;
             zip_stat_init(&st);
