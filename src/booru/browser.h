@@ -13,10 +13,12 @@
 
 namespace AhoViewer
 {
+    class MainWindow;
     namespace Booru
     {
         class Browser : public Gtk::Paned
         {
+            friend MainWindow;
             using SignalPageChangedType = sigc::signal<void, Page*>;
         public:
             Browser(BaseObjectType *cobj, const Glib::RefPtr<Gtk::Builder> &bldr);
@@ -91,7 +93,12 @@ namespace AhoViewer
             TagEntry *m_TagEntry;
             TagView *m_TagView;
 
-            bool m_ClosePage { false };
+            bool m_ClosePage { false },
+                 // This is used to prevent the tagview position from
+                 // shrinking when first being shown (when it isnt visible on
+                 // startup), not exactly sure what causes this but this
+                 // workaround works for now.
+                 m_FirstShow { true };
             std::string m_LastSavePath;
 
             Glib::RefPtr<Gtk::UIManager> m_UIManager;

@@ -54,19 +54,13 @@ Browser::Browser(BaseObjectType *cobj, const Glib::RefPtr<Gtk::Builder> &bldr)
 
     g_signal_connect(m_Notebook->gobj(), "create-window", G_CALLBACK(on_create_window), this);
 
-    set_focus_chain(std::vector<Gtk::Widget*>{ m_TagEntry });
-
-    m_PosChangedConn = property_position().signal_changed().connect([&]()
-    {
-        if (get_realized())
-            Settings.set("TagViewPosition", get_position());
-    });
+    set_focus_chain({ m_TagEntry });
 }
 
 Browser::~Browser()
 {
     // Why isn't this automatically disconnected immediatly in the notebook
-    // destructor?  Because GTK A SHIT
+    // destructor?
     m_PageSwitchedConn.disconnect();
 
     delete m_Notebook;
@@ -254,7 +248,6 @@ void Browser::on_realize()
     Gtk::Paned::on_realize();
 
     get_window()->freeze_updates();
-    m_PosChangedConn.block();
 
     update_combobox_model();
 
@@ -263,8 +256,20 @@ void Browser::on_realize()
 
     set_position(Settings.get_int("TagViewPosition"));
 
-    m_PosChangedConn.unblock();
     get_window()->thaw_updates();
+
+    m_PosChangedConn = property_position().signal_changed().connect([&]()
+    {
+        if (!m_FirstShow)
+        {
+            Settings.set("TagViewPosition", get_position());
+        }
+        else
+        {
+            m_FirstShow = false;
+            set_position(Settings.get_int("TagViewPosition"));
+        }
+    });
 }
 
 void Browser::on_show()

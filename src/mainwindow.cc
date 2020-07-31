@@ -307,6 +307,9 @@ void MainWindow::on_realize()
     Gtk::ApplicationWindow::on_realize();
 
     update_widgets_visibility();
+
+    // Only need this to be true if the booru browser isnt shown on startup
+    m_BooruBrowser->m_FirstShow = !m_BooruBrowser->get_visible();
 }
 
 void MainWindow::on_check_resize()
