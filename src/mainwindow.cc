@@ -113,15 +113,14 @@ MainWindow::MainWindow(BaseObjectType *cobj, const Glib::RefPtr<Gtk::Builder> &b
             gchar *g = g_win32_get_package_installation_directory_of_module(NULL);
             if (g)
             {
-                path = Glib::build_filename(g, "share", "pixmaps", "ahoviewer", "ahoviewer-about-logo.png");
+                path = Glib::build_filename(g, "share", "icons", "hicolor", "256x256", "apps", "ahoviewer.png");
                 g_free(g);
             }
             Glib::RefPtr<Gdk::Pixbuf> logo = Gdk::Pixbuf::create_from_file(path);
-#else
-            Glib::RefPtr<Gdk::Pixbuf> logo =
-                Gdk::Pixbuf::create_from_file(AHOVIEWER_DATADIR "/pixmaps/ahoviewer/ahoviewer-about-logo.png");
-#endif // _WIN32
             m_AboutDialog->set_logo(logo);
+#else
+            m_AboutDialog->set_logo_icon_name(PACKAGE);
+#endif // _WIN32
         }
         catch (...) { }
 
@@ -129,8 +128,15 @@ MainWindow::MainWindow(BaseObjectType *cobj, const Glib::RefPtr<Gtk::Builder> &b
         m_AboutDialog->set_version(ahoviewer_version);
         m_AboutDialog->set_copyright(u8"Copyright \u00A9 2013-2020 ahoka");
         m_AboutDialog->set_website(PACKAGE_URL);
+        m_AboutDialog->set_website_label(PACKAGE_URL);
+        m_AboutDialog->add_credit_section(_("Created by"), { "ahoka" });
+        m_AboutDialog->add_credit_section(_("Contributions by"),
+        {
+            "oliwer",
+            "HaxtonFale",
+            "WebFreak001",
+        });
 
-        m_AboutDialog->add_credit_section("Created by", { "ahoka" });
         m_AboutDialog->set_license(
             "Copyright (c) 2013-2020 ahoka\n"
             "\n"
