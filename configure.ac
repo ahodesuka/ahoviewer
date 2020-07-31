@@ -80,7 +80,7 @@ if test x"$enable_gnutls" != xno; then
     )
 fi
 
-LIBCURL_CHECK_CONFIG(, 7.32.0,, [AC_MSG_ERROR([libcurl >= 7.32.0 not found])])
+LIBCURL_CHECK_CONFIG(, 7.32.0,, AC_MSG_ERROR([libcurl >= 7.32.0 not found]))
 
 PKG_CHECK_MODULES([libxml2], [libxml-2.0])
 
