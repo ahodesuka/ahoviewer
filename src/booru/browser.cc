@@ -86,7 +86,7 @@ void Browser::update_combobox_model()
     // Fallback if the previously selected site was deleted or if there was no
     // previously selected site (first time on startup)
     size_t selected{ std::clamp(static_cast<size_t>(Settings.get_int("SelectedBooru")),
-                            0UL, Settings.get_sites().size() - 1) };
+                            size_t{0}, Settings.get_sites().size() - 1) };
 
     for (sigc::connection conn : m_SiteIconConns)
         conn.disconnect();
