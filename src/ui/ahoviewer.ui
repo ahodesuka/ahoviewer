@@ -1250,6 +1250,10 @@
                               <object class="GtkTreeView" id="BooruSiteEditor">
                                 <property name="visible">True</property>
                                 <property name="can_focus">True</property>
+                                <property name="headers_clickable">False</property>
+                                <property name="reorderable">True</property>
+                                <property name="enable_search">False</property>
+                                <property name="show_expanders">False</property>
                                 <child internal-child="selection">
                                   <object class="GtkTreeSelection"/>
                                 </child>

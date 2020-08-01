@@ -22,6 +22,8 @@ namespace AhoViewer
 
         void on_cursor_changed() override;
     private:
+        // Custom CellRenderer that either shows a booru sites favicon, a error
+        // icon, or a spinner when trying to check if the url is valid
         class CellRendererIcon : public Gtk::CellRenderer/*{{{*/
         {
         public:
@@ -131,6 +133,7 @@ namespace AhoViewer
         void on_name_edited(const std::string &p, const std::string &text);
         void on_url_edited(const std::string &p, const std::string &text);
         void on_samples_toggled(const std::string &p);
+        void on_row_changed(const Gtk::TreePath &path, const Gtk::TreeIter &iter);
 
         bool is_name_unique(const Gtk::TreeIter &iter, const std::string &name) const;
         void add_edit_site(const Gtk::TreeIter &iter);
@@ -157,14 +160,16 @@ namespace AhoViewer
 
         std::shared_ptr<Booru::Site> m_SiteCheckSite;
         Gtk::TreeIter m_SiteCheckIter;
-        bool m_SiteCheckEdit        { false },
+        bool m_LastAddFromDND       { false },
+             m_SiteCheckEdit        { false },
              m_SiteCheckEditSuccess { false };
 
         std::thread m_SiteCheckThread;
         Glib::Dispatcher m_SignalSiteChecked;
 
         sigc::connection m_UsernameConn,
-                         m_PasswordConn;
+                         m_PasswordConn,
+                         m_RowInsertedConn;
 
         sigc::signal<void> m_SignalEdited;
     };

@@ -31,7 +31,7 @@ Page::Page()
     m_TabButton->property_relief() = Gtk::RELIEF_NONE;
     m_TabButton->set_focus_on_click(false);
     m_TabButton->set_tooltip_text(_("Close Tab"));
-    m_TabButton->signal_clicked().connect([this]() { m_SignalClosed(this); });
+    m_TabButton->signal_clicked().connect([&]() { m_SignalClosed(this); });
 
     m_TabLabel->set_alignment(0.0, 0.5);
     m_TabLabel->set_ellipsize(Pango::ELLIPSIZE_END);

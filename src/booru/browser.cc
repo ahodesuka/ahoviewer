@@ -78,6 +78,16 @@ std::vector<Page*> Browser::get_pages() const
 
 void Browser::update_combobox_model()
 {
+    // Use this to select the site that was previously selected if it's still valid
+    Glib::RefPtr<Gdk::Pixbuf> prev_pixbuf{ nullptr };
+    if (m_ComboBox->get_active())
+        prev_pixbuf = m_ComboBox->get_active()->get_value(m_ComboColumns.icon);
+
+    // Fallback if the previously selected site was deleted or if there was no
+    // previously selected site (first time on startup)
+    size_t selected{ std::clamp(static_cast<size_t>(Settings.get_int("SelectedBooru")),
+                            0UL, Settings.get_sites().size() - 1) };
+
     for (sigc::connection conn : m_SiteIconConns)
         conn.disconnect();
 
@@ -85,17 +95,23 @@ void Browser::update_combobox_model()
     m_ComboChangedConn.disconnect();
     m_ComboModel->clear();
 
+    size_t i{ 0 };
     for (std::shared_ptr<Site> site : Settings.get_sites())
     {
-        Gtk::TreeIter it = m_ComboModel->append();
+        Gtk::TreeIter it{ m_ComboModel->append() };
         sigc::connection c = site->signal_icon_downloaded().connect([ &, site, it ]
         {
             it->set_value(m_ComboColumns.icon, site->get_icon_pixbuf());
         });
         m_SiteIconConns.push_back(std::move(c));
 
-        it->set_value(m_ComboColumns.icon, site->get_icon_pixbuf());
+        auto icon{ site->get_icon_pixbuf() };
+        if (icon == prev_pixbuf)
+            selected = i;
+
+        it->set_value(m_ComboColumns.icon, icon);
         it->set_value(m_ComboColumns.name, site->get_name());
+        ++i;
     }
 
     m_ComboChangedConn = m_ComboBox->signal_changed().connect([&]()
@@ -103,8 +119,6 @@ void Browser::update_combobox_model()
         m_TagEntry->set_tags(get_active_site()->get_tags());
     });
 
-    int selected = std::min(static_cast<size_t>(Settings.get_int("SelectedBooru")),
-                            Settings.get_sites().size() - 1);
     m_ComboBox->set_active(selected);
 }
 
