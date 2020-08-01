@@ -330,14 +330,14 @@ void Browser::on_image_progress(const Image *bimage, double c, double t)
 
     if (t > 0)
     {
-        ss << "Downloading " << Glib::format_size(c) << " / " << Glib::format_size(t) << " @ "
-           << Glib::format_size(speed) << "/s";
+        ss << "Downloading " << Glib::format_size(c).c_str() << " / " << Glib::format_size(t).c_str() << " @ "
+           << Glib::format_size(speed).c_str() << "/s";
         m_StatusBar->set_progress(ss.str(), c / t, StatusBar::Priority::DOWNLOAD, c == t ? 2 : 0);
     }
     else
     {
-         ss << "Downloading " << Glib::format_size(c) << " / ?? @ "
-            << Glib::format_size(speed) << "/s";
+         ss << "Downloading " << Glib::format_size(c).c_str() << " / ?? @ "
+            << Glib::format_size(speed).c_str() << "/s";
         m_StatusBar->set_message(ss.str(), StatusBar::Priority::DOWNLOAD, c == t ? 2 : 0);
     }
 }
