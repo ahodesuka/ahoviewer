@@ -47,14 +47,7 @@ endif
 #################################
 ###   Optional dependencies   ###
 #################################
-# This version should match all the gstreamer-*-1.0 package version (on a sane distro)
-# >=1.16.0 is recommended since playbin3 is used and is "experimental" so newer
-# versions will probably function the best, I have tested using 1.16.2 and it
-# has worked fine
-gstreamer = dependency('gstreamer-1.0', version : ['>=1.16.0'], required : get_option('gstreamer'))
-# GstAppSrc (for playing video files as they download from memory)
-gstapp = dependency('gstreamer-app-1.0', required : get_option('gstreamer'))
-# gst_stream_volume_set_volume
+gstreamer = dependency('gstreamer-1.0', required : get_option('gstreamer'))
 gstaudio = dependency('gstreamer-audio-1.0', required : get_option('gstreamer'))
 # GstVideoOverlay (rendering directly to the ahoviewer window)
 gstvideo = dependency('gstreamer-video-1.0', required : get_option('gstreamer'))

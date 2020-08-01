@@ -4,12 +4,10 @@ using namespace AhoViewer;
 #include "mainwindow.h"
 #include "settings.h"
 #include "statusbar.h"
-#include "booru/image.h"
 
 #include <iostream>
 
 #ifdef HAVE_GSTREAMER
-#include <gst/app/gstappsrc.h>
 #include <gst/audio/streamvolume.h>
 #include <gst/video/videooverlay.h>
 #if defined(GDK_WINDOWING_X11)
@@ -40,162 +38,12 @@ gboolean ImageBox::bus_cb(GstBus*, GstMessage *msg, void *userp)
     switch (GST_MESSAGE_TYPE(msg))
     {
         case GST_MESSAGE_EOS:
-            // Use the local file on the next loop
-            // This will only happen when using playbin2
-            // playbin3's about-to-finish signal will queue the local file when
-            // looping a appsrc video
-            if (self->m_CurlerFinishedConn)
-            {
-                gst_element_set_state(self->m_Playbin, GST_STATE_READY);
-                self->m_CurlerFinishedConn.disconnect();
-                self->on_set_volume();
-
-                g_object_set(self->m_Playbin, "uri",
-                    Glib::filename_to_uri(self->m_Image->get_path()).c_str(), NULL);
-                gst_element_set_state(self->m_Playbin, GST_STATE_PAUSED);
-                self->m_Prerolling = true;
-                self->m_Playing = false;
-            }
-            else if (!self->m_Prerolling)
-            {
-                gst_element_seek_simple(self->m_Playbin, GST_FORMAT_TIME, GST_SEEK_FLAG_FLUSH, 0);
-            }
-            break;
-        // Playbin3 way of getting the video caps
-        case GST_MESSAGE_STREAMS_SELECTED:
-            self->on_streams_selected(msg);
-        // Used for playbin2
-        case GST_MESSAGE_APPLICATION:
-            self->on_application_message(msg);
-            break;
+            gst_element_seek_simple(self->m_Playbin, GST_FORMAT_TIME, GST_SEEK_FLAG_FLUSH, 0);
         default:
             break;
     }
 
     return TRUE;
-}
-
-// Swap to the local file if we were playing from memory
-// This could be used to loop the same URI but uses a lot of memory creating
-// additional elements to play the same file, using seek at EOS is more resource
-// friendly
-void ImageBox::on_about_to_finish(GstElement*, void *userp)
-{
-    ImageBox *self = static_cast<ImageBox*>(userp);
-    if (self->m_CurlerFinishedConn)
-    {
-        self->m_CurlerFinishedConn.disconnect();
-        g_object_set(self->m_Playbin, "uri",
-            Glib::filename_to_uri(self->m_Image->get_path()).c_str(), NULL);
-        // Use this to prevent EOS message from seeking since we are technically
-        // prerolling and this won't affect anything in draw_image once we are
-        // already playing
-        self->m_Prerolling = true;
-    }
-}
-
-void ImageBox::on_source_setup(GstElement*, GstElement *source, void *userp)
-{
-    ImageBox *self = static_cast<ImageBox*>(userp);
-    if (source && GST_IS_APP_SRC(source))
-    {
-        // Need this for streaming booru videos, we use it to call
-        // gst_app_src_push_buffer to push new data into the gstreamer pipeline and
-        // gst_app_src_end_of_stream to notify the pipeline we have fed it all the
-        // data we have
-        self->m_AppSrc = source;
-        // This is set to match curl's buffersize (CURL_MAX_WRITE_SIZE)
-        g_object_set(source, "blocksize", 16 * 1024, NULL);
-        auto bimage = std::static_pointer_cast<Booru::Image>(self->m_Image);
-
-        {
-            // Wait for/block any on_write signals from the curler so we can get
-            // the full data buffer before anything else is inserted into it
-            std::scoped_lock lock{ bimage->get_curler().get_mutex() };
-
-            auto data = bimage->get_curler().get_data();
-            long l = bimage->get_curler().get_data_size();
-
-            if (l > 0)
-            {
-                GstBuffer *buffer = gst_buffer_new_allocate(NULL, l, NULL);
-
-                gst_buffer_fill(buffer, 0, data, l);
-                gst_app_src_push_buffer(GST_APP_SRC(source), buffer);
-            }
-
-            // Connect these signals before we unpause
-            self->m_CurlerWriteConn = bimage->get_curler().signal_write().connect(
-                sigc::mem_fun(self, &ImageBox::on_curler_write));
-            self->m_CurlerFinishedConn = bimage->get_curler().signal_finished().connect(
-                sigc::mem_fun(self, &ImageBox::on_curler_finished));
-        }
-        // Notify the imagefetcher that the download is ready to resume
-        bimage->get_curler().unpause();
-
-        self->m_NeedDataID = g_signal_connect(source, "need-data", G_CALLBACK(on_need_data), userp);
-        self->m_EnoughDataID = g_signal_connect(source, "enough-data", G_CALLBACK(on_enough_data), userp);
-    }
-
-    g_signal_handler_disconnect(self->m_Playbin, self->m_SourceSetupID);
-}
-
-void ImageBox::on_need_data(GstElement*, guint, void *userp)
-{
-    ImageBox *self = static_cast<ImageBox*>(userp);
-    gst_element_set_state(self->m_Playbin, GST_STATE_PAUSED);
-}
-
-void ImageBox::on_enough_data(GstElement*, void *userp)
-{
-    ImageBox *self = static_cast<ImageBox*>(userp);
-    gst_element_set_state(self->m_Playbin, GST_STATE_PLAYING);
-}
-
-GstPadProbeReturn ImageBox::buffer_probe_cb(GstPad*, GstPadProbeInfo*, void *userp)
-{
-    ImageBox *self = static_cast<ImageBox*>(userp);
-    GstMessage *msg = gst_message_new_application(GST_OBJECT(self->m_Playbin),
-        gst_structure_new_empty("video-buffered"));
-
-    gst_element_post_message(self->m_Playbin, msg);
-
-    return GST_PAD_PROBE_OK;
-}
-
-void ImageBox::on_video_changed(GstElement*, void *userp)
-{
-    ImageBox *self = static_cast<ImageBox*>(userp);
-    GstMessage *msg = gst_message_new_application(GST_OBJECT(self->m_Playbin),
-        gst_structure_new_empty("video-changed"));
-
-    gst_element_post_message(self->m_Playbin, msg);
-}
-
-// This is called from the curler thread (ImageFetcher)
-void ImageBox::on_curler_write(const unsigned char *d, size_t l)
-{
-    // We want to set the "size" property for the appsrc,
-    // the documentation doesn't really say how this changes the
-    // pipepline but emphisized that it is recommended to do so
-    if (m_FirstFill)
-    {
-        m_FirstFill = false;
-        long c, t;
-        auto bimage = std::static_pointer_cast<Booru::Image>(m_Image);
-        bimage->get_curler().get_progress(c, t);
-        g_object_set(m_AppSrc, "size", t, NULL);
-    }
-
-    GstBuffer *buffer = gst_buffer_new_allocate(NULL, l, NULL);
-
-    gst_buffer_fill(buffer, 0, d, l);
-    gst_app_src_push_buffer(GST_APP_SRC(m_AppSrc), buffer);
-}
-
-void ImageBox::on_curler_finished()
-{
-    gst_app_src_end_of_stream(GST_APP_SRC(m_AppSrc));
 }
 
 // Set volume based on Volume setting
@@ -207,108 +55,10 @@ void ImageBox::on_set_volume()
         std::min(static_cast<double>(Settings.get_int("Volume")) / 100, 1.0));
 }
 
-void ImageBox::on_application_message(GstMessage *msg)
-{
-    if (gst_message_has_name(msg, "video-changed"))
-    {
-        GstPad *pad = nullptr;
-        g_signal_emit_by_name(m_Playbin, "get-video-pad", 0, &pad, NULL);
-
-        if (pad)
-        {
-            m_PadProbeID = gst_pad_add_probe(pad, GST_PAD_PROBE_TYPE_BUFFER,
-                &ImageBox::buffer_probe_cb, this, NULL);
-            m_VideoPad = pad;
-        }
-        else
-        {
-            // set errorr and draw the missing image pixbuf
-            m_OrigWidth = m_OrigHeight = 0;
-            queue_draw_image(true);
-        }
-    }
-    else if (gst_message_has_name(msg, "video-buffered"))
-    {
-        if (m_VideoPad)
-        {
-            if (m_PadProbeID)
-            {
-                gst_pad_remove_probe(m_VideoPad, m_PadProbeID);
-                m_PadProbeID = 0;
-            }
-
-            GstCaps *caps = gst_pad_get_current_caps(m_VideoPad);
-            GstStructure *s = gst_caps_get_structure(caps, 0);
-
-            gst_structure_get_int(s, "width", &m_OrigWidth);
-            gst_structure_get_int(s, "height", &m_OrigHeight);
-
-            gst_caps_unref(caps);
-            gst_object_unref(m_VideoPad);
-            m_VideoPad = nullptr;
-        }
-        else
-        {
-            // Can't play this file (no pad created)
-            m_OrigWidth = m_OrigHeight = 0;
-        }
-
-        // We have enough information to start showing the video,
-        // or show a missing image pixbuf if we can't play this file
-        queue_draw_image(true);
-    }
-}
-
-void ImageBox::create_playbin()
-{
-    // Can swap between playbin3 and playbin, just need to uncomment the
-    // video-changed signal connection at the end of this function to use playbin
-    // Overall playbin3 seems to work better but uses more ram, and may leak memory?
-    m_Playbin = gst_element_factory_make("playbin3", "playbin");
-    g_object_set(m_Playbin,
-            // For now users can put
-            // AudioSink = "autoaudiosink";
-            // into the config file and have sound if they have the correct gstreamer plugins
-            // Can also set Volume = 0-100; in config to control it
-            "audio-sink", gst_element_factory_make(Settings.get_string("AudioSink").c_str(), "audiosink"),
-            // If sink is null it will fallback to autovideosink
-            "video-sink", m_VideoSink,
-            // draw_image takes care of it
-            "force-aspect-ratio", false,
-            NULL);
-
-    GstBus *bus = gst_pipeline_get_bus(GST_PIPELINE(m_Playbin));
-    gst_bus_set_sync_handler(bus, &ImageBox::create_window, this, NULL);
-    gst_bus_add_watch(bus, &ImageBox::bus_cb, this);
-    g_object_unref(bus);
-
-    g_signal_connect(m_Playbin, "about-to-finish", G_CALLBACK(on_about_to_finish), this);
-    //g_signal_connect(m_Playbin, "video-changed", G_CALLBACK(on_video_changed), this);
-}
-
 void ImageBox::reset_gstreamer_pipeline()
 {
-    // If the finish connection is still valid we need to ensure that any
-    // ongoing writes finish before the gstappsrc gets disposed
-    if (m_Image && m_CurlerFinishedConn)
-    {
-        auto bimage = std::static_pointer_cast<Booru::Image>(m_Image);
-        std::scoped_lock lock{ bimage->get_curler().get_mutex() };
-
-        m_CurlerWriteConn.disconnect();
-        m_CurlerFinishedConn.disconnect();
-    }
-
-    if (m_AppSrc)
-    {
-        g_signal_handler_disconnect(m_AppSrc, m_NeedDataID);
-        g_signal_handler_disconnect(m_AppSrc, m_EnoughDataID);
-
-        m_AppSrc = nullptr;
-    }
-
     gst_element_set_state(m_Playbin, GST_STATE_NULL);
-    m_Playing = m_Prerolling = m_WaitingForStream = false;
+    m_Playing = false;
 }
 
 // Attempts to create a GstElement of type @name, and prints a message if it fails
@@ -319,47 +69,6 @@ GstElement* ImageBox::create_video_sink(const std::string &name)
         std::cerr << "Failed to create videosink of type '" << name << "'" << std::endl;
 
     return sink;
-}
-
-void ImageBox::on_streams_selected(GstMessage *msg)
-{
-    GstStreamCollection *collection { nullptr };
-    GstStream *video_stream { nullptr };
-
-    gst_message_parse_streams_selected(msg, &collection);
-
-    for (int i = 0, n = gst_stream_collection_get_size(collection); i < n; ++i)
-    {
-        GstStream *s = gst_stream_collection_get_stream(collection, i);
-        if (gst_stream_get_stream_type(s) == GST_STREAM_TYPE_VIDEO)
-        {
-            video_stream = s;
-            break;
-        }
-    }
-
-    if (video_stream)
-    {
-        GstCaps *caps = gst_stream_get_caps(video_stream);
-        GstStructure *s = gst_caps_get_structure(caps, 0);
-
-        gst_structure_get_int(s, "width", &m_OrigWidth);
-        gst_structure_get_int(s, "height", &m_OrigHeight);
-
-        gst_caps_unref(caps);
-    }
-    else
-    {
-        // Can't play this file (no pad created)
-        m_OrigWidth = m_OrigHeight = 0;
-    }
-
-    gst_object_unref(collection);
-    // We can now start playing
-    m_WaitingForStream = false;
-    // on_enough_data will start playing loading videos?
-    // FIXME: on_enough_data wont handle scrolling
-    queue_draw_image(true);
 }
 #endif // HAVE_GSTREAMER
 
@@ -464,7 +173,23 @@ ImageBox::ImageBox(BaseObjectType *cobj, const Glib::RefPtr<Gtk::Builder> &bldr)
         gst_object_ref(m_VideoSink);
     }
 
-    create_playbin();
+    m_Playbin = gst_element_factory_make("playbin", "playbin");
+    g_object_set(m_Playbin,
+            // For now users can put
+            // AudioSink = "autoaudiosink";
+            // into the config file and have sound if they have the correct gstreamer plugins
+            // Can also set Volume = 0-100; in config to control it
+            "audio-sink", gst_element_factory_make(Settings.get_string("AudioSink").c_str(), "audiosink"),
+            // If sink is null it will fallback to autovideosink
+            "video-sink", m_VideoSink,
+            // draw_image takes care of it
+            "force-aspect-ratio", false,
+            NULL);
+
+    GstBus *bus = gst_pipeline_get_bus(GST_PIPELINE(m_Playbin));
+    gst_bus_set_sync_handler(bus, &ImageBox::create_window, this, NULL);
+    gst_bus_add_watch(bus, &ImageBox::bus_cb, this);
+    g_object_unref(bus);
 #endif // HAVE_GSTREAMER
 
     m_StyleUpdatedConn = m_Layout->signal_style_updated().connect([&]()
@@ -506,21 +231,7 @@ void ImageBox::set_image(const std::shared_ptr<Image> &image)
 
 #ifdef HAVE_GSTREAMER
         reset_gstreamer_pipeline();
-        // Will be shown when/if we start playing
         m_DrawingArea->hide();
-
-        if (image->is_loading() && image->is_webm())
-        {
-            m_FirstFill = true;
-            // Only Booru::Image's is_loading can return true when it's a
-            // webm so no need to dynamic cast
-            auto bimage = std::static_pointer_cast<Booru::Image>(image);
-            // Pause the download if it's going so we don't miss any of the
-            // write signals.  Once the pipeline is ready to receive data
-            // (source-setup) we push all currently downloaded data into it and
-            // resume the download.
-            bimage->get_curler().pause();
-        }
 #endif // HAVE_GSTREAMER
 
         // reset GIF stuff so if it stays cached and is viewed again it will
@@ -838,13 +549,13 @@ void ImageBox::get_scale_and_position(int &w, int &h, int &x, int &y)
 void ImageBox::draw_image(bool scroll)
 {
     // Don't draw images that don't exist (obviously)
+    // Don't draw loading animated GIFs
     // Don't draw loading images that haven't created a pixbuf yet
-    // Don't draw anything while we are waiting for the pipeline to be created for a loading webm
+    // Don't draw loading webm files (only booru images can have a loading webm)
+    // The pixbuf_changed signal will fire when the above images are ready to be drawn
     if (!m_Image ||
         (m_Image->is_loading() &&
-         ((!m_Image->is_webm() && !m_Image->get_pixbuf()) ||
-          (m_Image->is_webm() && m_WaitingForStream))))
-          //(m_Image->is_webm() && m_PadProbeID))))
+         (m_Image->is_animated_gif() || !m_Image->get_pixbuf() || m_Image->is_webm())))
     {
         m_RedrawQueued = false;
         return;
@@ -861,32 +572,31 @@ void ImageBox::draw_image(bool scroll)
 #ifdef HAVE_GSTREAMER
     if (m_Image->is_webm())
     {
-        if (!m_Playing && !m_Prerolling)
+        if (!m_Playing)
         {
-            gst_element_set_state(m_Playbin, GST_STATE_READY);
-            m_Prerolling = m_WaitingForStream = true;
-
+            g_object_set(m_Playbin, "uri", Glib::filename_to_uri(m_Image->get_path()).c_str(), NULL);
             on_set_volume();
-            // We want to get data from the image's curler and pass it to
-            // gstreamer when it needs it
-            if (m_Loading)
-            {
-                m_SourceSetupID = g_signal_connect(m_Playbin, "source-setup",
-                                                   G_CALLBACK(on_source_setup), this);
-                g_object_set(m_Playbin, "uri", "appsrc://", NULL);
-            }
-            // We have a local file
-            else
-            {
-                g_object_set(m_Playbin, "uri", Glib::filename_to_uri(m_Image->get_path()).c_str(), NULL);
-            }
 
             gst_element_set_state(m_Playbin, GST_STATE_PAUSED);
-            // Wait for the video to preroll
-            return;
+            // Wait for the above changes to actually happen
+            gst_element_get_state(m_Playbin, NULL, NULL, GST_CLOCK_TIME_NONE);
         }
 
-        if (!m_Playing && m_OrigWidth <= 0 && m_OrigHeight <= 0)
+        GstPad *pad = nullptr;
+        g_signal_emit_by_name(m_Playbin, "get-video-pad", 0, &pad, NULL);
+
+        if (pad)
+        {
+            GstCaps *caps = gst_pad_get_current_caps(pad);
+            GstStructure *s = gst_caps_get_structure(caps, 0);
+
+            gst_structure_get_int(s, "width", &m_OrigWidth);
+            gst_structure_get_int(s, "height", &m_OrigHeight);
+
+            gst_caps_unref(caps);
+            gst_object_unref(pad);
+        }
+        else
         {
             error = true;
             m_DrawingArea->hide();
@@ -1004,14 +714,13 @@ void ImageBox::draw_image(bool scroll)
     if (!m_Playing && m_Image->is_webm())
     {
         gst_element_set_state(m_Playbin, GST_STATE_PLAYING);
-        m_Prerolling = false;
         m_Playing = true;
     }
 #endif // HAVE_GSTREAMER
 
     get_window()->thaw_updates();
-
     m_RedrawQueued = false;
+
     m_Scale = m_ZoomMode == ZoomMode::MANUAL ? m_ZoomPercent :
                         static_cast<double>(w) / m_OrigWidth * 100;
     m_StatusBar->set_resolution(m_OrigWidth, m_OrigHeight, m_Scale, m_ZoomMode);

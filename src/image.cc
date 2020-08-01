@@ -92,10 +92,6 @@ Image::Image(const std::string &path)
   : m_isWebM(Image::is_webm(path)),
     m_Path(path)
 {
-    // Gstreamer will handle the loading of webm files in a multithreaded manor
-    if (m_isWebM)
-        m_Loading = !Glib::file_test(m_Path, Glib::FILE_TEST_EXISTS);
-
     m_BitmapCallbacks.bitmap_create      = _def_bitmap_create;
     m_BitmapCallbacks.bitmap_destroy     = _def_bitmap_destroy;
     m_BitmapCallbacks.bitmap_get_buffer  = _def_bitmap_get_buffer;
@@ -246,8 +242,7 @@ void Image::load_gif()
 
 void Image::reset_pixbuf()
 {
-    // Set this back to true unless it's a webm
-    m_Loading = !m_isWebM;
+    m_Loading = true;
     std::scoped_lock lock{ m_Mutex };
     m_Pixbuf.reset();
 

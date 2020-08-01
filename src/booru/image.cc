@@ -47,7 +47,8 @@ Image::~Image()
 // or if the pixbuf is being loaded from the saved local file
 bool Image::is_loading() const
 {
-    return m_Curler.is_active() || AhoViewer::Image::is_loading();
+    return (m_isWebM && !Glib::file_test(m_Path, Glib::FILE_TEST_EXISTS))
+        || m_Curler.is_active() || AhoViewer::Image::is_loading();
 }
 
 std::string Image::get_filename() const
@@ -116,8 +117,6 @@ void Image::reset_pixbuf()
         cancel_download();
 
     AhoViewer::Image::reset_pixbuf();
-    // webms that are downloaded will set m_Loading to false, otherwise this is true
-    m_Loading = !(m_isWebM && Glib::file_test(m_Path, Glib::FILE_TEST_EXISTS));
 }
 
 void Image::save(const std::string &path)

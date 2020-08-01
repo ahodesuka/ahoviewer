@@ -34,8 +34,6 @@ namespace AhoViewer
 
             std::string get_url() const { return m_Url; }
             std::string get_post_url() const { return m_PostUrl; }
-            Curler& get_curler() { return m_Curler; }
-            Curler const& get_curler() const { return m_Curler; }
 
             virtual bool is_loading() const override;
             virtual std::string get_filename() const override;

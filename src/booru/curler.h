@@ -49,7 +49,6 @@ namespace AhoViewer
 
             unsigned char* get_data() { return m_Buffer.data(); }
             size_t get_data_size() const { return m_Buffer.size(); }
-            std::mutex& get_mutex() { return m_Mutex; }
 
             std::string get_error() const  { return curl_easy_strerror(m_Response); }
             CURLcode get_response() const { return m_Response; }
@@ -79,7 +78,6 @@ namespace AhoViewer
             CURLcode m_Response;
             std::string m_Url;
             std::vector<unsigned char> m_Buffer;
-            std::mutex m_Mutex;
 
             std::atomic<bool> m_Active { false },
                               m_Pause  { false };

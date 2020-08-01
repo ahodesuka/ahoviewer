@@ -19,7 +19,6 @@ namespace AhoViewer
             void shutdown();
 
             void add_handle(Curler *curler);
-            void pause_handle(Curler *curler);
             void unpause_handle(Curler *curler);
         private:
             struct SockInfo
@@ -49,16 +48,13 @@ namespace AhoViewer
             CURLM *m_MultiHandle;
             int m_RunningHandles { 0 };
             TSQueue<Curler*> m_CurlerQueue,
-                             m_CurlerPauseQueue,
                              m_CurlerUnpauseQueue;
             std::vector<Curler*> m_Curlers;
 
             std::weak_ptr<Glib::Dispatcher> m_SignalHandleAdded,
-                                            m_SignalHandlePause,
                                             m_SignalHandleUnpause;
 
             std::atomic<bool> m_Shutdown { false };
-            std::mutex m_Mutex;
 
             sigc::connection m_TimeoutConn;
         };
