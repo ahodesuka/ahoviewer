@@ -326,20 +326,18 @@ void Browser::on_image_progress(const Image *bimage, double c, double t)
 {
     double speed = (c / std::chrono::duration<double>(std::chrono::steady_clock::now() -
                                                       bimage->m_Curler.get_start_time()).count());
-    std::ostringstream ss;
+
+    Glib::ustring msg{
+        Glib::ustring::compose("Downloading %1 / %2 @ %3/s",
+            Glib::format_size(c),                  // Current amount downloaded
+            (t > 0 ? Glib::format_size(t) : "??"), // Total size or ??
+            Glib::format_size(speed))              // Current speed
+    };
 
     if (t > 0)
-    {
-        ss << "Downloading " << Glib::format_size(c).c_str() << " / " << Glib::format_size(t).c_str() << " @ "
-           << Glib::format_size(speed).c_str() << "/s";
-        m_StatusBar->set_progress(ss.str(), c / t, StatusBar::Priority::DOWNLOAD, c == t ? 2 : 0);
-    }
+        m_StatusBar->set_progress(msg, c / t, StatusBar::Priority::DOWNLOAD, c == t ? 2 : 0);
     else
-    {
-         ss << "Downloading " << Glib::format_size(c).c_str() << " / ?? @ "
-            << Glib::format_size(speed).c_str() << "/s";
-        m_StatusBar->set_message(ss.str(), StatusBar::Priority::DOWNLOAD, c == t ? 2 : 0);
-    }
+        m_StatusBar->set_message(msg, StatusBar::Priority::DOWNLOAD, c == t ? 2 : 0);
 }
 
 GtkNotebook* Browser::on_create_window(GtkNotebook*, GtkWidget*,
