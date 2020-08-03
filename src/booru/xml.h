@@ -3,6 +3,7 @@
 
 #include <libxml/parser.h>
 #include <libxml/tree.h>
+#include <libxml/xmlstring.h>
 
 #include <string>
 #include <vector>
@@ -14,7 +15,7 @@ namespace AhoViewer
         class Node
         {
         public:
-            Node(xmlNodePtr n) : m_xmlNode(n) {  }
+            Node(xmlNodePtr n) : m_xmlNode{ n } {  }
             ~Node() = default;
 
             std::string get_attribute(const std::string &name) const
@@ -55,9 +56,23 @@ namespace AhoViewer
 
                 return val;
             }
+
+            // Returns the value of a child node of this node
+            std::string get_value(const std::string &name) const
+            {
+                xmlNodePtr n{ m_xmlNode->children };
+                while (n != nullptr)
+                {
+                    if (xmlStrEqual(n->name, reinterpret_cast<const xmlChar*>(name.c_str())))
+                        return Node{ n }.get_value();
+                    n = n->next;
+                }
+
+                return "";
+            }
         protected:
             Node() = default;
-            xmlNodePtr m_xmlNode;
+            xmlNodePtr m_xmlNode{ nullptr };
         };
 
         // The Root node

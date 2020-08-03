@@ -20,27 +20,40 @@ using namespace AhoViewer::Booru;
 // 1: page, 2: limit, 3: tags
 const std::map<Type, std::string> Site::RequestURI =
 {
-    { Type::DANBOORU, "/post/index.xml?page=%1&limit=%2&tags=%3" },
-    { Type::GELBOORU, "/index.php?page=dapi&s=post&q=index&pid=%1&limit=%2&tags=%3" },
-    { Type::MOEBOORU, "/post.xml?page=%1&limit=%2&tags=%3" },
-    { Type::SHIMMIE,  "/api/danbooru/find_posts/index.xml?page=%1&limit=%2&tags=%3" },
+    { Type::DANBOORU_V2, "/posts.xml?page=%1&limit=%2&tags=%3" },
+    { Type::GELBOORU,    "/index.php?page=dapi&s=post&q=index&pid=%1&limit=%2&tags=%3" },
+    { Type::MOEBOORU,    "/post.xml?page=%1&limit=%2&tags=%3" },
+    { Type::SHIMMIE,     "/api/danbooru/find_posts/index.xml?page=%1&limit=%2&tags=%3" },
+    { Type::DANBOORU,    "/post/index.xml?page=%1&limit=%2&tags=%3" },
 };
 
 // 1: id
 const std::map<Type, std::string> Site::PostURI =
 {
-    { Type::DANBOORU, "/posts/%1" },
-    { Type::GELBOORU, "/index.php?page=post&s=view&id=%1" },
-    { Type::MOEBOORU, "/post/show/%1" },
-    { Type::SHIMMIE,  "/post/view/%1" },
+    { Type::DANBOORU_V2, "/posts/%1" },
+    { Type::GELBOORU,    "/index.php?page=post&s=view&id=%1" },
+    { Type::MOEBOORU,    "/post/show/%1" },
+    { Type::SHIMMIE,     "/post/view/%1" },
+    { Type::DANBOORU,    "/posts/%1" },
+};
+
+// 1: id
+const std::map<Type, std::string> Site::NotesURI =
+{
+    { Type::DANBOORU_V2, "/notes.xml?group_by=note&search[post_id]=%1" },
+    { Type::GELBOORU,    "/index.php?page=dapi&s=note&q=index&post_id=%1" },
+    { Type::MOEBOORU,    "/note.xml?post_id=%1" },
+    { Type::SHIMMIE,     "" },
+    { Type::DANBOORU,    "/note/index.xml?post_id=%1" },
 };
 
 const std::map<Type, std::string> Site::RegisterURI =
 {
-    { Type::DANBOORU, "/users/new" },
-    { Type::GELBOORU, "/index.php?page=account&s=reg" },
-    { Type::MOEBOORU, "/user/signup" },
-    { Type::SHIMMIE,  "/user_admin/create" },
+    { Type::DANBOORU_V2, "/users/new" },
+    { Type::GELBOORU,    "/index.php?page=account&s=reg" },
+    { Type::MOEBOORU,    "/user/signup" },
+    { Type::SHIMMIE,     "/user_admin/create" },
+    { Type::DANBOORU,    "/users/new" },
 };
 
 // This is a workaround to have a private/protected constructor
@@ -48,11 +61,14 @@ const std::map<Type, std::string> Site::RegisterURI =
 // Site's constructor shouldn't be called directly that's why it's protected.
 // Site::create should be used since it will let us know if the site is actually
 // valid or not
-struct _shared_site : public Site
+namespace
 {
-    template<typename... Args>
-    _shared_site(Args&&... v) : Site(std::forward<Args>(v)...) { }
-};
+    struct _shared_site : public Site
+    {
+        template<typename... Args>
+        _shared_site(Args&&... v) : Site(std::forward<Args>(v)...) { }
+    };
+}
 
 std::shared_ptr<Site> Site::create(const std::string &name, const std::string &url, const Type type,
                                    const std::string &user, const std::string &pass, const unsigned int max_cons,
@@ -147,17 +163,17 @@ void Site::share_unlock_cb(CURL*, curl_lock_data data, void *userp)
 Site::Site(const std::string &name, const std::string &url, const Type type,
            const std::string &user, const std::string &pass, const int max_cons,
            const bool use_samples)
-  : m_Name(name),
-    m_Url(url),
-    m_Username(user),
-    m_Password(pass),
-    m_IconPath(Glib::build_filename(Settings.get_booru_path(), m_Name + ".png")),
-    m_TagsPath(Glib::build_filename(Settings.get_booru_path(), m_Name + "-tags")),
-    m_CookiePath(Glib::build_filename(Settings.get_booru_path(), m_Name + "-cookie")),
-    m_Type(type),
-    m_UseSamples(use_samples),
-    m_MaxConnections(max_cons),
-    m_ShareHandle(curl_share_init())
+  : m_Name{ name },
+    m_Url{ url },
+    m_Username{ user },
+    m_Password{ pass },
+    m_IconPath{ Glib::build_filename(Settings.get_booru_path(), m_Name + ".png") },
+    m_TagsPath{ Glib::build_filename(Settings.get_booru_path(), m_Name + "-tags") },
+    m_CookiePath{ Glib::build_filename(Settings.get_booru_path(), m_Name + "-cookie") },
+    m_Type{ type },
+    m_UseSamples{ use_samples },
+    m_MaxConnections{ max_cons },
+    m_ShareHandle{ curl_share_init() }
 {
     curl_share_setopt(m_ShareHandle, CURLSHOPT_LOCKFUNC, &Site::share_lock_cb);
     curl_share_setopt(m_ShareHandle, CURLSHOPT_UNLOCKFUNC, &Site::share_unlock_cb);
@@ -263,6 +279,11 @@ std::string Site::get_posts_url(const std::string &tags, size_t page)
 std::string Site::get_post_url(const std::string &id)
 {
     return Glib::ustring::compose(m_Url + PostURI.at(m_Type), id);
+}
+
+std::string Site::get_notes_url(const std::string &id)
+{
+    return Glib::ustring::compose(m_Url + NotesURI.at(m_Type), id);
 }
 
 void Site::add_tags(const std::set<std::string> &tags)

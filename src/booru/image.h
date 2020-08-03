@@ -26,6 +26,7 @@ namespace AhoViewer
                   const std::string &thumbPath, const std::string &thumbUrl,
                   const std::string &postUrl,
                   std::set<std::string> tags,
+                  const std::string &notesUrl,
                   std::shared_ptr<Site> site,
                   ImageFetcher &fetcher);
             virtual ~Image() override;
@@ -59,6 +60,7 @@ namespace AhoViewer
             void on_finished();
             void on_area_prepared();
             void on_area_updated(int, int, int, int);
+            void on_notes_downloaded();
 
             std::string m_Url, m_ThumbnailUrl, m_PostUrl;
             std::set<std::string> m_Tags;
@@ -68,10 +70,11 @@ namespace AhoViewer
             time_point_t m_LastDraw;
 
             Curler m_Curler,
-                   m_ThumbnailCurler;
+                   m_ThumbnailCurler,
+                   m_NotesCurler;
             Glib::RefPtr<Gdk::PixbufLoader> m_Loader;
-            bool m_PixbufError  { false },
-                 m_isGIFChecked { false };
+            bool m_PixbufError { false },
+                 m_isGIFChecked{ false };
             std::shared_mutex m_ThumbnailLock;
 
             std::condition_variable m_DownloadCond, m_ThumbnailCond;

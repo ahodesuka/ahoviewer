@@ -13,6 +13,7 @@
 
 namespace AhoViewer
 {
+    class ImageBoxNote;
     class MainWindow;
     class StatusBar;
     class ImageBox : public Gtk::ScrolledWindow
@@ -77,10 +78,14 @@ namespace AhoViewer
 
         bool advance_slideshow();
         bool on_cursor_timeout();
+        void on_notes_changed();
+        void clear_notes();
+        void update_notes();
 
         static constexpr double SmoothScrollStep = 1000.0 / 60.0;
 
-        Gtk::Layout *m_Layout;
+        Gtk::Layout *m_Layout, *m_NoteLayout;
+        Gtk::Overlay *m_Overlay;
         Gtk::Image *m_GtkImage;
         Gtk::DrawingArea *m_DrawingArea;
         Gtk::Menu *m_PopupMenu;
@@ -115,6 +120,7 @@ namespace AhoViewer
                          m_CursorConn,
                          m_DrawConn,
                          m_ImageConn,
+                         m_NotesConn,
                          m_ScrollConn,
                          m_SlideshowConn,
                          m_StyleUpdatedConn;
@@ -132,6 +138,8 @@ namespace AhoViewer
                m_PressY, m_PreviousY,
                m_ScrollTime, m_ScrollDuration,
                m_ScrollStart, m_ScrollTarget;
+
+        std::vector<ImageBoxNote*> m_Notes;
 
         sigc::signal<void> m_SignalSlideshowEnded,
                            m_SignalImageDrawn;

@@ -1,6 +1,7 @@
 #include "imagebox.h"
 using namespace AhoViewer;
 
+#include "imageboxnote.h"
 #include "mainwindow.h"
 #include "settings.h"
 #include "statusbar.h"
@@ -75,15 +76,17 @@ GstElement* ImageBox::create_video_sink(const std::string &name)
 Gdk::RGBA ImageBox::DefaultBGColor = Gdk::RGBA();
 
 ImageBox::ImageBox(BaseObjectType *cobj, const Glib::RefPtr<Gtk::Builder> &bldr)
-  : Gtk::ScrolledWindow(cobj),
-    m_LeftPtrCursor(Gdk::Cursor::create(Gdk::LEFT_PTR)),
-    m_FleurCursor(Gdk::Cursor::create(Gdk::FLEUR)),
-    m_BlankCursor(Gdk::Cursor::create(Gdk::BLANK_CURSOR)),
-    m_ZoomMode(Settings.get_zoom_mode()),
-    m_RestoreScrollPos(-1, -1, m_ZoomMode)
+  : Gtk::ScrolledWindow{ cobj },
+    m_LeftPtrCursor{ Gdk::Cursor::create(Gdk::LEFT_PTR) },
+    m_FleurCursor{ Gdk::Cursor::create(Gdk::FLEUR) },
+    m_BlankCursor{ Gdk::Cursor::create(Gdk::BLANK_CURSOR) },
+    m_ZoomMode{ Settings.get_zoom_mode() },
+    m_RestoreScrollPos{ -1, -1, m_ZoomMode }
 {
     bldr->get_widget("ImageBox::Layout",       m_Layout);
+    bldr->get_widget("ImageBox::Overlay",      m_Overlay);
     bldr->get_widget("ImageBox::Image",        m_GtkImage);
+    bldr->get_widget("ImageBox::NoteLayout",   m_NoteLayout);
     bldr->get_widget("ImageBox::DrawingArea",  m_DrawingArea);
     bldr->get_widget_derived("StatusBar",      m_StatusBar);
     bldr->get_widget_derived("MainWindow",     m_MainWindow);
@@ -227,7 +230,9 @@ void ImageBox::set_image(const std::shared_ptr<Image> &image)
     {
         m_AnimConn.disconnect();
         m_ImageConn.disconnect();
+        m_NotesConn.disconnect();
         reset_slideshow();
+        clear_notes();
 
 #ifdef HAVE_GSTREAMER
         reset_gstreamer_pipeline();
@@ -245,6 +250,11 @@ void ImageBox::set_image(const std::shared_ptr<Image> &image)
         m_ImageConn = m_Image->signal_pixbuf_changed().connect(
                 sigc::bind(sigc::mem_fun(*this, &ImageBox::queue_draw_image), false));
 
+        // Maybe the notes havent been downloaded yet
+        if (m_Image->get_notes().empty())
+            m_NotesConn = m_Image->signal_notes_changed().connect(
+                    sigc::mem_fun(*this, &ImageBox::on_notes_changed));
+
         queue_draw_image(true);
     }
     else
@@ -257,11 +267,14 @@ void ImageBox::clear_image()
 {
     m_SlideshowConn.disconnect();
     m_ImageConn.disconnect();
+    m_NotesConn.disconnect();
     m_DrawConn.disconnect();
     m_AnimConn.disconnect();
     m_GtkImage->clear();
     m_DrawingArea->hide();
     m_Layout->set_size(0, 0);
+
+    clear_notes();
 
 #ifdef HAVE_GSTREAMER
     reset_gstreamer_pipeline();
@@ -640,7 +653,8 @@ void ImageBox::draw_image(bool scroll)
 
     int w, h, x, y;
     get_scale_and_position(w, h, x, y);
-
+    m_Scale = m_ZoomMode == ZoomMode::MANUAL ? m_ZoomPercent :
+                        static_cast<double>(w) / m_OrigWidth * 100;
     if (!m_Image->is_webm() && !error && (w != m_OrigWidth || h != m_OrigHeight))
         tempPixbuf = m_Image->get_pixbuf()->scale_simple(w, h, Gdk::INTERP_BILINEAR);
 
@@ -662,7 +676,7 @@ void ImageBox::draw_image(bool scroll)
 
     if (tempPixbuf)
     {
-        m_Layout->move(*m_GtkImage, x, y);
+        m_Layout->move(*m_Overlay, x, y);
         m_GtkImage->set(tempPixbuf);
     }
 #ifdef HAVE_GSTREAMER
@@ -700,6 +714,10 @@ void ImageBox::draw_image(bool scroll)
             else
                 get_hadjustment()->set_value(0);
         }
+
+        if (m_FirstDraw && !m_Image->get_notes().empty() && !m_NotesConn)
+            on_notes_changed();
+
         m_FirstDraw = false;
     }
     else if (m_ZoomScroll)
@@ -720,11 +738,9 @@ void ImageBox::draw_image(bool scroll)
 
     get_window()->thaw_updates();
     m_RedrawQueued = false;
-
-    m_Scale = m_ZoomMode == ZoomMode::MANUAL ? m_ZoomPercent :
-                        static_cast<double>(w) / m_OrigWidth * 100;
     m_StatusBar->set_resolution(m_OrigWidth, m_OrigHeight, m_Scale, m_ZoomMode);
 
+    update_notes();
     m_SignalImageDrawn();
 }
 
@@ -887,4 +903,36 @@ bool ImageBox::on_cursor_timeout()
     m_Layout->get_window()->set_cursor(m_BlankCursor);
 
     return false;
+}
+
+void ImageBox::on_notes_changed(/*notes*/)
+{
+    double scale{ m_Scale / 100 };
+    for (auto &note : m_Image->get_notes())
+    {
+        auto n{ Gtk::manage(new ImageBoxNote{note}) };
+        m_Notes.push_back(n);
+
+        n->set_scale(scale);
+        m_NoteLayout->put(*n, n->get_x(), n->get_y());
+        n->show();
+    }
+}
+
+void ImageBox::clear_notes()
+{
+    for (auto &note : m_Notes)
+        m_NoteLayout->remove(*note);
+
+    m_Notes.clear();
+}
+
+void ImageBox::update_notes()
+{
+    double scale{ m_Scale / 100 };
+    for (auto &note : m_Notes)
+    {
+        note->set_scale(scale);
+        m_NoteLayout->move(*note, note->get_x(), note->get_y());
+    }
 }

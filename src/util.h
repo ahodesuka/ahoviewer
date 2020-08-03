@@ -28,10 +28,11 @@ namespace AhoViewer
         enum class Type
         {
             UNKNOWN = -1,
-            DANBOORU,
+            DANBOORU_V2,
             GELBOORU,
             MOEBOORU,
             SHIMMIE,
+            DANBOORU,
         };
     }
 }

@@ -279,7 +279,8 @@ void Page::get_posts()
         size_t postsCount = 0;
         // Danbooru doesn't give the post count with the posts
         // Get it from thier counts api
-        if (m_Page == 1 && m_Site->get_type() == Type::DANBOORU)
+        if (m_Page == 1 &&
+            (m_Site->get_type() == Type::DANBOORU || m_Site->get_type() == Type::DANBOORU_V2))
         {
             m_Curler.set_url(m_Site->get_url() + "/counts/posts.xml?tags=" + tags);
             if (m_Curler.perform())
@@ -327,6 +328,7 @@ void Page::get_posts()
                 // XXX: Ocassionally Danbooru returns a 500 internal server error
                 // "uninitialized constant LegacyController::Builder"
                 // and sets success to false
+                // XXX: Does this still happen? and does it happen with _V2?
                 if (m_Posts && m_Site->get_type() == Type::DANBOORU)
                     success = m_Posts->get_attribute("success") != "false";
             }

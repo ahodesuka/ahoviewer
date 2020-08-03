@@ -66,16 +66,36 @@ void ImageList::load(const xml::Document &posts, const Page &page)
 
     for (const xml::Node &post : posts.get_children())
     {
-        std::string thumbUrl  = post.get_attribute("preview_url"),
-                    thumbPath = Glib::build_filename(get_path(), "thumbnails",
-                                                   Glib::uri_unescape_string(Glib::path_get_basename(thumbUrl))),
-                    imageUrl  = post.get_attribute(m_Site->use_samples() ? "sample_url" : "file_url"),
-                    imagePath = Glib::build_filename(get_path(),
-                                                   Glib::uri_unescape_string(Glib::path_get_basename(imageUrl)));
+        auto site_type{ m_Site->get_type() };
+        std::string id, thumbUrl, imageUrl, thumbPath, imagePath, tags_string, notesUrl, postUrl;
 
-        std::istringstream ss(post.get_attribute("tags"));
-        std::set<std::string> tags { std::istream_iterator<std::string>(ss),
-                                     std::istream_iterator<std::string>() };
+        if (site_type == Type::DANBOORU_V2)
+        {
+            id = post.get_value("id");
+            thumbUrl = post.get_value("preview-file-url");
+            imageUrl = post.get_value(m_Site->use_samples() ? "large-file-url" : "file-url");
+            tags_string = post.get_value("tag-string");
+            // TODO: use tag category values (color tags based on category in
+            // the tagview)  Issue #100
+            // Category nodes are: tag-string-general, tag-string-character,
+            // tag-string-copyright, tag-string-artist, tag-string-meta
+        }
+        else
+        {
+            id = post.get_attribute("id");
+            thumbUrl = post.get_attribute("preview_url");
+            imageUrl = post.get_attribute(m_Site->use_samples() ? "sample_url" : "file_url");
+            tags_string = post.get_attribute("tags");
+        }
+
+        thumbPath = Glib::build_filename(get_path(), "thumbnails",
+                                       Glib::uri_unescape_string(Glib::path_get_basename(thumbUrl)));
+        imagePath = Glib::build_filename(get_path(),
+                                       Glib::uri_unescape_string(Glib::path_get_basename(imageUrl)));
+
+        std::istringstream ss{ tags_string };
+        std::set<std::string> tags { std::istream_iterator<std::string>{ss},
+                                     std::istream_iterator<std::string>{} };
         m_Site->add_tags(tags);
 
         if (thumbUrl[0] == '/')
@@ -94,21 +114,38 @@ void ImageList::load(const xml::Document &posts, const Page &page)
                 imageUrl = m_Site->get_url() + imageUrl;
         }
 
+        bool hasNotes{ false };
+        // Moebooru doesnt have a has_notes attribute, instead they have
+        // last_noted_at which is a unix timestamp or 0 if no notes
+        if (site_type == Type::MOEBOORU)
+            hasNotes = post.get_attribute("last_noted_at") != "0";
+        else if (site_type == Type::DANBOORU_V2)
+            hasNotes = post.get_value("last-noted-at") != "";
+        else
+            hasNotes = post.get_attribute("has_notes") == "true";
+
+        if (hasNotes)
+            notesUrl = m_Site->get_notes_url(id);
+
         // safebooru.org provides the wrong file extension for thumbnails
         // All their thumbnails are .jpg, but their api gives links to with the
         // same exntension as the original images exnteion
         if (thumbUrl.find("safebooru.org") != std::string::npos)
             thumbUrl = thumbUrl.substr(0, thumbUrl.find_last_of('.')) + ".jpg";
 
-        std::string postUrl = m_Site->get_post_url(post.get_attribute("id"));
+        postUrl = m_Site->get_post_url(id);
 
         if (Image::is_valid_extension(imageUrl))
+        {
             m_Images.emplace_back(std::make_shared<Image>(imagePath, imageUrl,
                                                           thumbPath, thumbUrl,
-                                                          postUrl, tags,
+                                                          postUrl, tags, notesUrl,
                                                           m_Site, *m_ImageFetcher));
+        }
         else
+        {
             --m_Size;
+        }
     }
 
     if (m_Images.empty())

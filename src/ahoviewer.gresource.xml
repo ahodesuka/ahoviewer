@@ -1,6 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <gresources>
   <gresource prefix="/">
-    <file preprocess="xml-stripblanks">ui/ahoviewer.ui</file>
+    <file compressed="true">ui/ahoviewer.ui</file>
+    <file>ui/css/note.css</file>
+    <file>ui/css/note-popover.css</file>
   </gresource>
 </gresources>

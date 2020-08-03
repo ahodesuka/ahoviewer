@@ -35,6 +35,7 @@ namespace AhoViewer
 
             std::string get_posts_url(const std::string &tags, size_t page);
             std::string get_post_url(const std::string &id);
+            std::string get_notes_url(const std::string &id);
             void add_tags(const std::set<std::string> &tags);
 
             std::string get_name() const { return m_Name; }
@@ -87,6 +88,7 @@ namespace AhoViewer
 
             static const std::map<Type, std::string> RequestURI,
                                                      PostURI,
+                                                     NotesURI,
                                                      RegisterURI;
 
             std::string m_Name,

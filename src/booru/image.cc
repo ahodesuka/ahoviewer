@@ -6,6 +6,9 @@
 using namespace AhoViewer::Booru;
 
 #include "browser.h"
+extern "C" {
+#include "entities.h"
+}
 #include "settings.h"
 #include "site.h"
 
@@ -13,18 +16,20 @@ Image::Image(const std::string &path, const std::string &url,
              const std::string &thumbPath, const std::string &thumbUrl,
              const std::string &postUrl,
              std::set<std::string> tags,
+             const std::string &notesUrl,
              std::shared_ptr<Site> site,
              ImageFetcher &fetcher)
-  : AhoViewer::Image(path),
-    m_Url(url),
-    m_ThumbnailUrl(thumbUrl),
-    m_PostUrl(postUrl),
-    m_Tags(tags),
-    m_Site(site),
-    m_ImageFetcher(fetcher),
-    m_LastDraw(std::chrono::steady_clock::now()),
-    m_Curler(m_Url, m_Site->get_share_handle()),
-    m_ThumbnailCurler(m_ThumbnailUrl, m_Site->get_share_handle())
+  : AhoViewer::Image{ path },
+    m_Url{ url },
+    m_ThumbnailUrl{ thumbUrl },
+    m_PostUrl{ postUrl },
+    m_Tags{ tags },
+    m_Site{ site },
+    m_ImageFetcher{ fetcher },
+    m_LastDraw{ std::chrono::steady_clock::now() },
+    m_Curler{ m_Url, m_Site->get_share_handle() },
+    m_ThumbnailCurler{ m_ThumbnailUrl, m_Site->get_share_handle() },
+    m_NotesCurler{ notesUrl, m_Site->get_share_handle() }
 {
     m_ThumbnailPath = thumbPath;
 
@@ -35,6 +40,12 @@ Image::Image(const std::string &path, const std::string &url,
     m_Curler.set_referer(m_PostUrl);
     m_Curler.signal_progress().connect(sigc::mem_fun(*this, &Image::on_progress));
     m_Curler.signal_finished().connect(sigc::mem_fun(*this, &Image::on_finished));
+
+    if (!notesUrl.empty())
+    {
+        m_NotesCurler.signal_finished().connect(sigc::mem_fun(*this, &Image::on_notes_downloaded));
+        m_ImageFetcher.add_handle(&m_NotesCurler);
+    }
 }
 
 Image::~Image()
@@ -305,4 +316,59 @@ void Image::on_area_updated(int, int, int, int)
         m_SignalPixbufChanged();
         m_LastDraw = steady_clock::now();
     }
+}
+
+void Image::on_notes_downloaded()
+{
+    try
+    {
+        xml::Document doc(reinterpret_cast<char*>(m_NotesCurler.get_data()),
+                          m_NotesCurler.get_data_size());
+
+        for (const xml::Node &n : doc.get_children())
+        {
+            std::string body;
+            int w, h, x, y;
+
+            if (m_Site->get_type() == Type::DANBOORU_V2)
+            {
+                if (n.get_value("is-active") != "true")
+                    continue;
+
+                body = n.get_value("body");
+                w = std::stoi(n.get_value("width"));
+                h = std::stoi(n.get_value("height"));
+                x = std::stoi(n.get_value("x"));
+                y = std::stoi(n.get_value("y"));
+            }
+            else
+            {
+                if (n.get_attribute("is_active") != "true")
+                    continue;
+
+                body = n.get_attribute("body");
+                w = std::stoi(n.get_attribute("width"));
+                h = std::stoi(n.get_attribute("height"));
+                x = std::stoi(n.get_attribute("x"));
+                y = std::stoi(n.get_attribute("y"));
+            }
+
+            // Remove all html tags
+            std::string::size_type sp;
+            while ((sp = body.find('<')) != std::string::npos)
+            {
+                std::string::size_type ep{ body.find('>') };
+                if (ep == std::string::npos)
+                    break;
+                body.erase(sp, ep + 1 - sp);
+            }
+
+            decode_html_entities_utf8(body.data(), nullptr);
+            m_Notes.emplace_back(body, w, h, x, y);
+        }
+    }
+    catch (...) { }
+
+    if (m_Notes.size() > 0)
+        m_SignalNotesChanged();
 }

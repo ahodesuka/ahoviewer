@@ -13,6 +13,7 @@ extern "C" {
 #include <thread>
 
 #include "config.h"
+#include "note.h"
 
 #ifdef HAVE_GSTREAMER
 #include <gst/gst.h>
@@ -43,6 +44,8 @@ namespace AhoViewer
         virtual const Glib::RefPtr<Gdk::Pixbuf>& get_pixbuf();
         virtual const Glib::RefPtr<Gdk::Pixbuf>& get_thumbnail(Glib::RefPtr<Gio::Cancellable> c);
 
+        const std::vector<Note>& get_notes() const { return m_Notes; }
+
         virtual void load_pixbuf(Glib::RefPtr<Gio::Cancellable> c);
         virtual void reset_pixbuf();
 
@@ -52,8 +55,9 @@ namespace AhoViewer
         void reset_gif_animation();
 
         Glib::Dispatcher& signal_pixbuf_changed() { return m_SignalPixbufChanged; }
+        Glib::Dispatcher& signal_notes_changed() { return m_SignalNotesChanged; }
 
-        static const size_t ThumbnailSize = 100;
+        static const size_t ThumbnailSize{ 100 };
     protected:
         static bool is_webm(const std::string&);
 
@@ -66,21 +70,24 @@ namespace AhoViewer
                                                         Glib::RefPtr<Gio::Cancellable> c) const;
 
         bool m_isWebM;
-        std::atomic<bool> m_Loading { true };
+        std::atomic<bool> m_Loading{ true };
         std::string m_Path, m_ThumbnailPath;
 
         Glib::RefPtr<Gdk::Pixbuf> m_ThumbnailPixbuf;
         Glib::RefPtr<Gdk::Pixbuf> m_Pixbuf;
 
-        gif_animation* m_GIFanim { nullptr };
-        size_t m_GIFdataSize { 0 };
-        unsigned char* m_GIFdata { nullptr };
+        gif_animation* m_GIFanim{ nullptr };
+        size_t m_GIFdataSize{ 0 };
+        unsigned char* m_GIFdata{ nullptr };
         gif_bitmap_callback_vt m_BitmapCallbacks;
-        int m_GIFcurFrame { 0 },
-            m_GIFcurLoop  { 1 };
+        int m_GIFcurFrame{ 0 },
+            m_GIFcurLoop { 1 };
+
+        std::vector<Note> m_Notes;
 
         std::mutex m_Mutex;
-        Glib::Dispatcher m_SignalPixbufChanged;
+        Glib::Dispatcher m_SignalPixbufChanged,
+                         m_SignalNotesChanged;
     private:
         Glib::RefPtr<Gdk::Pixbuf> scale_pixbuf(Glib::RefPtr<Gdk::Pixbuf> &pixbuf,
                                                const int w, const int h) const;

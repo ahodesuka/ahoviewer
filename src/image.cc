@@ -89,8 +89,8 @@ static unsigned char* _def_bitmap_get_buffer(void *bitmap)
 }
 
 Image::Image(const std::string &path)
-  : m_isWebM(Image::is_webm(path)),
-    m_Path(path)
+  : m_isWebM{ Image::is_webm(path) },
+    m_Path{ path }
 {
     m_BitmapCallbacks.bitmap_create      = _def_bitmap_create;
     m_BitmapCallbacks.bitmap_destroy     = _def_bitmap_destroy;

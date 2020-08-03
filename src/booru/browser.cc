@@ -11,8 +11,8 @@ using namespace AhoViewer::Booru;
 #include "tempdir.h"
 
 Browser::Browser(BaseObjectType *cobj, const Glib::RefPtr<Gtk::Builder> &bldr)
-  : Gtk::Paned(cobj),
-    m_LastSavePath(Settings.get_string("LastSavePath"))
+  : Gtk::Paned{ cobj },
+    m_LastSavePath{ Settings.get_string("LastSavePath") }
 {
     bldr->get_widget("Booru::Browser::Notebook",          m_Notebook);
     bldr->get_widget("Booru::Browser::NewTabButton",      m_NewTabButton);

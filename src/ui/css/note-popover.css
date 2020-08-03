@@ -1,0 +1,10 @@
+#NotePopover {
+  background-color: rgba(0, 0, 0, 0.85);
+  background-clip: padding-box;
+  border: 1px solid black;
+  box-shadow: rgba(0, 0, 0, 0.8) 0 0 3px;
+  color: #efefef;
+  font-family: sans-serif;
+  font-size: 10pt;
+  padding: 4px;
+}

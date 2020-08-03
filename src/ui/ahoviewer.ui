@@ -288,9 +288,24 @@
                     <property name="hadjustment">ImageBox::HAdjust</property>
                     <property name="vadjustment">ImageBox::VAdjust</property>
                     <child>
-                      <object class="GtkImage" id="ImageBox::Image">
+                      <object class="GtkOverlay" id="ImageBox::Overlay">
                         <property name="visible">True</property>
                         <property name="can_focus">False</property>
+                        <child>
+                          <object class="GtkImage" id="ImageBox::Image">
+                            <property name="visible">True</property>
+                            <property name="can_focus">False</property>
+                          </object>
+                          <packing>
+                            <property name="index">-1</property>
+                          </packing>
+                        </child>
+                        <child type="overlay">
+                          <object class="GtkLayout" id="ImageBox::NoteLayout">
+                            <property name="visible">True</property>
+                            <property name="can_focus">False</property>
+                          </object>
+                        </child>
                       </object>
                     </child>
                     <child>
