@@ -925,21 +925,25 @@ void MainWindow::on_open_file_dialog()
 
 #ifdef HAVE_GSTREAMER
     filter->add_pattern("*.webm");
-    filter->add_mime_type("video/webm");
     filter->add_pattern("*.mp4");
-    filter->add_mime_type("video/mp4");
-
     videoFilter->add_pattern("*.webm");
-    videoFilter->add_mime_type("video/webm");
     videoFilter->add_pattern("*.mp4");
+
+#ifndef _WIN32
+    filter->add_mime_type("video/webm");
+    filter->add_mime_type("video/mp4");
+    videoFilter->add_mime_type("video/webm");
     videoFilter->add_mime_type("video/mp4");
+#endif // !_WIN32
 #endif // HAVE_GSTREAMER
 
+#ifndef _WIN32
     for (const std::string &mimeType : Archive::MimeTypes)
     {
         filter->add_mime_type(mimeType);
         archiveFilter->add_mime_type(mimeType);
     }
+#endif // !_WIN32
 
     for (const std::string &ext : Archive::FileExtensions)
     {
