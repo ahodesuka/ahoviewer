@@ -240,7 +240,7 @@ void Image::on_write(const unsigned char *d, size_t l)
 
 void Image::on_progress()
 {
-    long c, t;
+    curl_off_t c, t;
     m_Curler.get_progress(c, t);
     m_SignalProgress(this, c, t);
 }
