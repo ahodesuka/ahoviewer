@@ -11,12 +11,14 @@ namespace AhoViewer
         class TagEntry : public Gtk::Entry
         {
         public:
-            TagEntry(BaseObjectType *cobj, const Glib::RefPtr<Gtk::Builder> &bldr);
+            TagEntry(BaseObjectType* cobj, const Glib::RefPtr<Gtk::Builder>& bldr);
             virtual ~TagEntry() override = default;
 
-            void set_tags(const std::set<std::string> &tags);
+            void set_tags(const std::set<std::string>& tags);
+
         protected:
             virtual void on_grab_focus() override;
+
         private:
             struct ModelColumns : public Gtk::TreeModelColumnRecord
             {
@@ -24,15 +26,17 @@ namespace AhoViewer
                 Gtk::TreeModelColumn<std::string> tag_column;
             };
 
-            inline bool match_func(const std::string&,
-                                   const Gtk::TreeModel::const_iterator&) { return true; }
+            inline bool match_func(const std::string&, const Gtk::TreeModel::const_iterator&)
+            {
+                return true;
+            }
 
             void on_text_changed();
-            bool on_cursor_on_match(const Gtk::TreeIter &iter);
-            bool on_match_selected(const Gtk::TreeIter &iter);
+            bool on_cursor_on_match(const Gtk::TreeIter& iter);
+            bool on_match_selected(const Gtk::TreeIter& iter);
 
             // These are the tags used for completion
-            const std::set<std::string> *m_Tags;
+            const std::set<std::string>* m_Tags;
             Glib::RefPtr<Gtk::EntryCompletion> m_TagCompletion;
             Glib::RefPtr<Gtk::ListStore> m_Model;
             ModelColumns m_Columns;

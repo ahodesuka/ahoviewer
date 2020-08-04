@@ -7,11 +7,7 @@ using namespace AhoViewer::Booru;
 #include "site.h"
 #include "tempdir.h"
 
-ImageList::ImageList(Widget *w)
-  : AhoViewer::ImageList(w)
-{
-
-}
+ImageList::ImageList(Widget* w) : AhoViewer::ImageList(w) { }
 
 ImageList::~ImageList()
 {
@@ -38,7 +34,7 @@ void ImageList::clear()
         m_Path.clear();
     }
 
-    m_Size = 0;
+    m_Size         = 0;
     m_ImageFetcher = nullptr;
 }
 
@@ -53,7 +49,7 @@ std::string ImageList::get_path()
     return m_Path;
 }
 
-void ImageList::load(const xml::Document &posts, const Page &page)
+void ImageList::load(const xml::Document& posts, const Page& page)
 {
     m_Site = page.get_site();
 
@@ -62,18 +58,19 @@ void ImageList::load(const xml::Document &posts, const Page &page)
 
     std::string c = posts.get_attribute("count");
     if (!c.empty())
-       m_Size = std::stoul(c);
+        m_Size = std::stoul(c);
 
-    for (const xml::Node &post : posts.get_children())
+    for (const xml::Node& post : posts.get_children())
     {
         auto site_type{ m_Site->get_type() };
-        std::string id, thumbUrl, imageUrl, thumbPath, imagePath, tags_string, notesUrl, postUrl;
+        std::string id, thumb_url, image_url, thumb_path, image_path, tags_string, notes_url,
+            post_url;
 
         if (site_type == Type::DANBOORU_V2)
         {
-            id = post.get_value("id");
-            thumbUrl = post.get_value("preview-file-url");
-            imageUrl = post.get_value(m_Site->use_samples() ? "large-file-url" : "file-url");
+            id          = post.get_value("id");
+            thumb_url   = post.get_value("preview-file-url");
+            image_url   = post.get_value(m_Site->use_samples() ? "large-file-url" : "file-url");
             tags_string = post.get_value("tag-string");
             // TODO: use tag category values (color tags based on category in
             // the tagview)  Issue #100
@@ -82,65 +79,72 @@ void ImageList::load(const xml::Document &posts, const Page &page)
         }
         else
         {
-            id = post.get_attribute("id");
-            thumbUrl = post.get_attribute("preview_url");
-            imageUrl = post.get_attribute(m_Site->use_samples() ? "sample_url" : "file_url");
+            id          = post.get_attribute("id");
+            thumb_url   = post.get_attribute("preview_url");
+            image_url   = post.get_attribute(m_Site->use_samples() ? "sample_url" : "file_url");
             tags_string = post.get_attribute("tags");
         }
 
-        thumbPath = Glib::build_filename(get_path(), "thumbnails",
-                                       Glib::uri_unescape_string(Glib::path_get_basename(thumbUrl)));
-        imagePath = Glib::build_filename(get_path(),
-                                       Glib::uri_unescape_string(Glib::path_get_basename(imageUrl)));
+        thumb_path =
+            Glib::build_filename(get_path(),
+                                 "thumbnails",
+                                 Glib::uri_unescape_string(Glib::path_get_basename(thumb_url)));
+        image_path = Glib::build_filename(
+            get_path(), Glib::uri_unescape_string(Glib::path_get_basename(image_url)));
 
         std::istringstream ss{ tags_string };
-        std::set<std::string> tags { std::istream_iterator<std::string>{ss},
-                                     std::istream_iterator<std::string>{} };
+        std::set<std::string> tags{ std::istream_iterator<std::string>{ ss },
+                                    std::istream_iterator<std::string>{} };
         m_Site->add_tags(tags);
 
-        if (thumbUrl[0] == '/')
+        if (thumb_url[0] == '/')
         {
-            if (thumbUrl[1] == '/')
-                thumbUrl = "https:" + thumbUrl;
+            if (thumb_url[1] == '/')
+                thumb_url = "https:" + thumb_url;
             else
-                thumbUrl = m_Site->get_url() + thumbUrl;
+                thumb_url = m_Site->get_url() + thumb_url;
         }
 
-        if (imageUrl[0] == '/')
+        if (image_url[0] == '/')
         {
-            if (imageUrl[1] == '/')
-                imageUrl = "https:" + imageUrl;
+            if (image_url[1] == '/')
+                image_url = "https:" + image_url;
             else
-                imageUrl = m_Site->get_url() + imageUrl;
+                image_url = m_Site->get_url() + image_url;
         }
 
-        bool hasNotes{ false };
+        bool has_notes{ false };
         // Moebooru doesnt have a has_notes attribute, instead they have
         // last_noted_at which is a unix timestamp or 0 if no notes
         if (site_type == Type::MOEBOORU)
-            hasNotes = post.get_attribute("last_noted_at") != "0";
+            has_notes = post.get_attribute("last_noted_at") != "0";
         else if (site_type == Type::DANBOORU_V2)
-            hasNotes = post.get_value("last-noted-at") != "";
+            has_notes = post.get_value("last-noted-at") != "";
         else
-            hasNotes = post.get_attribute("has_notes") == "true";
+            has_notes = post.get_attribute("has_notes") == "true";
 
-        if (hasNotes)
-            notesUrl = m_Site->get_notes_url(id);
+        if (has_notes)
+            notes_url = m_Site->get_notes_url(id);
 
         // safebooru.org provides the wrong file extension for thumbnails
         // All their thumbnails are .jpg, but their api gives links to with the
         // same exntension as the original images exnteion
-        if (thumbUrl.find("safebooru.org") != std::string::npos)
-            thumbUrl = thumbUrl.substr(0, thumbUrl.find_last_of('.')) + ".jpg";
+        if (thumb_url.find("safebooru.org") != std::string::npos)
+            thumb_url = thumb_url.substr(0, thumb_url.find_last_of('.')) + ".jpg";
 
-        postUrl = m_Site->get_post_url(id);
+        post_url = m_Site->get_post_url(id);
 
-        if (Image::is_valid_extension(imageUrl))
+        if (Image::is_valid_extension(image_url))
         {
-            m_Images.emplace_back(std::make_shared<Image>(imagePath, imageUrl,
-                                                          thumbPath, thumbUrl,
-                                                          postUrl, tags, notesUrl,
-                                                          m_Site, *m_ImageFetcher));
+            m_Images.emplace_back(std::make_shared<Image>(image_path,
+                                                          image_url,
+                                                          thumb_path,
+                                                          thumb_url,
+                                                          post_url,
+                                                          tags,
+                                                          notes_url,
+                                                          m_Site,
+                                                          *m_ImageFetcher));
         }
         else
         {
@@ -164,7 +168,7 @@ void ImageList::load(const xml::Document &posts, const Page &page)
 }
 
 // Override this so we dont cancel and restart the thumbnail thread
-void ImageList::set_current(const size_t index, const bool fromWidget, const bool force)
+void ImageList::set_current(const size_t index, const bool from_widget, const bool force)
 {
     if (index == m_Index && !force)
         return;
@@ -173,7 +177,7 @@ void ImageList::set_current(const size_t index, const bool fromWidget, const boo
     m_SignalChanged(m_Images[m_Index]);
     update_cache();
 
-    if (!fromWidget)
+    if (!from_widget)
         m_Widget->set_selected(m_Index);
 }
 

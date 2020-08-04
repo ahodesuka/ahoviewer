@@ -1,7 +1,7 @@
+#include "page.h"
+
 #include <glibmm/i18n.h>
 #include <iostream>
-
-#include "page.h"
 using namespace AhoViewer::Booru;
 
 #include "curler.h"
@@ -12,16 +12,16 @@ using namespace AhoViewer::Booru;
 #define RETRY_COUNT 5
 
 Page::Page()
-  : Gtk::ScrolledWindow(),
-    m_PopupMenu(nullptr),
-    m_IconView(Gtk::manage(new Gtk::IconView)),
-    m_Tab(Gtk::manage(new Gtk::EventBox)),
-    m_TabIcon(Gtk::manage(new Gtk::Image(Gtk::Stock::NEW, Gtk::ICON_SIZE_MENU))),
-    m_TabLabel(Gtk::manage(new Gtk::Label(_("New Tab")))),
-    m_MenuLabel(Gtk::manage(new Gtk::Label(_("New Tab")))),
-    m_TabButton(Gtk::manage(new Gtk::Button)),
-    m_ImageList(std::make_shared<ImageList>(this)),
-    m_SaveCancel(Gio::Cancellable::create())
+    : Gtk::ScrolledWindow(),
+      m_PopupMenu(nullptr),
+      m_IconView(Gtk::manage(new Gtk::IconView)),
+      m_Tab(Gtk::manage(new Gtk::EventBox)),
+      m_TabIcon(Gtk::manage(new Gtk::Image(Gtk::Stock::NEW, Gtk::ICON_SIZE_MENU))),
+      m_TabLabel(Gtk::manage(new Gtk::Label(_("New Tab")))),
+      m_MenuLabel(Gtk::manage(new Gtk::Label(_("New Tab")))),
+      m_TabButton(Gtk::manage(new Gtk::Button)),
+      m_ImageList(std::make_shared<ImageList>(this)),
+      m_SaveCancel(Gio::Cancellable::create())
 {
     set_policy(Gtk::POLICY_NEVER, Gtk::POLICY_AUTOMATIC);
     set_shadow_type(Gtk::SHADOW_ETCHED_IN);
@@ -39,7 +39,7 @@ Page::Page()
     m_MenuLabel->set_alignment(0.0, 0.5);
     m_MenuLabel->set_ellipsize(Pango::ELLIPSIZE_END);
 
-    Gtk::HBox *hbox = Gtk::manage(new Gtk::HBox());
+    Gtk::HBox* hbox = Gtk::manage(new Gtk::HBox());
     hbox->pack_start(*m_TabIcon, false, false);
     hbox->pack_start(*m_TabLabel, true, true, 2);
     hbox->pack_start(*m_TabButton, false, false);
@@ -47,31 +47,34 @@ Page::Page()
 
     m_Tab->set_visible_window(false);
     m_Tab->add(*hbox);
-    m_Tab->signal_button_release_event().connect(sigc::mem_fun(*this, &Page::on_tab_button_release_event));
+    m_Tab->signal_button_release_event().connect(
+        sigc::mem_fun(*this, &Page::on_tab_button_release_event));
     // }}}
 
-    m_ScrollConn = get_vadjustment()->signal_value_changed().connect(sigc::mem_fun(*this, &Page::on_value_changed));
+    m_ScrollConn = get_vadjustment()->signal_value_changed().connect(
+        sigc::mem_fun(*this, &Page::on_value_changed));
 
     m_IconView->set_model(m_ListStore);
     m_IconView->set_selection_mode(Gtk::SELECTION_BROWSE);
-    m_IconView->set_item_width(Image::BooruThumbnailSize - m_IconView->get_margin()
-                                                         - m_IconView->property_item_padding().get_value());
-    m_IconView->signal_selection_changed().connect(sigc::mem_fun(*this, &Page::on_selection_changed));
-    m_IconView->signal_button_press_event().connect(sigc::mem_fun(*this, &Page::on_button_press_event));
+    m_IconView->set_item_width(Image::BooruThumbnailSize - m_IconView->get_margin() -
+                               m_IconView->property_item_padding().get_value());
+    m_IconView->signal_selection_changed().connect(
+        sigc::mem_fun(*this, &Page::on_selection_changed));
+    m_IconView->signal_button_press_event().connect(
+        sigc::mem_fun(*this, &Page::on_button_press_event));
 
     // Workaround to have fully centered pixbufs
-    Gtk::CellRendererPixbuf *cell = Gtk::manage(new Gtk::CellRendererPixbuf());
-    gtk_cell_layout_pack_start(GTK_CELL_LAYOUT(m_IconView->gobj()),
-                               GTK_CELL_RENDERER(cell->gobj()), TRUE);
-    gtk_cell_layout_add_attribute(GTK_CELL_LAYOUT(m_IconView->gobj()),
-                                  GTK_CELL_RENDERER(cell->gobj()), "pixbuf", 0);
+    Gtk::CellRendererPixbuf* cell = Gtk::manage(new Gtk::CellRendererPixbuf());
+    gtk_cell_layout_pack_start(
+        GTK_CELL_LAYOUT(m_IconView->gobj()), GTK_CELL_RENDERER(cell->gobj()), TRUE);
+    gtk_cell_layout_add_attribute(
+        GTK_CELL_LAYOUT(m_IconView->gobj()), GTK_CELL_RENDERER(cell->gobj()), "pixbuf", 0);
 
     m_SignalPostsDownloaded.connect(sigc::mem_fun(*this, &Page::on_posts_downloaded));
-    m_SignalSaveProgressDisp.connect([&](){ m_SignalSaveProgress(this); });
+    m_SignalSaveProgressDisp.connect([&]() { m_SignalSaveProgress(this); });
 
     // Check if next page should be loaded after current finishes
-    m_ImageList->signal_thumbnails_loaded().connect([&]()
-    {
+    m_ImageList->signal_thumbnails_loaded().connect([&]() {
         on_selection_changed();
         if (!m_KeepAligned)
             on_value_changed();
@@ -93,7 +96,7 @@ Page::~Page()
     m_ListStore->clear();
 }
 
-void Page::set_pixbuf(const size_t index, const Glib::RefPtr<Gdk::Pixbuf> &pixbuf)
+void Page::set_pixbuf(const size_t index, const Glib::RefPtr<Gdk::Pixbuf>& pixbuf)
 {
     m_ScrollConn.block();
     ImageList::Widget::set_pixbuf(index, pixbuf);
@@ -134,7 +137,7 @@ void Page::scroll_to_selected()
     }
 }
 
-void Page::search(const std::shared_ptr<Site> &site)
+void Page::search(const std::shared_ptr<Site>& site)
 {
     if (!ask_cancel_save())
         return;
@@ -147,17 +150,16 @@ void Page::search(const std::shared_ptr<Site> &site)
     if (m_GetPostsThread.joinable())
         m_GetPostsThread.join();
 
-    m_Site = site;
-    m_Page = 1;
-    m_LastPage = false;
+    m_Site       = site;
+    m_Page       = 1;
+    m_LastPage   = false;
     m_SearchTags = m_Tags;
 
     // Trim leading and trailing whitespace for tab label
     // and m_SearchTags which is used to display tags in other places
     if (!m_SearchTags.empty())
     {
-        size_t f = m_SearchTags.find_first_not_of(' '),
-               l = m_SearchTags.find_last_not_of(' ');
+        size_t f = m_SearchTags.find_first_not_of(' '), l = m_SearchTags.find_last_not_of(' ');
         m_SearchTags = f == std::string::npos ? "*" : m_SearchTags.substr(f, l - f + 1);
     }
     else
@@ -166,7 +168,7 @@ void Page::search(const std::shared_ptr<Site> &site)
             m_SearchTags = "*";
     }
     std::string label = m_Site->get_name() +
-        (m_SearchTags == "*" || m_SearchTags.empty() ? "" : " - " + m_SearchTags);
+                        (m_SearchTags == "*" || m_SearchTags.empty() ? "" : " - " + m_SearchTags);
     m_TabLabel->set_text(label);
     m_MenuLabel->set_text(label);
     m_TabIcon->set(m_Site->get_icon_pixbuf());
@@ -177,21 +179,20 @@ void Page::search(const std::shared_ptr<Site> &site)
     get_posts();
 }
 
-void Page::save_image(const std::string &path, const std::shared_ptr<Image> &img)
+void Page::save_image(const std::string& path, const std::shared_ptr<Image>& img)
 {
     m_SaveCancel->reset();
     if (m_SaveImagesThread.joinable())
         m_SaveImagesThread.join();
 
-    m_Saving            = true;
-    m_SaveImagesThread  = std::thread([ &, path, img ]()
-    {
+    m_Saving           = true;
+    m_SaveImagesThread = std::thread([&, path, img]() {
         img->save(path);
         m_Saving = false;
     });
 }
 
-void Page::save_images(const std::string &path)
+void Page::save_images(const std::string& path)
 {
     m_SaveCancel->reset();
     if (m_SaveImagesThread.joinable())
@@ -200,18 +201,17 @@ void Page::save_images(const std::string &path)
     m_Saving            = true;
     m_SaveImagesCurrent = 0;
     m_SaveImagesTotal   = m_ImageList->get_vector_size();
-    m_SaveImagesThread  = std::thread([ &, path ]()
-    {
+    m_SaveImagesThread  = std::thread([&, path]() {
         ThreadPool pool;
-        for (const std::shared_ptr<AhoViewer::Image> &img : *m_ImageList)
+        for (const std::shared_ptr<AhoViewer::Image>& img : *m_ImageList)
         {
-            pool.push([ &, path, img ]()
-            {
+            pool.push([&, path, img]() {
                 if (m_SaveCancel->is_cancelled())
                     return;
 
                 std::shared_ptr<Image> bimage = std::static_pointer_cast<Image>(img);
-                bimage->save(Glib::build_filename(path, Glib::path_get_basename(bimage->get_filename())));
+                bimage->save(
+                    Glib::build_filename(path, Glib::path_get_basename(bimage->get_filename())));
                 ++m_SaveImagesCurrent;
 
                 if (!m_SaveCancel->is_cancelled())
@@ -231,9 +231,13 @@ bool Page::ask_cancel_save()
     if (!m_Saving)
         return true;
 
-    Gtk::Window *window = static_cast<Gtk::Window*>(get_toplevel());
-    Gtk::MessageDialog dialog(*window, _("Are you sure that you want to stop saving images?"),
-                              false, Gtk::MESSAGE_QUESTION, Gtk::BUTTONS_YES_NO, true);
+    auto* window = static_cast<Gtk::Window*>(get_toplevel());
+    Gtk::MessageDialog dialog(*window,
+                              _("Are you sure that you want to stop saving images?"),
+                              false,
+                              Gtk::MESSAGE_QUESTION,
+                              Gtk::BUTTONS_YES_NO,
+                              true);
     dialog.set_secondary_text(_("Closing this tab will stop the save operation."));
 
     return dialog.run() == Gtk::RESPONSE_YES;
@@ -243,7 +247,7 @@ void Page::cancel_save()
 {
     m_SaveCancel->cancel();
 
-    for (const std::shared_ptr<AhoViewer::Image> &img : *m_ImageList)
+    for (const std::shared_ptr<AhoViewer::Image>& img : *m_ImageList)
     {
         std::shared_ptr<Image> bimage = std::static_pointer_cast<Image>(img);
         bimage->cancel_download();
@@ -258,7 +262,7 @@ void Page::cancel_save()
 void Page::get_posts()
 {
     std::string tags = m_SearchTags;
-    m_KeepAligned = true;
+    m_KeepAligned    = true;
 
     if (m_Tags.find("rating:") == std::string::npos)
     {
@@ -274,9 +278,8 @@ void Page::get_posts()
 
     tags = m_Curler.escape(tags);
 
-    m_GetPostsThread = std::thread([ &, tags ]()
-    {
-        size_t postsCount = 0;
+    m_GetPostsThread = std::thread([&, tags]() {
+        size_t posts_count = 0;
         // Danbooru doesn't give the post count with the posts
         // Get it from thier counts api
         if (m_Page == 1 &&
@@ -289,10 +292,14 @@ void Page::get_posts()
                 {
                     xml::Document doc(reinterpret_cast<char*>(m_Curler.get_data()),
                                       m_Curler.get_data_size());
-                    postsCount = std::stoul(doc.get_children()[0].get_value());
+                    posts_count = std::stoul(doc.get_children()[0].get_value());
                 }
-                catch (const std::runtime_error &e) { }
-                catch (const std::invalid_argument &e) { }
+                catch (const std::runtime_error& e)
+                {
+                }
+                catch (const std::invalid_argument& e)
+                {
+                }
             }
             else if (m_Curler.is_cancelled())
             {
@@ -307,8 +314,8 @@ void Page::get_posts()
         else
             m_Curler.set_http_auth(m_Site->get_username(), m_Site->get_password());
 
-        bool success = false;
-        size_t retryCount = 0;
+        bool success       = false;
+        size_t retry_count = 0;
         do
         {
             success = m_Curler.perform();
@@ -319,7 +326,7 @@ void Page::get_posts()
                     m_Posts = std::make_unique<xml::Document>(
                         reinterpret_cast<char*>(m_Curler.get_data()), m_Curler.get_data_size());
                 }
-                catch (const std::runtime_error &e)
+                catch (const std::runtime_error& e)
                 {
                     std::cerr << e.what() << std::endl;
                     m_Posts = nullptr;
@@ -332,11 +339,10 @@ void Page::get_posts()
                 if (m_Posts && m_Site->get_type() == Type::DANBOORU)
                     success = m_Posts->get_attribute("success") != "false";
             }
-        }
-        while (!m_Curler.is_cancelled() && !success && ++retryCount < RETRY_COUNT);
+        } while (!m_Curler.is_cancelled() && !success && ++retry_count < RETRY_COUNT);
 
-        if (success && m_Posts && postsCount)
-            m_Posts->set_attribute("count", std::to_string(postsCount));
+        if (success && m_Posts && posts_count)
+            m_Posts->set_attribute("count", std::to_string(posts_count));
         else if (!success && !m_Curler.is_cancelled())
             std::cerr << "Error while downloading posts on " << m_Curler.get_url() << std::endl
                       << "  " << m_Curler.get_error() << std::endl;
@@ -363,7 +369,8 @@ bool Page::get_next_page()
     }
     else if (!m_GetNextPageConn)
     {
-        m_GetNextPageConn = Glib::signal_timeout().connect(sigc::mem_fun(*this, &Page::get_next_page), 1000);
+        m_GetNextPageConn =
+            Glib::signal_timeout().connect(sigc::mem_fun(*this, &Page::get_next_page), 1000);
     }
 
     return true;
@@ -375,23 +382,24 @@ void Page::on_posts_downloaded()
     if (m_Posts && m_Posts->get_attribute("success") == "false" &&
         (!m_Posts->get_attribute("reason").empty() || !m_Posts->get_value().empty()))
     {
-        auto reason = m_Posts->get_value().empty() ? m_Posts->get_attribute("reason") : m_Posts->get_value();
+        auto reason =
+            m_Posts->get_value().empty() ? m_Posts->get_attribute("reason") : m_Posts->get_value();
         m_SignalDownloadError(reason);
     }
     else if (m_Posts)
     {
-        auto nPosts = m_Posts->get_n_nodes();
-        if (nPosts > 0)
+        auto n_posts = m_Posts->get_n_nodes();
+        if (n_posts > 0)
         {
             auto size_before = m_ImageList->get_vector_size();
             m_ImageList->load(*m_Posts, *this);
             // Number of posts that actually got added to the image list
             // ie supported file types
-            nPosts = m_ImageList->get_vector_size() - size_before;
-            reserve(nPosts);
+            n_posts = m_ImageList->get_vector_size() - size_before;
+            reserve(n_posts);
         }
 
-        if (nPosts == 0)
+        if (n_posts == 0)
         {
             if (m_Page == 1)
                 m_SignalDownloadError(_("No results found"));
@@ -402,16 +410,15 @@ void Page::on_posts_downloaded()
     // 401 = Unauthorized
     else if (m_Curler.get_response_code() == 401)
     {
-        std::string e = Glib::ustring::compose(_("Failed to login as %1 on %2"),
-                                                 m_Site->get_username(),
-                                                 m_Site->get_name());
+        std::string e = Glib::ustring::compose(
+            _("Failed to login as %1 on %2"), m_Site->get_username(), m_Site->get_name());
         m_SignalDownloadError(e);
     }
     // No network connection?
     else
     {
-        std::string e = Glib::ustring::compose(_("Failed to download posts on %1"),
-                                                 m_Site->get_name());
+        std::string e =
+            Glib::ustring::compose(_("Failed to download posts on %1"), m_Site->get_name());
         m_SignalDownloadError(e);
     }
 
@@ -442,8 +449,7 @@ void Page::on_selection_changed()
 void Page::on_value_changed()
 {
     double value = get_vadjustment()->get_value(),
-           limit = get_vadjustment()->get_upper() -
-                   get_vadjustment()->get_page_size() -
+           limit = get_vadjustment()->get_upper() - get_vadjustment()->get_page_size() -
                    get_vadjustment()->get_step_increment() * 3;
     m_KeepAligned = false;
 
@@ -451,7 +457,7 @@ void Page::on_value_changed()
         get_next_page();
 }
 
-bool Page::on_button_press_event(GdkEventButton *e)
+bool Page::on_button_press_event(GdkEventButton* e)
 {
     if (e->type == GDK_BUTTON_PRESS && e->button == 3)
     {
@@ -471,7 +477,7 @@ bool Page::on_button_press_event(GdkEventButton *e)
     return false;
 }
 
-bool Page::on_tab_button_release_event(GdkEventButton *e)
+bool Page::on_tab_button_release_event(GdkEventButton* e)
 {
     if (e->type == GDK_BUTTON_RELEASE && e->button == 2)
         m_SignalClosed(this);

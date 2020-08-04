@@ -52,9 +52,9 @@ const std::string TagView::StarOutlineSVG = "<?xml version=\"1.0\" standalone=\"
 </svg>";
 // }}}
 
-TagView::TagView(BaseObjectType *cobj, const Glib::RefPtr<Gtk::Builder> &bldr)
-  : Gtk::TreeView(cobj),
-    m_FavoriteTags(Settings.get_favorite_tags())
+TagView::TagView(BaseObjectType* cobj, const Glib::RefPtr<Gtk::Builder>& bldr)
+    : Gtk::TreeView(cobj),
+      m_FavoriteTags(Settings.get_favorite_tags())
 {
     bldr->get_widget_derived("Booru::Browser::TagEntry", m_TagEntry);
     m_TagEntry->signal_changed().connect([&]() { queue_draw(); });
@@ -63,26 +63,27 @@ TagView::TagView(BaseObjectType *cobj, const Glib::RefPtr<Gtk::Builder> &bldr)
 
     set_model(m_ListStore);
 
-    Gtk::CellRendererPixbuf *fcell = Gtk::manage(new Gtk::CellRendererPixbuf());
+    Gtk::CellRendererPixbuf* fcell = Gtk::manage(new Gtk::CellRendererPixbuf());
     append_column("Favorite", *fcell);
 
-    Gtk::CellRendererToggle *cell = Gtk::manage(new Gtk::CellRendererToggle());
+    Gtk::CellRendererToggle* cell = Gtk::manage(new Gtk::CellRendererToggle());
     append_column("Toggle", *cell);
 
     append_column("Tag", m_Columns.tag);
-    Gtk::CellRendererText *tcell = static_cast<Gtk::CellRendererText*>(get_column_cell_renderer(2));
+    auto* tcell                 = static_cast<Gtk::CellRendererText*>(get_column_cell_renderer(2));
     tcell->property_ellipsize() = Pango::ELLIPSIZE_END;
 
-    get_column(0)->set_cell_data_func(*fcell, sigc::mem_fun(*this, &TagView::on_favorite_cell_data));
+    get_column(0)->set_cell_data_func(*fcell,
+                                      sigc::mem_fun(*this, &TagView::on_favorite_cell_data));
     get_column(1)->set_cell_data_func(*cell, sigc::mem_fun(*this, &TagView::on_toggle_cell_data));
 
     show_favorite_tags();
 }
 
-void TagView::set_tags(const std::set<std::string> &tags)
+void TagView::set_tags(const std::set<std::string>& tags)
 {
     clear();
-    for (const std::string &tag : tags)
+    for (const std::string& tag : tags)
         m_ListStore->append()->set_value(m_Columns.tag, tag);
 
     if (get_realized())
@@ -92,11 +93,12 @@ void TagView::set_tags(const std::set<std::string> &tags)
 void TagView::on_style_updated()
 {
     m_PrevColor = m_Color;
-    if (get_style_context()->lookup_color("theme_selected_bg_color", m_Color) && m_PrevColor != m_Color)
+    if (get_style_context()->lookup_color("theme_selected_bg_color", m_Color) &&
+        m_PrevColor != m_Color)
         update_favorite_icons();
 }
 
-bool TagView::on_button_press_event(GdkEventButton *e)
+bool TagView::on_button_press_event(GdkEventButton* e)
 {
     if (e->type == GDK_BUTTON_PRESS && (e->button == 1 || e->button == 2))
     {
@@ -136,7 +138,8 @@ bool TagView::on_button_press_event(GdkEventButton *e)
                         tags.push_back(std::move(tag));
 
                     std::ostringstream oss;
-                    std::copy(tags.begin(), tags.end(), std::ostream_iterator<std::string>(oss, " "));
+                    std::copy(
+                        tags.begin(), tags.end(), std::ostream_iterator<std::string>(oss, " "));
                     m_TagEntry->set_text(oss.str());
                 }
 
@@ -148,9 +151,9 @@ bool TagView::on_button_press_event(GdkEventButton *e)
     return true;
 }
 
-void TagView::on_favorite_cell_data(Gtk::CellRenderer *c, const Gtk::TreeIter &iter)
+void TagView::on_favorite_cell_data(Gtk::CellRenderer* c, const Gtk::TreeIter& iter)
 {
-    Gtk::CellRendererPixbuf *cell = static_cast<Gtk::CellRendererPixbuf*>(c);
+    auto* cell      = static_cast<Gtk::CellRendererPixbuf*>(c);
     std::string tag = iter->get_value(m_Columns.tag);
 
     if (m_FavoriteTags.find(tag) != m_FavoriteTags.end())
@@ -159,9 +162,9 @@ void TagView::on_favorite_cell_data(Gtk::CellRenderer *c, const Gtk::TreeIter &i
         cell->property_pixbuf().set_value(m_StarOutlinePixbuf);
 }
 
-void TagView::on_toggle_cell_data(Gtk::CellRenderer *c, const Gtk::TreeIter &iter)
+void TagView::on_toggle_cell_data(Gtk::CellRenderer* c, const Gtk::TreeIter& iter)
 {
-    Gtk::CellRendererToggle *cell = static_cast<Gtk::CellRendererToggle*>(c);
+    auto* cell = static_cast<Gtk::CellRendererToggle*>(c);
     std::istringstream ss(m_TagEntry->get_text());
     std::vector<std::string> tags = { std::istream_iterator<std::string>(ss),
                                       std::istream_iterator<std::string>() };

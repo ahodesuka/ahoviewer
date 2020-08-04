@@ -1,40 +1,42 @@
 #ifndef _NATURALSORT_H_
 #define _NATURALSORT_H_
 
+#include "image.h"
+
 #include <cctype>
 #include <cstdlib>
-
-#include "image.h"
 
 namespace AhoViewer
 {
     class NaturalSort
     {
     public:
-        bool operator()(const std::string &a, const std::string &b)
+        bool operator()(const std::string& a, const std::string& b)
         {
             return compare_natural(a.c_str(), b.c_str());
         }
-        bool operator()(const std::shared_ptr<Image> &a, const std::shared_ptr<Image> &b)
+        bool operator()(const std::shared_ptr<Image>& a, const std::shared_ptr<Image>& b)
         {
             return compare_natural(a->get_path().c_str(), b->get_path().c_str());
         }
+
     private:
-        bool compare_natural(const char *a, const char *b)
+        bool compare_natural(const char* a, const char* b)
         {
             // End of string
-            if (!a || !b) return !!a;
+            if (!a || !b)
+                return !!a;
 
             // Both are numbers, compare them as such
             if (std::isdigit(*a) && std::isdigit(*b))
             {
-                char *aAfter, *bAfter;
-                unsigned long aL = strtoul(a, &aAfter, 10),
-                              bL = strtoul(b, &bAfter, 10);
+                char *a_after, *b_after;
+                unsigned long a_l = strtoul(a, &a_after, 10), b_l = strtoul(b, &b_after, 10);
 
-                if (aL != bL) return aL < bL;
+                if (a_l != b_l)
+                    return a_l < b_l;
 
-                return compare_natural(aAfter, bAfter);
+                return compare_natural(a_after, b_after);
             }
 
             // One of them is a number

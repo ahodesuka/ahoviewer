@@ -53,8 +53,11 @@ resources = gnome.compile_resources(
     'resources', 'ahoviewer.gresource.xml'
 )
 
+incdirs += include_directories('../ext/entities')
+
 sources = [
   resources,
+  '../ext/entities/entities.c',
   'archive/archive.cc',
   'archive/image.cc',
   'archive/rar.cc',
@@ -69,7 +72,6 @@ sources = [
   'booru/tagentry.cc',
   'booru/tagview.cc',
   'application.cc',
-  'entities.c',
   'image.cc',
   'imagebox.cc',
   'imageboxnote.cc',

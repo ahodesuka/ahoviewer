@@ -4,7 +4,6 @@
 #include <libxml/parser.h>
 #include <libxml/tree.h>
 #include <libxml/xmlstring.h>
-
 #include <string>
 #include <vector>
 
@@ -15,13 +14,14 @@ namespace AhoViewer
         class Node
         {
         public:
-            Node(xmlNodePtr n) : m_xmlNode{ n } {  }
+            Node(xmlNodePtr n) : m_XmlNode{ n } { }
             ~Node() = default;
 
-            std::string get_attribute(const std::string &name) const
+            std::string get_attribute(const std::string& name) const
             {
                 std::string attr;
-                xmlChar *prop = xmlGetProp(m_xmlNode, reinterpret_cast<const xmlChar*>(name.c_str()));
+                xmlChar* prop =
+                    xmlGetProp(m_XmlNode, reinterpret_cast<const xmlChar*>(name.c_str()));
 
                 if (prop)
                 {
@@ -32,21 +32,21 @@ namespace AhoViewer
                 return attr;
             }
 
-            void set_attribute(const std::string &_name, const std::string &_value)
+            void set_attribute(const std::string& a_name, const std::string& a_value)
             {
-                const xmlChar *name  = reinterpret_cast<const xmlChar*>(_name.c_str()),
-                              *value = reinterpret_cast<const xmlChar*>(_value.c_str());
+                const xmlChar *name  = reinterpret_cast<const xmlChar*>(a_name.c_str()),
+                              *value = reinterpret_cast<const xmlChar*>(a_value.c_str());
 
-                if (!xmlHasProp(m_xmlNode, name))
-                    xmlNewProp(m_xmlNode, name, value);
+                if (!xmlHasProp(m_XmlNode, name))
+                    xmlNewProp(m_XmlNode, name, value);
                 else
-                    xmlSetProp(m_xmlNode, name, value);
+                    xmlSetProp(m_XmlNode, name, value);
             }
 
             std::string get_value() const
             {
                 std::string val;
-                xmlChar *content = xmlNodeGetContent(m_xmlNode);
+                xmlChar* content = xmlNodeGetContent(m_XmlNode);
 
                 if (content)
                 {
@@ -58,9 +58,9 @@ namespace AhoViewer
             }
 
             // Returns the value of a child node of this node
-            std::string get_value(const std::string &name) const
+            std::string get_value(const std::string& name) const
             {
-                xmlNodePtr n{ m_xmlNode->children };
+                xmlNodePtr n{ m_XmlNode->children };
                 while (n != nullptr)
                 {
                     if (xmlStrEqual(n->name, reinterpret_cast<const xmlChar*>(name.c_str())))
@@ -70,39 +70,34 @@ namespace AhoViewer
 
                 return "";
             }
+
         protected:
             Node() = default;
-            xmlNodePtr m_xmlNode{ nullptr };
+            xmlNodePtr m_XmlNode{ nullptr };
         };
 
         // The Root node
         class Document : public Node
         {
         public:
-            Document(const char *buf, const int size)
+            Document(const char* buf, const int size)
             {
-                m_xmlDoc = xmlParseMemory(buf, size);
+                m_XmlDoc = xmlParseMemory(buf, size);
 
-                if (!m_xmlDoc)
+                if (!m_XmlDoc)
                     throw std::runtime_error("Failed to parse XML");
                 else
-                    m_xmlNode = xmlDocGetRootElement(m_xmlDoc);
+                    m_XmlNode = xmlDocGetRootElement(m_XmlDoc);
             }
-            ~Document()
-            {
-                xmlFreeDoc(m_xmlDoc);
-            }
+            ~Document() { xmlFreeDoc(m_XmlDoc); }
 
-            unsigned long get_n_nodes() const
-            {
-                return xmlChildElementCount(m_xmlNode);
-            }
+            unsigned long get_n_nodes() const { return xmlChildElementCount(m_XmlNode); }
 
             const std::vector<Node> get_children() const
             {
                 std::vector<Node> children;
 
-                for (xmlNodePtr n = m_xmlNode->children; n; n = n->next)
+                for (xmlNodePtr n = m_XmlNode->children; n; n = n->next)
                 {
                     if (n->type == XML_ELEMENT_NODE)
                         children.emplace_back(n);
@@ -110,8 +105,9 @@ namespace AhoViewer
 
                 return children;
             }
+
         private:
-            xmlDocPtr m_xmlDoc;
+            xmlDocPtr m_XmlDoc;
         };
     }
 }

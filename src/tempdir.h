@@ -1,13 +1,12 @@
 #ifndef _TEMPDIR_H_
 #define _TEMPDIR_H_
 
-#include <glibmm.h>
-#include <glib/gstdio.h>
+#include "config.h"
 
 #include <cstring>
+#include <glib/gstdio.h>
+#include <glibmm.h>
 #include <iostream>
-
-#include "config.h"
 
 namespace AhoViewer
 {
@@ -38,14 +37,15 @@ namespace AhoViewer
 
                 if (g_mkdir_with_parents(path.c_str(), 0755) == -1)
                 {
-                    std::cerr << "g_mkdir_with_parents: Failed to create '" << path << "'" << std::endl;
+                    std::cerr << "g_mkdir_with_parents: Failed to create '" << path << "'"
+                              << std::endl;
                     return "";
                 }
             }
 
             return path;
         }
-        void remove_dir(const std::string &dirPath)
+        void remove_dir(const std::string& dirPath)
         {
             // Make sure the directory is in the tempdir
             if (dirPath.compare(0, m_Path.length(), m_Path) == 0)
@@ -62,10 +62,8 @@ namespace AhoViewer
                 g_rmdir(dirPath.c_str());
             }
         }
-        std::string get_dir() const
-        {
-            return m_Path;
-        }
+        std::string get_dir() const { return m_Path; }
+
     private:
         TempDir()
         {
@@ -76,8 +74,7 @@ namespace AhoViewer
             for (auto i = dirs.begin(); i != dirs.end(); ++i)
             {
                 // 7 = strlen(".XXXXXX")
-                if (i->find(PACKAGE ".") != std::string::npos
-                 && i->length() == strlen(PACKAGE) + 7)
+                if (i->find(PACKAGE ".") != std::string::npos && i->length() == strlen(PACKAGE) + 7)
                     remove_dir(Glib::build_filename(Glib::get_tmp_dir(), *i));
             }
 

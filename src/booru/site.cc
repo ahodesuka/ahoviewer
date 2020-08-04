@@ -1,10 +1,12 @@
+#include "site.h"
+
 #include <chrono>
 #include <fstream>
-#include <iostream>
 #include <glib/gstdio.h>
 #include <gtkmm.h>
+#include <iostream>
+#include <utility>
 
-#include "site.h"
 using namespace AhoViewer::Booru;
 
 #include "settings.h"
@@ -18,42 +20,34 @@ using namespace AhoViewer::Booru;
 #endif // _WIN32
 
 // 1: page, 2: limit, 3: tags
-const std::map<Type, std::string> Site::RequestURI =
-{
+const std::map<Type, std::string> Site::RequestURI = {
     { Type::DANBOORU_V2, "/posts.xml?page=%1&limit=%2&tags=%3" },
-    { Type::GELBOORU,    "/index.php?page=dapi&s=post&q=index&pid=%1&limit=%2&tags=%3" },
-    { Type::MOEBOORU,    "/post.xml?page=%1&limit=%2&tags=%3" },
-    { Type::SHIMMIE,     "/api/danbooru/find_posts/index.xml?page=%1&limit=%2&tags=%3" },
-    { Type::DANBOORU,    "/post/index.xml?page=%1&limit=%2&tags=%3" },
+    { Type::GELBOORU, "/index.php?page=dapi&s=post&q=index&pid=%1&limit=%2&tags=%3" },
+    { Type::MOEBOORU, "/post.xml?page=%1&limit=%2&tags=%3" },
+    { Type::SHIMMIE, "/api/danbooru/find_posts/index.xml?page=%1&limit=%2&tags=%3" },
+    { Type::DANBOORU, "/post/index.xml?page=%1&limit=%2&tags=%3" },
 };
 
 // 1: id
-const std::map<Type, std::string> Site::PostURI =
-{
-    { Type::DANBOORU_V2, "/posts/%1" },
-    { Type::GELBOORU,    "/index.php?page=post&s=view&id=%1" },
-    { Type::MOEBOORU,    "/post/show/%1" },
-    { Type::SHIMMIE,     "/post/view/%1" },
-    { Type::DANBOORU,    "/posts/%1" },
+const std::map<Type, std::string> Site::PostURI = {
+    { Type::DANBOORU_V2, "/posts/%1" },  { Type::GELBOORU, "/index.php?page=post&s=view&id=%1" },
+    { Type::MOEBOORU, "/post/show/%1" }, { Type::SHIMMIE, "/post/view/%1" },
+    { Type::DANBOORU, "/posts/%1" },
 };
 
 // 1: id
-const std::map<Type, std::string> Site::NotesURI =
-{
+const std::map<Type, std::string> Site::NotesURI = {
     { Type::DANBOORU_V2, "/notes.xml?group_by=note&search[post_id]=%1" },
-    { Type::GELBOORU,    "/index.php?page=dapi&s=note&q=index&post_id=%1" },
-    { Type::MOEBOORU,    "/note.xml?post_id=%1" },
-    { Type::SHIMMIE,     "" },
-    { Type::DANBOORU,    "/note/index.xml?post_id=%1" },
+    { Type::GELBOORU, "/index.php?page=dapi&s=note&q=index&post_id=%1" },
+    { Type::MOEBOORU, "/note.xml?post_id=%1" },
+    { Type::SHIMMIE, "" },
+    { Type::DANBOORU, "/note/index.xml?post_id=%1" },
 };
 
-const std::map<Type, std::string> Site::RegisterURI =
-{
-    { Type::DANBOORU_V2, "/users/new" },
-    { Type::GELBOORU,    "/index.php?page=account&s=reg" },
-    { Type::MOEBOORU,    "/user/signup" },
-    { Type::SHIMMIE,     "/user_admin/create" },
-    { Type::DANBOORU,    "/users/new" },
+const std::map<Type, std::string> Site::RegisterURI = {
+    { Type::DANBOORU_V2, "/users/new" }, { Type::GELBOORU, "/index.php?page=account&s=reg" },
+    { Type::MOEBOORU, "/user/signup" },  { Type::SHIMMIE, "/user_admin/create" },
+    { Type::DANBOORU, "/users/new" },
 };
 
 // This is a workaround to have a private/protected constructor
@@ -63,40 +57,45 @@ const std::map<Type, std::string> Site::RegisterURI =
 // valid or not
 namespace
 {
-    struct _shared_site : public Site
+    struct SharedSite : public Site
     {
         template<typename... Args>
-        _shared_site(Args&&... v) : Site(std::forward<Args>(v)...) { }
+        SharedSite(Args&&... v) : Site(std::forward<Args>(v)...)
+        {
+        }
     };
 }
 
-std::shared_ptr<Site> Site::create(const std::string &name, const std::string &url, const Type type,
-                                   const std::string &user, const std::string &pass, const unsigned int max_cons,
+std::shared_ptr<Site> Site::create(const std::string& name,
+                                   const std::string& url,
+                                   const Type type,
+                                   const std::string& user,
+                                   const std::string& pass,
+                                   const unsigned int max_cons,
                                    const bool use_samples)
 {
     Type t = type == Type::UNKNOWN ? get_type_from_url(url) : type;
 
     if (t != Type::UNKNOWN)
-        return std::make_shared<_shared_site>(name, url, t, user, pass, max_cons, use_samples);
+        return std::make_shared<SharedSite>(name, url, t, user, pass, max_cons, use_samples);
 
     return nullptr;
 }
 
 const Glib::RefPtr<Gdk::Pixbuf>& Site::get_missing_pixbuf()
 {
-    static const Glib::RefPtr<Gdk::Pixbuf> pixbuf =
-        Gtk::IconTheme::get_default()->load_icon("image-missing", 16,
-            Gtk::ICON_LOOKUP_USE_BUILTIN | Gtk::ICON_LOOKUP_GENERIC_FALLBACK);
+    static const Glib::RefPtr<Gdk::Pixbuf> pixbuf = Gtk::IconTheme::get_default()->load_icon(
+        "image-missing", 16, Gtk::ICON_LOOKUP_USE_BUILTIN | Gtk::ICON_LOOKUP_GENERIC_FALLBACK);
 
     return pixbuf;
 }
 
 #ifdef HAVE_LIBSECRET
-void Site::on_password_lookup(GObject*, GAsyncResult *result, gpointer ptr)
+void Site::on_password_lookup(GObject*, GAsyncResult* result, gpointer ptr)
 {
-    GError *error = NULL;
-    gchar *password = secret_password_lookup_finish(result, &error);
-    Site *s = static_cast<Site*>(ptr);
+    GError* error   = nullptr;
+    gchar* password = secret_password_lookup_finish(result, &error);
+    Site* s         = static_cast<Site*>(ptr);
 
     if (!error && password)
     {
@@ -112,14 +111,14 @@ void Site::on_password_lookup(GObject*, GAsyncResult *result, gpointer ptr)
     }
 }
 
-void Site::on_password_stored(GObject*, GAsyncResult *result, gpointer ptr)
+void Site::on_password_stored(GObject*, GAsyncResult* result, gpointer ptr)
 {
-    GError *error = NULL;
+    GError* error = nullptr;
     secret_password_store_finish(result, &error);
 
     if (error)
     {
-        Site *s = static_cast<Site*>(ptr);
+        Site* s = static_cast<Site*>(ptr);
         std::cerr << "Failed to set password for " << s->get_name() << std::endl
                   << "  " << error->message << std::endl;
         g_error_free(error);
@@ -127,13 +126,13 @@ void Site::on_password_stored(GObject*, GAsyncResult *result, gpointer ptr)
 }
 #endif // HAVE_LIBSECRET
 
-Type Site::get_type_from_url(const std::string &url)
+Type Site::get_type_from_url(const std::string& url)
 {
     Curler curler;
     curler.set_no_body();
     curler.set_follow_location(false);
 
-    for (const Type &type : { Type::GELBOORU, Type::MOEBOORU, Type::DANBOORU, Type::SHIMMIE })
+    for (const Type& type : { Type::GELBOORU, Type::MOEBOORU, Type::DANBOORU, Type::SHIMMIE })
     {
         std::string uri = RequestURI.at(type);
 
@@ -150,30 +149,34 @@ Type Site::get_type_from_url(const std::string &url)
     return Type::UNKNOWN;
 }
 
-void Site::share_lock_cb(CURL*, curl_lock_data data, curl_lock_access, void *userp)
+void Site::share_lock_cb(CURL*, curl_lock_data data, curl_lock_access, void* userp)
 {
     static_cast<Site*>(userp)->m_MutexMap[data].lock();
 }
 
-void Site::share_unlock_cb(CURL*, curl_lock_data data, void *userp)
+void Site::share_unlock_cb(CURL*, curl_lock_data data, void* userp)
 {
     static_cast<Site*>(userp)->m_MutexMap[data].unlock();
 }
 
-Site::Site(const std::string &name, const std::string &url, const Type type,
-           const std::string &user, const std::string &pass, const int max_cons,
+Site::Site(std::string name,
+           std::string url,
+           const Type type,
+           std::string user,
+           std::string pass,
+           const int max_cons,
            const bool use_samples)
-  : m_Name{ name },
-    m_Url{ url },
-    m_Username{ user },
-    m_Password{ pass },
-    m_IconPath{ Glib::build_filename(Settings.get_booru_path(), m_Name + ".png") },
-    m_TagsPath{ Glib::build_filename(Settings.get_booru_path(), m_Name + "-tags") },
-    m_CookiePath{ Glib::build_filename(Settings.get_booru_path(), m_Name + "-cookie") },
-    m_Type{ type },
-    m_UseSamples{ use_samples },
-    m_MaxConnections{ max_cons },
-    m_ShareHandle{ curl_share_init() }
+    : m_Name{ std::move(name) },
+      m_Url{ std::move(url) },
+      m_Username{ std::move(user) },
+      m_Password{ std::move(pass) },
+      m_IconPath{ Glib::build_filename(Settings.get_booru_path(), m_Name + ".png") },
+      m_TagsPath{ Glib::build_filename(Settings.get_booru_path(), m_Name + "-tags") },
+      m_CookiePath{ Glib::build_filename(Settings.get_booru_path(), m_Name + "-cookie") },
+      m_Type{ type },
+      m_UseSamples{ use_samples },
+      m_MaxConnections{ max_cons },
+      m_ShareHandle{ curl_share_init() }
 {
     curl_share_setopt(m_ShareHandle, CURLSHOPT_LOCKFUNC, &Site::share_lock_cb);
     curl_share_setopt(m_ShareHandle, CURLSHOPT_UNLOCKFUNC, &Site::share_unlock_cb);
@@ -183,16 +186,14 @@ Site::Site(const std::string &name, const std::string &url, const Type type,
     for (auto d : {
 // CURL_LOCK_DATA_CONNECT is broken in 7.57.0
 #if LIBCURL_VERSION_NUM != 0x073900
-                    CURL_LOCK_DATA_CONNECT,
+             CURL_LOCK_DATA_CONNECT,
 #endif
-                    CURL_LOCK_DATA_COOKIE,
-                    CURL_LOCK_DATA_DNS,
-                    CURL_LOCK_DATA_SSL_SESSION,
-                    CURL_LOCK_DATA_SHARE })
+                 CURL_LOCK_DATA_COOKIE, CURL_LOCK_DATA_DNS, CURL_LOCK_DATA_SSL_SESSION,
+                 CURL_LOCK_DATA_SHARE
+         })
     {
-        m_MutexMap.emplace(std::piecewise_construct,
-                           std::forward_as_tuple(d),
-                           std::forward_as_tuple());
+        m_MutexMap.emplace(
+            std::piecewise_construct, std::forward_as_tuple(d), std::forward_as_tuple());
         if (d != CURL_LOCK_DATA_SHARE)
             curl_share_setopt(m_ShareHandle, CURLSHOPT_SHARE, d);
     }
@@ -201,10 +202,13 @@ Site::Site(const std::string &name, const std::string &url, const Type type,
 #ifdef HAVE_LIBSECRET
     if (!m_Username.empty())
         secret_password_lookup(SECRET_SCHEMA_COMPAT_NETWORK,
-                               NULL,
-                               &Site::on_password_lookup, this,
-                               "user", m_Username.c_str(),
-                               "server", m_Url.c_str(),
+                               nullptr,
+                               &Site::on_password_lookup,
+                               this,
+                               "user",
+                               m_Username.c_str(),
+                               "server",
+                               m_Url.c_str(),
                                NULL);
 #endif // HAVE_LIBSECRET
 
@@ -214,8 +218,8 @@ Site::Site(const std::string &name, const std::string &url, const Type type,
         PCREDENTIALW pcred;
 
         std::string target = std::string(PACKAGE "/") + m_Name;
-        wchar_t *TargetName = reinterpret_cast<wchar_t*>(
-            g_utf8_to_utf16(target.c_str(), -1, NULL, NULL, NULL));
+        wchar_t* TargetName =
+            reinterpret_cast<wchar_t*>(g_utf8_to_utf16(target.c_str(), -1, NULL, NULL, NULL));
 
         if (TargetName)
         {
@@ -228,7 +232,7 @@ Site::Site(const std::string &name, const std::string &url, const Type type,
             }
             else
             {
-                wchar_t *UserName = reinterpret_cast<wchar_t*>(
+                wchar_t* UserName = reinterpret_cast<wchar_t*>(
                     g_utf8_to_utf16(m_Username.c_str(), -1, NULL, NULL, NULL));
 
                 if (UserName)
@@ -269,29 +273,30 @@ Site::~Site()
     curl_share_cleanup(m_ShareHandle);
 }
 
-std::string Site::get_posts_url(const std::string &tags, size_t page)
+std::string Site::get_posts_url(const std::string& tags, size_t page)
 {
     return Glib::ustring::compose(m_Url + RequestURI.at(m_Type),
                                   (m_Type == Type::GELBOORU ? page - 1 : page),
-                                  Settings.get_int("BooruLimit"), tags);
+                                  Settings.get_int("BooruLimit"),
+                                  tags);
 }
 
-std::string Site::get_post_url(const std::string &id)
+std::string Site::get_post_url(const std::string& id)
 {
     return Glib::ustring::compose(m_Url + PostURI.at(m_Type), id);
 }
 
-std::string Site::get_notes_url(const std::string &id)
+std::string Site::get_notes_url(const std::string& id)
 {
     return Glib::ustring::compose(m_Url + NotesURI.at(m_Type), id);
 }
 
-void Site::add_tags(const std::set<std::string> &tags)
+void Site::add_tags(const std::set<std::string>& tags)
 {
     m_Tags.insert(tags.begin(), tags.end());
 }
 
-bool Site::set_url(const std::string &url)
+bool Site::set_url(const std::string& url)
 {
     if (url != m_Url)
     {
@@ -307,18 +312,22 @@ bool Site::set_url(const std::string &url)
     return true;
 }
 
-void Site::set_password(const std::string &s)
+void Site::set_password(const std::string& s)
 {
     m_NewAccount = true;
 #ifdef HAVE_LIBSECRET
     if (!m_Username.empty())
         secret_password_store(SECRET_SCHEMA_COMPAT_NETWORK,
                               SECRET_COLLECTION_DEFAULT,
-                              "password", s.c_str(),
-                              NULL,
-                              &Site::on_password_stored, this,
-                              "user", m_Username.c_str(),
-                              "server", m_Url.c_str(),
+                              "password",
+                              s.c_str(),
+                              nullptr,
+                              &Site::on_password_stored,
+                              this,
+                              "user",
+                              m_Username.c_str(),
+                              "server",
+                              m_Url.c_str(),
                               NULL);
 #endif // HAVE_LIBSECRET
 
@@ -326,23 +335,23 @@ void Site::set_password(const std::string &s)
     if (!m_Username.empty())
     {
         std::string target = std::string(PACKAGE "/") + m_Name;
-        wchar_t *TargetName = reinterpret_cast<wchar_t*>(
-            g_utf8_to_utf16(target.c_str(), -1, NULL, NULL, NULL));
+        wchar_t* TargetName =
+            reinterpret_cast<wchar_t*>(g_utf8_to_utf16(target.c_str(), -1, NULL, NULL, NULL));
 
         if (TargetName)
         {
-            wchar_t *UserName = reinterpret_cast<wchar_t*>(
+            wchar_t* UserName = reinterpret_cast<wchar_t*>(
                 g_utf8_to_utf16(m_Username.c_str(), -1, NULL, NULL, NULL));
 
             if (UserName)
             {
-                CREDENTIALW cred = { 0 };
-                cred.Type = CRED_TYPE_GENERIC;
-                cred.TargetName = TargetName;
+                CREDENTIALW cred        = { 0 };
+                cred.Type               = CRED_TYPE_GENERIC;
+                cred.TargetName         = TargetName;
                 cred.CredentialBlobSize = s.length();
-                cred.CredentialBlob = (LPBYTE)s.c_str();
-                cred.Persist = CRED_PERSIST_LOCAL_MACHINE;
-                cred.UserName = UserName;
+                cred.CredentialBlob     = (LPBYTE)s.c_str();
+                cred.Persist            = CRED_PERSIST_LOCAL_MACHINE;
+                cred.UserName           = UserName;
 
                 BOOL r = CredWriteW(&cred, 0);
                 if (!r)
@@ -384,7 +393,8 @@ std::string Site::get_cookie()
                         line = line.substr(1);
 
                     // Skip comments
-                    if (line[0] == '#') continue;
+                    if (line[0] == '#')
+                        continue;
 
                     std::istringstream iss(line);
                     size_t i = 0;
@@ -394,7 +404,7 @@ std::string Site::get_cookie()
                         // Timestamp is always at the 4th index
                         if (i == 4)
                         {
-                            char *after = nullptr;
+                            char* after = nullptr;
                             uint64_t ts = strtoull(tok.c_str(), &after, 10);
 
                             if (ts < m_CookieTS || m_CookieTS == 0)
@@ -431,7 +441,7 @@ std::string Site::get_cookie()
 void Site::cleanup_cookie() const
 {
     if ((m_Username.empty() || m_Password.empty() || m_NewAccount) &&
-            Glib::file_test(m_CookiePath, Glib::FILE_TEST_EXISTS))
+        Glib::file_test(m_CookiePath, Glib::FILE_TEST_EXISTS))
         g_unlink(m_CookiePath.c_str());
 }
 
@@ -447,10 +457,8 @@ Glib::RefPtr<Gdk::Pixbuf> Site::get_icon_pixbuf(const bool update)
         {
             m_IconPixbuf = get_missing_pixbuf();
             // Attempt to download the site's favicon
-            m_IconCurlerThread = std::thread([&]()
-            {
-                for (const std::string &url : { m_Url + "/favicon.ico",
-                                                m_Url + "/favicon.png" })
+            m_IconCurlerThread = std::thread([&]() {
+                for (const std::string& url : { m_Url + "/favicon.ico", m_Url + "/favicon.png" })
                 {
                     m_Curler.set_url(url);
                     if (m_Curler.perform())
@@ -467,10 +475,11 @@ Glib::RefPtr<Gdk::Pixbuf> Site::get_icon_pixbuf(const bool update)
                             m_IconPixbuf->save(m_IconPath, "png");
                             break;
                         }
-                        catch (const Gdk::PixbufError &ex)
+                        catch (const Gdk::PixbufError& ex)
                         {
-                            std::cerr << "Error while creating icon for " << m_Name
-                                      << ": " << std::endl << "  " << ex.what() << std::endl;
+                            std::cerr << "Error while creating icon for " << m_Name << ": "
+                                      << std::endl
+                                      << "  " << ex.what() << std::endl;
                         }
                     }
                 }

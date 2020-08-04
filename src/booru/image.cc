@@ -1,37 +1,42 @@
+#include "image.h"
+
 #include <chrono>
 #include <fstream>
 #include <iostream>
+#include <utility>
 
-#include "image.h"
 using namespace AhoViewer::Booru;
 
 #include "browser.h"
-extern "C" {
+extern "C"
+{
 #include "entities.h"
 }
 #include "settings.h"
 #include "site.h"
 
-Image::Image(const std::string &path, const std::string &url,
-             const std::string &thumbPath, const std::string &thumbUrl,
-             const std::string &postUrl,
+Image::Image(const std::string& path,
+             std::string url,
+             const std::string& thumb_path,
+             std::string thumb_url,
+             std::string post_url,
              std::set<std::string> tags,
-             const std::string &notesUrl,
+             const std::string& notes_url,
              std::shared_ptr<Site> site,
-             ImageFetcher &fetcher)
-  : AhoViewer::Image{ path },
-    m_Url{ url },
-    m_ThumbnailUrl{ thumbUrl },
-    m_PostUrl{ postUrl },
-    m_Tags{ tags },
-    m_Site{ site },
-    m_ImageFetcher{ fetcher },
-    m_LastDraw{ std::chrono::steady_clock::now() },
-    m_Curler{ m_Url, m_Site->get_share_handle() },
-    m_ThumbnailCurler{ m_ThumbnailUrl, m_Site->get_share_handle() },
-    m_NotesCurler{ notesUrl, m_Site->get_share_handle() }
+             ImageFetcher& fetcher)
+    : AhoViewer::Image{ path },
+      m_Url{ std::move(url) },
+      m_ThumbnailUrl{ std::move(thumb_url) },
+      m_PostUrl{ std::move(post_url) },
+      m_Tags{ std::move(tags) },
+      m_Site{ std::move(site) },
+      m_ImageFetcher{ fetcher },
+      m_LastDraw{ std::chrono::steady_clock::now() },
+      m_Curler{ m_Url, m_Site->get_share_handle() },
+      m_ThumbnailCurler{ m_ThumbnailUrl, m_Site->get_share_handle() },
+      m_NotesCurler{ notes_url, m_Site->get_share_handle() }
 {
-    m_ThumbnailPath = thumbPath;
+    m_ThumbnailPath = thumb_path;
 
     if (!m_isWebM)
         m_Curler.signal_write().connect(sigc::mem_fun(*this, &Image::on_write));
@@ -41,7 +46,7 @@ Image::Image(const std::string &path, const std::string &url,
     m_Curler.signal_progress().connect(sigc::mem_fun(*this, &Image::on_progress));
     m_Curler.signal_finished().connect(sigc::mem_fun(*this, &Image::on_finished));
 
-    if (!notesUrl.empty())
+    if (!notes_url.empty())
     {
         m_NotesCurler.signal_finished().connect(sigc::mem_fun(*this, &Image::on_notes_downloaded));
         m_ImageFetcher.add_handle(&m_NotesCurler);
@@ -58,8 +63,8 @@ Image::~Image()
 // or if the pixbuf is being loaded from the saved local file
 bool Image::is_loading() const
 {
-    return (m_isWebM && !Glib::file_test(m_Path, Glib::FILE_TEST_EXISTS))
-        || m_Curler.is_active() || AhoViewer::Image::is_loading();
+    return (m_isWebM && !Glib::file_test(m_Path, Glib::FILE_TEST_EXISTS)) || m_Curler.is_active() ||
+           AhoViewer::Image::is_loading();
 }
 
 std::string Image::get_filename() const
@@ -75,10 +80,8 @@ const Glib::RefPtr<Gdk::Pixbuf>& Image::get_thumbnail(Glib::RefPtr<Gio::Cancella
 
         {
             std::unique_lock<std::mutex> lock{ m_ThumbnailMutex };
-            m_ThumbnailCond.wait(lock, [&]()
-            {
-                return m_ThumbnailCurler.is_cancelled()
-                    || !m_ThumbnailCurler.is_active();
+            m_ThumbnailCond.wait(lock, [&]() {
+                return m_ThumbnailCurler.is_cancelled() || !m_ThumbnailCurler.is_active();
             });
         }
         if (!m_ThumbnailCurler.is_cancelled() && m_ThumbnailCurler.get_response() == CURLE_OK)
@@ -88,7 +91,8 @@ const Glib::RefPtr<Gdk::Pixbuf>& Image::get_thumbnail(Glib::RefPtr<Gio::Cancella
             m_ThumbnailLock.lock();
             // This doesn't need to be cancellable since booru
             // thumbnails are already small in size
-            m_ThumbnailPixbuf = create_pixbuf_at_size(m_ThumbnailPath, 128, 128, Gio::Cancellable::create());
+            m_ThumbnailPixbuf =
+                create_pixbuf_at_size(m_ThumbnailPath, 128, 128, Gio::Cancellable::create());
             m_ThumbnailLock.unlock();
         }
         else if (!m_ThumbnailCurler.is_cancelled())
@@ -130,15 +134,14 @@ void Image::reset_pixbuf()
     AhoViewer::Image::reset_pixbuf();
 }
 
-void Image::save(const std::string &path)
+void Image::save(const std::string& path)
 {
     if (!Glib::file_test(m_Path, Glib::FILE_TEST_EXISTS))
     {
         start_download();
 
         std::unique_lock<std::mutex> lock{ m_DownloadMutex };
-        m_DownloadCond.wait(lock, [&]()
-        {
+        m_DownloadCond.wait(lock, [&]() {
             return m_Curler.is_cancelled() || Glib::file_test(m_Path, Glib::FILE_TEST_EXISTS);
         });
     }
@@ -183,7 +186,8 @@ bool Image::start_download()
         if (!m_isWebM)
         {
             m_Loader = Gdk::PixbufLoader::create();
-            m_Loader->signal_area_prepared().connect(sigc::mem_fun(*this, &Image::on_area_prepared));
+            m_Loader->signal_area_prepared().connect(
+                sigc::mem_fun(*this, &Image::on_area_prepared));
             m_Loader->signal_area_updated().connect(sigc::mem_fun(*this, &Image::on_area_updated));
         }
 
@@ -198,13 +202,18 @@ void Image::close_loader()
     std::scoped_lock lock{ m_DownloadMutex };
     if (m_Loader)
     {
-        try { m_Loader->close(); }
-        catch (...) { }
+        try
+        {
+            m_Loader->close();
+        }
+        catch (...)
+        {
+        }
         m_Loader.reset();
     }
 }
 
-void Image::on_write(const unsigned char *d, size_t l)
+void Image::on_write(const unsigned char* d, size_t l)
 {
     if (m_Curler.is_cancelled())
         return;
@@ -229,7 +238,7 @@ void Image::on_write(const unsigned char *d, size_t l)
 
         m_Loader->write(d, l);
     }
-    catch (const Gdk::PixbufError &ex)
+    catch (const Gdk::PixbufError& ex)
     {
         std::cerr << ex.what() << std::endl;
         cancel_download();
@@ -253,13 +262,12 @@ void Image::on_finished()
         if (m_GIFanim)
         {
             m_GIFdataSize = m_Curler.get_data_size();
-            m_GIFdata = new unsigned char[m_GIFdataSize];
+            m_GIFdata     = new unsigned char[m_GIFdataSize];
             memcpy(m_GIFdata, m_Curler.get_data(), m_GIFdataSize);
 
             AhoViewer::Image::load_gif();
         }
-        m_Curler.save_file_async(m_Path, [&](Glib::RefPtr<Gio::AsyncResult> &r)
-        {
+        m_Curler.save_file_async(m_Path, [&](Glib::RefPtr<Gio::AsyncResult>& r) {
             try
             {
                 m_Curler.save_file_finish(r);
@@ -267,7 +275,7 @@ void Image::on_finished()
                 m_SignalPixbufChanged();
                 m_DownloadCond.notify_one();
             }
-            catch (const Gio::Error &e)
+            catch (const Gio::Error& e)
             {
                 if (e.code() != Gio::Error::CANCELLED)
                     std::cerr << "Failed to save file '" << get_filename() << "'" << std::endl
@@ -277,7 +285,8 @@ void Image::on_finished()
     }
     else
     {
-        std::cerr << "Booru::Image::on_finished: Curler received no data yet finished!" << std::endl;
+        std::cerr << "Booru::Image::on_finished: Curler received no data yet finished!"
+                  << std::endl;
     }
 
     close_loader();
@@ -289,10 +298,18 @@ void Image::on_area_prepared()
     if (m_ThumbnailPixbuf && m_ThumbnailPixbuf != get_missing_pixbuf())
     {
         Glib::RefPtr<Gdk::Pixbuf> pixbuf = m_Loader->get_pixbuf();
-        m_ThumbnailPixbuf->composite(pixbuf, 0, 0, pixbuf->get_width(), pixbuf->get_height(), 0, 0,
-                                     static_cast<double>(pixbuf->get_width()) / m_ThumbnailPixbuf->get_width(),
-                                     static_cast<double>(pixbuf->get_height()) / m_ThumbnailPixbuf->get_height(),
-                                     Gdk::INTERP_BILINEAR, 255);
+        m_ThumbnailPixbuf->composite(
+            pixbuf,
+            0,
+            0,
+            pixbuf->get_width(),
+            pixbuf->get_height(),
+            0,
+            0,
+            static_cast<double>(pixbuf->get_width()) / m_ThumbnailPixbuf->get_width(),
+            static_cast<double>(pixbuf->get_height()) / m_ThumbnailPixbuf->get_height(),
+            Gdk::INTERP_BILINEAR,
+            255);
     }
     m_ThumbnailLock.unlock_shared();
 
@@ -325,7 +342,7 @@ void Image::on_notes_downloaded()
         xml::Document doc(reinterpret_cast<char*>(m_NotesCurler.get_data()),
                           m_NotesCurler.get_data_size());
 
-        for (const xml::Node &n : doc.get_children())
+        for (const xml::Node& n : doc.get_children())
         {
             std::string body;
             int w, h, x, y;
@@ -336,10 +353,10 @@ void Image::on_notes_downloaded()
                     continue;
 
                 body = n.get_value("body");
-                w = std::stoi(n.get_value("width"));
-                h = std::stoi(n.get_value("height"));
-                x = std::stoi(n.get_value("x"));
-                y = std::stoi(n.get_value("y"));
+                w    = std::stoi(n.get_value("width"));
+                h    = std::stoi(n.get_value("height"));
+                x    = std::stoi(n.get_value("x"));
+                y    = std::stoi(n.get_value("y"));
             }
             else
             {
@@ -347,10 +364,10 @@ void Image::on_notes_downloaded()
                     continue;
 
                 body = n.get_attribute("body");
-                w = std::stoi(n.get_attribute("width"));
-                h = std::stoi(n.get_attribute("height"));
-                x = std::stoi(n.get_attribute("x"));
-                y = std::stoi(n.get_attribute("y"));
+                w    = std::stoi(n.get_attribute("width"));
+                h    = std::stoi(n.get_attribute("height"));
+                x    = std::stoi(n.get_attribute("x"));
+                y    = std::stoi(n.get_attribute("y"));
             }
 
             // Remove all html tags
@@ -367,7 +384,9 @@ void Image::on_notes_downloaded()
             m_Notes.emplace_back(body, w, h, x, y);
         }
     }
-    catch (...) { }
+    catch (...)
+    {
+    }
 
     if (m_Notes.size() > 0)
         m_SignalNotesChanged();

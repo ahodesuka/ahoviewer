@@ -6,7 +6,7 @@
 
 namespace AhoViewer
 {
-    template <typename T>
+    template<typename T>
     class TSQueue
     {
     public:
@@ -20,7 +20,7 @@ namespace AhoViewer
             std::scoped_lock lock{ m_Mutex };
             m_Queue.push(std::move(v));
         }
-        template <typename... Args>
+        template<typename... Args>
         void emplace(Args&&... v)
         {
             std::scoped_lock lock{ m_Mutex };
@@ -38,7 +38,8 @@ namespace AhoViewer
         void clear()
         {
             std::scoped_lock lock{ m_Mutex };
-            while (!m_Queue.empty()) m_Queue.pop();
+            while (!m_Queue.empty())
+                m_Queue.pop();
         }
         bool empty() const
         {

@@ -1,39 +1,39 @@
+#include "imagelist.h"
+
 #include <numeric>
 #include <thread>
-
-#include "imagelist.h"
 using namespace AhoViewer;
 
 #include "booru/image.h"
 #include "naturalsort.h"
 #include "settings.h"
 
-ImageList::ImageList(Widget *const w)
-  : m_Widget(w),
-    m_ScrollPos(-1, -1, ZoomMode::AUTO_FIT),
-    m_ThumbnailCancel(Gio::Cancellable::create()),
-    m_CacheCancel(Gio::Cancellable::create())
+ImageList::ImageList(Widget* const w)
+    : m_Widget(w),
+      m_ScrollPos(-1, -1, ZoomMode::AUTO_FIT),
+      m_ThumbnailCancel(Gio::Cancellable::create()),
+      m_CacheCancel(Gio::Cancellable::create())
 {
     // Sorts indices based on how close they are to m_Index
-    m_IndexSort = [=](size_t a, size_t b)
-    {
+    m_IndexSort = [=](size_t a, size_t b) {
         size_t adiff = std::abs(static_cast<int>(a - m_Index)),
                bdiff = std::abs(static_cast<int>(b - m_Index));
         return adiff == bdiff ? a > b : adiff < bdiff;
     };
 
     m_Widget->signal_selected_changed().connect(
-            sigc::bind(sigc::mem_fun(*this, &ImageList::set_current), true, false));
+        sigc::bind(sigc::mem_fun(*this, &ImageList::set_current), true, false));
 
-    m_ThumbnailLoadedConn = m_SignalThumbnailLoaded.connect(sigc::mem_fun(*this, &ImageList::on_thumbnail_loaded));
+    m_ThumbnailLoadedConn =
+        m_SignalThumbnailLoaded.connect(sigc::mem_fun(*this, &ImageList::on_thumbnail_loaded));
 
-    m_CacheThread = std::thread([&]()
-    {
+    m_CacheThread = std::thread([&]() {
         while (!m_CacheStop)
         {
             {
                 std::unique_lock<std::mutex> lock(m_CacheMutex);
-                m_CacheCond.wait(lock, [&]() { return !m_CacheQueue.empty() || m_CacheCancel->is_cancelled(); });
+                m_CacheCond.wait(
+                    lock, [&]() { return !m_CacheQueue.empty() || m_CacheCancel->is_cancelled(); });
             }
 
             std::shared_ptr<Image> img = nullptr;
@@ -63,24 +63,24 @@ void ImageList::clear()
 
 // Creates a local image list from a given file (archive/image) or direcotry.
 // The parameter index is used when reopening an archive at a given index.
-bool ImageList::load(const std::string path, std::string &error, int index)
+bool ImageList::load(const std::string path, std::string& error, int index)
 {
     std::unique_ptr<Archive> archive = nullptr;
-    std::string dirPath;
+    std::string dir_path;
 
     if (Glib::file_test(path, Glib::FILE_TEST_EXISTS))
     {
         if (Glib::file_test(path, Glib::FILE_TEST_IS_DIR))
         {
-            dirPath = path;
+            dir_path = path;
         }
         else if (Image::is_valid(path))
         {
-            dirPath = Glib::path_get_dirname(path);
+            dir_path = Glib::path_get_dirname(path);
         }
         else if ((archive = Archive::create(path)))
         {
-            dirPath = archive->get_extracted_path();
+            dir_path = archive->get_extracted_path();
         }
         else
         {
@@ -95,13 +95,13 @@ bool ImageList::load(const std::string path, std::string &error, int index)
     }
 
     std::vector<std::string> entries =
-        archive ? archive->get_entries(Archive::IMAGES) : get_entries<Image>(dirPath);
+        archive ? archive->get_entries(Archive::IMAGES) : get_entries<Image>(dir_path);
 
     // No valid images in this directory
     if (entries.empty())
     {
         error = "No valid image files found in '" +
-            Glib::path_get_basename(archive ? archive->get_path() : dirPath.c_str()) + "'.";
+                Glib::path_get_basename(archive ? archive->get_path() : dir_path.c_str()) + "'.";
         return false;
     }
 
@@ -113,30 +113,31 @@ bool ImageList::load(const std::string path, std::string &error, int index)
 
     if (archive)
     {
-        m_Archive = std::move(archive);
+        m_Archive        = std::move(archive);
         m_ArchiveEntries = get_entries<Archive>(Glib::path_get_dirname(m_Archive->get_path()));
         std::sort(m_ArchiveEntries.begin(), m_ArchiveEntries.end(), NaturalSort());
     }
     else
     {
-        Glib::RefPtr<Gio::File> dir = Gio::File::create_for_path(dirPath);
-        m_FileMonitor = dir->monitor_directory();
-        m_FileMonitor->signal_changed().connect(sigc::mem_fun(*this, &ImageList::on_directory_changed));
+        Glib::RefPtr<Gio::File> dir = Gio::File::create_for_path(dir_path);
+        m_FileMonitor               = dir->monitor_directory();
+        m_FileMonitor->signal_changed().connect(
+            sigc::mem_fun(*this, &ImageList::on_directory_changed));
     }
 
     std::sort(entries.begin(), entries.end(), NaturalSort());
 
-    if (path != dirPath && !m_Archive)
+    if (path != dir_path && !m_Archive)
     {
-        std::vector<std::string>::iterator iter = std::find(entries.begin(), entries.end(), path);
-        index = iter == entries.end() ? 0 : iter - entries.begin();
+        auto iter = std::find(entries.begin(), entries.end(), path);
+        index     = iter == entries.end() ? 0 : iter - entries.begin();
     }
     else if (index == -1)
     {
         index = entries.size() - 1;
     }
 
-    for (const std::string &e : entries)
+    for (const std::string& e : entries)
     {
         std::shared_ptr<Image> img;
         if (m_Archive)
@@ -178,8 +179,9 @@ bool ImageList::can_go_next() const
     if (m_Index + 1 < m_Images.size())
         return true;
     else if (m_Archive && Settings.get_bool("AutoOpenArchive"))
-        return std::find(m_ArchiveEntries.begin(), m_ArchiveEntries.end(),
-                m_Archive->get_path()) - m_ArchiveEntries.begin() < static_cast<long>(m_ArchiveEntries.size() - 1);
+        return std::find(m_ArchiveEntries.begin(), m_ArchiveEntries.end(), m_Archive->get_path()) -
+                   m_ArchiveEntries.begin() <
+               static_cast<long>(m_ArchiveEntries.size() - 1);
 
     return false;
 }
@@ -189,8 +191,9 @@ bool ImageList::can_go_previous() const
     if (m_Index > 0)
         return true;
     else if (m_Archive && Settings.get_bool("AutoOpenArchive"))
-        return std::find(m_ArchiveEntries.begin(), m_ArchiveEntries.end(),
-                m_Archive->get_path()) - m_ArchiveEntries.begin() > 0;
+        return std::find(m_ArchiveEntries.begin(), m_ArchiveEntries.end(), m_Archive->get_path()) -
+                   m_ArchiveEntries.begin() >
+               0;
 
     return false;
 }
@@ -201,7 +204,7 @@ void ImageList::on_cache_size_changed()
         update_cache();
 }
 
-void ImageList::set_current(const size_t index, const bool fromWidget, const bool force)
+void ImageList::set_current(const size_t index, const bool from_widget, const bool force)
 {
     if (index == m_Index && !force)
         return;
@@ -216,7 +219,7 @@ void ImageList::set_current(const size_t index, const bool fromWidget, const boo
         m_ThumbnailThread = std::thread(sigc::mem_fun(*this, &ImageList::load_thumbnails));
     }
 
-    if (!fromWidget)
+    if (!from_widget)
         m_Widget->set_selected(m_Index);
 }
 
@@ -236,8 +239,7 @@ void ImageList::load_thumbnails()
         // Only load thumbnails that haven't been already
         auto it = m_Widget->m_ListStore->get_iter(std::to_string(i));
         if (!it || !it->get_value(m_Widget->m_Columns.pixbuf))
-            m_ThreadPool.push([ &, i ]()
-            {
+            m_ThreadPool.push([&, i]() {
                 Glib::RefPtr<Gdk::Pixbuf> thumb = m_Images[i]->get_thumbnail(m_ThumbnailCancel);
 
                 if (!m_ThumbnailCancel->is_cancelled())
@@ -286,12 +288,12 @@ void ImageList::cancel_thumbnail_thread()
 
 // Returns an unsorted vector of the paths to valid T's.
 // T must have a static method ::is_valid_extension, ie Image and Archive
-template <typename T>
-std::vector<std::string> ImageList::get_entries(const std::string &path) const
+template<typename T>
+std::vector<std::string> ImageList::get_entries(const std::string& path) const
 {
     Glib::Dir dir(path);
     std::vector<std::string> entries(dir.begin(), dir.end());
-    std::vector<std::string>::iterator i = entries.begin();
+    auto i = entries.begin();
 
     while (i != entries.end())
     {
@@ -322,14 +324,17 @@ void ImageList::on_thumbnail_loaded()
         m_SignalThumbnailsLoaded();
 }
 
-void ImageList::on_directory_changed(const Glib::RefPtr<Gio::File> &file,
+void ImageList::on_directory_changed(const Glib::RefPtr<Gio::File>& file,
                                      const Glib::RefPtr<Gio::File>&,
                                      Gio::FileMonitorEvent event)
 {
-    if (!file) return;
+    if (!file)
+        return;
 
     ImageVector::iterator it;
-    auto comp = [ file ](const std::shared_ptr<Image> &i) { return i->get_path() == file->get_path(); };
+    auto comp = [file](const std::shared_ptr<Image>& i) {
+        return i->get_path() == file->get_path();
+    };
 
     if (event == Gio::FILE_MONITOR_EVENT_DELETED)
     {
@@ -373,7 +378,7 @@ void ImageList::on_directory_changed(const Glib::RefPtr<Gio::File> &file,
     // and the file was invalid while still being written
     else if ((event == Gio::FILE_MONITOR_EVENT_CREATED ||
               event == Gio::FILE_MONITOR_EVENT_CHANGES_DONE_HINT) &&
-            Image::is_valid(file->get_path()))
+             Image::is_valid(file->get_path()))
     {
         // Make sure the image wasn't already added
         if (event == Gio::FILE_MONITOR_EVENT_CHANGES_DONE_HINT &&
@@ -381,7 +386,7 @@ void ImageList::on_directory_changed(const Glib::RefPtr<Gio::File> &file,
             return;
 
         std::shared_ptr<Image> img = std::make_shared<Image>(file->get_path());
-        it = std::lower_bound(m_Images.begin(), m_Images.end(), img, NaturalSort());
+        it           = std::lower_bound(m_Images.begin(), m_Images.end(), img, NaturalSort());
         size_t index = it - m_Images.begin();
 
         if (index <= m_Index)
@@ -403,8 +408,9 @@ void ImageList::set_current_relative(const int d)
     }
     else if (m_Archive && Settings.get_bool("AutoOpenArchive"))
     {
-        size_t i = std::find(m_ArchiveEntries.begin(), m_ArchiveEntries.end(),
-                        m_Archive->get_path()) - m_ArchiveEntries.begin();
+        size_t i =
+            std::find(m_ArchiveEntries.begin(), m_ArchiveEntries.end(), m_Archive->get_path()) -
+            m_ArchiveEntries.begin();
 
         if ((d > 0 && i < m_ArchiveEntries.size() - 1) || (d < 0 && i > 0))
         {
@@ -430,8 +436,8 @@ void ImageList::update_cache()
         auto tmp = cache;
         std::sort(m_Cache.begin(), m_Cache.end());
         std::sort(tmp.begin(), tmp.end());
-        std::set_difference(m_Cache.begin(), m_Cache.end(),
-                            tmp.begin(), tmp.end(), std::back_inserter(diff));
+        std::set_difference(
+            m_Cache.begin(), m_Cache.end(), tmp.begin(), tmp.end(), std::back_inserter(diff));
     }
 
     cancel_cache();

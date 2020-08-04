@@ -1,7 +1,7 @@
-#include <glibmm/i18n.h>
-#include <gdk/gdkkeysyms-compat.h>
-
 #include "siteeditor.h"
+
+#include <gdk/gdkkeysyms-compat.h>
+#include <glibmm/i18n.h>
 using namespace AhoViewer;
 using namespace AhoViewer::Booru;
 
@@ -9,13 +9,13 @@ using namespace AhoViewer::Booru;
 #include "settings.h"
 #include "util.h"
 
-SiteEditor::SiteEditor(BaseObjectType *cobj, const Glib::RefPtr<Gtk::Builder> &bldr)
-  : Gtk::TreeView(cobj),
-    m_Model(Gtk::ListStore::create(m_Columns)),
-    m_NameColumn(Gtk::manage(new Gtk::TreeView::Column(_("Name"), m_Columns.name))),
-    m_UrlColumn(Gtk::manage(new Gtk::TreeView::Column(_("Url"), m_Columns.url))),
-    m_SampleColumn(Gtk::manage(new Gtk::TreeView::Column(_("Samples"), m_Columns.samples))),
-    m_Sites(Settings.get_sites())
+SiteEditor::SiteEditor(BaseObjectType* cobj, const Glib::RefPtr<Gtk::Builder>& bldr)
+    : Gtk::TreeView(cobj),
+      m_Model(Gtk::ListStore::create(m_Columns)),
+      m_NameColumn(Gtk::manage(new Gtk::TreeView::Column(_("Name"), m_Columns.name))),
+      m_UrlColumn(Gtk::manage(new Gtk::TreeView::Column(_("Url"), m_Columns.url))),
+      m_SampleColumn(Gtk::manage(new Gtk::TreeView::Column(_("Samples"), m_Columns.samples))),
+      m_Sites(Settings.get_sites())
 {
     bldr->get_widget("BooruRegisterLinkButton", m_RegisterButton);
     bldr->get_widget("BooruUsernameEntry", m_UsernameEntry);
@@ -24,75 +24,80 @@ SiteEditor::SiteEditor(BaseObjectType *cobj, const Glib::RefPtr<Gtk::Builder> &b
 
     m_SignalSiteChecked.connect(sigc::mem_fun(*this, &SiteEditor::on_site_checked));
 
-    for (const std::shared_ptr<Site> &s : m_Sites)
+    for (const std::shared_ptr<Site>& s : m_Sites)
     {
         Gtk::TreeIter iter{ m_Model->append() };
         iter->set_value(m_Columns.icon, s->get_icon_pixbuf());
-        s->signal_icon_downloaded().connect([ &, iter, s ]()
-                { iter->set_value(m_Columns.icon, s->get_icon_pixbuf()); });
+        s->signal_icon_downloaded().connect(
+            [&, iter, s]() { iter->set_value(m_Columns.icon, s->get_icon_pixbuf()); });
         iter->set_value(m_Columns.name, s->get_name());
         iter->set_value(m_Columns.url, s->get_url());
         iter->set_value(m_Columns.samples, s->use_samples());
         iter->set_value(m_Columns.site, s);
     }
 
-    try {
-        m_ErrorPixbuf = Gtk::IconTheme::get_default()->load_icon("edit-delete",
-            Gtk::ICON_SIZE_MENU, Gtk::ICON_LOOKUP_USE_BUILTIN | Gtk::ICON_LOOKUP_GENERIC_FALLBACK);
-    // TODO: Capture and print something useful
-    } catch (...) { }
+    try
+    {
+        m_ErrorPixbuf = Gtk::IconTheme::get_default()->load_icon(
+            "edit-delete",
+            Gtk::ICON_SIZE_MENU,
+            Gtk::ICON_LOOKUP_USE_BUILTIN | Gtk::ICON_LOOKUP_GENERIC_FALLBACK);
+        // TODO: Capture and print something useful
+    }
+    catch (...)
+    {
+    }
 
-    CellRendererIcon *iconRenderer{ Gtk::manage(new CellRendererIcon(this)) };
-    iconRenderer->property_xpad() = 2;
-    iconRenderer->property_ypad() = 2;
-    append_column("", *iconRenderer);
-    get_column(0)->add_attribute(iconRenderer->property_loading(), m_Columns.loading);
-    get_column(0)->add_attribute(iconRenderer->property_pulse(), m_Columns.pulse);
-    get_column(0)->add_attribute(iconRenderer->property_pixbuf(), m_Columns.icon);
+    CellRendererIcon* icon_renderer{ Gtk::manage(new CellRendererIcon(this)) };
+    icon_renderer->property_xpad() = 2;
+    icon_renderer->property_ypad() = 2;
+    append_column("", *icon_renderer);
+    get_column(0)->add_attribute(icon_renderer->property_loading(), m_Columns.loading);
+    get_column(0)->add_attribute(icon_renderer->property_pulse(), m_Columns.pulse);
+    get_column(0)->add_attribute(icon_renderer->property_pixbuf(), m_Columns.icon);
 
-    Gtk::CellRendererText *textRenderer{ nullptr };
+    Gtk::CellRendererText* text_renderer{ nullptr };
 
-    textRenderer = static_cast<Gtk::CellRendererText*>(m_NameColumn->get_first_cell());
-    textRenderer->property_editable() = true;
-    textRenderer->signal_edited().connect(sigc::mem_fun(*this, &SiteEditor::on_name_edited));
+    text_renderer = static_cast<Gtk::CellRendererText*>(m_NameColumn->get_first_cell());
+    text_renderer->property_editable() = true;
+    text_renderer->signal_edited().connect(sigc::mem_fun(*this, &SiteEditor::on_name_edited));
     append_column(*m_NameColumn);
 
-    textRenderer = static_cast<Gtk::CellRendererText*>(m_UrlColumn->get_first_cell());
-    textRenderer->property_editable() = true;
-    textRenderer->signal_edited().connect(sigc::mem_fun(*this, &SiteEditor::on_url_edited));
+    text_renderer = static_cast<Gtk::CellRendererText*>(m_UrlColumn->get_first_cell());
+    text_renderer->property_editable() = true;
+    text_renderer->signal_edited().connect(sigc::mem_fun(*this, &SiteEditor::on_url_edited));
     m_UrlColumn->set_expand(true);
     append_column(*m_UrlColumn);
 
-    Gtk::CellRendererToggle *toggleRenderer = static_cast<Gtk::CellRendererToggle*>(m_SampleColumn->get_first_cell());
-    toggleRenderer->signal_toggled().connect(sigc::mem_fun(*this, &SiteEditor::on_samples_toggled));
-    toggleRenderer->set_activatable(true);
+    auto* toggle_renderer = static_cast<Gtk::CellRendererToggle*>(m_SampleColumn->get_first_cell());
+    toggle_renderer->signal_toggled().connect(
+        sigc::mem_fun(*this, &SiteEditor::on_samples_toggled));
+    toggle_renderer->set_activatable(true);
     append_column(*m_SampleColumn);
 
     set_model(m_Model);
     get_selection()->select(m_Model->children().begin());
 
-    Gtk::ToolButton *toolButton{ nullptr };
-    bldr->get_widget("DeleteSiteButton", toolButton);
-    toolButton->signal_clicked().connect(sigc::mem_fun(*this, &SiteEditor::delete_site));
+    Gtk::ToolButton* tool_button{ nullptr };
+    bldr->get_widget("DeleteSiteButton", tool_button);
+    tool_button->signal_clicked().connect(sigc::mem_fun(*this, &SiteEditor::delete_site));
 
-    bldr->get_widget("AddSiteButton", toolButton);
-    toolButton->signal_clicked().connect(sigc::mem_fun(*this, &SiteEditor::add_row));
+    bldr->get_widget("AddSiteButton", tool_button);
+    tool_button->signal_clicked().connect(sigc::mem_fun(*this, &SiteEditor::add_row));
 
     m_UsernameConn = m_UsernameEntry->signal_changed().connect(
-            sigc::mem_fun(*this, &SiteEditor::on_username_edited));
+        sigc::mem_fun(*this, &SiteEditor::on_username_edited));
     m_PasswordConn = m_PasswordEntry->signal_changed().connect(
-            sigc::mem_fun(*this, &SiteEditor::on_password_edited));
+        sigc::mem_fun(*this, &SiteEditor::on_password_edited));
 
 #ifdef HAVE_LIBSECRET
     // Make sure the initially selected site's password gets set in the entry once it's loaded
-    const std::shared_ptr<Site> &s{ get_selection()->get_selected()->get_value(m_Columns.site) };
+    const std::shared_ptr<Site>& s{ get_selection()->get_selected()->get_value(m_Columns.site) };
     if (s)
-        s->signal_password_lookup().connect([ &, s ]()
-        {
+        s->signal_password_lookup().connect([&, s]() {
             m_PasswordConn.block();
             m_PasswordEntry->set_text(s->get_password());
             m_PasswordConn.unblock();
-
         });
 #endif // HAVE_LIBSECRET
 
@@ -104,10 +109,7 @@ SiteEditor::SiteEditor(BaseObjectType *cobj, const Glib::RefPtr<Gtk::Builder> &b
     // Set a flag to let the on_row_changed signal handler know that the change
     // is from a DND'ing
     m_RowInsertedConn = m_Model->signal_row_inserted().connect(
-        [&](const Gtk::TreePath&, const Gtk::TreeIter &iter)
-        {
-            m_LastAddFromDND = true;
-        });
+        [&](const Gtk::TreePath&, const Gtk::TreeIter& iter) { m_LastAddFromDND = true; });
     m_Model->signal_row_changed().connect(sigc::mem_fun(*this, &SiteEditor::on_row_changed));
 }
 
@@ -117,10 +119,10 @@ SiteEditor::~SiteEditor()
         m_SiteCheckThread.join();
 }
 
-bool SiteEditor::on_key_release_event(GdkEventKey *e)
+bool SiteEditor::on_key_release_event(GdkEventKey* e)
 {
-    if (e->keyval == GDK_Return || e->keyval == GDK_ISO_Enter
-     || e->keyval == GDK_KP_Enter || e->keyval == GDK_Tab)
+    if (e->keyval == GDK_Return || e->keyval == GDK_ISO_Enter || e->keyval == GDK_KP_Enter ||
+        e->keyval == GDK_Tab)
     {
         Gtk::TreeIter iter{ get_selection()->get_selected() };
         Gtk::TreePath p(iter);
@@ -190,7 +192,8 @@ void SiteEditor::delete_site()
 
     if (o)
     {
-        m_Sites.erase(std::remove(m_Sites.begin(), m_Sites.end(), o->get_value(m_Columns.site)), m_Sites.end());
+        m_Sites.erase(std::remove(m_Sites.begin(), m_Sites.end(), o->get_value(m_Columns.site)),
+                      m_Sites.end());
         m_SignalEdited();
 
         Gtk::TreeIter n{ m_Model->erase(o) };
@@ -200,7 +203,7 @@ void SiteEditor::delete_site()
     }
 }
 
-void SiteEditor::on_name_edited(const std::string &p, const std::string &text)
+void SiteEditor::on_name_edited(const std::string& p, const std::string& text)
 {
     Gtk::TreePath path{ p };
     Gtk::TreeIter iter{ m_Model->get_iter(path) };
@@ -216,7 +219,7 @@ void SiteEditor::on_name_edited(const std::string &p, const std::string &text)
         add_edit_site(iter);
 }
 
-void SiteEditor::on_url_edited(const std::string &p, const std::string &text)
+void SiteEditor::on_url_edited(const std::string& p, const std::string& text)
 {
     Gtk::TreePath path{ p };
     Gtk::TreeIter iter{ m_Model->get_iter(path) };
@@ -229,7 +232,7 @@ void SiteEditor::on_url_edited(const std::string &p, const std::string &text)
     add_edit_site(iter);
 }
 
-void SiteEditor::on_samples_toggled(const std::string &p)
+void SiteEditor::on_samples_toggled(const std::string& p)
 {
     Gtk::TreePath path{ p };
     Gtk::TreeIter iter{ m_Model->get_iter(path) };
@@ -241,7 +244,7 @@ void SiteEditor::on_samples_toggled(const std::string &p)
         s->set_use_samples(iter->get_value(m_Columns.samples));
 }
 
-void SiteEditor::on_row_changed(const Gtk::TreePath &path, const Gtk::TreeIter &iter)
+void SiteEditor::on_row_changed(const Gtk::TreePath& path, const Gtk::TreeIter& iter)
 {
     if (!m_LastAddFromDND)
         return;
@@ -262,10 +265,11 @@ void SiteEditor::on_row_changed(const Gtk::TreePath &path, const Gtk::TreeIter &
         if (s != s2)
         {
             auto i{ std::find(m_Sites.begin(), m_Sites.end(), s) },
-                 i2{ std::find(m_Sites.begin(), m_Sites.end(), s2) };
+                i2{ std::find(m_Sites.begin(), m_Sites.end(), s2) };
 
             // Insert after s2
-            if (after) ++i2;
+            if (after)
+                ++i2;
 
             if (i < i2)
                 std::rotate(i, i + 1, i2);
@@ -278,26 +282,23 @@ void SiteEditor::on_row_changed(const Gtk::TreePath &path, const Gtk::TreeIter &
             // Calling this directly doesn't work, something handling this
             // signal later one might be setting the selection?  Either way
             // queuing it works fine.
-            Glib::signal_idle().connect_once([ &, iter ](){
-                get_selection()->select(iter);
-            });
+            Glib::signal_idle().connect_once([&, iter]() { get_selection()->select(iter); });
         }
     }
 }
 
-bool SiteEditor::is_name_unique(const Gtk::TreeIter &iter, const std::string &name) const
+bool SiteEditor::is_name_unique(const Gtk::TreeIter& iter, const std::string& name) const
 {
-    for (const Gtk::TreeIter &i : m_Model->children())
+    for (const Gtk::TreeIter& i : m_Model->children())
         if (i->get_value(m_Columns.name) == name && iter != i)
             return false;
 
     return true;
 }
 
-void SiteEditor::add_edit_site(const Gtk::TreeIter &iter)
+void SiteEditor::add_edit_site(const Gtk::TreeIter& iter)
 {
-    std::string name{ iter->get_value(m_Columns.name) },
-                 url{ iter->get_value(m_Columns.url) };
+    std::string name{ iter->get_value(m_Columns.name) }, url{ iter->get_value(m_Columns.url) };
 
     if (name.empty() || url.empty())
     {
@@ -310,8 +311,8 @@ void SiteEditor::add_edit_site(const Gtk::TreeIter &iter)
 
     m_SiteCheckIter = iter;
 
-    std::vector<std::shared_ptr<Site>>::iterator i{
-        std::find(m_Sites.begin(), m_Sites.end(), iter->get_value(m_Columns.site)) };
+    std::vector<std::shared_ptr<Site>>::iterator i{ std::find(
+        m_Sites.begin(), m_Sites.end(), iter->get_value(m_Columns.site)) };
     std::shared_ptr<Site> site{ i != m_Sites.end() ? *i : nullptr };
 
     // editting
@@ -328,8 +329,7 @@ void SiteEditor::add_edit_site(const Gtk::TreeIter &iter)
         m_SiteCheckEdit = true;
         m_SiteCheckSite = site;
         m_SiteCheckIter->set_value(m_Columns.loading, true);
-        m_SiteCheckThread = std::thread([ &, name, url ]()
-        {
+        m_SiteCheckThread = std::thread([&, name, url]() {
             m_SiteCheckSite->set_name(name);
             m_SiteCheckEditSuccess = m_SiteCheckSite->set_url(url);
 
@@ -343,8 +343,7 @@ void SiteEditor::add_edit_site(const Gtk::TreeIter &iter)
     {
         m_SiteCheckEdit = false;
         m_SiteCheckIter->set_value(m_Columns.loading, true);
-        m_SiteCheckThread = std::thread([ &, name, url ]()
-        {
+        m_SiteCheckThread = std::thread([&, name, url]() {
             m_SiteCheckSite = Site::create(name, url);
 
             if (m_SiteCheckSite)
@@ -384,12 +383,14 @@ void SiteEditor::on_site_checked()
 
 void SiteEditor::on_username_edited()
 {
-    const std::shared_ptr<Site> &s{ get_selection()->get_selected()->get_value(m_Columns.site) };
-    if (s) s->set_username(m_UsernameEntry->get_text());
+    const std::shared_ptr<Site>& s{ get_selection()->get_selected()->get_value(m_Columns.site) };
+    if (s)
+        s->set_username(m_UsernameEntry->get_text());
 }
 
 void SiteEditor::on_password_edited()
 {
-    const std::shared_ptr<Site> &s{ get_selection()->get_selected()->get_value(m_Columns.site) };
-    if (s) s->set_password(m_PasswordEntry->get_text());
+    const std::shared_ptr<Site>& s{ get_selection()->get_selected()->get_value(m_Columns.site) };
+    if (s)
+        s->set_password(m_PasswordEntry->get_text());
 }

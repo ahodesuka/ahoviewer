@@ -15,10 +15,10 @@ using namespace AhoViewer;
 #include <unrar/dll.hpp>
 #endif
 
-std::wstring utf8_to_utf16(const std::string &s)
+std::wstring utf8_to_utf16(const std::string& s)
 {
     std::wstring r;
-    wchar_t *g = reinterpret_cast<wchar_t*>(g_utf8_to_utf16(s.c_str(), -1, NULL, NULL, NULL));
+    auto* g = reinterpret_cast<wchar_t*>(g_utf8_to_utf16(s.c_str(), -1, nullptr, nullptr, nullptr));
 
     if (g)
     {
@@ -28,10 +28,11 @@ std::wstring utf8_to_utf16(const std::string &s)
 
     return r;
 }
-std::string utf16_to_utf8(const std::wstring &s)
+std::string utf16_to_utf8(const std::wstring& s)
 {
     std::string r;
-    gchar *g = g_utf16_to_utf8(reinterpret_cast<const gunichar2*>(s.c_str()), -1, NULL, NULL, NULL);
+    gchar* g = g_utf16_to_utf8(
+        reinterpret_cast<const gunichar2*>(s.c_str()), -1, nullptr, nullptr, nullptr);
 
     if (g)
     {
@@ -42,13 +43,9 @@ std::string utf16_to_utf8(const std::wstring &s)
     return r;
 }
 
-Rar::Rar(const std::string &path, const std::string &exDir)
-  : Archive::Archive(path, exDir)
-{
+Rar::Rar(const std::string& path, const std::string& ex_dir) : Archive::Archive(path, ex_dir) { }
 
-}
-
-bool Rar::extract(const std::string &file) const
+bool Rar::extract(const std::string& file) const
 {
     bool found = false;
     RAROpenArchiveDataEx archive;
@@ -56,11 +53,10 @@ bool Rar::extract(const std::string &file) const
     memset(&archive, 0, sizeof(archive));
 
 #ifdef _WIN32
-    std::wstring wPath  = utf8_to_utf16(m_Path),
-                 wEPath = utf8_to_utf16(m_ExtractedPath);
+    std::wstring wPath = utf8_to_utf16(m_Path), wEPath = utf8_to_utf16(m_ExtractedPath);
     archive.ArcNameW = const_cast<wchar_t*>(wPath.c_str());
 #else
-    archive.ArcName  = const_cast<char*>(m_Path.c_str());
+    archive.ArcName = const_cast<char*>(m_Path.c_str());
 #endif // _WIN32
     archive.OpenMode = RAR_OM_EXTRACT;
 
@@ -80,14 +76,15 @@ bool Rar::extract(const std::string &file) const
 #ifdef _WIN32
                 RARProcessFileW(rar, RAR_EXTRACT, const_cast<wchar_t*>(wEPath.c_str()), NULL);
 #else
-                RARProcessFile(rar, RAR_EXTRACT, const_cast<char*>(m_ExtractedPath.c_str()), NULL);
+                RARProcessFile(
+                    rar, RAR_EXTRACT, const_cast<char*>(m_ExtractedPath.c_str()), nullptr);
 #endif // _WIN32
                 found = true;
                 break;
             }
             else
             {
-                RARProcessFile(rar, RAR_SKIP, NULL, NULL);
+                RARProcessFile(rar, RAR_SKIP, nullptr, nullptr);
             }
         }
 
@@ -110,10 +107,10 @@ std::vector<std::string> Rar::get_entries(const FileType t) const
     memset(&archive, 0, sizeof(archive));
 
 #ifdef _WIN32
-    std::wstring wPath  = utf8_to_utf16(m_Path);
-    archive.ArcNameW = const_cast<wchar_t*>(wPath.c_str());
+    std::wstring wPath = utf8_to_utf16(m_Path);
+    archive.ArcNameW   = const_cast<wchar_t*>(wPath.c_str());
 #else
-    archive.ArcName  = const_cast<char*>(m_Path.c_str());
+    archive.ArcName = const_cast<char*>(m_Path.c_str());
 #endif // _WIN32
 
     archive.OpenMode = RAR_OM_LIST;
@@ -129,11 +126,11 @@ std::vector<std::string> Rar::get_entries(const FileType t) const
 #else
             std::string filename = header.FileName;
 #endif // _WIN32
-            if (((t & IMAGES)  && Image::is_valid_extension(filename)) ||
+            if (((t & IMAGES) && Image::is_valid_extension(filename)) ||
                 ((t & ARCHIVES) && Archive::is_valid_extension(filename)))
                 entries.push_back(std::move(filename));
 
-            RARProcessFile(rar, RAR_SKIP, NULL, NULL);
+            RARProcessFile(rar, RAR_SKIP, nullptr, nullptr);
         }
 
         RARCloseArchive(rar);

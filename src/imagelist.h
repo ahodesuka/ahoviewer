@@ -1,20 +1,23 @@
 #ifndef _IMAGELIST_H_
 #define _IMAGELIST_H_
 
-#include <gtkmm.h>
-#include <memory>
-#include <string>
-#include <vector>
-
 #include "archive/archive.h"
 #include "image.h"
 #include "threadpool.h"
 #include "tsqueue.h"
 #include "util.h"
 
+#include <gtkmm.h>
+#include <memory>
+#include <string>
+#include <vector>
+
 namespace AhoViewer
 {
-    namespace Booru { class ImageList; }
+    namespace Booru
+    {
+        class ImageList;
+    }
     class ImageList : public sigc::trackable
     {
         using ImageVector = std::vector<std::shared_ptr<Image>>;
@@ -28,6 +31,7 @@ namespace AhoViewer
 
         // Used for async thumbnail pixbuf loading
         using PixbufPair = std::pair<size_t, Glib::RefPtr<Gdk::Pixbuf>>;
+
     public:
         // ImageList::Widget {{{
         // This is used by ThumbnailBar and Booru::Page.
@@ -38,9 +42,11 @@ namespace AhoViewer
 
             // When the widget's selected item changes it will emit this signal.
             using SignalSelectedChangedType = sigc::signal<void, const size_t>;
+
         public:
             Widget() : m_ListStore(Gtk::ListStore::create(m_Columns)) { }
             virtual ~Widget() = default;
+
         protected:
             struct ModelColumns : public Gtk::TreeModelColumnRecord
             {
@@ -49,7 +55,7 @@ namespace AhoViewer
             };
 
             virtual void set_selected(const size_t) = 0;
-            virtual void scroll_to_selected() = 0;
+            virtual void scroll_to_selected()       = 0;
 
             virtual void clear()
             {
@@ -57,10 +63,11 @@ namespace AhoViewer
                 m_ListStore->clear();
                 m_CursorConn.unblock();
             }
-            virtual void set_pixbuf(const size_t index, const Glib::RefPtr<Gdk::Pixbuf> &pixbuf)
+            virtual void set_pixbuf(const size_t index, const Glib::RefPtr<Gdk::Pixbuf>& pixbuf)
             {
                 Gtk::TreeIter it = m_ListStore->get_iter(std::to_string(index));
-                if (it) it->set_value(0, pixbuf);
+                if (it)
+                    it->set_value(0, pixbuf);
             }
             void reserve(const size_t s)
             {
@@ -74,28 +81,33 @@ namespace AhoViewer
             Glib::RefPtr<Gtk::ListStore> m_ListStore;
             SignalSelectedChangedType m_SignalSelectedChanged;
             sigc::connection m_CursorConn;
+
         private:
             void erase(const size_t i)
             {
                 Gtk::TreeIter it = m_ListStore->get_iter(std::to_string(i));
-                if (it) m_ListStore->erase(it);
+                if (it)
+                    m_ListStore->erase(it);
             }
-            void insert(const size_t i, const Glib::RefPtr<Gdk::Pixbuf> &pixbuf)
+            void insert(const size_t i, const Glib::RefPtr<Gdk::Pixbuf>& pixbuf)
             {
                 Gtk::TreeIter it = m_ListStore->get_iter(std::to_string(i));
-                it = it ? m_ListStore->insert(it) : m_ListStore->append();
+                it               = it ? m_ListStore->insert(it) : m_ListStore->append();
                 it->set_value(0, pixbuf);
             }
 
-            SignalSelectedChangedType signal_selected_changed() const { return m_SignalSelectedChanged; }
+            SignalSelectedChangedType signal_selected_changed() const
+            {
+                return m_SignalSelectedChanged;
+            }
         };
         // }}}
 
-        ImageList(Widget *const w);
+        ImageList(Widget* const w);
         virtual ~ImageList();
 
         virtual void clear();
-        bool load(const std::string path, std::string &error, int index = 0);
+        bool load(const std::string path, std::string& error, int index = 0);
 
         // Action callbacks {{{
         void go_next();
@@ -115,10 +127,11 @@ namespace AhoViewer
         bool empty() const { return m_Images.empty(); }
         bool from_archive() const { return !!m_Archive; }
 
-        void set_scroll_position(const ScrollPos &s) { m_ScrollPos = s; }
+        void set_scroll_position(const ScrollPos& s) { m_ScrollPos = s; }
         const ScrollPos& get_scroll_position() const { return m_ScrollPos; }
 
-        virtual void set_current(const size_t index, const bool fromWidget = false, const bool force = false);
+        virtual void
+        set_current(const size_t index, const bool fromWidget = false, const bool force = false);
 
         ImageVector::iterator begin() { return m_Images.begin(); }
         ImageVector::iterator end() { return m_Images.end(); }
@@ -131,14 +144,15 @@ namespace AhoViewer
         sigc::signal<void> signal_load_success() const { return m_SignalLoadSuccess; }
         sigc::signal<void> signal_size_changed() const { return m_SignalSizeChanged; }
         sigc::signal<void> signal_thumbnails_loaded() const { return m_SignalThumbnailsLoaded; }
+
     protected:
         virtual void load_thumbnails();
         virtual void cancel_thumbnail_thread();
         void update_cache();
 
-        Widget *const m_Widget;
+        Widget* const m_Widget;
         ImageVector m_Images;
-        size_t m_Index { 0 };
+        size_t m_Index{ 0 };
 
         ScrollPos m_ScrollPos;
 
@@ -149,13 +163,14 @@ namespace AhoViewer
 
         SignalChangedType m_SignalChanged;
         sigc::signal<void> m_SignalCleared;
+
     private:
         void reset();
-        template <typename T>
-        std::vector<std::string> get_entries(const std::string &path) const;
+        template<typename T>
+        std::vector<std::string> get_entries(const std::string& path) const;
 
         void on_thumbnail_loaded();
-        void on_directory_changed(const Glib::RefPtr<Gio::File> &file,
+        void on_directory_changed(const Glib::RefPtr<Gio::File>& file,
                                   const Glib::RefPtr<Gio::File>&,
                                   Gio::FileMonitorEvent event);
 
@@ -171,7 +186,7 @@ namespace AhoViewer
         std::function<int(size_t, size_t)> m_IndexSort;
 
         Glib::RefPtr<Gio::Cancellable> m_CacheCancel;
-        std::atomic<bool> m_CacheStop { false };
+        std::atomic<bool> m_CacheStop{ false };
         std::condition_variable m_CacheCond;
         std::mutex m_CacheMutex, m_ThumbnailMutex;
         std::thread m_CacheThread;
@@ -181,10 +196,8 @@ namespace AhoViewer
 
         sigc::connection m_ThumbnailLoadedConn;
 
-        SignalArchiveErrorType      m_SignalArchiveError;
-        sigc::signal<void>          m_SignalLoadSuccess,
-                                    m_SignalSizeChanged,
-                                    m_SignalThumbnailsLoaded;
+        SignalArchiveErrorType m_SignalArchiveError;
+        sigc::signal<void> m_SignalLoadSuccess, m_SignalSizeChanged, m_SignalThumbnailsLoaded;
     };
 }
 
