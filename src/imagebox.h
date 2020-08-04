@@ -20,7 +20,7 @@ namespace AhoViewer
     {
     public:
         ImageBox(BaseObjectType*, const Glib::RefPtr<Gtk::Builder>&);
-        virtual ~ImageBox() override;
+        ~ImageBox() override;
 
         void queue_draw_image(const bool scroll = false);
         void set_image(const std::shared_ptr<Image>& image);
@@ -62,11 +62,11 @@ namespace AhoViewer
         void on_scroll_right();
         // }}}
     protected:
-        virtual void on_realize() override;
-        virtual bool on_button_press_event(GdkEventButton* e) override;
-        virtual bool on_button_release_event(GdkEventButton* e) override;
-        virtual bool on_motion_notify_event(GdkEventMotion* e) override;
-        virtual bool on_scroll_event(GdkEventScroll* e) override;
+        void on_realize() override;
+        bool on_button_press_event(GdkEventButton* e) override;
+        bool on_button_release_event(GdkEventButton* e) override;
+        bool on_motion_notify_event(GdkEventMotion* e) override;
+        bool on_scroll_event(GdkEventScroll* e) override;
 
     private:
         void get_scale_and_position(int& w, int& h, int& x, int& y);
@@ -74,8 +74,8 @@ namespace AhoViewer
         bool update_animation();
         void scroll(const int x,
                     const int y,
-                    const bool panning       = false,
-                    const bool fromSlideshow = false);
+                    const bool panning        = false,
+                    const bool from_slideshow = false);
         void smooth_scroll(const int, const Glib::RefPtr<Gtk::Adjustment>&);
         bool update_smooth_scroll();
         void zoom(const uint32_t percent);

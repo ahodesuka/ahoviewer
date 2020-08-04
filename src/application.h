@@ -18,10 +18,9 @@ namespace AhoViewer
     protected:
         Application();
 
-        virtual void on_open(const std::vector<Glib::RefPtr<Gio::File>>& f,
-                             const Glib::ustring&) override;
-        virtual void on_startup() override;
-        virtual void on_activate() override;
+        void on_open(const std::vector<Glib::RefPtr<Gio::File>>& f, const Glib::ustring&) override;
+        void on_startup() override;
+        void on_activate() override;
 
     private:
         void add_window(MainWindow* w);

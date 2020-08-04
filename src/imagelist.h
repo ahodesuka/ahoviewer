@@ -131,7 +131,7 @@ namespace AhoViewer
         const ScrollPos& get_scroll_position() const { return m_ScrollPos; }
 
         virtual void
-        set_current(const size_t index, const bool fromWidget = false, const bool force = false);
+        set_current(const size_t index, const bool from_widget = false, const bool force = false);
 
         ImageVector::iterator begin() { return m_Images.begin(); }
         ImageVector::iterator end() { return m_Images.end(); }

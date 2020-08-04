@@ -6,7 +6,7 @@ using namespace AhoViewer;
 ImageBoxNote::ImageBoxNote(const Note& note)
     : Glib::ObjectBase{ "ImageBoxNote" },
       Gtk::Widget{},
-      m_refCssProvider{ Gtk::CssProvider::create() },
+      m_CssProvider{ Gtk::CssProvider::create() },
       m_Note{ note },
       m_Popover{ *this }
 {
@@ -16,8 +16,8 @@ ImageBoxNote::ImageBoxNote(const Note& note)
     set_events(Gdk::ENTER_NOTIFY_MASK | Gdk::LEAVE_NOTIFY_MASK);
 
     auto style_context = get_style_context();
-    style_context->add_provider(m_refCssProvider, GTK_STYLE_PROVIDER_PRIORITY_APPLICATION);
-    m_refCssProvider->load_from_resource("/ui/css/note.css");
+    style_context->add_provider(m_CssProvider, GTK_STYLE_PROVIDER_PRIORITY_APPLICATION);
+    m_CssProvider->load_from_resource("/ui/css/note.css");
 
     auto label{ Gtk::manage(new Gtk::Label{ m_Note.body }) };
     label->set_line_wrap(true);
@@ -78,11 +78,11 @@ void ImageBoxNote::on_size_allocate(Gtk::Allocation& allocation)
     // Use the offered allocation for this container:
     set_allocation(allocation);
 
-    if (m_refGdkWindow)
-        m_refGdkWindow->move_resize(allocation.get_x(),
-                                    allocation.get_y(),
-                                    allocation.get_width(),
-                                    allocation.get_height());
+    if (m_GdkWindow)
+        m_GdkWindow->move_resize(allocation.get_x(),
+                                 allocation.get_y(),
+                                 allocation.get_width(),
+                                 allocation.get_height());
 }
 
 void ImageBoxNote::on_realize()
@@ -91,7 +91,7 @@ void ImageBoxNote::on_realize()
     // It's intended only for widgets that set_has_window(false).
     set_realized();
 
-    if (!m_refGdkWindow)
+    if (!m_GdkWindow)
     {
         // Create the GdkWindow:
         GdkWindowAttr attributes;
@@ -109,17 +109,17 @@ void ImageBoxNote::on_realize()
         attributes.window_type = GDK_WINDOW_CHILD;
         attributes.wclass      = GDK_INPUT_OUTPUT;
 
-        m_refGdkWindow = Gdk::Window::create(get_parent_window(), &attributes, GDK_WA_X | GDK_WA_Y);
-        set_window(m_refGdkWindow);
+        m_GdkWindow = Gdk::Window::create(get_parent_window(), &attributes, GDK_WA_X | GDK_WA_Y);
+        set_window(m_GdkWindow);
 
         // make the widget receive expose events
-        m_refGdkWindow->set_user_data(gobj());
+        m_GdkWindow->set_user_data(gobj());
     }
 }
 
 void ImageBoxNote::on_unrealize()
 {
-    m_refGdkWindow.reset();
+    m_GdkWindow.reset();
     Gtk::Widget::on_unrealize();
 }
 

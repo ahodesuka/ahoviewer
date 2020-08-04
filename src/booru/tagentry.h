@@ -12,12 +12,12 @@ namespace AhoViewer
         {
         public:
             TagEntry(BaseObjectType* cobj, const Glib::RefPtr<Gtk::Builder>& bldr);
-            virtual ~TagEntry() override = default;
+            ~TagEntry() override = default;
 
             void set_tags(const std::set<std::string>& tags);
 
         protected:
-            virtual void on_grab_focus() override;
+            void on_grab_focus() override;
 
         private:
             struct ModelColumns : public Gtk::TreeModelColumnRecord

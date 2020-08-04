@@ -38,7 +38,7 @@ Image::Image(const std::string& path,
 {
     m_ThumbnailPath = thumb_path;
 
-    if (!m_isWebM)
+    if (!m_IsWebM)
         m_Curler.signal_write().connect(sigc::mem_fun(*this, &Image::on_write));
 
     m_ThumbnailCurler.signal_finished().connect([&]() { m_ThumbnailCond.notify_one(); });
@@ -63,7 +63,7 @@ Image::~Image()
 // or if the pixbuf is being loaded from the saved local file
 bool Image::is_loading() const
 {
-    return (m_isWebM && !Glib::file_test(m_Path, Glib::FILE_TEST_EXISTS)) || m_Curler.is_active() ||
+    return (m_IsWebM && !Glib::file_test(m_Path, Glib::FILE_TEST_EXISTS)) || m_Curler.is_active() ||
            AhoViewer::Image::is_loading();
 }
 
@@ -119,7 +119,7 @@ void Image::load_pixbuf(Glib::RefPtr<Gio::Cancellable> c)
         // This will either start the download and do nothing, or if the
         // download is already started and the pixbuf loader has created a
         // pixbuf set m_Pixbuf to that loader pixbuf
-        else if (!start_download() && !m_isWebM && m_Loader && m_Loader->get_pixbuf())
+        else if (!start_download() && !m_IsWebM && m_Loader && m_Loader->get_pixbuf())
         {
             m_Pixbuf = m_Loader->get_pixbuf();
         }
@@ -183,7 +183,7 @@ bool Image::start_download()
     {
         m_ImageFetcher.add_handle(&m_Curler);
 
-        if (!m_isWebM)
+        if (!m_IsWebM)
         {
             m_Loader = Gdk::PixbufLoader::create();
             m_Loader->signal_area_prepared().connect(
@@ -218,9 +218,9 @@ void Image::on_write(const unsigned char* d, size_t l)
     if (m_Curler.is_cancelled())
         return;
 
-    if (!m_GIFanim && !m_isGIFChecked && m_Curler.get_data_size() >= 4)
+    if (!m_GIFanim && !m_IsGifChecked && m_Curler.get_data_size() >= 4)
     {
-        m_isGIFChecked = true;
+        m_IsGifChecked = true;
         if (is_gif(m_Curler.get_data()))
         {
             m_GIFanim = new gif_animation;

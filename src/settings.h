@@ -60,7 +60,7 @@ namespace AhoViewer
         ZoomMode get_zoom_mode() const;
         void set_zoom_mode(const ZoomMode value);
 
-        const std::string get_booru_path() const { return BooruPath; }
+        const std::string get_booru_path() const { return m_BooruPath; }
 
         void remove(const std::string& key);
 
@@ -81,17 +81,17 @@ namespace AhoViewer
         void load_keybindings();
         void save_sites();
 
-        libconfig::Config Config;
+        libconfig::Config m_Config;
 
-        const std::string ConfigPath, ConfigFilePath, BooruPath, FavoriteTagsPath;
+        const std::string m_ConfigPath, m_ConfigFilePath, m_BooruPath, m_FavoriteTagsPath;
 
-        const std::map<std::string, bool> DefaultBools;
-        const std::map<std::string, int> DefaultInts;
-        const std::map<std::string, std::string> DefaultStrings;
-        const std::vector<SiteTuple> DefaultSites;
-        const std::map<std::string, std::map<std::string, std::string>> DefaultKeybindings;
-        const Booru::Rating DefaultBooruMaxRating{ Booru::Rating::EXPLICIT };
-        const ZoomMode DefaultZoomMode{ ZoomMode::MANUAL };
+        const std::map<std::string, bool> m_DefaultBools;
+        const std::map<std::string, int> m_DefaultInts;
+        const std::map<std::string, std::string> m_DefaultStrings;
+        const std::vector<SiteTuple> m_DefaultSites;
+        const std::map<std::string, std::map<std::string, std::string>> m_DefaultKeybindings;
+        const Booru::Rating m_DefaultBooruMaxRating{ Booru::Rating::EXPLICIT };
+        const ZoomMode m_DefaultZoomMode{ ZoomMode::MANUAL };
 
         std::vector<std::shared_ptr<Booru::Site>> m_Sites;
         std::map<std::string, std::map<std::string, std::string>> m_Keybindings;
@@ -100,7 +100,7 @@ namespace AhoViewer
         template<typename T>
         void set(const std::string& key, const T value, Setting::Type type)
         {
-            set(key, value, type, Config.getRoot());
+            set(key, value, type, m_Config.getRoot());
         }
         template<typename T>
         void set(const std::string& key, const T value, Setting::Type type, Setting& s)

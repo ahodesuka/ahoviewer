@@ -13,12 +13,12 @@ using namespace AhoViewer::Booru;
 SettingsManager AhoViewer::Settings;
 
 SettingsManager::SettingsManager()
-    : ConfigPath(Glib::build_filename(Glib::get_user_config_dir(), PACKAGE)),
-      ConfigFilePath(Glib::build_filename(ConfigPath, PACKAGE ".cfg")),
-      BooruPath(Glib::build_filename(ConfigPath, "booru")),
-      FavoriteTagsPath(Glib::build_filename(ConfigPath, "favorite-tags")),
+    : m_ConfigPath(Glib::build_filename(Glib::get_user_config_dir(), PACKAGE)),
+      m_ConfigFilePath(Glib::build_filename(m_ConfigPath, PACKAGE ".cfg")),
+      m_BooruPath(Glib::build_filename(m_ConfigPath, "booru")),
+      m_FavoriteTagsPath(Glib::build_filename(m_ConfigPath, "favorite-tags")),
       // Defaults {{{
-      DefaultBools({
+      m_DefaultBools({
           { "AutoOpenArchive", true },
           { "MangaMode", true },
           { "RememberLastFile", true },
@@ -39,92 +39,92 @@ SettingsManager::SettingsManager()
           { "RememberWindowSize", true },
           { "RememberWindowPos", true },
       }),
-      DefaultInts({ { "ArchiveIndex", -1 },
-                    { "CacheSize", 2 },
-                    { "SlideshowDelay", 5 },
-                    { "CursorHideDelay", 2 },
-                    { "TagViewPosition", 520 },
-                    { "SelectedBooru", 0 },
-                    { "BooruLimit", 50 },
-                    { "BooruWidth", -1 },
-                    { "Volume", 50 },
-                    { "ScrollPosH", -1 },
-                    { "ScrollPosV", -1 } }),
-      DefaultStrings({
+      m_DefaultInts({ { "ArchiveIndex", -1 },
+                      { "CacheSize", 2 },
+                      { "SlideshowDelay", 5 },
+                      { "CursorHideDelay", 2 },
+                      { "TagViewPosition", 520 },
+                      { "SelectedBooru", 0 },
+                      { "BooruLimit", 50 },
+                      { "BooruWidth", -1 },
+                      { "Volume", 50 },
+                      { "ScrollPosH", -1 },
+                      { "ScrollPosV", -1 } }),
+      m_DefaultStrings({
           { "TitleFormat", "[%i / %c] %f - %p" },
           { "AudioSink", "fakesink" },
       }),
-      DefaultSites({
+      m_DefaultSites({
           std::make_tuple("Danbooru", "https://danbooru.donmai.us", Type::DANBOORU, "", "", 0),
           std::make_tuple("Gelbooru", "https://gelbooru.com", Type::GELBOORU, "", "", 0),
           std::make_tuple("Konachan", "https://konachan.com", Type::MOEBOORU, "", "", 6),
           std::make_tuple("yande.re", "https://yande.re", Type::MOEBOORU, "", "", 0),
           std::make_tuple("Safebooru", "https://safebooru.org", Type::GELBOORU, "", "", 0),
       }),
-      DefaultKeybindings({ { "File",
-                             {
-                                 { "OpenFile", "<Primary>o" },
-                                 { "Preferences", "p" },
-                                 { "Close", "<Primary>w" },
-                                 { "Quit", "<Primary>q" },
-                             } },
-                           { "ViewMode",
-                             {
-                                 { "ToggleMangaMode", "g" },
-                                 { "AutoFitMode", "a" },
-                                 { "FitWidthMode", "w" },
-                                 { "FitHeightMode", "h" },
-                                 { "ManualZoomMode", "m" },
-                             } },
-                           { "UserInterface",
-                             {
-                                 { "ToggleFullscreen", "f" },
-                                 { "ToggleMenuBar", "<Primary>m" },
-                                 { "ToggleStatusBar", "<Primary>b" },
-                                 { "ToggleScrollbars", "<Primary>l" },
-                                 { "ToggleThumbnailBar", "t" },
-                                 { "ToggleBooruBrowser", "b" },
-                                 { "ToggleHideAll", "i" },
-                             } },
-                           { "Zoom",
-                             {
-                                 { "ZoomIn", "<Primary>equal" },
-                                 { "ZoomOut", "<Primary>minus" },
-                                 { "ResetZoom", "<Primary>0" },
-                             } },
-                           { "Navigation",
-                             {
-                                 { "NextImage", "Page_Down" },
-                                 { "PreviousImage", "Page_Up" },
-                                 { "FirstImage", "Home" },
-                                 { "LastImage", "End" },
-                                 { "ToggleSlideshow", "s" },
-                             } },
-                           { "Scroll",
-                             {
-                                 { "ScrollUp", "Up" },
-                                 { "ScrollDown", "Down" },
-                                 { "ScrollLeft", "Left" },
-                                 { "ScrollRight", "Right" },
-                             } },
-                           { "BooruBrowser",
-                             {
-                                 { "NewTab", "<Primary>t" },
-                                 { "SaveImage", "<Primary>s" },
-                                 { "SaveImages", "<Primary><Shift>s" },
-                                 { "ViewPost", "<Primary><Shift>o" },
-                                 { "CopyImageURL", "y" },
-                                 { "CopyImageData", "<Primary><Shift>y" },
-                                 { "CopyPostURL", "<Primary>y" },
-                             } } })
+      m_DefaultKeybindings({ { "File",
+                               {
+                                   { "OpenFile", "<Primary>o" },
+                                   { "Preferences", "p" },
+                                   { "Close", "<Primary>w" },
+                                   { "Quit", "<Primary>q" },
+                               } },
+                             { "ViewMode",
+                               {
+                                   { "ToggleMangaMode", "g" },
+                                   { "AutoFitMode", "a" },
+                                   { "FitWidthMode", "w" },
+                                   { "FitHeightMode", "h" },
+                                   { "ManualZoomMode", "m" },
+                               } },
+                             { "UserInterface",
+                               {
+                                   { "ToggleFullscreen", "f" },
+                                   { "ToggleMenuBar", "<Primary>m" },
+                                   { "ToggleStatusBar", "<Primary>b" },
+                                   { "ToggleScrollbars", "<Primary>l" },
+                                   { "ToggleThumbnailBar", "t" },
+                                   { "ToggleBooruBrowser", "b" },
+                                   { "ToggleHideAll", "i" },
+                               } },
+                             { "Zoom",
+                               {
+                                   { "ZoomIn", "<Primary>equal" },
+                                   { "ZoomOut", "<Primary>minus" },
+                                   { "ResetZoom", "<Primary>0" },
+                               } },
+                             { "Navigation",
+                               {
+                                   { "NextImage", "Page_Down" },
+                                   { "PreviousImage", "Page_Up" },
+                                   { "FirstImage", "Home" },
+                                   { "LastImage", "End" },
+                                   { "ToggleSlideshow", "s" },
+                               } },
+                             { "Scroll",
+                               {
+                                   { "ScrollUp", "Up" },
+                                   { "ScrollDown", "Down" },
+                                   { "ScrollLeft", "Left" },
+                                   { "ScrollRight", "Right" },
+                               } },
+                             { "BooruBrowser",
+                               {
+                                   { "NewTab", "<Primary>t" },
+                                   { "SaveImage", "<Primary>s" },
+                                   { "SaveImages", "<Primary><Shift>s" },
+                                   { "ViewPost", "<Primary><Shift>o" },
+                                   { "CopyImageURL", "y" },
+                                   { "CopyImageData", "<Primary><Shift>y" },
+                                   { "CopyPostURL", "<Primary>y" },
+                               } } })
 // }}}
 {
-    Config.setTabWidth(4);
-    if (Glib::file_test(ConfigFilePath, Glib::FILE_TEST_EXISTS))
+    m_Config.setTabWidth(4);
+    if (Glib::file_test(m_ConfigFilePath, Glib::FILE_TEST_EXISTS))
     {
         try
         {
-            Config.readFile(ConfigFilePath.c_str());
+            m_Config.readFile(m_ConfigFilePath.c_str());
         }
         catch (const libconfig::ParseException& ex)
         {
@@ -132,12 +132,12 @@ SettingsManager::SettingsManager()
         }
     }
 
-    if (!Glib::file_test(BooruPath, Glib::FILE_TEST_EXISTS))
-        g_mkdir_with_parents(BooruPath.c_str(), 0700);
+    if (!Glib::file_test(m_BooruPath, Glib::FILE_TEST_EXISTS))
+        g_mkdir_with_parents(m_BooruPath.c_str(), 0700);
 
-    if (Glib::file_test(FavoriteTagsPath, Glib::FILE_TEST_EXISTS))
+    if (Glib::file_test(m_FavoriteTagsPath, Glib::FILE_TEST_EXISTS))
     {
-        std::ifstream ifs(FavoriteTagsPath);
+        std::ifstream ifs(m_FavoriteTagsPath);
 
         if (ifs)
             std::copy(std::istream_iterator<std::string>(ifs),
@@ -154,7 +154,7 @@ SettingsManager::~SettingsManager()
 
     try
     {
-        Config.writeFile(ConfigFilePath.c_str());
+        m_Config.writeFile(m_ConfigFilePath.c_str());
     }
     catch (const libconfig::FileIOException& ex)
     {
@@ -163,41 +163,41 @@ SettingsManager::~SettingsManager()
 
     if (!m_FavoriteTags.empty())
     {
-        std::ofstream ofs(FavoriteTagsPath);
+        std::ofstream ofs(m_FavoriteTagsPath);
 
         if (ofs)
             std::copy(m_FavoriteTags.begin(),
                       m_FavoriteTags.end(),
                       std::ostream_iterator<std::string>(ofs, "\n"));
     }
-    else if (Glib::file_test(FavoriteTagsPath, Glib::FILE_TEST_EXISTS))
+    else if (Glib::file_test(m_FavoriteTagsPath, Glib::FILE_TEST_EXISTS))
     {
-        g_unlink(FavoriteTagsPath.c_str());
+        g_unlink(m_FavoriteTagsPath.c_str());
     }
 }
 
 bool SettingsManager::get_bool(const std::string& key) const
 {
-    if (Config.exists(key))
-        return Config.lookup(key);
+    if (m_Config.exists(key))
+        return m_Config.lookup(key);
 
-    return DefaultBools.at(key);
+    return m_DefaultBools.at(key);
 }
 
 int SettingsManager::get_int(const std::string& key) const
 {
-    if (Config.exists(key))
-        return Config.lookup(key);
+    if (m_Config.exists(key))
+        return m_Config.lookup(key);
 
-    return DefaultInts.at(key);
+    return m_DefaultInts.at(key);
 }
 
 std::string SettingsManager::get_string(const std::string& key) const
 {
-    if (Config.exists(key))
-        return static_cast<const char*>(Config.lookup(key));
-    else if (DefaultStrings.find(key) != DefaultStrings.end())
-        return DefaultStrings.at(key);
+    if (m_Config.exists(key))
+        return static_cast<const char*>(m_Config.lookup(key));
+    else if (m_DefaultStrings.find(key) != m_DefaultStrings.end())
+        return m_DefaultStrings.at(key);
 
     return "";
 }
@@ -208,9 +208,9 @@ std::vector<std::shared_ptr<Site>>& SettingsManager::get_sites()
     {
         return m_Sites;
     }
-    else if (Config.exists("Sites"))
+    else if (m_Config.exists("Sites"))
     {
-        const Setting& sites = Config.lookup("Sites");
+        const Setting& sites = m_Config.lookup("Sites");
         if (sites.getLength() > 0)
         {
             for (size_t i = 0; i < static_cast<size_t>(sites.getLength()); ++i)
@@ -240,7 +240,7 @@ std::vector<std::shared_ptr<Site>>& SettingsManager::get_sites()
         }
     }
 
-    for (const SiteTuple& s : DefaultSites)
+    for (const SiteTuple& s : m_DefaultSites)
         m_Sites.push_back(Site::create(std::get<0>(s),
                                        std::get<1>(s),
                                        std::get<2>(s),
@@ -253,8 +253,8 @@ std::vector<std::shared_ptr<Site>>& SettingsManager::get_sites()
 
 bool SettingsManager::get_geometry(int& x, int& y, int& w, int& h) const
 {
-    if (Config.lookupValue("Geometry.x", x) && Config.lookupValue("Geometry.y", y) &&
-        Config.lookupValue("Geometry.w", w) && Config.lookupValue("Geometry.h", h))
+    if (m_Config.lookupValue("Geometry.x", x) && m_Config.lookupValue("Geometry.y", y) &&
+        m_Config.lookupValue("Geometry.w", w) && m_Config.lookupValue("Geometry.h", h))
     {
         return true;
     }
@@ -264,10 +264,10 @@ bool SettingsManager::get_geometry(int& x, int& y, int& w, int& h) const
 
 void SettingsManager::set_geometry(const int x, const int y, const int w, const int h)
 {
-    if (!Config.exists("Geometry"))
-        Config.getRoot().add("Geometry", Setting::TypeGroup);
+    if (!m_Config.exists("Geometry"))
+        m_Config.getRoot().add("Geometry", Setting::TypeGroup);
 
-    Setting& geo = Config.lookup("Geometry");
+    Setting& geo = m_Config.lookup("Geometry");
 
     set("x", x, Setting::TypeInt, geo);
     set("y", y, Setting::TypeInt, geo);
@@ -311,10 +311,10 @@ void SettingsManager::set_keybinding(const std::string& group,
                                      const std::string& name,
                                      const std::string& value)
 {
-    if (!Config.exists("Keybindings"))
-        Config.getRoot().add("Keybindings", Setting::TypeGroup);
+    if (!m_Config.exists("Keybindings"))
+        m_Config.getRoot().add("Keybindings", Setting::TypeGroup);
 
-    Setting& keys = Config.lookup("Keybindings");
+    Setting& keys = m_Config.lookup("Keybindings");
 
     if (!keys.exists(group))
         keys.add(group, Setting::TypeGroup);
@@ -325,21 +325,21 @@ void SettingsManager::set_keybinding(const std::string& group,
 
 std::string SettingsManager::reset_keybinding(const std::string& group, const std::string& name)
 {
-    if (Config.exists("Keybindings"))
+    if (m_Config.exists("Keybindings"))
     {
-        Setting& keys = Config.lookup("Keybindings");
+        Setting& keys = m_Config.lookup("Keybindings");
 
         if (keys.exists(group) && keys[group.c_str()].exists(name))
             keys[group.c_str()].remove(name);
     }
 
-    return m_Keybindings[group][name] = DefaultKeybindings.at(group).at(name);
+    return m_Keybindings[group][name] = m_DefaultKeybindings.at(group).at(name);
 }
 
 Gdk::RGBA SettingsManager::get_background_color() const
 {
-    if (Config.exists("BackgroundColor"))
-        return Gdk::RGBA(static_cast<const char*>(Config.lookup("BackgroundColor")));
+    if (m_Config.exists("BackgroundColor"))
+        return Gdk::RGBA(static_cast<const char*>(m_Config.lookup("BackgroundColor")));
 
     return ImageBox::DefaultBGColor;
 }
@@ -351,10 +351,10 @@ void SettingsManager::set_background_color(const Gdk::RGBA& value)
 
 Rating SettingsManager::get_booru_max_rating() const
 {
-    if (Config.exists("BooruMaxRating"))
-        return Rating(static_cast<int>(Config.lookup("BooruMaxRating")));
+    if (m_Config.exists("BooruMaxRating"))
+        return Rating(static_cast<int>(m_Config.lookup("BooruMaxRating")));
 
-    return DefaultBooruMaxRating;
+    return m_DefaultBooruMaxRating;
 }
 
 void SettingsManager::set_booru_max_rating(const Rating value)
@@ -364,10 +364,10 @@ void SettingsManager::set_booru_max_rating(const Rating value)
 
 ZoomMode SettingsManager::get_zoom_mode() const
 {
-    if (Config.exists("ZoomMode"))
-        return ZoomMode(static_cast<const char*>(Config.lookup("ZoomMode"))[0]);
+    if (m_Config.exists("ZoomMode"))
+        return ZoomMode(static_cast<const char*>(m_Config.lookup("ZoomMode"))[0]);
 
-    return DefaultZoomMode;
+    return m_DefaultZoomMode;
 }
 
 void SettingsManager::set_zoom_mode(const ZoomMode value)
@@ -377,17 +377,17 @@ void SettingsManager::set_zoom_mode(const ZoomMode value)
 
 void SettingsManager::remove(const std::string& key)
 {
-    if (Config.exists(key))
-        Config.getRoot().remove(key);
+    if (m_Config.exists(key))
+        m_Config.getRoot().remove(key);
 }
 
 void SettingsManager::load_keybindings()
 {
-    if (Config.exists("Keybindings"))
+    if (m_Config.exists("Keybindings"))
     {
-        Setting& keys = Config.lookup("Keybindings");
+        Setting& keys = m_Config.lookup("Keybindings");
 
-        for (auto& i : DefaultKeybindings)
+        for (auto& i : m_DefaultKeybindings)
         {
             if (keys.exists(i.first))
             {
@@ -401,26 +401,26 @@ void SettingsManager::load_keybindings()
                     else
                     {
                         m_Keybindings[i.first][j.first] =
-                            DefaultKeybindings.at(i.first).at(j.first);
+                            m_DefaultKeybindings.at(i.first).at(j.first);
                     }
                 }
             }
             else
             {
-                m_Keybindings[i.first] = DefaultKeybindings.at(i.first);
+                m_Keybindings[i.first] = m_DefaultKeybindings.at(i.first);
             }
         }
     }
     else
     {
-        m_Keybindings = DefaultKeybindings;
+        m_Keybindings = m_DefaultKeybindings;
     }
 }
 
 void SettingsManager::save_sites()
 {
     remove("Sites");
-    Setting& sites = Config.getRoot().add("Sites", Setting::TypeList);
+    Setting& sites = m_Config.getRoot().add("Sites", Setting::TypeList);
 
     for (const std::shared_ptr<Site>& s : m_Sites)
     {

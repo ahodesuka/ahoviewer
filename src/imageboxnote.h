@@ -11,7 +11,7 @@ namespace AhoViewer
     {
     public:
         ImageBoxNote(const Note& note);
-        virtual ~ImageBoxNote() = default;
+        ~ImageBoxNote() override = default;
 
         void set_scale(const double scale) { m_Scale = scale; }
         int get_x() const { return m_Note.x * m_Scale; }
@@ -34,8 +34,8 @@ namespace AhoViewer
         bool on_enter_notify_event(GdkEventCrossing* e) override;
         bool on_leave_notify_event(GdkEventCrossing* e) override;
 
-        Glib::RefPtr<Gdk::Window> m_refGdkWindow;
-        Glib::RefPtr<Gtk::CssProvider> m_refCssProvider;
+        Glib::RefPtr<Gdk::Window> m_GdkWindow;
+        Glib::RefPtr<Gtk::CssProvider> m_CssProvider;
 
         const Note& m_Note;
         Gtk::Popover m_Popover;

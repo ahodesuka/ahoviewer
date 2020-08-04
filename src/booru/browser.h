@@ -22,7 +22,7 @@ namespace AhoViewer
 
         public:
             Browser(BaseObjectType* cobj, const Glib::RefPtr<Gtk::Builder>& bldr);
-            virtual ~Browser() override;
+            ~Browser() override;
 
             std::vector<Page*> get_pages() const;
             Page* get_active_page() const
@@ -43,14 +43,14 @@ namespace AhoViewer
             void on_close_tab();
             void on_save_image();
             void on_save_images();
-            void on_view_post();
+            void on_view_post() const;
             void on_copy_image_url();
             void on_copy_image_data();
             void on_copy_post_url();
             // }}}
         protected:
-            virtual void on_realize() override;
-            virtual void on_show() override;
+            void on_realize() override;
+            void on_show() override;
 
         private:
             struct ComboBoxModelColumns : public Gtk::TreeModelColumnRecord

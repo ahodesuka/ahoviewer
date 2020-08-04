@@ -12,7 +12,7 @@ namespace AhoViewer
 
     public:
         KeybindingEditor(BaseObjectType* cobj, const Glib::RefPtr<Gtk::Builder>& bldr);
-        virtual ~KeybindingEditor() override = default;
+        ~KeybindingEditor() override = default;
 
         SignalEditedType signal_edited() const { return m_SignalEdited; }
 
@@ -32,8 +32,8 @@ namespace AhoViewer
 
         void on_reset_selected();
 
-        void action_data_func(Gtk::CellRenderer* c, const Gtk::TreeIter& iter);
-        void accel_data_func(Gtk::CellRenderer* c, const Gtk::TreeIter& iter);
+        void action_data_func(Gtk::CellRenderer* c, const Gtk::TreeIter& iter) const;
+        void accel_data_func(Gtk::CellRenderer* c, const Gtk::TreeIter& iter) const;
 
         void on_accel_edited(const std::string& path, guint key, Gdk::ModifierType mods, guint);
         void on_accel_cleared(const std::string& path);

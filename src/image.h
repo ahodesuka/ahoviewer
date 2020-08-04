@@ -33,14 +33,14 @@ namespace AhoViewer
         static const Glib::RefPtr<Gdk::Pixbuf>& get_missing_pixbuf();
 
         const std::string get_path() const { return m_Path; }
-        bool is_webm() const { return m_isWebM; }
+        bool is_webm() const { return m_IsWebM; }
         bool is_animated_gif() const { return m_GIFanim && m_GIFanim->frame_count > 1; }
 
         // This is used to let the imagebox know that load_pixbuf has been or needs to be
         // called but has not yet finished loading.  When the image has finished loading
         // and get_pixbuf() returns a nullptr the imagebox will show the missing pixbuf, webm
         // files will always return false as gstreamer will determine whether they are valid or not
-        virtual bool is_loading() const { return !m_isWebM && m_Loading; }
+        virtual bool is_loading() const { return !m_IsWebM && m_Loading; }
         virtual std::string get_filename() const;
         virtual const Glib::RefPtr<Gdk::Pixbuf>& get_pixbuf();
         virtual const Glib::RefPtr<Gdk::Pixbuf>& get_thumbnail(Glib::RefPtr<Gio::Cancellable> c);
@@ -72,7 +72,7 @@ namespace AhoViewer
                                                         const int h,
                                                         Glib::RefPtr<Gio::Cancellable> c) const;
 
-        bool m_isWebM;
+        bool m_IsWebM;
         std::atomic<bool> m_Loading{ true };
         std::string m_Path, m_ThumbnailPath;
 
@@ -95,7 +95,7 @@ namespace AhoViewer
         scale_pixbuf(Glib::RefPtr<Gdk::Pixbuf>& pixbuf, const int w, const int h) const;
 
         Glib::RefPtr<Gdk::Pixbuf> create_webm_thumbnail(int w, int h) const;
-        void save_thumbnail(Glib::RefPtr<Gdk::Pixbuf>& pixbuf, const gchar* mimeType) const;
+        void save_thumbnail(Glib::RefPtr<Gdk::Pixbuf>& pixbuf, const gchar* mime_type) const;
 
         static const std::string ThumbnailDir;
     };

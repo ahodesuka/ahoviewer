@@ -24,7 +24,7 @@ namespace AhoViewer
 
         public:
             Page();
-            virtual ~Page() override;
+            ~Page() override;
 
             std::shared_ptr<Site> get_site() const { return m_Site; }
             std::shared_ptr<ImageList> get_imagelist() const { return m_ImageList; }
@@ -36,10 +36,9 @@ namespace AhoViewer
             SignalSaveProgressType signal_save_progress() const { return m_SignalSaveProgress; }
 
         protected:
-            virtual void set_pixbuf(const size_t index,
-                                    const Glib::RefPtr<Gdk::Pixbuf>& pixbuf) override;
-            virtual void set_selected(const size_t index) override;
-            virtual void scroll_to_selected() override;
+            void set_pixbuf(const size_t index, const Glib::RefPtr<Gdk::Pixbuf>& pixbuf) override;
+            void set_selected(const size_t index) override;
+            void scroll_to_selected() override;
 
         private:
             void search(const std::shared_ptr<Site>& site);
@@ -57,7 +56,7 @@ namespace AhoViewer
             void on_posts_downloaded();
             void on_selection_changed();
             void on_value_changed();
-            virtual bool on_button_press_event(GdkEventButton* e) override;
+            bool on_button_press_event(GdkEventButton* e) override;
             bool on_tab_button_release_event(GdkEventButton* e);
 
             Gtk::Menu* m_PopupMenu;

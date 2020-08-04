@@ -16,12 +16,12 @@ namespace AhoViewer
         friend class CellRendererIcon;
 
         SiteEditor(BaseObjectType* cobj, const Glib::RefPtr<Gtk::Builder>& bldr);
-        virtual ~SiteEditor() override;
+        ~SiteEditor() override;
 
         sigc::signal<void> signal_edited() const { return m_SignalEdited; }
 
     protected:
-        virtual bool on_key_release_event(GdkEventKey* e) override;
+        bool on_key_release_event(GdkEventKey* e) override;
 
         void on_cursor_changed() override;
 
@@ -56,7 +56,7 @@ namespace AhoViewer
                 m_SiteEditor->get_toplevel()->signal_hide().connect(
                     [&]() { m_SpinnerConn.disconnect(); });
             }
-            virtual ~CellRendererIcon() override = default;
+            ~CellRendererIcon() override = default;
 
             Glib::PropertyProxy<bool> property_loading() { return m_LoadingProperty.get_proxy(); }
             Glib::PropertyProxy<unsigned int> property_pulse()
@@ -68,29 +68,29 @@ namespace AhoViewer
                 return m_PixbufProperty.get_proxy();
             }
 
-            virtual void get_preferred_width_vfunc(Gtk::Widget& widget,
-                                                   int& minimum_width,
-                                                   int& natural_width) const override
+            void get_preferred_width_vfunc(Gtk::Widget& widget,
+                                           int& minimum_width,
+                                           int& natural_width) const override
             {
                 if (m_LoadingProperty.get_value())
                     m_SpinnerRenderer->get_preferred_width(widget, minimum_width, natural_width);
                 else
                     m_PixbufRenderer->get_preferred_width(widget, minimum_width, natural_width);
             }
-            virtual void get_preferred_height_vfunc(Gtk::Widget& widget,
-                                                    int& minimum_height,
-                                                    int& natural_height) const override
+            void get_preferred_height_vfunc(Gtk::Widget& widget,
+                                            int& minimum_height,
+                                            int& natural_height) const override
             {
                 if (m_LoadingProperty.get_value())
                     m_SpinnerRenderer->get_preferred_height(widget, minimum_height, natural_height);
                 else
                     m_PixbufRenderer->get_preferred_height(widget, minimum_height, natural_height);
             }
-            virtual void render_vfunc(const Cairo::RefPtr<::Cairo::Context>& cr,
-                                      Gtk::Widget& widget,
-                                      const Gdk::Rectangle& background_area,
-                                      const Gdk::Rectangle& cell_area,
-                                      Gtk::CellRendererState flags) override
+            void render_vfunc(const Cairo::RefPtr<::Cairo::Context>& cr,
+                              Gtk::Widget& widget,
+                              const Gdk::Rectangle& background_area,
+                              const Gdk::Rectangle& cell_area,
+                              Gtk::CellRendererState flags) override
             {
                 Gtk::CellRenderer::render_vfunc(cr, widget, background_area, cell_area, flags);
 
@@ -104,12 +104,12 @@ namespace AhoViewer
             bool update_spinner()
             {
                 Gtk::TreeModel::Children children = m_SiteEditor->m_Model->children();
-                for (Gtk::TreeIter i = children.begin(); i != children.end(); ++i)
+                for (const auto& i : children)
                 {
-                    if (i->get_value(m_SiteEditor->m_Columns.loading))
+                    if (i.get_value(m_SiteEditor->m_Columns.loading))
                     {
-                        unsigned int pulse = i->get_value(m_SiteEditor->m_Columns.pulse);
-                        i->set_value(m_SiteEditor->m_Columns.pulse, pulse >= 12 ? 0u : ++pulse);
+                        unsigned int pulse = i.get_value(m_SiteEditor->m_Columns.pulse);
+                        i.set_value(m_SiteEditor->m_Columns.pulse, pulse >= 12 ? 0u : ++pulse);
                     }
                 }
 

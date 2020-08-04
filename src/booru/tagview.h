@@ -13,7 +13,7 @@ namespace AhoViewer
 
         public:
             TagView(BaseObjectType* cobj, const Glib::RefPtr<Gtk::Builder>& bldr);
-            virtual ~TagView() override = default;
+            ~TagView() override = default;
 
             void clear() { m_ListStore->clear(); }
 
@@ -23,8 +23,8 @@ namespace AhoViewer
             SignalNewTabTag signal_new_tab_tag() const { return m_SignalNewTabTag; }
 
         protected:
-            virtual void on_style_updated() override;
-            virtual bool on_button_press_event(GdkEventButton* e) override;
+            void on_style_updated() override;
+            bool on_button_press_event(GdkEventButton* e) override;
 
         private:
             struct ModelColumns : public Gtk::TreeModelColumnRecord

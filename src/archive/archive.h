@@ -29,10 +29,10 @@ namespace AhoViewer
         {
         public:
             Image(const std::string& file, const Archive& archive);
-            virtual std::string get_filename() const override;
-            virtual const Glib::RefPtr<Gdk::Pixbuf>&
+            std::string get_filename() const override;
+            const Glib::RefPtr<Gdk::Pixbuf>&
             get_thumbnail(Glib::RefPtr<Gio::Cancellable> c) override;
-            virtual void load_pixbuf(Glib::RefPtr<Gio::Cancellable> c) override;
+            void load_pixbuf(Glib::RefPtr<Gio::Cancellable> c) override;
 
             void save(const std::string& path);
 
@@ -49,7 +49,7 @@ namespace AhoViewer
         static bool is_valid(const std::string& path);
         static bool is_valid_extension(const std::string& path);
         static std::unique_ptr<Archive> create(const std::string& path,
-                                               const std::string& parentDir = "");
+                                               const std::string& parent_dir = "");
 
         virtual bool extract(const std::string& file) const                  = 0;
         virtual bool has_valid_files(const FileType t) const                 = 0;
@@ -61,7 +61,7 @@ namespace AhoViewer
         static const std::vector<std::string> MimeTypes, FileExtensions;
 
     protected:
-        Archive(std::string path, std::string exDir);
+        Archive(std::string path, std::string ex_dir);
 
         std::string m_Path, m_ExtractedPath;
 

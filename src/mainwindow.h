@@ -23,27 +23,27 @@ namespace AhoViewer
 
     public:
         MainWindow(BaseObjectType* cobj, Glib::RefPtr<Gtk::Builder> bldr);
-        virtual ~MainWindow() override;
+        ~MainWindow() override;
 
         void open_file(const std::string& path, const int index = 0, const bool restore = false);
         void restore_last_file();
         void get_drawable_area_size(int& w, int& h) const;
 
     protected:
-        virtual void on_realize() override;
-        virtual void on_check_resize() override;
-        virtual bool on_delete_event(GdkEventAny* e) override;
-        virtual bool on_window_state_event(GdkEventWindowState* e) override;
-        virtual void on_drag_data_received(const Glib::RefPtr<Gdk::DragContext>& ctx,
-                                           int,
-                                           int,
-                                           const Gtk::SelectionData& data,
-                                           guint,
-                                           guint time) override;
-        virtual bool on_key_press_event(GdkEventKey* e) override;
+        void on_realize() override;
+        void on_check_resize() override;
+        bool on_delete_event(GdkEventAny* e) override;
+        bool on_window_state_event(GdkEventWindowState* e) override;
+        void on_drag_data_received(const Glib::RefPtr<Gdk::DragContext>& ctx,
+                                   int,
+                                   int,
+                                   const Gtk::SelectionData& data,
+                                   guint,
+                                   guint time) override;
+        bool on_key_press_event(GdkEventKey* e) override;
 
     private:
-        void set_active_imagelist(const std::shared_ptr<ImageList>& imageList);
+        void set_active_imagelist(const std::shared_ptr<ImageList>& image_list);
         void save_window_geometry();
         void create_actions();
         void update_widgets_visibility();
@@ -56,7 +56,7 @@ namespace AhoViewer
         void on_imagelist_changed(const std::shared_ptr<Image>& image);
         void on_imagelist_cleared();
         void on_cache_size_changed();
-        void on_accel_edited(const std::string& accelPath, const std::string& actionName);
+        void on_accel_edited(const std::string& accel_path, const std::string& action_name);
 
         void on_connect_proxy(const Glib::RefPtr<Gtk::Action>& action, Gtk::Widget* w);
 

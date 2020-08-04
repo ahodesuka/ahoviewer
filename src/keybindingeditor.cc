@@ -68,7 +68,7 @@ void KeybindingEditor::on_reset_selected()
     }
 }
 
-void KeybindingEditor::action_data_func(Gtk::CellRenderer* c, const Gtk::TreeIter& iter)
+void KeybindingEditor::action_data_func(Gtk::CellRenderer* c, const Gtk::TreeIter& iter) const
 {
     auto* cell         = static_cast<Gtk::CellRendererText*>(c);
     std::string action = iter->get_value(m_Columns.name), val;
@@ -83,7 +83,7 @@ void KeybindingEditor::action_data_func(Gtk::CellRenderer* c, const Gtk::TreeIte
     cell->property_text() = val;
 }
 
-void KeybindingEditor::accel_data_func(Gtk::CellRenderer* c, const Gtk::TreeIter& iter)
+void KeybindingEditor::accel_data_func(Gtk::CellRenderer* c, const Gtk::TreeIter& iter) const
 {
     auto* cell        = static_cast<Gtk::CellRendererText*>(c);
     std::string accel = iter->get_value(m_Columns.binding);

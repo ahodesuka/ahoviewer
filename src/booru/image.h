@@ -24,27 +24,26 @@ namespace AhoViewer
         public:
             Image(const std::string& path,
                   std::string url,
-                  const std::string& thumbPath,
-                  std::string thumbUrl,
-                  std::string postUrl,
+                  const std::string& thumb_path,
+                  std::string thumb_url,
+                  std::string post_url,
                   std::set<std::string> tags,
-                  const std::string& notesUrl,
+                  const std::string& notes_url,
                   std::shared_ptr<Site> site,
                   ImageFetcher& fetcher);
-            virtual ~Image() override;
+            ~Image() override;
 
             std::set<std::string> get_tags() const { return m_Tags; }
 
             std::string get_url() const { return m_Url; }
             std::string get_post_url() const { return m_PostUrl; }
 
-            virtual bool is_loading() const override;
-            virtual std::string get_filename() const override;
-            virtual const Glib::RefPtr<Gdk::Pixbuf>&
-                get_thumbnail(Glib::RefPtr<Gio::Cancellable>) override;
+            bool is_loading() const override;
+            std::string get_filename() const override;
+            const Glib::RefPtr<Gdk::Pixbuf>& get_thumbnail(Glib::RefPtr<Gio::Cancellable>) override;
 
-            virtual void load_pixbuf(Glib::RefPtr<Gio::Cancellable> c) override;
-            virtual void reset_pixbuf() override;
+            void load_pixbuf(Glib::RefPtr<Gio::Cancellable> c) override;
+            void reset_pixbuf() override;
 
             void save(const std::string& path);
             void cancel_download();
@@ -75,7 +74,7 @@ namespace AhoViewer
 
             Curler m_Curler, m_ThumbnailCurler, m_NotesCurler;
             Glib::RefPtr<Gdk::PixbufLoader> m_Loader;
-            bool m_PixbufError{ false }, m_isGIFChecked{ false };
+            bool m_PixbufError{ false }, m_IsGifChecked{ false };
             std::shared_mutex m_ThumbnailLock;
 
             std::condition_variable m_DownloadCond, m_ThumbnailCond;

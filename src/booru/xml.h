@@ -34,8 +34,8 @@ namespace AhoViewer
 
             void set_attribute(const std::string& a_name, const std::string& a_value)
             {
-                const xmlChar *name  = reinterpret_cast<const xmlChar*>(a_name.c_str()),
-                              *value = reinterpret_cast<const xmlChar*>(a_value.c_str());
+                const auto *name  = reinterpret_cast<const xmlChar*>(a_name.c_str()),
+                           *value = reinterpret_cast<const xmlChar*>(a_value.c_str());
 
                 if (!xmlHasProp(m_XmlNode, name))
                     xmlNewProp(m_XmlNode, name, value);

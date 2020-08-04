@@ -199,7 +199,7 @@ void Browser::on_save_images()
     }
 }
 
-void Browser::on_view_post()
+void Browser::on_view_post() const
 {
     const std::shared_ptr<Image> image =
         std::static_pointer_cast<Image>(get_active_page()->get_imagelist()->get_current());

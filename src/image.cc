@@ -88,7 +88,7 @@ static unsigned char* _def_bitmap_get_buffer(void* bitmap)
     return static_cast<unsigned char*>(bitmap);
 }
 
-Image::Image(const std::string& path) : m_isWebM{ Image::is_webm(path) }, m_Path{ path }
+Image::Image(const std::string& path) : m_IsWebM{ Image::is_webm(path) }, m_Path{ path }
 {
     m_BitmapCallbacks.bitmap_create      = _def_bitmap_create;
     m_BitmapCallbacks.bitmap_destroy     = _def_bitmap_destroy;
@@ -183,7 +183,7 @@ const Glib::RefPtr<Gdk::Pixbuf>& Image::get_thumbnail(Glib::RefPtr<Gio::Cancella
 
 void Image::load_pixbuf(Glib::RefPtr<Gio::Cancellable> c)
 {
-    if (!m_Pixbuf && !m_isWebM)
+    if (!m_Pixbuf && !m_IsWebM)
     {
         Glib::RefPtr<Gio::File> file = Gio::File::create_for_path(m_Path);
 
@@ -329,13 +329,13 @@ void Image::create_thumbnail(Glib::RefPtr<Gio::Cancellable> c, bool save)
 
     if (!save)
     {
-        m_ThumbnailPixbuf = m_isWebM
+        m_ThumbnailPixbuf = m_IsWebM
                                 ? create_webm_thumbnail(ThumbnailSize, ThumbnailSize)
                                 : create_pixbuf_at_size(m_Path, ThumbnailSize, ThumbnailSize, c);
         return;
     }
 
-    if (m_isWebM)
+    if (m_IsWebM)
     {
         pixbuf = create_webm_thumbnail(128, 128);
 
