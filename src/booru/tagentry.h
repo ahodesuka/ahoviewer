@@ -4,46 +4,43 @@
 #include <gtkmm.h>
 #include <set>
 
-namespace AhoViewer
+namespace AhoViewer::Booru
 {
-    namespace Booru
+    class TagEntry : public Gtk::Entry
     {
-        class TagEntry : public Gtk::Entry
+    public:
+        TagEntry(BaseObjectType* cobj, const Glib::RefPtr<Gtk::Builder>& bldr);
+        ~TagEntry() override = default;
+
+        void set_tags(const std::set<std::string>& tags);
+
+    protected:
+        void on_grab_focus() override;
+
+    private:
+        struct ModelColumns : public Gtk::TreeModelColumnRecord
         {
-        public:
-            TagEntry(BaseObjectType* cobj, const Glib::RefPtr<Gtk::Builder>& bldr);
-            ~TagEntry() override = default;
-
-            void set_tags(const std::set<std::string>& tags);
-
-        protected:
-            void on_grab_focus() override;
-
-        private:
-            struct ModelColumns : public Gtk::TreeModelColumnRecord
-            {
-                ModelColumns() { add(tag_column); }
-                Gtk::TreeModelColumn<std::string> tag_column;
-            };
-
-            inline bool match_func(const std::string&, const Gtk::TreeModel::const_iterator&)
-            {
-                return true;
-            }
-
-            void on_text_changed();
-            bool on_cursor_on_match(const Gtk::TreeIter& iter);
-            bool on_match_selected(const Gtk::TreeIter& iter);
-
-            // These are the tags used for completion
-            const std::set<std::string>* m_Tags;
-            Glib::RefPtr<Gtk::EntryCompletion> m_TagCompletion;
-            Glib::RefPtr<Gtk::ListStore> m_Model;
-            ModelColumns m_Columns;
-
-            sigc::connection m_ChangedConn;
+            ModelColumns() { add(tag_column); }
+            Gtk::TreeModelColumn<std::string> tag_column;
         };
-    }
+
+        inline bool match_func(const std::string&, const Gtk::TreeModel::const_iterator&)
+        {
+            return true;
+        }
+
+        void on_text_changed();
+        bool on_cursor_on_match(const Gtk::TreeIter& iter);
+        bool on_match_selected(const Gtk::TreeIter& iter);
+
+        // These are the tags used for completion
+        const std::set<std::string>* m_Tags;
+        Glib::RefPtr<Gtk::EntryCompletion> m_TagCompletion;
+        Glib::RefPtr<Gtk::ListStore> m_Model;
+        ModelColumns m_Columns;
+
+        sigc::connection m_ChangedConn;
+    };
 }
 
 #endif /* _TAGENTRY_H_ */
