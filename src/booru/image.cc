@@ -20,7 +20,7 @@ Image::Image(const std::string& path,
              const std::string& thumb_path,
              std::string thumb_url,
              std::string post_url,
-             std::set<std::string> tags,
+             std::vector<Tag> tags,
              const std::string& notes_url,
              std::shared_ptr<Site> site,
              ImageFetcher& fetcher)
@@ -157,6 +157,7 @@ void Image::save(const std::string& path)
     {
         std::ofstream ofs(path + ".txt");
 
+        // XXX: This doesn't save the tag type, should it? I never use this
         if (ofs)
             std::copy(m_Tags.begin(), m_Tags.end(), std::ostream_iterator<std::string>(ofs, "\n"));
     }

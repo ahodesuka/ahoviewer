@@ -1,0 +1,67 @@
+@define-color ahoviewer_artist %1;
+@define-color ahoviewer_character %2;
+@define-color ahoviewer_copyright %3;
+@define-color ahoviewer_metadata %4;
+@define-color ahoviewer_general %5;
+@define-color ahoviewer_deprecated %5;
+
+#TagViewRow.artist checkbutton label {
+  color: @ahoviewer_artist;
+}
+#TagViewHeader.artist {
+  color: @ahoviewer_artist;
+}
+#TagViewHeader.artist separator {
+  background-color: @ahoviewer_artist;
+}
+
+#TagViewRow.character checkbutton label {
+  color: @ahoviewer_character;
+}
+#TagViewHeader.character {
+  color: @ahoviewer_character;
+}
+#TagViewHeader.character separator {
+  background-color: @ahoviewer_character;
+}
+
+#TagViewRow.copyright checkbutton label {
+  color: @ahoviewer_copyright;
+}
+#TagViewHeader.copyright {
+  color: @ahoviewer_copyright;
+}
+#TagViewHeader.copyright separator {
+  background-color: @ahoviewer_copyright;
+}
+
+#TagViewRow.metadata checkbutton label {
+  color: @ahoviewer_metadata;
+}
+#TagViewHeader.metadata {
+  color: @ahoviewer_metadata;
+}
+#TagViewHeader.metadata separator {
+  background-color: @ahoviewer_metadata;
+}
+
+#TagViewRow.general checkbutton label {
+  color: @ahoviewer_general;
+}
+#TagViewHeader.general {
+  color: @ahoviewer_general;
+}
+#TagViewHeader.general separator {
+  background-color: @ahoviewer_general;
+}
+
+#TagViewRow.deprecated checkbutton label {
+  color: @ahoviewer_deprecated;
+  text-decoration: line-through;
+}
+#TagViewHeader.deprecated {
+  color: @ahoviewer_deprecated;
+}
+#TagViewHeader.deprecated separator {
+  background-color: @ahoviewer_deprecated;
+}

@@ -49,7 +49,9 @@ std::string ImageList::get_path()
     return m_Path;
 }
 
-void ImageList::load(const xml::Document& posts, const Page& page)
+void ImageList::load(const xml::Document& posts,
+                     const Page& page,
+                     const std::vector<Tag>& posts_tags)
 {
     m_Site = page.get_site();
 
@@ -62,27 +64,74 @@ void ImageList::load(const xml::Document& posts, const Page& page)
 
     for (const xml::Node& post : posts.get_children())
     {
+        std::vector<Tag> tags;
         auto site_type{ m_Site->get_type() };
-        std::string id, thumb_url, image_url, thumb_path, image_path, tags_string, notes_url,
-            post_url;
+        std::string id, thumb_url, image_url, thumb_path, image_path, notes_url;
 
         if (site_type == Type::DANBOORU_V2)
         {
-            id          = post.get_value("id");
-            thumb_url   = post.get_value("preview-file-url");
-            image_url   = post.get_value(m_Site->use_samples() ? "large-file-url" : "file-url");
-            tags_string = post.get_value("tag-string");
-            // TODO: use tag category values (color tags based on category in
-            // the tagview)  Issue #100
-            // Category nodes are: tag-string-general, tag-string-character,
-            // tag-string-copyright, tag-string-artist, tag-string-meta
+            id        = post.get_value("id");
+            thumb_url = post.get_value("preview-file-url");
+            image_url = post.get_value(m_Site->use_samples() ? "large-file-url" : "file-url");
         }
         else
         {
-            id          = post.get_attribute("id");
-            thumb_url   = post.get_attribute("preview_url");
-            image_url   = post.get_attribute(m_Site->use_samples() ? "sample_url" : "file_url");
-            tags_string = post.get_attribute("tags");
+            id        = post.get_attribute("id");
+            thumb_url = post.get_attribute("preview_url");
+            image_url = post.get_attribute(m_Site->use_samples() ? "sample_url" : "file_url");
+        }
+
+        // Check this before we do tag stuff since it would waste time
+        if (!Image::is_valid_extension(image_url))
+        {
+            --m_Size;
+            continue;
+        }
+
+        if (site_type == Type::DANBOORU_V2)
+        {
+            std::map<Tag::Type, std::string> tag_types{ {
+                { Tag::Type::ARTIST, "tag-string-artist" },
+                { Tag::Type::CHARACTER, "tag-string-character" },
+                { Tag::Type::COPYRIGHT, "tag-string-copyright" },
+                { Tag::Type::METADATA, "tag-string-meta" },
+                { Tag::Type::GENERAL, "tag-string-general" },
+            } };
+            for (const auto& v : tag_types)
+            {
+                std::istringstream ss{ post.get_value(v.second) };
+                std::transform(std::istream_iterator<std::string>{ ss },
+                               std::istream_iterator<std::string>{},
+                               std::back_inserter(tags),
+                               [v](const std::string& t) { return Tag(t, v.first); });
+            }
+        }
+        else
+        {
+            std::istringstream ss{ post.get_attribute("tags") };
+
+            // Use the posts_tags from gelbooru to find the tag type for every tag
+            if (!posts_tags.empty())
+            {
+                std::transform(
+                    std::istream_iterator<std::string>{ ss },
+                    std::istream_iterator<std::string>{},
+                    std::back_inserter(tags),
+                    [&posts_tags](const std::string& t) {
+                        auto it{ std::find_if(posts_tags.begin(),
+                                              posts_tags.end(),
+                                              [&t](const Tag& tag) { return tag.tag == t; }) };
+
+                        return Tag(t, it != posts_tags.end() ? it->type : Tag::Type::UNKNOWN);
+                    });
+            }
+            else
+            {
+                std::transform(std::istream_iterator<std::string>{ ss },
+                               std::istream_iterator<std::string>{},
+                               std::back_inserter(tags),
+                               [](const std::string& t) { return Tag(t); });
+            }
         }
 
         thumb_path =
@@ -92,9 +141,6 @@ void ImageList::load(const xml::Document& posts, const Page& page)
         image_path = Glib::build_filename(
             get_path(), Glib::uri_unescape_string(Glib::path_get_basename(image_url)));
 
-        std::istringstream ss{ tags_string };
-        std::set<std::string> tags{ std::istream_iterator<std::string>{ ss },
-                                    std::istream_iterator<std::string>{} };
         m_Site->add_tags(tags);
 
         if (thumb_url[0] == '/')
@@ -132,24 +178,15 @@ void ImageList::load(const xml::Document& posts, const Page& page)
         if (thumb_url.find("safebooru.org") != std::string::npos)
             thumb_url = thumb_url.substr(0, thumb_url.find_last_of('.')) + ".jpg";
 
-        post_url = m_Site->get_post_url(id);
-
-        if (Image::is_valid_extension(image_url))
-        {
-            m_Images.emplace_back(std::make_shared<Image>(image_path,
-                                                          image_url,
-                                                          thumb_path,
-                                                          thumb_url,
-                                                          post_url,
-                                                          tags,
-                                                          notes_url,
-                                                          m_Site,
-                                                          *m_ImageFetcher));
-        }
-        else
-        {
-            --m_Size;
-        }
+        m_Images.emplace_back(std::make_shared<Image>(image_path,
+                                                      image_url,
+                                                      thumb_path,
+                                                      thumb_url,
+                                                      m_Site->get_post_url(id),
+                                                      tags,
+                                                      notes_url,
+                                                      m_Site,
+                                                      *m_ImageFetcher));
     }
 
     if (m_Images.empty())

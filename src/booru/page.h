@@ -46,6 +46,7 @@ namespace AhoViewer::Booru
 
         void cancel_save();
         void get_posts();
+        void get_posts_tags();
         bool get_next_page();
 
         Gtk::Widget* get_tab() const { return m_Tab; }
@@ -71,11 +72,13 @@ namespace AhoViewer::Booru
         // m_Tags stores tags that are inside the entry
         // while m_SearchTags are the whitespace trimmed tags or *
         std::string m_Tags, m_SearchTags, m_Path;
+        double m_TagViewPos{ 0.0 };
         size_t m_Page{ 0 }, m_SaveImagesTotal{ 0 };
         std::atomic<size_t> m_SaveImagesCurrent{ 0 };
         std::atomic<bool> m_Saving{ false };
         bool m_LastPage{ false }, m_KeepAligned{ false };
-        std::unique_ptr<xml::Document> m_Posts;
+        std::unique_ptr<xml::Document> m_Posts{ nullptr };
+        std::vector<Tag> m_PostsTags;
 
         Glib::RefPtr<Gio::Cancellable> m_SaveCancel;
         std::thread m_GetPostsThread, m_SaveImagesThread;

@@ -19,25 +19,16 @@ SettingsManager::SettingsManager()
       m_FavoriteTagsPath(Glib::build_filename(m_ConfigPath, "favorite-tags")),
       // Defaults {{{
       m_DefaultBools({
-          { "AutoOpenArchive", true },
-          { "MangaMode", true },
-          { "RememberLastFile", true },
-          { "RememberLastSavePath", true },
-          { "SaveImageTags", false },
-          { "SaveThumbnails", true },
-          { "StartFullscreen", false },
-          { "StoreRecentFiles", true },
-          { "SmartNavigation", false },
-
-          { "BooruBrowserVisible", true },
-          { "MenuBarVisible", true },
-          { "ScrollbarsVisible", true },
-          { "StatusBarVisible", true },
-          { "ThumbnailBarVisible", false },
-          { "HideAll", false },
-          { "HideAllFullscreen", true },
-          { "RememberWindowSize", true },
-          { "RememberWindowPos", true },
+          { "AutoOpenArchive", true },    { "MangaMode", true },
+          { "RememberLastFile", true },   { "RememberLastSavePath", true },
+          { "SaveImageTags", false },     { "SaveThumbnails", true },
+          { "StartFullscreen", false },   { "StoreRecentFiles", true },
+          { "SmartNavigation", false },   { "BooruBrowserVisible", true },
+          { "MenuBarVisible", true },     { "ScrollbarsVisible", true },
+          { "StatusBarVisible", true },   { "ThumbnailBarVisible", false },
+          { "HideAll", false },           { "HideAllFullscreen", true },
+          { "RememberWindowSize", true }, { "RememberWindowPos", true },
+          { "ShowTagTypeHeaders", true },
       }),
       m_DefaultInts({ { "ArchiveIndex", -1 },
                       { "CacheSize", 2 },
@@ -53,6 +44,10 @@ SettingsManager::SettingsManager()
       m_DefaultStrings({
           { "TitleFormat", "[%i / %c] %f - %p" },
           { "AudioSink", "fakesink" },
+          { "TagArtistColor", "#A00" },
+          { "TagCharacterColor", "#0A0" },
+          { "TagCopyrightColor", "#A0A" },
+          { "TagMetadataColor", "#F80" },
       }),
       m_DefaultSites({
           std::make_tuple("Danbooru", "https://danbooru.donmai.us", Type::DANBOORU, "", "", 0),
@@ -138,11 +133,10 @@ SettingsManager::SettingsManager()
     if (Glib::file_test(m_FavoriteTagsPath, Glib::FILE_TEST_EXISTS))
     {
         std::ifstream ifs(m_FavoriteTagsPath);
-
         if (ifs)
-            std::copy(std::istream_iterator<std::string>(ifs),
-                      std::istream_iterator<std::string>(),
-                      std::inserter(m_FavoriteTags, m_FavoriteTags.begin()));
+            std::copy(std::istream_iterator<Booru::Tag>{ ifs },
+                      std::istream_iterator<Booru::Tag>{},
+                      std::back_inserter(m_FavoriteTags));
     }
 
     load_keybindings();
@@ -168,7 +162,7 @@ SettingsManager::~SettingsManager()
         if (ofs)
             std::copy(m_FavoriteTags.begin(),
                       m_FavoriteTags.end(),
-                      std::ostream_iterator<std::string>(ofs, "\n"));
+                      std::ostream_iterator<Tag>(ofs, "\n"));
     }
     else if (Glib::file_test(m_FavoriteTagsPath, Glib::FILE_TEST_EXISTS))
     {
@@ -373,6 +367,19 @@ ZoomMode SettingsManager::get_zoom_mode() const
 void SettingsManager::set_zoom_mode(const ZoomMode value)
 {
     set("ZoomMode", std::string(1, static_cast<char>(value)));
+}
+
+Booru::TagViewOrder SettingsManager::get_tag_view_order() const
+{
+    if (m_Config.exists("TagViewOrder"))
+        return Booru::TagViewOrder(static_cast<int>(m_Config.lookup("TagViewOrder")));
+
+    return m_DefaultTagViewOrder;
+}
+
+void SettingsManager::set_tag_view_order(const Booru::TagViewOrder value)
+{
+    set("TagViewOrder", static_cast<int>(value));
 }
 
 void SettingsManager::remove(const std::string& key)

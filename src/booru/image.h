@@ -2,12 +2,13 @@
 #define _BOORUIMAGE_H_
 
 #include "../image.h"
+#include "../util.h"
 #include "curler.h"
 #include "imagefetcher.h"
 
 #include <condition_variable>
-#include <set>
 #include <shared_mutex>
+#include <vector>
 
 namespace AhoViewer::Booru
 {
@@ -25,13 +26,13 @@ namespace AhoViewer::Booru
               const std::string& thumb_path,
               std::string thumb_url,
               std::string post_url,
-              std::set<std::string> tags,
+              std::vector<Tag> tags,
               const std::string& notes_url,
               std::shared_ptr<Site> site,
               ImageFetcher& fetcher);
         ~Image() override;
 
-        std::set<std::string> get_tags() const { return m_Tags; }
+        std::vector<Tag>& get_tags() { return m_Tags; }
 
         std::string get_url() const { return m_Url; }
         std::string get_post_url() const { return m_PostUrl; }
@@ -50,7 +51,7 @@ namespace AhoViewer::Booru
         SignalProgressType signal_progress() const { return m_SignalProgress; }
         SignalDownloadErrorType signal_download_error() const { return m_SignalDownloadError; }
 
-        static const size_t BooruThumbnailSize = 150;
+        static const size_t BooruThumbnailSize{ 150 };
 
     private:
         bool start_download();
@@ -64,7 +65,7 @@ namespace AhoViewer::Booru
         void on_notes_downloaded();
 
         std::string m_Url, m_ThumbnailUrl, m_PostUrl;
-        std::set<std::string> m_Tags;
+        std::vector<Tag> m_Tags;
         std::shared_ptr<Site> m_Site;
         ImageFetcher& m_ImageFetcher;
 

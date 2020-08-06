@@ -257,8 +257,8 @@ Site::Site(std::string name,
         std::ifstream ifs(m_TagsPath);
 
         if (ifs)
-            std::copy(std::istream_iterator<std::string>(ifs),
-                      std::istream_iterator<std::string>(),
+            std::copy(std::istream_iterator<Tag>(ifs),
+                      std::istream_iterator<Tag>(),
                       std::inserter(m_Tags, m_Tags.begin()));
     }
 }
@@ -291,9 +291,20 @@ std::string Site::get_notes_url(const std::string& id)
     return Glib::ustring::compose(m_Url + NotesURI.at(m_Type), id);
 }
 
-void Site::add_tags(const std::set<std::string>& tags)
+void Site::add_tags(const std::vector<Tag>& tags)
 {
-    m_Tags.insert(tags.begin(), tags.end());
+    auto& favorite_tags{ Settings.get_favorite_tags() };
+    // Add or update tags (type may have changed)
+    for (const auto& t : tags)
+    {
+        auto it{ m_Tags.insert(t) };
+        if (!it.second)
+            it.first->type = t.type;
+
+        auto fav_it{ std::find(favorite_tags.begin(), favorite_tags.end(), t) };
+        if (fav_it != favorite_tags.end())
+            (*fav_it).type = t.type;
+    }
 }
 
 bool Site::set_url(const std::string& url)
@@ -498,5 +509,5 @@ void Site::save_tags() const
     std::ofstream ofs(m_TagsPath);
 
     if (ofs)
-        std::copy(m_Tags.begin(), m_Tags.end(), std::ostream_iterator<std::string>(ofs, "\n"));
+        std::copy(m_Tags.begin(), m_Tags.end(), std::ostream_iterator<Tag>(ofs, "\n"));
 }

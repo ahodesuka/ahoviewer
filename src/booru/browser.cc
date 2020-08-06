@@ -429,8 +429,9 @@ void Browser::on_entry_value_changed()
 
 void Browser::on_page_removed(Gtk::Widget* w, guint)
 {
-    Page* page = static_cast<Page*>(w);
-    auto it    = m_PageCloseConns.find(page);
+    Page* page{ static_cast<Page*>(w) };
+    auto it{ m_PageCloseConns.find(page) };
+
     if (it != m_PageCloseConns.end())
     {
         it->second.disconnect();
@@ -460,6 +461,9 @@ void Browser::on_page_removed(Gtk::Widget* w, guint)
                 sigc::mem_fun(*this, &Browser::on_page_removed_cleanup));
     }
 
+    if (page == m_CurrentPage)
+        m_CurrentPage = nullptr;
+
     m_ClosePage = false;
 }
 
@@ -470,14 +474,14 @@ void Browser::on_page_removed_cleanup()
     if (m_Notebook->get_n_pages() != 0)
         return;
 
-    auto* w = static_cast<MainWindow*>(get_toplevel());
+    auto* w{ static_cast<MainWindow*>(get_toplevel()) };
     if (w->m_LocalImageList->empty() && !w->m_OriginalWindow)
         w->on_quit();
 }
 
 void Browser::on_page_added(Gtk::Widget* w, guint)
 {
-    Page* page        = static_cast<Page*>(w);
+    Page* page{ static_cast<Page*>(w) };
     page->m_PopupMenu = m_PopupMenu;
     m_PageCloseConns[page] =
         page->signal_closed().connect(sigc::mem_fun(*this, &Browser::close_page));
@@ -508,8 +512,15 @@ void Browser::on_page_added(Gtk::Widget* w, guint)
 
 void Browser::on_switch_page(Gtk::Widget* w, guint)
 {
-    Page* page                    = static_cast<Page*>(w);
-    std::shared_ptr<Image> bimage = nullptr;
+    Page* page{ static_cast<Page*>(w) };
+    std::shared_ptr<Image> bimage{ nullptr };
+
+    // Save the tagview scroll pos from the previously selected page so it can be restored when
+    // switching back
+    if (m_CurrentPage)
+        m_CurrentPage->m_TagViewPos = m_TagView->get_scroll_position();
+
+    m_CurrentPage = page;
 
     if (!page->get_imagelist()->empty())
         bimage = std::static_pointer_cast<Image>(page->get_imagelist()->get_current());
@@ -549,9 +560,9 @@ void Browser::on_switch_page(Gtk::Widget* w, guint)
 
     if (page->get_site())
     {
-        int index                                 = 0;
-        std::vector<std::shared_ptr<Site>>& sites = Settings.get_sites();
-        auto it = std::find(sites.begin(), sites.end(), page->get_site());
+        int index{ 0 };
+        auto& sites{ Settings.get_sites() };
+        auto it{ std::find(sites.begin(), sites.end(), page->get_site()) };
 
         if (it != sites.end())
             index = it - sites.begin();
@@ -559,13 +570,15 @@ void Browser::on_switch_page(Gtk::Widget* w, guint)
         m_ComboBox->set_active(index);
 
         if (bimage)
-            m_TagView->set_tags(bimage->get_tags());
+            m_TagView->set_tags(bimage->get_tags(), page->m_TagViewPos);
     }
     else
     {
-        m_TagView->show_favorite_tags();
+        m_TagView->show_favorite_tags(page->m_TagViewPos);
     }
 
+    // Reset this so when the image changes the tagview is scrolled to the top
+    page->m_TagViewPos = 0.0;
     m_SignalPageChanged(page);
 }
 

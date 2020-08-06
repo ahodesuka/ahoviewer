@@ -332,7 +332,7 @@ void ImageList::on_directory_changed(const Glib::RefPtr<Gio::File>& file,
         return;
 
     ImageVector::iterator it;
-    auto comp = [file](const std::shared_ptr<Image>& i) {
+    auto comp = [&file](const std::shared_ptr<Image>& i) {
         return i->get_path() == file->get_path();
     };
 

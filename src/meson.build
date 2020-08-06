@@ -84,6 +84,7 @@ sources = [
   'siteeditor.cc',
   'statusbar.cc',
   'thumbnailbar.cc',
+  'util.cc',
   'version.cc'
 ]
 

@@ -1,8 +1,6 @@
 #include "imageboxnote.h"
 using namespace AhoViewer;
 
-#include <iostream>
-
 ImageBoxNote::ImageBoxNote(const Note& note)
     : Glib::ObjectBase{ "ImageBoxNote" },
       Gtk::Widget{},

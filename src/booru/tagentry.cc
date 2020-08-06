@@ -10,16 +10,20 @@ TagEntry::TagEntry(BaseObjectType* cobj, const Glib::RefPtr<Gtk::Builder>& bldr)
 
     m_TagCompletion->set_match_func(sigc::mem_fun(*this, &TagEntry::match_func));
     m_TagCompletion->set_model(m_Model);
-    m_TagCompletion->set_text_column(m_Columns.tag_column);
     m_TagCompletion->signal_match_selected().connect(
         sigc::mem_fun(*this, &TagEntry::on_match_selected), false);
     m_TagCompletion->signal_cursor_on_match().connect(
         sigc::mem_fun(*this, &TagEntry::on_cursor_on_match), false);
 
     m_ChangedConn = signal_changed().connect(sigc::mem_fun(*this, &TagEntry::on_text_changed));
+
+    auto* c{ Gtk::manage(new Gtk::CellRendererText()) };
+    c->property_ellipsize() = Pango::ELLIPSIZE_END;
+    m_TagCompletion->pack_start(*c);
+    m_TagCompletion->set_cell_data_func(*c, sigc::mem_fun(*this, &TagEntry::on_tag_cell_data));
 }
 
-void TagEntry::set_tags(const std::set<std::string>& tags)
+void TagEntry::set_tags(const std::set<Tag>& tags)
 {
     m_Tags = &tags;
 }
@@ -44,6 +48,7 @@ void TagEntry::on_text_changed()
         key.pop_back();
 
     // Check if key is prefixed
+    // FIXME: ~ is a valid prefix (or operator) on gelbooru (new) and danbooru?
     if (key.front() == '-')
         key.erase(key.begin());
 
@@ -52,12 +57,12 @@ void TagEntry::on_text_changed()
     if (key.length() >= static_cast<size_t>(m_TagCompletion->get_minimum_key_length()))
     {
         size_t i = 0;
-        for (const std::string& tag : *m_Tags)
+        for (const auto& tag : *m_Tags)
         {
-            if (tag.compare(0, key.length(), key) == 0)
+            if (tag.tag.compare(0, key.length(), key) == 0)
             {
                 Gtk::TreeIter iter = m_Model->append();
-                iter->set_value(m_Columns.tag_column, tag);
+                iter->set_value(m_Columns.tag, tag);
 
                 // Limit list to 20 tags
                 if (++i >= 20)
@@ -71,7 +76,7 @@ void TagEntry::on_text_changed()
 
 bool TagEntry::on_cursor_on_match(const Gtk::TreeIter& iter)
 {
-    const std::string tag = iter->get_value(m_Columns.tag_column);
+    const std::string tag = iter->get_value(m_Columns.tag);
     int spos, epos;
     get_selection_bounds(spos, epos);
 
@@ -101,7 +106,7 @@ bool TagEntry::on_match_selected(const Gtk::TreeIter& iter)
     size_t pos         = get_text().substr(0, spos).find_last_of(' ');
     std::string prefix = pos == std::string::npos ? (get_text()[0] == '-' ? "-" : "")
                                                   : get_text().substr(0, pos + 1),
-                tag = iter->get_value(m_Columns.tag_column), suffix = get_text().substr(epos);
+                tag = iter->get_value(m_Columns.tag), suffix = get_text().substr(epos);
 
     if (pos != std::string::npos && get_text().substr(pos + 1, 1) == "-")
         prefix += '-';
@@ -112,4 +117,20 @@ bool TagEntry::on_match_selected(const Gtk::TreeIter& iter)
     set_position(epos + 1);
 
     return true;
+}
+
+void TagEntry::on_tag_cell_data(const Gtk::TreeIter& iter)
+{
+    Gtk::CellRenderer* c{ m_TagCompletion->get_first_cell() };
+    auto* cell{ static_cast<Gtk::CellRendererText*>(c) };
+    auto tag{ iter->get_value(m_Columns.tag) };
+
+    cell->property_text().set_value(tag);
+
+    if (tag.type != Tag::Type::GENERAL && tag.type != Tag::Type::UNKNOWN)
+        cell->property_foreground_rgba().set_value(tag);
+
+    cell->property_foreground_set().set_value(tag.type != Tag::Type::GENERAL &&
+                                              tag.type != Tag::Type::DEPRECATED &&
+                                              tag.type != Tag::Type::UNKNOWN);
 }

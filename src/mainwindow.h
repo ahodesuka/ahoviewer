@@ -15,6 +15,7 @@ namespace AhoViewer
     namespace Booru
     {
         class Browser;
+        class TagView;
     }
     class MainWindow : public Gtk::ApplicationWindow
     {
@@ -97,6 +98,7 @@ namespace AhoViewer
         StatusBar* m_StatusBar;
         Booru::Browser* m_BooruBrowser;
         Gtk::Paned* m_HPaned;
+        Booru::TagView* m_TagView;
 
         std::string m_LastSavePath;
 

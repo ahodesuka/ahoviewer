@@ -100,6 +100,7 @@ namespace AhoViewer
 
             TagEntry* m_TagEntry;
             TagView* m_TagView;
+            Page* m_CurrentPage{ nullptr };
 
             bool m_ClosePage{ false },
                 // This is used to prevent the tagview position from

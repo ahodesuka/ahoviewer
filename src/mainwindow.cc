@@ -59,6 +59,7 @@ MainWindow::MainWindow(BaseObjectType* cobj, Glib::RefPtr<Gtk::Builder> bldr)
             m_ImageBox->queue_draw_image();
         }
     });
+    m_Builder->get_widget_derived("Booru::Browser::TagView", m_TagView);
 
     m_UIManager = Glib::RefPtr<Gtk::UIManager>::cast_static(m_Builder->get_object("UIManager"));
 
@@ -244,7 +245,7 @@ void MainWindow::open_file(const std::string& path, const int index, const bool 
     auto iter =
         std::find_if(m_LocalImageList->begin(),
                      m_LocalImageList->end(),
-                     [absolute_path](const auto i) { return i->get_path() == absolute_path; });
+                     [&absolute_path](const auto i) { return i->get_path() == absolute_path; });
     if (iter != m_LocalImageList->end())
     {
         m_LocalImageList->set_current(iter - m_LocalImageList->begin());
@@ -686,10 +687,17 @@ void MainWindow::create_actions()
     m_ActionGroup->add(toggle_action,
                        Gtk::AccelKey(Settings.get_keybinding("Navigation", "ToggleSlideshow")),
                        sigc::mem_fun(*this, &MainWindow::on_toggle_slideshow));
+
+    toggle_action = Gtk::ToggleAction::create(
+        "ShowTagTypeHeaders", _("Show Tag Type Headers"), _("Show headers for each tag type"));
+    toggle_action->set_active(Settings.get_bool("ShowTagTypeHeaders"));
+    m_ActionGroup->add(toggle_action,
+                       Gtk::AccelKey(),
+                       sigc::mem_fun(m_TagView, &Booru::TagView::on_toggle_show_headers));
     // }}}
 
     // Radio actions {{{
-    Gtk::RadioAction::Group zoom_mode_group;
+    Gtk::RadioAction::Group zoom_mode_group, tag_view_group;
     Glib::RefPtr<Gtk::RadioAction> radio_action;
 
     radio_action =
@@ -732,6 +740,23 @@ void MainWindow::create_actions()
         sigc::bind(sigc::mem_fun(m_ImageBox, &ImageBox::set_zoom_mode), ZoomMode::MANUAL));
 
     radio_action->set_current_value(static_cast<int>(m_ImageBox->get_zoom_mode()));
+
+    radio_action = Gtk::RadioAction::create(
+        tag_view_group, "SortByType", _("Sort by Type"), _("Sort booru tags by their type"));
+    radio_action->property_value().set_value(static_cast<int>(Booru::TagViewOrder::TYPE));
+    m_ActionGroup->add(radio_action,
+                       Gtk::AccelKey(),
+                       sigc::bind(sigc::mem_fun(m_TagView, &Booru::TagView::set_sort_order),
+                                  Booru::TagViewOrder::TYPE));
+    radio_action = Gtk::RadioAction::create(
+        tag_view_group, "SortByTag", _("Sort by Tag"), _("Sort booru tags alphabetically"));
+    radio_action->property_value().set_value(static_cast<int>(Booru::TagViewOrder::TAG));
+    m_ActionGroup->add(radio_action,
+                       Gtk::AccelKey(),
+                       sigc::bind(sigc::mem_fun(m_TagView, &Booru::TagView::set_sort_order),
+                                  Booru::TagViewOrder::TAG));
+
+    radio_action->set_current_value(static_cast<int>(Settings.get_tag_view_order()));
     // }}}
 
     m_UIManager->insert_action_group(m_ActionGroup);

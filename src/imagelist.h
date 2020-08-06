@@ -14,10 +14,6 @@
 
 namespace AhoViewer
 {
-    namespace Booru
-    {
-        class ImageList;
-    }
     class ImageList : public sigc::trackable
     {
         using ImageVector = std::vector<std::shared_ptr<Image>>;
@@ -37,9 +33,6 @@ namespace AhoViewer
         // This is used by ThumbnailBar and Booru::Page.
         class Widget
         {
-            friend class ImageList;
-            friend class Booru::ImageList;
-
             // When the widget's selected item changes it will emit this signal.
             using SignalSelectedChangedType = sigc::signal<void, const size_t>;
 
@@ -47,7 +40,10 @@ namespace AhoViewer
             Widget() : m_ListStore(Gtk::ListStore::create(m_Columns)) { }
             virtual ~Widget() = default;
 
-        protected:
+            SignalSelectedChangedType signal_selected_changed() const
+            {
+                return m_SignalSelectedChanged;
+            }
             struct ModelColumns : public Gtk::TreeModelColumnRecord
             {
                 ModelColumns() { add(pixbuf); }
@@ -74,15 +70,6 @@ namespace AhoViewer
                 for (size_t i = 0; i < s; ++i)
                     m_ListStore->append();
             }
-
-            // Member ordering here is important, m_ListStore requires m_Columns
-            // during initialization
-            ModelColumns m_Columns;
-            Glib::RefPtr<Gtk::ListStore> m_ListStore;
-            SignalSelectedChangedType m_SignalSelectedChanged;
-            sigc::connection m_CursorConn;
-
-        private:
             void erase(const size_t i)
             {
                 Gtk::TreeIter it = m_ListStore->get_iter(std::to_string(i));
@@ -96,10 +83,14 @@ namespace AhoViewer
                 it->set_value(0, pixbuf);
             }
 
-            SignalSelectedChangedType signal_selected_changed() const
-            {
-                return m_SignalSelectedChanged;
-            }
+            // Member ordering here is important, m_ListStore requires m_Columns
+            // during initialization
+            ModelColumns m_Columns;
+            Glib::RefPtr<Gtk::ListStore> m_ListStore;
+
+        protected:
+            SignalSelectedChangedType m_SignalSelectedChanged;
+            sigc::connection m_CursorConn;
         };
         // }}}
 

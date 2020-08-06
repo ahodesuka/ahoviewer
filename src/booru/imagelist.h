@@ -25,7 +25,8 @@ namespace AhoViewer
             size_t get_vector_size() const { return m_Images.size(); }
 
             void clear() override;
-            void load(const xml::Document& posts, const Page& page);
+            void
+            load(const xml::Document& posts, const Page& page, const std::vector<Tag>& posts_tags);
             bool is_loading() const { return m_ThreadPool.active(); }
 
         protected:

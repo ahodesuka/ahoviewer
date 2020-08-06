@@ -9,7 +9,7 @@ using libconfig::Setting;
 #include "util.h"
 
 #include <map>
-#include <set>
+#include <vector>
 
 namespace AhoViewer
 {
@@ -44,9 +44,13 @@ namespace AhoViewer
         bool clear_keybinding(const std::string& value, std::string& group, std::string& name);
         std::string reset_keybinding(const std::string& group, const std::string& name);
 
-        void add_favorite_tag(const std::string& tag) { m_FavoriteTags.insert(tag); }
-        void remove_favorite_tag(const std::string& tag) { m_FavoriteTags.erase(tag); }
-        const std::set<std::string>& get_favorite_tags() const { return m_FavoriteTags; }
+        void add_favorite_tag(const Booru::Tag& tag) { m_FavoriteTags.push_back(tag); }
+        void remove_favorite_tag(const Booru::Tag& tag)
+        {
+            m_FavoriteTags.erase(std::remove(m_FavoriteTags.begin(), m_FavoriteTags.end(), tag),
+                                 m_FavoriteTags.end());
+        }
+        std::vector<Booru::Tag>& get_favorite_tags() { return m_FavoriteTags; }
 
         bool get_geometry(int& x, int& y, int& w, int& h) const;
         void set_geometry(const int x, const int y, const int w, const int h);
@@ -59,6 +63,9 @@ namespace AhoViewer
 
         ZoomMode get_zoom_mode() const;
         void set_zoom_mode(const ZoomMode value);
+
+        Booru::TagViewOrder get_tag_view_order() const;
+        void set_tag_view_order(const Booru::TagViewOrder value);
 
         const std::string get_booru_path() const { return m_BooruPath; }
 
@@ -92,10 +99,11 @@ namespace AhoViewer
         const std::map<std::string, std::map<std::string, std::string>> m_DefaultKeybindings;
         const Booru::Rating m_DefaultBooruMaxRating{ Booru::Rating::EXPLICIT };
         const ZoomMode m_DefaultZoomMode{ ZoomMode::MANUAL };
+        const Booru::TagViewOrder m_DefaultTagViewOrder{ Booru::TagViewOrder::TYPE };
 
         std::vector<std::shared_ptr<Booru::Site>> m_Sites;
         std::map<std::string, std::map<std::string, std::string>> m_Keybindings;
-        std::set<std::string> m_FavoriteTags;
+        std::vector<Booru::Tag> m_FavoriteTags;
 
         template<typename T>
         void set(const std::string& key, const T value, Setting::Type type)

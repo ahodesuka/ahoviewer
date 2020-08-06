@@ -407,7 +407,7 @@ bool ImageBox::on_button_press_event(GdkEventButton* e)
             m_PressY = m_PreviousY = e->y_root;
             return true;
         case 3:
-            m_PopupMenu->popup_at_pointer((GdkEvent*)e);
+            m_PopupMenu->popup_at_pointer(reinterpret_cast<GdkEvent*>(e));
             m_CursorConn.disconnect();
             return true;
         case 8: // Back

@@ -34,7 +34,7 @@ namespace AhoViewer::Booru
         std::string get_posts_url(const std::string& tags, size_t page);
         std::string get_post_url(const std::string& id);
         std::string get_notes_url(const std::string& id);
-        void add_tags(const std::set<std::string>& tags);
+        void add_tags(const std::vector<Tag>& tags);
 
         std::string get_name() const { return m_Name; }
         void set_name(const std::string& name) { m_Name = name; }
@@ -43,7 +43,7 @@ namespace AhoViewer::Booru
         bool set_url(const std::string& s);
 
         Type get_type() const { return m_Type; }
-        const std::set<std::string>& get_tags() const { return m_Tags; }
+        const std::set<Tag>& get_tags() const { return m_Tags; }
 
         std::string get_register_uri() const { return m_Url + RegisterURI.at(m_Type); }
 
@@ -96,7 +96,7 @@ namespace AhoViewer::Booru
         Type m_Type;
         bool m_NewAccount{ false }, m_UseSamples;
         uint64_t m_CookieTS{ 0 };
-        std::set<std::string> m_Tags;
+        std::set<Tag> m_Tags;
         int m_MaxConnections;
         CURLSH* m_ShareHandle;
         std::map<curl_lock_data, std::mutex> m_MutexMap;

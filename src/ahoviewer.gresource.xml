@@ -4,5 +4,7 @@
     <file compressed="true">ui/ahoviewer.ui</file>
     <file>ui/css/note.css</file>
     <file>ui/css/note-popover.css</file>
+    <file>ui/css/tagview.css</file>
+    <file>ui/css/tagview-colors.css</file>
   </gresource>
 </gresources>
