@@ -4,8 +4,7 @@
 #include <sstream>
 using namespace AhoViewer;
 
-StatusBar::StatusBar(BaseObjectType* cobj, const Glib::RefPtr<Gtk::Builder>& bldr)
-    : Gtk::Frame(cobj)
+StatusBar::StatusBar(BaseObjectType* cobj, const Glib::RefPtr<Gtk::Builder>& bldr) : Gtk::Box(cobj)
 {
     bldr->get_widget("PageInfoLabel", m_PageInfo);
     bldr->get_widget("ResolutionLabel", m_Resolution);

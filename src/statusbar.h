@@ -7,7 +7,7 @@
 
 namespace AhoViewer
 {
-    class StatusBar : public Gtk::Frame
+    class StatusBar : public Gtk::Box
     {
     public:
         enum class Priority : uint8_t
