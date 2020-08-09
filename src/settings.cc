@@ -50,7 +50,7 @@ SettingsManager::SettingsManager()
           { "TagMetadataColor", "#F80" },
       }),
       m_DefaultSites({
-          std::make_tuple("Danbooru", "https://danbooru.donmai.us", Type::DANBOORU, "", "", 0),
+          std::make_tuple("Danbooru", "https://danbooru.donmai.us", Type::DANBOORU_V2, "", "", 0),
           std::make_tuple("Gelbooru", "https://gelbooru.com", Type::GELBOORU, "", "", 0),
           std::make_tuple("Konachan", "https://konachan.com", Type::MOEBOORU, "", "", 6),
           std::make_tuple("yande.re", "https://yande.re", Type::MOEBOORU, "", "", 0),
@@ -209,25 +209,26 @@ std::vector<std::shared_ptr<Site>>& SettingsManager::get_sites()
         {
             for (size_t i = 0; i < static_cast<size_t>(sites.getLength()); ++i)
             {
-                const Setting& s     = sites[i];
-                std::string name     = s.exists("name") ? s["name"] : "",
-                            url      = s.exists("url") ? s["url"] : "",
-                            username = s.exists("username") ? s["username"] : "",
-                            password = s.exists("password") ? s["password"] : "";
-                int max_cons         = 0;
+                const Setting& s{ sites[i] };
+                std::string name{ s.exists("name") ? s["name"] : "" },
+                    url{ s.exists("url") ? s["url"] : "" },
+                    username{ s.exists("username") ? s["username"] : "" },
+                    password{ s.exists("password") ? s["password"] : "" };
+                int type{ s["type"] }, max_cons{ 0 };
+
+                // Old saved versions of danbooru probably have the wrong type, change it to use
+                // the newer API
+                if (url.find("danbooru.donmai.us") != std::string::npos)
+                    type = static_cast<int>(Booru::Type::DANBOORU_V2);
+
                 s.lookupValue("max_connections", max_cons);
                 // cachesize * 2 + 1 < 6 < max_cons
                 if (max_cons != 0)
                     max_cons = std::max(max_cons, std::min(get_int("CacheSize") * 2 + 1, 6));
                 bool use_samples = false;
                 s.lookupValue("use_samples", use_samples);
-                m_Sites.push_back(Site::create(name,
-                                               url,
-                                               static_cast<Type>(static_cast<int>(s["type"])),
-                                               username,
-                                               password,
-                                               max_cons,
-                                               use_samples));
+                m_Sites.push_back(Site::create(
+                    name, url, static_cast<Type>(type), username, password, max_cons, use_samples));
             }
 
             return m_Sites;

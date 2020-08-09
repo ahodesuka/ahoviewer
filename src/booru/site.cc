@@ -132,9 +132,10 @@ Type Site::get_type_from_url(const std::string& url)
     curler.set_no_body();
     curler.set_follow_location(false);
 
-    for (const Type& type : { Type::GELBOORU, Type::MOEBOORU, Type::DANBOORU, Type::SHIMMIE })
+    for (const Type& type :
+         { Type::DANBOORU_V2, Type::GELBOORU, Type::MOEBOORU, Type::DANBOORU, Type::SHIMMIE })
     {
-        std::string uri = RequestURI.at(type);
+        std::string uri{ RequestURI.at(type) };
 
         if (type == Type::GELBOORU)
             uri = uri.substr(0, uri.find("&pid"));
@@ -142,7 +143,9 @@ Type Site::get_type_from_url(const std::string& url)
             uri = uri.substr(0, uri.find("?"));
 
         curler.set_url(url + uri);
-        if (curler.perform() && curler.get_response_code() == 200)
+        // Danbooru V2 returns a 204 (no content because set_no_body?)
+        if (curler.perform() && (curler.get_response_code() == 200 ||
+                                 (type == Type::DANBOORU_V2 && curler.get_response_code() == 204)))
             return type;
     }
 
@@ -298,12 +301,12 @@ void Site::add_tags(const std::vector<Tag>& tags)
     for (const auto& t : tags)
     {
         auto it{ m_Tags.insert(t) };
-        if (!it.second)
+        if (!it.second && t.type != Tag::Type::UNKNOWN)
             it.first->type = t.type;
 
         auto fav_it{ std::find(favorite_tags.begin(), favorite_tags.end(), t) };
-        if (fav_it != favorite_tags.end())
-            (*fav_it).type = t.type;
+        if (fav_it != favorite_tags.end() && t.type != Tag::Type::UNKNOWN)
+            fav_it->type = t.type;
     }
 }
 
