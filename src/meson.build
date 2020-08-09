@@ -41,6 +41,7 @@ configure_file(
   configuration: conf
 )
 
+# FIXME: does this break the version header when theres no .git directory?
 vcs_tag(
   command: ['git', 'describe', '--dirty'],
   input: 'version.h.in',

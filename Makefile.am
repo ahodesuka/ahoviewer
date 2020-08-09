@@ -1,4 +1,0 @@
-SUBDIRS =      \
-		  data \
-		  po   \
-		  src
