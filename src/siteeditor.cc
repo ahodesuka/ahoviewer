@@ -90,6 +90,9 @@ SiteEditor::SiteEditor(BaseObjectType* cobj, const Glib::RefPtr<Gtk::Builder>& b
     m_PasswordConn = m_PasswordEntry->signal_changed().connect(
         sigc::mem_fun(*this, &SiteEditor::on_password_edited));
 
+    m_CursorConn = signal_cursor_changed().connect(
+        sigc::mem_fun(*this, &SiteEditor::on_my_cursor_changed), false);
+
 #ifdef HAVE_LIBSECRET
     // Make sure the initially selected site's password gets set in the entry once it's loaded
     const std::shared_ptr<Site>& s{ get_selection()->get_selected()->get_value(m_Columns.site) };
@@ -104,7 +107,7 @@ SiteEditor::SiteEditor(BaseObjectType* cobj, const Glib::RefPtr<Gtk::Builder>& b
     m_PasswordEntry->set_visibility(false);
 
     // Set initial values for entries and linkbutton
-    on_cursor_changed();
+    on_my_cursor_changed();
 
     // Set a flag to let the on_row_changed signal handler know that the change
     // is from a DND'ing
@@ -136,9 +139,8 @@ bool SiteEditor::on_key_release_event(GdkEventKey* e)
     return false;
 }
 
-void SiteEditor::on_cursor_changed()
+void SiteEditor::on_my_cursor_changed()
 {
-    Gtk::TreeView::on_cursor_changed();
     std::shared_ptr<Site> s{ nullptr };
 
     if (get_selection()->get_selected())
@@ -199,7 +201,7 @@ void SiteEditor::delete_site()
         Gtk::TreeIter n{ m_Model->erase(o) };
         if (m_Model->children().size())
             get_selection()->select(n ? n : --n);
-        on_cursor_changed();
+        on_my_cursor_changed();
     }
 }
 
@@ -249,6 +251,7 @@ void SiteEditor::on_row_changed(const Gtk::TreePath& path, const Gtk::TreeIter& 
     if (!m_LastAddFromDND)
         return;
 
+    m_CursorConn.block();
     m_LastAddFromDND = false;
     std::shared_ptr<Site> s{ iter->get_value(m_Columns.site) };
     if (s)
@@ -282,7 +285,10 @@ void SiteEditor::on_row_changed(const Gtk::TreePath& path, const Gtk::TreeIter& 
             // Calling this directly doesn't work, something handling this
             // signal later one might be setting the selection?  Either way
             // queuing it works fine.
-            Glib::signal_idle().connect_once([&, iter]() { get_selection()->select(iter); });
+            Glib::signal_idle().connect_once([&, iter]() {
+                get_selection()->select(iter);
+                m_CursorConn.unblock();
+            });
         }
     }
 }
@@ -369,9 +375,13 @@ void SiteEditor::on_site_checked()
     }
     else if (m_SiteCheckSite && !m_SiteCheckEdit)
     {
+        // In case this was set before the site was actually created
+        m_SiteCheckSite->set_use_samples(m_SiteCheckIter->get_value(m_Columns.samples));
+
         m_Sites.push_back(m_SiteCheckSite);
         m_SiteCheckIter->set_value(m_Columns.site, m_SiteCheckSite);
-        on_cursor_changed();
+        // Make the username/password entries sensitive
+        on_my_cursor_changed();
     }
 
     if (m_SiteCheckEdit || m_SiteCheckSite)

@@ -23,8 +23,6 @@ namespace AhoViewer
     protected:
         bool on_key_release_event(GdkEventKey* e) override;
 
-        void on_cursor_changed() override;
-
     private:
         // Custom CellRenderer that either shows a booru sites favicon, a error
         // icon, or a spinner when trying to check if the url is valid
@@ -148,6 +146,7 @@ namespace AhoViewer
         void add_row();
         void delete_site();
 
+        void on_my_cursor_changed();
         void on_name_edited(const std::string& p, const std::string& text);
         void on_url_edited(const std::string& p, const std::string& text);
         void on_samples_toggled(const std::string& p);
@@ -180,7 +179,7 @@ namespace AhoViewer
         std::thread m_SiteCheckThread;
         Glib::Dispatcher m_SignalSiteChecked;
 
-        sigc::connection m_UsernameConn, m_PasswordConn, m_RowInsertedConn;
+        sigc::connection m_UsernameConn, m_PasswordConn, m_CursorConn, m_RowInsertedConn;
 
         sigc::signal<void> m_SignalEdited;
     };
