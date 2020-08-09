@@ -54,6 +54,10 @@ resources = gnome.compile_resources(
     'resources', 'ahoviewer.gresource.xml'
 )
 
+if host_machine.system() == 'windows'
+  resources += import('windows').compile_resources('ahoviewer.rc')
+endif
+
 incdirs += include_directories('../ext/entities')
 
 sources = [
