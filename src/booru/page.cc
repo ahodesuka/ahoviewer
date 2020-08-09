@@ -391,11 +391,11 @@ void Page::get_posts_tags()
     const int max_query_size{ 5120 };
     static const std::string space{ "%20" };
 
-    auto splits_needed{ tags.length() / max_query_size };
+    size_t splits_needed{ tags.length() / max_query_size };
     std::vector<std::string> split_tags;
     std::string::iterator it, last_it{ tags.begin() };
 
-    for (int i = 0; i < splits_needed; ++i)
+    for (size_t i{ 0 }; i < splits_needed; ++i)
     {
         // Find the last encoded space before max_query_size * (i+1)
         it = std::find_end(
