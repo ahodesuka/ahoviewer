@@ -35,6 +35,8 @@ Browser::Browser(BaseObjectType* cobj, const Glib::RefPtr<Gtk::Builder>& bldr)
     m_TagEntry->signal_key_press_event().connect(
         sigc::mem_fun(*this, &Browser::on_entry_key_press_event), false);
     m_TagEntry->signal_changed().connect(sigc::mem_fun(*this, &Browser::on_entry_value_changed));
+    m_TagEntry->signal_icon_release().connect(
+        sigc::mem_fun(*this, &Browser::on_entry_button_release_event));
 
     m_TagView->signal_new_tab_tag().connect(sigc::mem_fun(*this, &Browser::on_new_tab_tag));
 
@@ -294,6 +296,22 @@ void Browser::on_show()
         page->scroll_to_selected();
 }
 
+void Browser::search(const bool new_tab)
+{
+    std::string tags{ m_TagEntry->get_text() };
+    if (new_tab || m_Notebook->get_n_pages() == 0)
+        on_new_tab();
+
+    if (new_tab)
+    {
+        m_TagEntry->set_text(tags);
+        m_TagEntry->set_position(-1);
+    }
+
+    m_TagView->clear();
+    get_active_page()->search(get_active_site());
+}
+
 void Browser::close_page(Page* page)
 {
     if (page->ask_cancel_save())
@@ -398,20 +416,7 @@ bool Browser::on_entry_key_press_event(GdkEventKey* e)
         ((e->state & GDK_SHIFT_MASK) == GDK_SHIFT_MASK ||
          (e->state & Gtk::AccelGroup::get_default_mod_mask()) == 0))
     {
-        std::string tags = m_TagEntry->get_text();
-        bool new_tab     = (e->state & GDK_SHIFT_MASK) == GDK_SHIFT_MASK;
-
-        if (new_tab || m_Notebook->get_n_pages() == 0)
-            on_new_tab();
-
-        if (new_tab)
-        {
-            m_TagEntry->set_text(tags);
-            m_TagEntry->set_position(-1);
-        }
-
-        m_TagView->clear();
-        get_active_page()->search(get_active_site());
+        search((e->state & GDK_SHIFT_MASK) == GDK_SHIFT_MASK);
     }
     else if (e->keyval == GDK_KEY_Escape)
     {
@@ -419,6 +424,15 @@ bool Browser::on_entry_key_press_event(GdkEventKey* e)
     }
 
     return false;
+}
+
+void Browser::on_entry_button_release_event(const Gtk::EntryIconPosition&, const GdkEventButton* e)
+{
+    if (e->button == 1 || e->button == 2)
+    {
+        // New tab on middle mouse click
+        search(e->button == 2);
+    }
 }
 
 void Browser::on_entry_value_changed()

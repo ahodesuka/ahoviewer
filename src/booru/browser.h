@@ -64,11 +64,14 @@ namespace AhoViewer
                 Gtk::TreeModelColumn<std::string> name;
             };
 
+            void search(const bool new_tab);
             void close_page(Page* page);
             void on_save_progress(const Page* p);
             void on_image_progress(const Image* bimage, double c, double t);
 
             bool on_entry_key_press_event(GdkEventKey* e);
+            void on_entry_button_release_event(const Gtk::EntryIconPosition&,
+                                               const GdkEventButton* e);
             void on_entry_value_changed();
             void on_page_removed(Gtk::Widget* w, guint);
             void on_page_removed_cleanup();

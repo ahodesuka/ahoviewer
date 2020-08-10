@@ -121,9 +121,6 @@
                                 <property name="stock">gtk-add</property>
                               </object>
                             </child>
-                            <style>
-                              <class name="linked"/>
-                            </style>
                           </object>
                           <packing>
                             <property name="expand">False</property>
@@ -147,9 +144,6 @@
                                 <property name="stock">gtk-save</property>
                               </object>
                             </child>
-                            <style>
-                              <class name="linked"/>
-                            </style>
                           </object>
                           <packing>
                             <property name="expand">False</property>
@@ -189,9 +183,9 @@
                                 <property name="visible">True</property>
                                 <property name="can_focus">True</property>
                                 <property name="has_focus">True</property>
-                                <property name="width_chars">25</property>
+                                <property name="caps_lock_warning">False</property>
+                                <property name="secondary_icon_name">edit-find</property>
                                 <property name="primary_icon_activatable">False</property>
-                                <property name="secondary_icon_activatable">False</property>
                                 <property name="placeholder_text" translatable="yes">search...</property>
                                 <property name="completion">Booru::Browser::TagEntryCompletion</property>
                               </object>
