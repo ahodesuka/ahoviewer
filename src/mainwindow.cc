@@ -52,6 +52,10 @@ MainWindow::MainWindow(BaseObjectType* cobj, Glib::RefPtr<Gtk::Builder> bldr)
         if (!m_BooruBrowser->get_realized())
             return;
 
+        auto half_window{ (get_width() - m_HPaned->get_handle_window()->get_width()) / 2 };
+        if (m_HPaned->get_position() > half_window)
+            m_HPaned->set_position(half_window);
+
         if (m_HPanedLastPos != m_HPaned->get_position())
         {
             m_HPanedLastPos = m_HPaned->get_position();
