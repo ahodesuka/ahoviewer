@@ -47,7 +47,7 @@ bool Image::is_valid_extension(const std::string& path)
     return r;
 }
 
-bool Image::is_webm(const std::string& path)
+bool Image::is_webm([[maybe_unused]] const std::string& path)
 {
 #ifdef HAVE_GSTREAMER
     bool uncertain;
@@ -56,7 +56,6 @@ bool Image::is_webm(const std::string& path)
 
     return mime_type == "video/webm" || mime_type == "video/mp4";
 #else
-    (void)path;
     return false;
 #endif // HAVE_GSTREAMER
 }
@@ -403,7 +402,8 @@ Image::scale_pixbuf(Glib::RefPtr<Gdk::Pixbuf>& pixbuf, const int w, const int h)
 }
 
 // TODO: make this cancellable
-Glib::RefPtr<Gdk::Pixbuf> Image::create_webm_thumbnail(int w, int h) const
+Glib::RefPtr<Gdk::Pixbuf> Image::create_webm_thumbnail([[maybe_unused]] int w,
+                                                       [[maybe_unused]] int h) const
 {
     Glib::RefPtr<Gdk::Pixbuf> pixbuf;
 #ifdef HAVE_GSTREAMER
@@ -502,9 +502,6 @@ Glib::RefPtr<Gdk::Pixbuf> Image::create_webm_thumbnail(int w, int h) const
     gst_object_unref(sink);
     gst_element_set_state(pipeline, GST_STATE_NULL);
     gst_object_unref(pipeline);
-#else
-    (void)w;
-    (void)h;
 #endif // HAVE_GSTREAMER
     return pixbuf;
 }
