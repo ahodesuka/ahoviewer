@@ -599,6 +599,7 @@ void Browser::on_new_tab_tag(const std::string& tag)
         on_new_tab();
 
     m_TagEntry->set_text(tag);
+    m_TagEntry->set_position(-1);
     m_TagView->clear();
 
     get_active_page()->search(get_active_site());
