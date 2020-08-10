@@ -91,8 +91,10 @@ const Glib::RefPtr<Gdk::Pixbuf>& Image::get_thumbnail(Glib::RefPtr<Gio::Cancella
             m_ThumbnailLock.lock();
             // This doesn't need to be cancellable since booru
             // thumbnails are already small in size
-            m_ThumbnailPixbuf =
-                create_pixbuf_at_size(m_ThumbnailPath, 128, 128, Gio::Cancellable::create());
+            m_ThumbnailPixbuf = create_pixbuf_at_size(m_ThumbnailPath,
+                                                      BooruThumbnailSize,
+                                                      BooruThumbnailSize,
+                                                      Gio::Cancellable::create());
             m_ThumbnailLock.unlock();
         }
         else if (!m_ThumbnailCurler.is_cancelled())

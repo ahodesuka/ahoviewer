@@ -55,6 +55,9 @@ Browser::Browser(BaseObjectType* cobj, const Glib::RefPtr<Gtk::Builder>& bldr)
     m_Notebook->signal_page_removed().connect(sigc::mem_fun(*this, &Browser::on_page_removed));
     m_Notebook->signal_page_added().connect(sigc::mem_fun(*this, &Browser::on_page_added));
 
+    // This essentially sets the minimum size to match 2 columns of a pages icon view
+    m_Notebook->set_size_request((Image::BooruThumbnailSize + IconViewItemPadding * 2) * 2, -1);
+
     g_signal_connect(m_Notebook->gobj(), "create-window", G_CALLBACK(on_create_window), this);
 
     set_focus_chain({ m_TagEntry });

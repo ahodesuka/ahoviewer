@@ -11,6 +11,15 @@ using namespace AhoViewer::Booru;
 
 #define RETRY_COUNT 5
 
+void Page::CellRendererThumbnail::get_preferred_width_vfunc(Gtk::Widget& widget,
+                                                            int& minimum_width,
+                                                            int& natural_width) const
+{
+    auto width{ widget.get_width() / (widget.get_width() / Image::BooruThumbnailSize) };
+    minimum_width = width - 12; // 12 = item_padding (6)*2 left+right padding
+    natural_width = width - 12;
+}
+
 Page::Page()
     : Gtk::ScrolledWindow(),
       m_PopupMenu{ nullptr },
@@ -54,21 +63,21 @@ Page::Page()
     m_ScrollConn = get_vadjustment()->signal_value_changed().connect(
         sigc::mem_fun(*this, &Page::on_value_changed));
 
+    m_IconView->set_column_spacing(0);
+    m_IconView->set_margin(0);
+    m_IconView->set_item_padding(IconViewItemPadding);
+
     m_IconView->set_model(m_ListStore);
     m_IconView->set_selection_mode(Gtk::SELECTION_BROWSE);
-    m_IconView->set_item_width(Image::BooruThumbnailSize - m_IconView->get_margin() -
-                               m_IconView->property_item_padding().get_value());
     m_IconView->signal_selection_changed().connect(
         sigc::mem_fun(*this, &Page::on_selection_changed));
     m_IconView->signal_button_press_event().connect(
         sigc::mem_fun(*this, &Page::on_button_press_event));
 
     // Workaround to have fully centered pixbufs
-    Gtk::CellRendererPixbuf* cell = Gtk::manage(new Gtk::CellRendererPixbuf());
-    gtk_cell_layout_pack_start(
-        GTK_CELL_LAYOUT(m_IconView->gobj()), GTK_CELL_RENDERER(cell->gobj()), TRUE);
-    gtk_cell_layout_add_attribute(
-        GTK_CELL_LAYOUT(m_IconView->gobj()), GTK_CELL_RENDERER(cell->gobj()), "pixbuf", 0);
+    auto* cell = Gtk::manage(new CellRendererThumbnail());
+    m_IconView->pack_start(*cell);
+    m_IconView->add_attribute(cell->property_pixbuf(), m_Columns.pixbuf);
 
     m_SignalPostsDownloaded.connect(sigc::mem_fun(*this, &Page::on_posts_downloaded));
     m_SignalSaveProgressDisp.connect([&]() { m_SignalSaveProgress(this); });

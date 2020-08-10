@@ -39,6 +39,48 @@ namespace AhoViewer::Booru
         void scroll_to_selected() override;
 
     private:
+        // Custom CellRenderer that expands to center the pixbufs in the iconview
+        class CellRendererThumbnail : public Gtk::CellRenderer /*{{{*/
+        {
+        public:
+            CellRendererThumbnail()
+                : Glib::ObjectBase(typeid(CellRendererThumbnail)),
+                  Gtk::CellRenderer(),
+                  m_PixbufProperty(*this, "pixbuf"),
+                  m_PixbufRenderer(Gtk::manage(new Gtk::CellRendererPixbuf()))
+            {
+                set_alignment(0.5, 0.5);
+                m_PixbufProperty.get_proxy().signal_changed().connect(
+                    [&]() { m_PixbufRenderer->property_pixbuf() = m_PixbufProperty.get_value(); });
+            }
+            ~CellRendererThumbnail() override = default;
+
+            Glib::PropertyProxy<Glib::RefPtr<Gdk::Pixbuf>> property_pixbuf()
+            {
+                return m_PixbufProperty.get_proxy();
+            }
+
+            void get_preferred_width_vfunc(Gtk::Widget& widget,
+                                           int& minimum_width,
+                                           int& natural_width) const override;
+            void get_preferred_height_vfunc(Gtk::Widget& widget,
+                                            int& minimum_height,
+                                            int& natural_height) const override
+            {
+                m_PixbufRenderer->get_preferred_height(widget, minimum_height, natural_height);
+            }
+            void render_vfunc(const Cairo::RefPtr<::Cairo::Context>& cr,
+                              Gtk::Widget& widget,
+                              const Gdk::Rectangle& background_area,
+                              const Gdk::Rectangle& cell_area,
+                              Gtk::CellRendererState flags) override
+            {
+                m_PixbufRenderer->render(cr, widget, background_area, cell_area, flags);
+            }
+
+            Glib::Property<Glib::RefPtr<Gdk::Pixbuf>> m_PixbufProperty;
+            Gtk::CellRendererPixbuf* m_PixbufRenderer;
+        }; /*}}}*/
         void search(const std::shared_ptr<Site>& site);
         void save_image(const std::string& path, const std::shared_ptr<Image>& img);
         void save_images(const std::string& path);

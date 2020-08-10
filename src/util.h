@@ -42,6 +42,7 @@ namespace AhoViewer
 
     namespace Booru
     {
+        static const int IconViewItemPadding{ 6 };
         enum class Rating
         {
             SAFE         = 0,
