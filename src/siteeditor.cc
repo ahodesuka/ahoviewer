@@ -90,8 +90,8 @@ SiteEditor::SiteEditor(BaseObjectType* cobj, const Glib::RefPtr<Gtk::Builder>& b
     m_PasswordConn = m_PasswordEntry->signal_changed().connect(
         sigc::mem_fun(*this, &SiteEditor::on_password_edited));
 
-    m_CursorConn = signal_cursor_changed().connect(
-        sigc::mem_fun(*this, &SiteEditor::on_my_cursor_changed), false);
+    m_CursorConn =
+        signal_cursor_changed().connect(sigc::mem_fun(*this, &SiteEditor::on_my_cursor_changed));
 
 #ifdef HAVE_LIBSECRET
     // Make sure the initially selected site's password gets set in the entry once it's loaded
