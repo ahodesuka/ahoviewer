@@ -24,14 +24,14 @@ const std::map<Type, std::string> Site::RequestURI = {
     { Type::DANBOORU_V2, "/posts.xml?page=%1&limit=%2&tags=%3" },
     { Type::GELBOORU, "/index.php?page=dapi&s=post&q=index&pid=%1&limit=%2&tags=%3" },
     { Type::MOEBOORU, "/post.xml?page=%1&limit=%2&tags=%3" },
-    { Type::SHIMMIE, "/api/danbooru/find_posts/index.xml?page=%1&limit=%2&tags=%3" },
     { Type::DANBOORU, "/post/index.xml?page=%1&limit=%2&tags=%3" },
 };
 
 // 1: id
 const std::map<Type, std::string> Site::PostURI = {
-    { Type::DANBOORU_V2, "/posts/%1" },  { Type::GELBOORU, "/index.php?page=post&s=view&id=%1" },
-    { Type::MOEBOORU, "/post/show/%1" }, { Type::SHIMMIE, "/post/view/%1" },
+    { Type::DANBOORU_V2, "/posts/%1" },
+    { Type::GELBOORU, "/index.php?page=post&s=view&id=%1" },
+    { Type::MOEBOORU, "/post/show/%1" },
     { Type::DANBOORU, "/post/show/%1" },
 };
 
@@ -40,13 +40,13 @@ const std::map<Type, std::string> Site::NotesURI = {
     { Type::DANBOORU_V2, "/notes.xml?group_by=note&search[post_id]=%1" },
     { Type::GELBOORU, "/index.php?page=dapi&s=note&q=index&post_id=%1" },
     { Type::MOEBOORU, "/note.xml?post_id=%1" },
-    { Type::SHIMMIE, "" }, // doesn't have note support as far as i know
     { Type::DANBOORU, "/note/index.xml?post_id=%1" },
 };
 
 const std::map<Type, std::string> Site::RegisterURI = {
-    { Type::DANBOORU_V2, "/users/new" }, { Type::GELBOORU, "/index.php?page=account&s=reg" },
-    { Type::MOEBOORU, "/user/signup" },  { Type::SHIMMIE, "/user_admin/create" },
+    { Type::DANBOORU_V2, "/users/new" },
+    { Type::GELBOORU, "/index.php?page=account&s=reg" },
+    { Type::MOEBOORU, "/user/signup" },
     { Type::DANBOORU, "/user/signup" },
 };
 
@@ -132,8 +132,7 @@ Type Site::get_type_from_url(const std::string& url)
     curler.set_no_body();
     curler.set_follow_location(false);
 
-    for (const Type& type :
-         { Type::DANBOORU_V2, Type::GELBOORU, Type::MOEBOORU, Type::DANBOORU, Type::SHIMMIE })
+    for (const Type& type : { Type::DANBOORU_V2, Type::GELBOORU, Type::MOEBOORU, Type::DANBOORU })
     {
         std::string uri{ RequestURI.at(type) };
 

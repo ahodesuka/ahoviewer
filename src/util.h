@@ -55,7 +55,6 @@ namespace AhoViewer
             DANBOORU_V2 = 0,
             GELBOORU    = 1,
             MOEBOORU    = 2,
-            SHIMMIE     = 3,
             DANBOORU    = 4,
         };
         struct Tag
