@@ -122,13 +122,9 @@ void Page::set_pixbuf(const size_t index, const Glib::RefPtr<Gdk::Pixbuf>& pixbu
 
 void Page::set_selected(const size_t index)
 {
-    get_window()->freeze_updates();
-
     Gtk::TreePath path(std::to_string(index));
     m_IconView->select_path(path);
     scroll_to_selected();
-
-    get_window()->thaw_updates();
 }
 
 void Page::scroll_to_selected()
@@ -546,14 +542,14 @@ void Page::on_posts_downloaded()
 
 void Page::on_selection_changed()
 {
-    std::vector<Gtk::TreePath> paths = m_IconView->get_selected_items();
+    std::vector<Gtk::TreePath> paths{ m_IconView->get_selected_items() };
 
     if (!paths.empty())
     {
-        Gtk::TreePath path = paths[0];
+        Gtk::TreePath path{ paths[0] };
         if (path)
         {
-            size_t index = path[0];
+            int index{ path[0] };
 
             if (index + Settings.get_int("CacheSize") >= m_ImageList->get_vector_size() - 1)
                 get_next_page();

@@ -58,6 +58,7 @@ void ImageList::load(const xml::Document& posts,
                      const Page& page,
                      const std::vector<Tag>& posts_tags)
 {
+    size_t old_size{ m_Size };
     m_Site = page.get_site();
 
     if (!m_ImageFetcher)
@@ -256,6 +257,8 @@ void ImageList::load(const xml::Document& posts,
 
     if (m_Images.empty())
         return;
+    else
+        m_Widget->reserve(m_Size - old_size);
 
     if (m_ThumbnailThread.joinable())
         m_ThumbnailThread.join();
