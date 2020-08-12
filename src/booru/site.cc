@@ -299,9 +299,9 @@ void Site::add_tags(const std::vector<Tag>& tags)
     // Add or update tags (type may have changed)
     for (const auto& t : tags)
     {
-        auto it{ m_Tags.insert(t) };
-        if (!it.second && t.type != Tag::Type::UNKNOWN)
-            it.first->type = t.type;
+        auto [tag, success]{ m_Tags.insert(t) };
+        if (!success && t.type != Tag::Type::UNKNOWN)
+            tag->type = t.type;
 
         auto fav_it{ std::find(favorite_tags.begin(), favorite_tags.end(), t) };
         if (fav_it != favorite_tags.end() && t.type != Tag::Type::UNKNOWN)
