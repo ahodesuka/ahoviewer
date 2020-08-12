@@ -1210,9 +1210,6 @@ void MainWindow::on_quit()
         Settings.remove("ScrollPosV");
     }
 
-    save_window_geometry();
-    hide();
-
     // ActionName => SettingKey
     std::map<std::string, std::string> widget_vis = {
         { "ToggleHideAll", "HideAll" },
@@ -1243,6 +1240,9 @@ void MainWindow::on_quit()
         Settings.remove("LastSavePath");
         Settings.remove("LastLocalSavePath");
     }
+
+    save_window_geometry();
+    hide();
 }
 
 void MainWindow::on_toggle_fullscreen()
