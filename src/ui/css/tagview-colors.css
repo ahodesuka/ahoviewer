@@ -2,8 +2,6 @@
 @define-color ahoviewer_character %2;
 @define-color ahoviewer_copyright %3;
 @define-color ahoviewer_metadata %4;
-@define-color ahoviewer_general %5;
-@define-color ahoviewer_deprecated %5;
 
 #TagViewRow.artist checkbutton label {
   color: @ahoviewer_artist;
@@ -45,23 +43,13 @@
   background-color: @ahoviewer_metadata;
 }
 
-#TagViewRow.general checkbutton label {
-  color: @ahoviewer_general;
-}
-#TagViewHeader.general {
-  color: @ahoviewer_general;
-}
 #TagViewHeader.general separator {
-  background-color: @ahoviewer_general;
+  background-color: @theme_fg_color;
 }
 
 #TagViewRow.deprecated checkbutton label {
-  color: @ahoviewer_deprecated;
   text-decoration: line-through;
 }
-#TagViewHeader.deprecated {
-  color: @ahoviewer_deprecated;
-}
 #TagViewHeader.deprecated separator {
-  background-color: @ahoviewer_deprecated;
+  background-color: @theme_fg_color;
 }

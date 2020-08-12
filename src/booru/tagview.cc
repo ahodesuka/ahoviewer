@@ -164,7 +164,6 @@ TagView::TagView(BaseObjectType* cobj, const Glib::RefPtr<Gtk::Builder>& bldr)
         Gdk::Screen::get_default(), css, GTK_STYLE_PROVIDER_PRIORITY_APPLICATION);
     css->load_from_resource("/ui/css/tagview.css");
 
-    auto general_color{ style_context->get_color(Gtk::STATE_FLAG_NORMAL) };
     gsize size;
     // This is pretty ugly, but the order of colors is the same as the order of the
     // Tag::Type enum entries
@@ -174,8 +173,7 @@ TagView::TagView(BaseObjectType* cobj, const Glib::RefPtr<Gtk::Builder>& bldr)
         Settings.get_string("TagArtistColor"),
         Settings.get_string("TagCharacterColor"),
         Settings.get_string("TagCopyrightColor"),
-        Settings.get_string("TagMetadataColor"),
-        general_color.to_string()) };
+        Settings.get_string("TagMetadataColor")) };
     style_context->add_provider_for_screen(
         Gdk::Screen::get_default(), css_colors, GTK_STYLE_PROVIDER_PRIORITY_APPLICATION);
     css_colors->load_from_data(css_data);
