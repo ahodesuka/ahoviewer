@@ -25,6 +25,7 @@ namespace AhoViewer
     private:
         void add_window(MainWindow* w);
         void remove_window(MainWindow* w);
+        void on_my_shutdown();
 
         std::vector<MainWindow*> m_Windows;
     };

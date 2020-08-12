@@ -8,9 +8,11 @@
 #include <libxml/parser.h>
 using namespace AhoViewer;
 
+#include "booru/site.h"
 #include "config.h"
 #include "imagelist.h"
 #include "mainwindow.h"
+#include "settings.h"
 
 #ifdef USE_OPENSSL
 #include <openssl/opensslv.h>
@@ -109,6 +111,8 @@ Application::Application()
     // The ImageBox needs this, disabling it is silly unless proven otherwise
     Glib::setenv("GTK_OVERLAY_SCROLLING", "", true);
     Glib::set_application_name(PACKAGE);
+
+    signal_shutdown().connect(sigc::mem_fun(*this, &Application::on_my_shutdown));
 }
 
 Application& Application::get_instance()
@@ -174,6 +178,13 @@ void Application::on_open(const std::vector<Glib::RefPtr<Gio::File>>& f, const G
     {
         (*it)->open_file(f.front()->get_path());
     }
+}
+
+void Application::on_my_shutdown()
+{
+    std::cout << "saving tags" << std::endl;
+    for (const std::shared_ptr<Booru::Site>& site : Settings.get_sites())
+        site->save_tags();
 }
 
 void Application::on_startup()

@@ -211,6 +211,8 @@ MainWindow::~MainWindow()
 
     delete m_ThumbnailBar;
     delete m_BooruBrowser;
+    delete m_InfoBox;
+    delete m_TagView;
     delete m_ImageBox;
     delete m_HPaned;
 
@@ -1133,7 +1135,7 @@ void MainWindow::on_open_file_dialog()
 
 void MainWindow::on_show_preferences()
 {
-    auto w = m_PreferencesDialog->get_transient_for();
+    auto w{ m_PreferencesDialog->get_transient_for() };
 
     if (m_PreferencesDialog->is_visible() && w == this)
         return;
@@ -1146,7 +1148,7 @@ void MainWindow::on_show_preferences()
 
 void MainWindow::on_show_about()
 {
-    auto w = m_AboutDialog->get_transient_for();
+    auto w{ m_AboutDialog->get_transient_for() };
 
     if (m_AboutDialog->is_visible() && w == this)
         return;
@@ -1159,7 +1161,7 @@ void MainWindow::on_show_about()
 
 void MainWindow::on_open_recent_file()
 {
-    std::string uri = m_RecentAction->get_current_uri();
+    std::string uri{ m_RecentAction->get_current_uri() };
 
     if (!uri.empty())
         open_file(Glib::filename_from_uri(uri));
@@ -1211,24 +1213,21 @@ void MainWindow::on_quit()
     }
 
     // ActionName => SettingKey
-    std::map<std::string, std::string> widget_vis = {
+    std::map<std::string, std::string> widget_vis{ {
         { "ToggleHideAll", "HideAll" },
         { "ToggleMenuBar", "MenuBarVisible" },
         { "ToggleStatusBar", "StatusBarVisible" },
         { "ToggleScrollbars", "ScrollbarsVisible" },
         { "ToggleBooruBrowser", "BooruBrowserVisible" },
         { "ToggleThumbnailBar", "ThumbnailBarVisible" },
-    };
+    } };
 
     for (auto w : widget_vis)
     {
-        bool v = Glib::RefPtr<Gtk::ToggleAction>::cast_static(m_ActionGroup->get_action(w.first))
-                     ->get_active();
+        bool v{ Glib::RefPtr<Gtk::ToggleAction>::cast_static(m_ActionGroup->get_action(w.first))
+                    ->get_active() };
         Settings.set(w.second, v);
     }
-
-    for (const std::shared_ptr<Booru::Site>& site : Settings.get_sites())
-        site->save_tags();
 
     if (Settings.get_bool("RememberLastSavePath"))
     {
@@ -1263,8 +1262,8 @@ void MainWindow::on_toggle_fullscreen()
         if (Settings.get_bool("HideAllFullscreen"))
         {
             m_HideAllFullscreen = true;
-            auto a              = Glib::RefPtr<Gtk::ToggleAction>::cast_static(
-                m_ActionGroup->get_action("ToggleHideAll"));
+            auto a{ Glib::RefPtr<Gtk::ToggleAction>::cast_static(
+                m_ActionGroup->get_action("ToggleHideAll")) };
             m_WasHideAll = a->get_active();
             a->set_active();
         }
