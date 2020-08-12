@@ -51,8 +51,8 @@ bool Image::is_webm([[maybe_unused]] const std::string& path)
 {
 #ifdef HAVE_GSTREAMER
     bool uncertain;
-    std::string ct        = Gio::content_type_guess(path, nullptr, 0, uncertain);
-    std::string mime_type = Gio::content_type_get_mime_type(ct);
+    std::string ct{ Gio::content_type_guess(path, nullptr, 0, uncertain) };
+    std::string mime_type{ Gio::content_type_get_mime_type(ct) };
 
     return mime_type == "video/webm" || mime_type == "video/mp4";
 #else
@@ -87,7 +87,7 @@ static unsigned char* _def_bitmap_get_buffer(void* bitmap)
     return static_cast<unsigned char*>(bitmap);
 }
 
-Image::Image(const std::string& path) : m_IsWebM{ Image::is_webm(path) }, m_Path{ path }
+Image::Image(std::string path) : m_IsWebM{ Image::is_webm(path) }, m_Path{ std::move(path) }
 {
     m_BitmapCallbacks.bitmap_create      = _def_bitmap_create;
     m_BitmapCallbacks.bitmap_destroy     = _def_bitmap_destroy;
@@ -160,12 +160,12 @@ const Glib::RefPtr<Gdk::Pixbuf>& Image::get_thumbnail(Glib::RefPtr<Gio::Cancella
         if (pixbuf)
         {
             struct stat file_info;
-            std::string s = pixbuf->get_option("tEXt::Thumb::MTime");
+            std::string s{ pixbuf->get_option("tEXt::Thumb::MTime") };
 
             // Make sure the file hasn't been modified since this thumbnail was created
             if (!s.empty())
             {
-                time_t mtime = strtol(s.c_str(), nullptr, 10);
+                time_t mtime{ std::stol(s) };
 
                 if ((stat(m_Path.c_str(), &file_info) == 0) && file_info.st_mtime == mtime)
                     m_ThumbnailPixbuf = pixbuf;
@@ -184,7 +184,7 @@ void Image::load_pixbuf(Glib::RefPtr<Gio::Cancellable> c)
 {
     if (!m_Pixbuf && !m_IsWebM)
     {
-        Glib::RefPtr<Gio::File> file = Gio::File::create_for_path(m_Path);
+        Glib::RefPtr<Gio::File> file{ Gio::File::create_for_path(m_Path) };
 
         std::array<unsigned char, 4> data;
         file->read()->read(&data, 4);

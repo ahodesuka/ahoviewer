@@ -15,6 +15,7 @@ namespace AhoViewer
     class MainWindow;
     namespace Booru
     {
+        class InfoBox;
         class Browser : public Gtk::Paned
         {
             friend MainWindow;
@@ -102,6 +103,7 @@ namespace AhoViewer
             Glib::RefPtr<Gtk::ListStore> m_ComboModel;
 
             TagEntry* m_TagEntry;
+            InfoBox* m_InfoBox;
             TagView* m_TagView;
             Page* m_CurrentPage{ nullptr };
 
@@ -119,8 +121,8 @@ namespace AhoViewer
             std::map<Page*, sigc::connection> m_PageCloseConns;
             std::vector<sigc::connection> m_SiteIconConns;
             sigc::connection m_ComboChangedConn, m_DownloadErrorConn, m_ImageListConn,
-                m_ImageListClearedConn, m_ImageProgConn, m_ImageErrorConn, m_PosChangedConn,
-                m_SaveProgConn, m_PageSwitchedConn;
+                m_ImageProgConn, m_ImageErrorConn, m_PosChangedConn, m_SaveProgConn,
+                m_PageSwitchedConn;
 
             SignalPageChangedType m_SignalPageChanged;
             sigc::signal<void> m_SignalEntryBlur;

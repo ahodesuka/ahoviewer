@@ -21,12 +21,13 @@ namespace AhoViewer::Booru
         using SignalDownloadErrorType = sigc::signal<void, const std::string&>;
 
     public:
-        Image(const std::string& path,
+        Image(std::string path,
               std::string url,
-              const std::string& thumb_path,
+              std::string thumb_path,
               std::string thumb_url,
               std::string post_url,
               std::vector<Tag> tags,
+              const PostInfo& post_info,
               const std::string& notes_url,
               std::shared_ptr<Site> site,
               ImageFetcher& fetcher);
@@ -36,6 +37,7 @@ namespace AhoViewer::Booru
 
         std::string get_url() const { return m_Url; }
         std::string get_post_url() const { return m_PostUrl; }
+        const PostInfo& get_post_info() const { return m_PostInfo; }
 
         bool is_loading() const override;
         std::string get_filename() const override;
@@ -66,6 +68,7 @@ namespace AhoViewer::Booru
 
         std::string m_Url, m_ThumbnailUrl, m_PostUrl;
         std::vector<Tag> m_Tags;
+        const PostInfo m_PostInfo;
         std::shared_ptr<Site> m_Site;
         ImageFetcher& m_ImageFetcher;
 

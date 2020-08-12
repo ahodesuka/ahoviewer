@@ -7,6 +7,7 @@ using namespace AhoViewer::Booru;
 
 #include "application.h"
 #include "image.h"
+#include "infobox.h"
 #include "mainwindow.h"
 #include "tempdir.h"
 
@@ -19,18 +20,18 @@ Browser::Browser(BaseObjectType* cobj, const Glib::RefPtr<Gtk::Builder>& bldr)
     bldr->get_widget("Booru::Browser::SaveImagesButton", m_SaveImagesButton);
     bldr->get_widget("Booru::Browser::ComboBox", m_ComboBox);
     bldr->get_widget_derived("Booru::Browser::TagEntry", m_TagEntry);
+    bldr->get_widget_derived("Booru::Browser::InfoBox", m_InfoBox);
     bldr->get_widget_derived("Booru::Browser::TagView", m_TagView);
     bldr->get_widget_derived("StatusBar", m_StatusBar);
 
     // Make the booru browser borders a little less ugly
-    auto css = Gtk::CssProvider::create();
+    auto css{ Gtk::CssProvider::create() };
     css->load_from_data("notebook.booru-browser \
     {\
         border-right-width:0;  \
         border-bottom-width:0; \
     }");
-    get_style_context()->add_provider_for_screen(
-        Gdk::Screen::get_default(), css, GTK_STYLE_PROVIDER_PRIORITY_APPLICATION);
+    m_Notebook->get_style_context()->add_provider(css, GTK_STYLE_PROVIDER_PRIORITY_APPLICATION);
 
     m_TagEntry->signal_key_press_event().connect(
         sigc::mem_fun(*this, &Browser::on_entry_key_press_event), false);
@@ -156,7 +157,7 @@ void Browser::on_save_image()
     if (get_active_page()->is_saving())
         return;
 
-    auto* window = static_cast<Gtk::Window*>(get_toplevel());
+    auto* window{ static_cast<Gtk::Window*>(get_toplevel()) };
     auto dialog{ Gtk::FileChooserNative::create(
         "Save Image As", *window, Gtk::FILE_CHOOSER_ACTION_SAVE) };
     dialog->set_modal();
@@ -182,7 +183,7 @@ void Browser::on_save_images()
     if (get_active_page()->is_saving())
         return;
 
-    auto* window = static_cast<Gtk::Window*>(get_toplevel());
+    auto* window{ static_cast<Gtk::Window*>(get_toplevel()) };
     auto dialog{ Gtk::FileChooserNative::create(
         "Save Image As", *window, Gtk::FILE_CHOOSER_ACTION_SELECT_FOLDER, _("Save")) };
     dialog->set_modal();
@@ -363,7 +364,7 @@ void Browser::on_image_progress(const Image* bimage, double c, double t)
 
 GtkNotebook* Browser::on_create_window(GtkNotebook*, GtkWidget*, gint x, gint y, gpointer*)
 {
-    auto window = Application::get_instance().create_window();
+    auto window{ Application::get_instance().create_window() };
 
     if (window)
     {
@@ -379,9 +380,9 @@ GtkNotebook* Browser::on_create_window(GtkNotebook*, GtkWidget*, gint x, gint y,
 // returns true if a page is saving
 bool Browser::check_saving_page()
 {
-    auto pages = get_pages();
-    auto iter  = std::find_if(
-        pages.cbegin(), pages.cend(), [](const auto page) { return page->is_saving(); });
+    auto pages{ get_pages() };
+    auto iter{ std::find_if(
+        pages.cbegin(), pages.cend(), [](const auto page) { return page->is_saving(); }) };
 
     if (iter != pages.end())
     {
@@ -459,12 +460,12 @@ void Browser::on_page_removed(Gtk::Widget* w, guint)
     {
         m_TagEntry->set_text("");
         m_TagView->show_favorite_tags();
+        m_InfoBox->clear();
         m_SaveImagesButton->set_sensitive(false);
 
         m_SaveProgConn.disconnect();
         m_ImageProgConn.disconnect();
         m_ImageListConn.disconnect();
-        m_ImageListClearedConn.disconnect();
         m_DownloadErrorConn.disconnect();
 
         m_StatusBar->clear_progress(StatusBar::Priority::SAVE);
@@ -508,17 +509,17 @@ void Browser::on_page_added(Gtk::Widget* w, guint)
     // will display as if the value was set to 0. (aka the top of the page)
     if (!page->get_imagelist()->empty())
     {
-        auto v = page->get_vadjustment()->get_value();
+        auto v{ page->get_vadjustment()->get_value() };
         page->get_vadjustment()->set_value(0);
         page->get_vadjustment()->set_value(v);
     }
 
     // Make sure the booru browser is visible
-    auto* window = static_cast<MainWindow*>(get_toplevel());
-    auto ha      = Glib::RefPtr<Gtk::ToggleAction>::cast_static(
-             window->m_ActionGroup->get_action("ToggleHideAll")),
-         bb = Glib::RefPtr<Gtk::ToggleAction>::cast_static(
-             window->m_ActionGroup->get_action("ToggleBooruBrowser"));
+    auto* window{ static_cast<MainWindow*>(get_toplevel()) };
+    auto ha{ Glib::RefPtr<Gtk::ToggleAction>::cast_static(
+        window->m_ActionGroup->get_action("ToggleHideAll")) },
+        bb{ Glib::RefPtr<Gtk::ToggleAction>::cast_static(
+            window->m_ActionGroup->get_action("ToggleBooruBrowser")) };
 
     if (ha->get_active())
         Glib::signal_idle().connect_once([ha]() { ha->set_active(false); });
@@ -550,23 +551,10 @@ void Browser::on_switch_page(Gtk::Widget* w, guint)
     m_ImageListConn = page->get_imagelist()->signal_changed().connect(
         sigc::mem_fun(*this, &Browser::on_imagelist_changed));
 
-    m_ImageListClearedConn.disconnect();
-    m_ImageListClearedConn = page->get_imagelist()->signal_cleared().connect([&]() {
-        if (!check_saving_page())
-        {
-            m_StatusBar->clear_progress(StatusBar::Priority::SAVE);
-            m_StatusBar->clear_message(StatusBar::Priority::SAVE);
-        }
-    });
-
     if (!check_saving_page())
     {
         m_SaveProgConn.disconnect();
-        if (bimage && bimage->is_loading())
-        {
-            connect_image_signals(bimage);
-        }
-        else
+        if (!bimage || !bimage->is_loading())
         {
             m_StatusBar->clear_progress(StatusBar::Priority::SAVE);
             m_StatusBar->clear_message(StatusBar::Priority::SAVE);
@@ -586,12 +574,14 @@ void Browser::on_switch_page(Gtk::Widget* w, guint)
 
         m_ComboBox->set_active(index);
 
+        // Pretend like we just switched to this image, since we did
         if (bimage)
-            m_TagView->set_tags(bimage->get_tags(), page->m_TagViewPos);
+            on_imagelist_changed(bimage);
     }
     else
     {
         m_TagView->show_favorite_tags(page->m_TagViewPos);
+        m_InfoBox->clear();
     }
 
     // Reset this so when the image changes the tagview is scrolled to the top
@@ -601,8 +591,9 @@ void Browser::on_switch_page(Gtk::Widget* w, guint)
 
 void Browser::on_imagelist_changed(const std::shared_ptr<AhoViewer::Image>& image)
 {
-    std::shared_ptr<Image> bimage = std::static_pointer_cast<Image>(image);
+    auto bimage{ std::static_pointer_cast<Image>(image) };
     m_TagView->set_tags(bimage->get_tags());
+    m_InfoBox->set_info(bimage->get_post_info());
 
     m_StatusBar->clear_progress(StatusBar::Priority::DOWNLOAD);
     m_StatusBar->clear_message(StatusBar::Priority::DOWNLOAD);

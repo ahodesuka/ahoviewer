@@ -41,7 +41,8 @@ configure_file(
   configuration: conf
 )
 
-# FIXME: does this break the version header when theres no .git directory?
+# Falls back to project version when there's no .git directory, but still outputs a "fatal" error
+# message (which can just be ignored since it doesn't actually stop the configuring process)
 vcs_tag(
   command: ['git', 'describe', '--dirty'],
   input: 'version.h.in',
@@ -60,8 +61,13 @@ endif
 
 incdirs += include_directories('../ext/entities')
 
+incdirs += include_directories('../ext/date/include')
+add_global_arguments('-DHAS_REMOTE_API=1', language : 'cpp')
+add_global_arguments('-DHAS_UNCAUGHT_EXCEPTIONS=1', language : 'cpp')
+
 sources = [
   resources,
+  '../ext/date/src/tz.cpp',
   '../ext/entities/entities.c',
   'archive/archive.cc',
   'archive/image.cc',
@@ -72,6 +78,7 @@ sources = [
   'booru/image.cc',
   'booru/imagefetcher.cc',
   'booru/imagelist.cc',
+  'booru/infobox.cc',
   'booru/page.cc',
   'booru/site.cc',
   'booru/tagentry.cc',

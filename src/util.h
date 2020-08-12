@@ -43,6 +43,18 @@ namespace AhoViewer
     namespace Booru
     {
         static const int IconViewItemPadding{ 6 };
+        struct PostInfo
+        {
+            PostInfo(std::string date, std::string source, std::string rating, std::string score)
+                : date{ std::move(date) },
+                  source{ std::move(source) },
+                  rating{ std::move(rating) },
+                  score{ std::move(score) }
+            {
+            }
+
+            const std::string date, source, rating, score;
+        };
         enum class Rating
         {
             SAFE         = 0,

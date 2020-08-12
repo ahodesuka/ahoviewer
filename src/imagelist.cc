@@ -9,10 +9,10 @@ using namespace AhoViewer;
 #include "settings.h"
 
 ImageList::ImageList(Widget* const w)
-    : m_Widget(w),
-      m_ScrollPos(-1, -1, ZoomMode::AUTO_FIT),
-      m_ThumbnailCancel(Gio::Cancellable::create()),
-      m_CacheCancel(Gio::Cancellable::create())
+    : m_Widget{ w },
+      m_ScrollPos{ -1, -1, ZoomMode::AUTO_FIT },
+      m_ThumbnailCancel{ Gio::Cancellable::create() },
+      m_CacheCancel{ Gio::Cancellable::create() }
 {
     // Sorts indices based on how close they are to m_Index
     m_IndexSort = [=](size_t a, size_t b) {

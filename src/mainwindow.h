@@ -15,6 +15,7 @@ namespace AhoViewer
     namespace Booru
     {
         class Browser;
+        class InfoBox;
         class TagView;
     }
     class MainWindow : public Gtk::ApplicationWindow
@@ -42,6 +43,7 @@ namespace AhoViewer
                                    guint,
                                    guint time) override;
         bool on_key_press_event(GdkEventKey* e) override;
+        bool on_motion_notify_event(GdkEventMotion* e) override;
 
     private:
         void set_active_imagelist(const std::shared_ptr<ImageList>& image_list);
@@ -97,6 +99,7 @@ namespace AhoViewer
         ImageBox* m_ImageBox;
         StatusBar* m_StatusBar;
         Booru::Browser* m_BooruBrowser;
+        Booru::InfoBox* m_InfoBox;
         Gtk::Paned* m_HPaned;
         Booru::TagView* m_TagView;
 

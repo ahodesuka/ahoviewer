@@ -15,12 +15,13 @@ extern "C"
 #include "settings.h"
 #include "site.h"
 
-Image::Image(const std::string& path,
+Image::Image(std::string path,
              std::string url,
-             const std::string& thumb_path,
+             std::string thumb_path,
              std::string thumb_url,
              std::string post_url,
              std::vector<Tag> tags,
+             const PostInfo& post_info,
              const std::string& notes_url,
              std::shared_ptr<Site> site,
              ImageFetcher& fetcher)
@@ -29,6 +30,7 @@ Image::Image(const std::string& path,
       m_ThumbnailUrl{ std::move(thumb_url) },
       m_PostUrl{ std::move(post_url) },
       m_Tags{ std::move(tags) },
+      m_PostInfo{ std::move(post_info) },
       m_Site{ std::move(site) },
       m_ImageFetcher{ fetcher },
       m_LastDraw{ std::chrono::steady_clock::now() },
@@ -36,7 +38,7 @@ Image::Image(const std::string& path,
       m_ThumbnailCurler{ m_ThumbnailUrl, m_Site->get_share_handle() },
       m_NotesCurler{ notes_url, m_Site->get_share_handle() }
 {
-    m_ThumbnailPath = thumb_path;
+    m_ThumbnailPath = std::move(thumb_path);
 
     if (!m_IsWebM)
         m_Curler.signal_write().connect(sigc::mem_fun(*this, &Image::on_write));

@@ -1,6 +1,8 @@
 #include "application.h"
 
 #include <curl/curl.h>
+// This can be removed once it's implemented in C++20
+#include <date/tz.h>
 #include <gtkmm.h>
 #include <iostream>
 #include <libxml/parser.h>
@@ -117,7 +119,7 @@ Application& Application::get_instance()
 
 MainWindow* Application::create_window()
 {
-    Glib::RefPtr<Gtk::Builder> builder = Gtk::Builder::create();
+    Glib::RefPtr<Gtk::Builder> builder{ Gtk::Builder::create() };
 
     try
     {
@@ -129,7 +131,7 @@ MainWindow* Application::create_window()
         return nullptr;
     }
 
-    MainWindow* w = nullptr;
+    MainWindow* w{ nullptr };
     builder->get_widget_derived("MainWindow", w);
 
     if (!w)
@@ -165,7 +167,7 @@ void Application::on_open(const std::vector<Glib::RefPtr<Gio::File>>& f, const G
 
     if (m_Windows.size() == 0 || it == m_Windows.cend())
     {
-        auto w = create_window();
+        auto w{ create_window() };
         w->open_file(f.front()->get_path());
     }
     else
@@ -180,8 +182,8 @@ void Application::on_startup()
 
     curl_global_init(CURL_GLOBAL_DEFAULT);
 
-    curl_version_info_data* ver_info = curl_version_info(CURLVERSION_NOW);
-    std::string ssl_lib              = ver_info->ssl_version;
+    curl_version_info_data* ver_info{ curl_version_info(CURLVERSION_NOW) };
+    std::string ssl_lib{ ver_info->ssl_version };
 
 #if defined(USE_OPENSSL) && (OPENSSL_VERSION_NUMBER < 0x10100000L)
     if (ssl_lib.find("OpenSSL") != std::string::npos)
@@ -200,11 +202,24 @@ void Application::on_startup()
     g_log_set_handler("glibmm", G_LOG_LEVEL_WARNING, glibmm_log_filter, nullptr);
 
     Gio::Application::on_startup();
+
+    std::string cache_dir{ Glib::build_filename(Glib::get_user_cache_dir(), PACKAGE, "tzdata") };
+    date::set_install(cache_dir);
+    std::thread{ []() {
+        try
+        {
+            date::get_tzdb();
+        }
+        catch (const std::runtime_error& e)
+        {
+            std::cerr << "Failed to fetch tzdata, times will be displayed in UTC" << std::endl;
+        }
+    } }.detach();
 }
 
 void Application::on_activate()
 {
-    auto w = create_window();
+    auto w{ create_window() };
 
     if (m_Windows.size() == 1)
         w->restore_last_file();

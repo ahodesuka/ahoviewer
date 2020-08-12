@@ -25,7 +25,7 @@ namespace AhoViewer
     class Image
     {
     public:
-        Image(const std::string& path);
+        Image(std::string path);
         virtual ~Image();
 
         static bool is_valid(const std::string& path);

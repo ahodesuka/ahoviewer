@@ -7,6 +7,7 @@ using namespace AhoViewer::Booru;
 #include "curler.h"
 #include "image.h"
 #include "settings.h"
+#include "site.h"
 #include "threadpool.h"
 
 #define RETRY_COUNT 5
@@ -21,9 +22,9 @@ void Page::CellRendererThumbnail::get_preferred_width_vfunc(Gtk::Widget& widget,
 }
 
 Page::Page()
-    : Gtk::ScrolledWindow(),
+    : Gtk::ScrolledWindow{},
       m_PopupMenu{ nullptr },
-      m_IconView{ Gtk::manage(new Gtk::IconView) },
+      m_IconView{ Gtk::manage(new IconView) },
       m_Tab{ Gtk::manage(new Gtk::EventBox) },
       m_TabIcon{ Gtk::manage(new Gtk::Image{ Gtk::Stock::NEW, Gtk::ICON_SIZE_MENU }) },
       m_TabLabel{ Gtk::manage(new Gtk::Label{ _("New Tab") }) },

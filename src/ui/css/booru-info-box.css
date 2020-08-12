@@ -1,0 +1,11 @@
+#BooruInfoBox {
+  background-color: rgba(0, 0, 0, 0.9);
+  border-radius: 5px;
+  box-shadow: rgba(0, 0, 0, 0.4) 0 0 5px;
+  color: #e9e6e6;
+  margin: 10px;
+  padding: 6px;
+}
+#BooruInfoBox label {
+  padding: 3px;
+}

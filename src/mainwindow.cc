@@ -7,6 +7,7 @@
 using namespace AhoViewer;
 
 #include "booru/browser.h"
+#include "booru/infobox.h"
 #include "config.h"
 #include "image.h"
 #include "imagebox.h"
@@ -41,6 +42,7 @@ MainWindow::MainWindow(BaseObjectType* cobj, Glib::RefPtr<Gtk::Builder> bldr)
 
     m_Builder->get_widget_derived("ThumbnailBar", m_ThumbnailBar);
     m_Builder->get_widget_derived("Booru::Browser", m_BooruBrowser);
+    m_Builder->get_widget_derived("Booru::Browser::InfoBox", m_InfoBox);
     m_Builder->get_widget_derived("ImageBox", m_ImageBox);
     m_Builder->get_widget_derived("StatusBar", m_StatusBar);
 
@@ -427,6 +429,46 @@ bool MainWindow::on_key_press_event(GdkEventKey* e)
     return Gtk::ApplicationWindow::on_key_press_event(e);
 }
 
+// Reveals the booru infobox when either the tagview, booru vpaned handle, or infobox itself is
+// under the cursor
+bool MainWindow::on_motion_notify_event(GdkEventMotion* e)
+{
+    if (!m_BooruBrowser->is_visible() || !Settings.get_bool("AutoHideInfoBox"))
+        return Gtk::ApplicationWindow::on_motion_notify_event(e);
+
+    int x, y, w, h;
+    Gdk::Rectangle cursor_rect{ static_cast<int>(e->x_root), static_cast<int>(e->y_root), 1, 1 };
+    m_TagView->get_window()->get_origin(x, y);
+    w = m_TagView->get_window()->get_width();
+    h = m_TagView->get_window()->get_height();
+    Gdk::Rectangle rect{ x, y, w, h };
+
+    m_BooruBrowser->get_handle_window()->get_origin(x, y);
+    w = m_BooruBrowser->get_handle_window()->get_width();
+    h = m_BooruBrowser->get_handle_window()->get_height();
+    rect.join({ x, y, w, h });
+
+    if (m_InfoBox->get_window())
+    {
+        m_InfoBox->get_window()->get_origin(x, y);
+        w = m_InfoBox->get_window()->get_width();
+        h = m_InfoBox->get_window()->get_height();
+        rect.join({ x, y, w, h });
+    }
+
+    if (rect.intersects(cursor_rect))
+    {
+        if (!m_InfoBox->is_visible())
+            m_InfoBox->show();
+    }
+    else if (m_InfoBox->is_visible())
+    {
+        m_InfoBox->hide();
+    }
+
+    return Gtk::ApplicationWindow::on_motion_notify_event(e);
+}
+
 void MainWindow::set_active_imagelist(const std::shared_ptr<ImageList>& image_list)
 {
     if (m_ActiveImageList == image_list)
@@ -698,6 +740,13 @@ void MainWindow::create_actions()
     m_ActionGroup->add(toggle_action,
                        Gtk::AccelKey(),
                        sigc::mem_fun(m_TagView, &Booru::TagView::on_toggle_show_headers));
+
+    toggle_action = Gtk::ToggleAction::create(
+        "AutoHideInfoBox", _("Auto Hide"), _("Auto Hide the Info Box when not hovered around it"));
+    toggle_action->set_active(Settings.get_bool("AutoHideInfoBox"));
+    m_ActionGroup->add(toggle_action,
+                       Gtk::AccelKey(),
+                       sigc::mem_fun(m_InfoBox, &Booru::InfoBox::on_toggle_auto_hide));
     // }}}
 
     // Radio actions {{{
@@ -1132,6 +1181,38 @@ void MainWindow::on_quit()
         Settings.set("SelectedBooru", m_BooruBrowser->get_selected_booru());
     }
 
+    if (Settings.get_bool("RememberLastFile") && !m_LocalImageList->empty())
+    {
+        std::string path{ m_LocalImageList->get_current()->get_path() };
+
+        if (m_LocalImageList->from_archive())
+        {
+            path = m_LocalImageList->get_archive().get_path();
+            Settings.set("ArchiveIndex", static_cast<int>(m_LocalImageList->get_index()));
+        }
+        else
+        {
+            Settings.remove("ArchiveIndex");
+        }
+
+        Settings.set("LastOpenFile", path);
+        auto scroll_pos{ m_LocalImageList == m_ActiveImageList
+                             ? m_ImageBox->get_scroll_position()
+                             : m_LocalImageList->get_scroll_position() };
+        Settings.set("ScrollPosH", static_cast<int>(scroll_pos.h));
+        Settings.set("ScrollPosV", static_cast<int>(scroll_pos.v));
+    }
+    else
+    {
+        Settings.remove("ArchiveIndex");
+        Settings.remove("LastOpenFile");
+        Settings.remove("ScrollPosH");
+        Settings.remove("ScrollPosV");
+    }
+
+    save_window_geometry();
+    hide();
+
     // ActionName => SettingKey
     std::map<std::string, std::string> widget_vis = {
         { "ToggleHideAll", "HideAll" },
@@ -1152,37 +1233,6 @@ void MainWindow::on_quit()
     for (const std::shared_ptr<Booru::Site>& site : Settings.get_sites())
         site->save_tags();
 
-    save_window_geometry();
-
-    if (Settings.get_bool("RememberLastFile") && !m_LocalImageList->empty())
-    {
-        std::string path = m_LocalImageList->get_current()->get_path();
-
-        if (m_LocalImageList->from_archive())
-        {
-            path = m_LocalImageList->get_archive().get_path();
-            Settings.set("ArchiveIndex", static_cast<int>(m_LocalImageList->get_index()));
-        }
-        else
-        {
-            Settings.remove("ArchiveIndex");
-        }
-
-        Settings.set("LastOpenFile", path);
-        auto scroll_pos = m_LocalImageList == m_ActiveImageList
-                              ? m_ImageBox->get_scroll_position()
-                              : m_LocalImageList->get_scroll_position();
-        Settings.set("ScrollPosH", static_cast<int>(scroll_pos.h));
-        Settings.set("ScrollPosV", static_cast<int>(scroll_pos.v));
-    }
-    else
-    {
-        Settings.remove("ArchiveIndex");
-        Settings.remove("LastOpenFile");
-        Settings.remove("ScrollPosH");
-        Settings.remove("ScrollPosV");
-    }
-
     if (Settings.get_bool("RememberLastSavePath"))
     {
         Settings.set("LastSavePath", m_BooruBrowser->get_last_save_path());
@@ -1193,8 +1243,6 @@ void MainWindow::on_quit()
         Settings.remove("LastSavePath");
         Settings.remove("LastLocalSavePath");
     }
-
-    hide();
 }
 
 void MainWindow::on_toggle_fullscreen()

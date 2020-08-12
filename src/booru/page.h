@@ -3,7 +3,6 @@
 
 #include "curler.h"
 #include "imagelist.h"
-#include "site.h"
 #include "xml.h"
 
 #include <atomic>
@@ -12,6 +11,7 @@
 namespace AhoViewer::Booru
 {
     class Image;
+    class Site;
     class Page : public Gtk::ScrolledWindow, public ImageList::Widget
     {
         friend class Browser;
@@ -39,6 +39,16 @@ namespace AhoViewer::Booru
         void scroll_to_selected() override;
 
     private:
+        class IconView : public Gtk::IconView
+        {
+        public:
+            IconView() : Gtk::IconView{} { }
+
+        protected:
+            // The default handler always stops event propagation and is only used for preliting and
+            // rubberbanding
+            bool on_motion_notify_event(GdkEventMotion* e) override { return false; }
+        };
         // Custom CellRenderer that expands to center the pixbufs in the iconview
         class CellRendererThumbnail : public Gtk::CellRenderer /*{{{*/
         {

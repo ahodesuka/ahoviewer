@@ -7,6 +7,11 @@ using namespace AhoViewer::Booru;
 #include "site.h"
 #include "tempdir.h"
 
+#include <chrono>
+#include <date/date.h>
+#include <date/tz.h>
+#include <glibmm/i18n.h>
+
 ImageList::ImageList(Widget* w) : AhoViewer::ImageList(w) { }
 
 ImageList::~ImageList()
@@ -66,19 +71,28 @@ void ImageList::load(const xml::Document& posts,
     {
         std::vector<Tag> tags;
         auto site_type{ m_Site->get_type() };
-        std::string id, thumb_url, image_url, thumb_path, image_path, notes_url;
+        std::string id, thumb_url, image_url, thumb_path, image_path, notes_url, date, source,
+            rating, score;
 
         if (site_type == Type::DANBOORU_V2)
         {
             id        = post.get_value("id");
             thumb_url = post.get_value("preview-file-url");
             image_url = post.get_value(m_Site->use_samples() ? "large-file-url" : "file-url");
+            date      = post.get_value("created-at");
+            source    = post.get_value("source");
+            rating    = post.get_value("rating");
+            score     = post.get_value("score");
         }
         else
         {
             id        = post.get_attribute("id");
             thumb_url = post.get_attribute("preview_url");
             image_url = post.get_attribute(m_Site->use_samples() ? "sample_url" : "file_url");
+            date      = post.get_attribute("created_at");
+            source    = post.get_attribute("source");
+            rating    = post.get_attribute("rating");
+            score     = post.get_attribute("score");
         }
 
         // Check this before we do tag stuff since it would waste time
@@ -173,10 +187,60 @@ void ImageList::load(const xml::Document& posts,
             notes_url = m_Site->get_notes_url(id);
 
         // safebooru.org provides the wrong file extension for thumbnails
-        // All their thumbnails are .jpg, but their api gives links to with the
+        // All their thumbnails are .jpg, but their api gives urls with the
         // same exntension as the original images exnteion
         if (thumb_url.find("safebooru.org") != std::string::npos)
             thumb_url = thumb_url.substr(0, thumb_url.find_last_of('.')) + ".jpg";
+
+        date::sys_seconds t;
+        // DANBOORU_V2 provides dates in the format "%FT%T%Ez"
+        if (site_type == Type::DANBOORU_V2)
+        {
+            std::string input{ date };
+            std::istringstream stream{ input };
+            stream >> date::parse("%FT%T%Ez", t);
+            if (stream.fail())
+                std::cerr << "Failed to parse date '" << date << "' on site " << m_Site->get_name()
+                          << std::endl;
+        }
+        else
+        {
+            // Moebooru provides unix timestamp
+            if (site_type == Type::MOEBOORU)
+            {
+                t = static_cast<date::sys_seconds>(
+                    std::chrono::duration<long long>(std::stoll(date)));
+            }
+            // Gelbooru, Danbooru "%a %b %d %T %z %Y"
+            else
+            {
+                std::string input{ date };
+                std::istringstream stream{ input };
+                stream >> date::parse("%a %b %d %T %z %Y", t);
+                if (stream.fail())
+                    std::cerr << "Failed to parse date '" << date << "' on site "
+                              << m_Site->get_name() << std::endl;
+            }
+        }
+
+        try
+        {
+            auto my_zone{ date::make_zoned(date::current_zone(), t) };
+            date = date::format("%x %X", my_zone);
+        }
+        catch (...)
+        {
+            date = date::format("%x %X", t);
+        }
+
+        if (rating == "s")
+            rating = _("Safe");
+        else if (rating == "q")
+            rating = _("Questionable");
+        else if (rating == "e")
+            rating = _("Explicit");
+
+        PostInfo post_info{ date, source, rating, score };
 
         m_Images.emplace_back(std::make_shared<Image>(image_path,
                                                       image_url,
@@ -184,6 +248,7 @@ void ImageList::load(const xml::Document& posts,
                                                       thumb_url,
                                                       m_Site->get_post_url(id),
                                                       tags,
+                                                      post_info,
                                                       notes_url,
                                                       m_Site,
                                                       *m_ImageFetcher));

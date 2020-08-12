@@ -28,7 +28,7 @@ SettingsManager::SettingsManager()
           { "StatusBarVisible", true },   { "ThumbnailBarVisible", false },
           { "HideAll", false },           { "HideAllFullscreen", true },
           { "RememberWindowSize", true }, { "RememberWindowPos", true },
-          { "ShowTagTypeHeaders", true },
+          { "ShowTagTypeHeaders", true }, { "AutoHideInfoBox", true },
       }),
       m_DefaultInts({ { "ArchiveIndex", -1 },
                       { "CacheSize", 2 },

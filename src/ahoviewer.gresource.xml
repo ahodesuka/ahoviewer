@@ -2,6 +2,7 @@
 <gresources>
   <gresource prefix="/">
     <file compressed="true">ui/ahoviewer.ui</file>
+    <file>ui/css/booru-info-box.css</file>
     <file>ui/css/note.css</file>
     <file>ui/css/note-popover.css</file>
     <file>ui/css/tagview.css</file>
