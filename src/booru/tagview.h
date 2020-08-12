@@ -29,7 +29,7 @@ namespace AhoViewer::Booru
                 {
                     get_style_context()->add_class("changed");
                     m_AnimConn = Glib::signal_timeout().connect(
-                        [this]() {
+                        [&]() {
                             get_style_context()->remove_class("changed");
                             return false;
                         },

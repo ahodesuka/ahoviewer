@@ -114,8 +114,8 @@ TagView::Row::Row(const Tag& t)
     static_cast<Gtk::Label*>(check_button.get_child())->set_ellipsize(Pango::ELLIPSIZE_END);
     check_button.add_events(Gdk::BUTTON_PRESS_MASK);
     check_button.signal_button_press_event().connect(
-        [this](GdkEventButton* e) { return m_SignalTagButtonPressed(e, this); }, false);
-    m_EBox.signal_button_press_event().connect([this](GdkEventButton* e) {
+        [&](GdkEventButton* e) { return m_SignalTagButtonPressed(e, this); }, false);
+    m_EBox.signal_button_press_event().connect([&](GdkEventButton* e) {
         if (e->type == GDK_BUTTON_PRESS && e->button == 1)
         {
             set_favorite(m_Favorite = !m_Favorite);

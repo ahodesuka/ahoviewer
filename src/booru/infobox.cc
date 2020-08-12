@@ -77,7 +77,7 @@ void InfoBox::hide()
     if (Settings.get_bool("AutoHideInfoBox"))
     {
         m_HideConn = Glib::signal_timeout().connect(
-            [this]() {
+            [&]() {
                 if (!m_IsVisible)
                     m_Revealer->set_reveal_child(false);
                 return false;
@@ -115,8 +115,6 @@ bool InfoBox::on_button_press_event(GdkEventButton* e)
         m_PopupMenu->popup_at_pointer(reinterpret_cast<GdkEvent*>(e));
         return false;
     }
-
-    m_SourceLabel->property_has_focus() = false;
 
     return Gtk::EventBox::on_button_press_event(e);
 }
