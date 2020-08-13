@@ -1,15 +1,15 @@
 #ifndef _APPLICATION_H_
 #define _APPLICATION_H_
 
-#include <giomm/application.h>
+#include <gtkmm/application.h>
 
 namespace AhoViewer
 {
     class MainWindow;
-    class Application : public Gio::Application
+    class Application : public Gtk::Application
     {
     public:
-        static Application& get_instance();
+        static Glib::RefPtr<Application> create();
 
         MainWindow* create_window();
 
@@ -18,16 +18,15 @@ namespace AhoViewer
     protected:
         Application();
 
+        void on_activate() override;
         void on_open(const std::vector<Glib::RefPtr<Gio::File>>& f, const Glib::ustring&) override;
         void on_startup() override;
-        void on_activate() override;
+
+        void on_window_added(Gtk::Window* w) override;
+        void on_window_removed(Gtk::Window* w) override;
 
     private:
-        void add_window(MainWindow* w);
-        void remove_window(MainWindow* w);
-        void on_my_shutdown();
-
-        std::vector<MainWindow*> m_Windows;
+        void on_shutdown();
     };
 }
 

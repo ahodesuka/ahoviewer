@@ -78,7 +78,7 @@ static void glibmm_log_filter(const gchar* ld, GLogLevelFlags ll, const gchar* m
 }
 
 Application::Application()
-    : Gio::Application("com.github.ahodesuka.ahoviewer", Gio::APPLICATION_HANDLES_OPEN)
+    : Gtk::Application("com.github.ahodesuka.ahoviewer", Gio::APPLICATION_HANDLES_OPEN)
 {
     // Disgusting win32 api to start dbus-daemon and make it close when
     // the ahoviewer process ends
@@ -112,13 +112,14 @@ Application::Application()
     Glib::setenv("GTK_OVERLAY_SCROLLING", "", true);
     Glib::set_application_name(PACKAGE);
 
-    signal_shutdown().connect(sigc::mem_fun(*this, &Application::on_my_shutdown));
+    signal_shutdown().connect(sigc::mem_fun(*this, &Application::on_shutdown));
 }
 
-Application& Application::get_instance()
+Glib::RefPtr<Application> Application::create()
 {
-    static Application i;
-    return i;
+    static Glib::RefPtr<Application> app{ new Application };
+    set_default(app);
+    return app;
 }
 
 MainWindow* Application::create_window()
@@ -141,7 +142,8 @@ MainWindow* Application::create_window()
     if (!w)
         throw std::runtime_error("Failed to create window");
 
-    add_window(w);
+    auto window{ static_cast<Gtk::Window*>(w) };
+    add_window(*window);
 
     return w;
 }
@@ -158,33 +160,37 @@ int Application::run(int argc, char** argv)
 #endif // HAVE_GSTREAMER
     }
 
-    return Gio::Application::run(argc, argv);
+    return Gtk::Application::run(argc, argv);
+}
+
+void Application::on_activate()
+{
+    auto w{ create_window() };
+
+    if (get_windows().size() == 1)
+        w->restore_last_file();
+
+    Gtk::Application::on_activate();
 }
 
 // Finds the first window with no local image list or creates a
 // new window and then opens the file
 void Application::on_open(const std::vector<Glib::RefPtr<Gio::File>>& f, const Glib::ustring&)
 {
-    auto it = std::find_if(m_Windows.cbegin(), m_Windows.cend(), [](MainWindow* w) {
-        return w->m_LocalImageList->empty();
-    });
+    auto windows{ get_windows() };
+    auto it{ std::find_if(windows.cbegin(), windows.cend(), [](Gtk::Window* w) {
+        return static_cast<MainWindow*>(w)->m_LocalImageList->empty();
+    }) };
 
-    if (m_Windows.size() == 0 || it == m_Windows.cend())
+    if (it == windows.cend())
     {
         auto w{ create_window() };
         w->open_file(f.front()->get_path());
     }
     else
     {
-        (*it)->open_file(f.front()->get_path());
+        static_cast<MainWindow*>(*it)->open_file(f.front()->get_path());
     }
-}
-
-void Application::on_my_shutdown()
-{
-    std::cout << "saving tags" << std::endl;
-    for (const std::shared_ptr<Booru::Site>& site : Settings.get_sites())
-        site->save_tags();
 }
 
 void Application::on_startup()
@@ -212,7 +218,7 @@ void Application::on_startup()
     // That happen when cancelling downloads
     g_log_set_handler("glibmm", G_LOG_LEVEL_WARNING, glibmm_log_filter, nullptr);
 
-    Gio::Application::on_startup();
+    Gtk::Application::on_startup();
 
     std::string cache_dir{ Glib::build_filename(Glib::get_user_cache_dir(), PACKAGE, "tzdata") };
     date::set_install(cache_dir);
@@ -228,34 +234,33 @@ void Application::on_startup()
     } }.detach();
 }
 
-void Application::on_activate()
+void Application::on_window_added(Gtk::Window* w)
 {
-    auto w{ create_window() };
+    if (get_windows().size() == 0)
+        static_cast<MainWindow*>(w)->m_OriginalWindow = true;
 
-    if (m_Windows.size() == 1)
-        w->restore_last_file();
-
-    Gio::Application::on_activate();
+    Gtk::Application::on_window_added(w);
 }
 
-void Application::add_window(MainWindow* w)
+void Application::on_window_removed(Gtk::Window* w)
 {
-    if (m_Windows.size() == 0)
-        w->m_OriginalWindow = true;
+    Gtk::Application::on_window_removed(w);
+    auto windows{ get_windows() };
 
-    m_Windows.push_back(w);
-    w->signal_hide().connect(sigc::bind(sigc::mem_fun(*this, &Application::remove_window), w));
+    // Set a new original window if the previous was closed
+    if (windows.size() > 0)
+    {
+        auto it = std::find_if(windows.cbegin(), windows.cend(), [](Gtk::Window* mw) {
+            return static_cast<MainWindow*>(mw)->m_OriginalWindow;
+        });
 
-    hold();
+        if (it == windows.cend())
+            static_cast<MainWindow*>(windows.front())->m_OriginalWindow = true;
+    }
 }
 
-void Application::remove_window(MainWindow* w)
+void Application::on_shutdown()
 {
-    m_Windows.erase(std::remove(m_Windows.begin(), m_Windows.end(), w), m_Windows.end());
-    delete w;
-
-    if (m_Windows.size() == 1)
-        m_Windows.front()->m_OriginalWindow = true;
-
-    release();
+    for (const std::shared_ptr<Booru::Site>& site : Settings.get_sites())
+        site->save_tags();
 }

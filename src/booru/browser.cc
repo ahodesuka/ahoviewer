@@ -345,9 +345,9 @@ void Browser::on_save_progress(const Page* p)
 
 void Browser::on_image_progress(const Image* bimage, double c, double t)
 {
-    double speed = (c / std::chrono::duration<double>(std::chrono::steady_clock::now() -
-                                                      bimage->m_Curler.get_start_time())
-                            .count());
+    double speed{ (c / std::chrono::duration<double>(std::chrono::steady_clock::now() -
+                                                     bimage->m_Curler.get_start_time())
+                           .count()) };
 
     Glib::ustring msg{
         Glib::ustring::compose("Downloading %1 / %2 @ %3/s",
@@ -364,12 +364,12 @@ void Browser::on_image_progress(const Image* bimage, double c, double t)
 
 GtkNotebook* Browser::on_create_window(GtkNotebook*, GtkWidget*, gint x, gint y, gpointer*)
 {
-    auto window{ Application::get_instance().create_window() };
+    auto w{ Glib::RefPtr<Application>::cast_static(Application::get_default())->create_window() };
 
-    if (window)
+    if (w)
     {
-        window->move(x, y);
-        return window->m_BooruBrowser->m_Notebook->gobj();
+        w->move(x, y);
+        return w->m_BooruBrowser->m_Notebook->gobj();
     }
 
     return nullptr;
