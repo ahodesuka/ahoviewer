@@ -58,7 +58,6 @@ void ImageList::load(const xml::Document& posts,
                      const Page& page,
                      const std::vector<Tag>& posts_tags)
 {
-    size_t old_size{ m_Size };
     m_Site = page.get_site();
 
     if (!m_ImageFetcher)
@@ -257,11 +256,14 @@ void ImageList::load(const xml::Document& posts,
 
     if (m_Images.empty())
         return;
-    else
-        m_Widget->reserve(m_Size - old_size);
 
     if (m_ThumbnailThread.joinable())
         m_ThumbnailThread.join();
+
+    // This ensures that the first image can be selected when set_current is called below,
+    // it's done before the thumbnails start loading to prevent any race conditions
+    if (page.get_page_num() == 1)
+        m_Widget->reserve(1);
 
     m_ThumbnailThread = std::thread(sigc::mem_fun(*this, &ImageList::load_thumbnails));
 
