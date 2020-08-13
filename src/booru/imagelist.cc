@@ -260,18 +260,20 @@ void ImageList::load(const xml::Document& posts,
     if (m_ThumbnailThread.joinable())
         m_ThumbnailThread.join();
 
-    // This ensures that the first image can be selected when set_current is called below,
-    // it's done before the thumbnails start loading to prevent any race conditions
-    if (page.get_page_num() == 1)
-        m_Widget->reserve(1);
-
     m_ThumbnailThread = std::thread(sigc::mem_fun(*this, &ImageList::load_thumbnails));
 
     // only call set_current if this is the first page
     if (page.get_page_num() == 1)
+    {
+        // This ensures that the first image can be selected when set_current emits signal_changed,
+        // and the page selects the first item in the icon view
+        m_Widget->reserve(1);
         set_current(m_Index, false, true);
+    }
     else
+    {
         m_SignalChanged(m_Images[m_Index]);
+    }
 }
 
 // Override this so we dont cancel and restart the thumbnail thread
