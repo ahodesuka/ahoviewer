@@ -436,7 +436,8 @@ bool MainWindow::on_key_press_event(GdkEventKey* e)
 // under the cursor
 bool MainWindow::on_motion_notify_event(GdkEventMotion* e)
 {
-    if (!m_BooruBrowser->is_visible() || !Settings.get_bool("AutoHideInfoBox"))
+    if (!m_BooruBrowser->is_visible() || !Settings.get_bool("AutoHideInfoBox") ||
+        !m_TagView->get_window() || !m_BooruBrowser->get_handle_window())
         return Gtk::ApplicationWindow::on_motion_notify_event(e);
 
     int x, y, w, h;
