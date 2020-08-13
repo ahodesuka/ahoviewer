@@ -549,7 +549,7 @@ void Page::on_selection_changed()
         Gtk::TreePath path{ paths[0] };
         if (path)
         {
-            int index{ path[0] };
+            size_t index = path[0];
 
             if (index + Settings.get_int("CacheSize") >= m_ImageList->get_vector_size() - 1)
                 get_next_page();
