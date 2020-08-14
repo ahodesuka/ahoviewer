@@ -186,8 +186,6 @@ bool Image::start_download()
 {
     if (!m_Curler.is_active())
     {
-        m_ImageFetcher.add_handle(&m_Curler);
-
         if (!m_IsWebM)
         {
             m_Loader = Gdk::PixbufLoader::create();
@@ -195,6 +193,8 @@ bool Image::start_download()
                 sigc::mem_fun(*this, &Image::on_area_prepared));
             m_Loader->signal_area_updated().connect(sigc::mem_fun(*this, &Image::on_area_updated));
         }
+
+        m_ImageFetcher.add_handle(&m_Curler);
 
         return true;
     }
