@@ -1,5 +1,4 @@
-#ifndef _STATUSBAR_H_
-#define _STATUSBAR_H_
+#pragma once
 
 #include "util.h"
 
@@ -46,5 +45,3 @@ namespace AhoViewer
         sigc::connection m_MessageConn, m_ProgressConn;
     };
 }
-
-#endif /* _STATUSBAR_H_ */

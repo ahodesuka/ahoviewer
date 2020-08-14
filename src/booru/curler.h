@@ -1,5 +1,4 @@
-#ifndef _CURLER_H_
-#define _CURLER_H_
+#pragma once
 
 #include <atomic>
 #include <chrono>
@@ -94,5 +93,3 @@ namespace AhoViewer::Booru
         Glib::Dispatcher m_SignalProgress, m_SignalFinished;
     };
 }
-
-#endif /* _CURLER_H_ */

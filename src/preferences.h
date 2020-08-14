@@ -1,5 +1,4 @@
-#ifndef _PREFERENCES_H_
-#define _PREFERENCES_H_
+#pragma once
 
 #include "keybindingeditor.h"
 #include "siteeditor.h"
@@ -49,5 +48,3 @@ namespace AhoViewer
         sigc::signal<void> m_SignalBGColorSet, m_SignalTitleFormatChanged;
     };
 }
-
-#endif /* _PREFERENCES_H_ */

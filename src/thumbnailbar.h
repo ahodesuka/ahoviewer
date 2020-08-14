@@ -1,5 +1,4 @@
-#ifndef _THUMBNAILBAR_H_
-#define _THUMBNAILBAR_H_
+#pragma once
 
 #include "imagelist.h"
 
@@ -31,5 +30,3 @@ namespace AhoViewer
         sigc::connection m_ScrollConn;
     };
 }
-
-#endif /* _THUMBNAILBAR_H_ */

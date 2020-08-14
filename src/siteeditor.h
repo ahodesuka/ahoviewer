@@ -1,5 +1,4 @@
-#ifndef _SITEEDITOR_H_
-#define _SITEEDITOR_H_
+#pragma once
 
 #include <gtkmm.h>
 #include <thread>
@@ -184,5 +183,3 @@ namespace AhoViewer
         sigc::signal<void> m_SignalEdited;
     };
 }
-
-#endif /* _SITEEDITOR_H_ */

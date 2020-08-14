@@ -1,5 +1,4 @@
-#ifndef _MAINWINDOW_H_
-#define _MAINWINDOW_H_
+#pragma once
 
 #include <gtkmm.h>
 
@@ -119,5 +118,3 @@ namespace AhoViewer
         sigc::connection m_ImageListConn, m_ImageListClearedConn;
     };
 }
-
-#endif /* _MAINWINDOW_H_ */

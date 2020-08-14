@@ -1,5 +1,4 @@
-#ifndef _BOORUIMAGELIST_H_
-#define _BOORUIMAGELIST_H_
+#pragma once
 
 #include "../imagelist.h"
 #include "xml.h"
@@ -45,5 +44,3 @@ namespace AhoViewer
         };
     }
 }
-
-#endif /* _BOORUIMAGELIST_H_ */

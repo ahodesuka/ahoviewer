@@ -1,5 +1,4 @@
-#ifndef _IMAGELIST_H_
-#define _IMAGELIST_H_
+#pragma once
 
 #include "archive/archive.h"
 #include "image.h"
@@ -191,5 +190,3 @@ namespace AhoViewer
         sigc::signal<void> m_SignalLoadSuccess, m_SignalSizeChanged, m_SignalThumbnailsLoaded;
     };
 }
-
-#endif /* _IMAGELIST_H_ */

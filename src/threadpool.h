@@ -1,5 +1,4 @@
-#ifndef _THREADPOOL_H_
-#define _THREADPOOL_H_
+#pragma once
 
 /*********************************************************
  *
@@ -256,5 +255,3 @@ namespace AhoViewer
         std::condition_variable m_Cond, m_Icond;
     };
 }
-
-#endif /* _THREADPOOL_H_ */

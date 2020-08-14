@@ -1,5 +1,4 @@
-#ifndef _KEYBINDINGEDITOR_H_
-#define _KEYBINDINGEDITOR_H_
+#pragma once
 
 #include <gtkmm.h>
 
@@ -44,5 +43,3 @@ namespace AhoViewer
         SignalEditedType m_SignalEdited;
     };
 }
-
-#endif /* _KEYBINDINGEDITOR_H_ */

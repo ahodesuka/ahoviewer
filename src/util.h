@@ -1,5 +1,4 @@
-#ifndef _UTIL_H_
-#define _UTIL_H_
+#pragma once
 
 #include <gdkmm.h>
 #include <glibmm.h>
@@ -117,5 +116,3 @@ namespace AhoViewer
         };
     }
 }
-
-#endif /* _UTIL_H_ */

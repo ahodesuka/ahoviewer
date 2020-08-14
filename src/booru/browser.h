@@ -1,5 +1,4 @@
-#ifndef _BROWSER_H_
-#define _BROWSER_H_
+#pragma once
 
 #include "page.h"
 #include "settings.h"
@@ -129,5 +128,3 @@ namespace AhoViewer
         };
     }
 }
-
-#endif /* _BROWSER_H_ */

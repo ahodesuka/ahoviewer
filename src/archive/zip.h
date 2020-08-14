@@ -1,5 +1,4 @@
-#ifndef _ZIP_H_
-#define _ZIP_H_
+#pragma once
 
 #include "archive.h"
 
@@ -19,5 +18,3 @@ namespace AhoViewer
         static constexpr char Magic[MagicSize]{ 'P', 'K', 0x03, 0x04 };
     };
 }
-
-#endif /* _ZIP_H_ */

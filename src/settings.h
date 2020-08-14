@@ -1,5 +1,4 @@
-#ifndef _SETTINGS_H_
-#define _SETTINGS_H_
+#pragma once
 
 #include <gdkmm.h>
 #include <glibmm.h>
@@ -122,5 +121,3 @@ namespace AhoViewer
 
     extern SettingsManager Settings;
 }
-
-#endif /* _SETTINGS_H_ */

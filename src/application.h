@@ -1,5 +1,4 @@
-#ifndef _APPLICATION_H_
-#define _APPLICATION_H_
+#pragma once
 
 #include <gtkmm/application.h>
 
@@ -29,5 +28,3 @@ namespace AhoViewer
         void on_shutdown();
     };
 }
-
-#endif /* _APPLICATION_H_ */

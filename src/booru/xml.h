@@ -1,5 +1,4 @@
-#ifndef _XML_H_
-#define _XML_H_
+#pragma once
 
 #include <libxml/parser.h>
 #include <libxml/tree.h>
@@ -106,5 +105,3 @@ namespace AhoViewer::xml
         xmlDocPtr m_XmlDoc;
     };
 }
-
-#endif /* _XML_H_ */

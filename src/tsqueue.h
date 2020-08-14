@@ -1,5 +1,4 @@
-#ifndef _TSQUEUE_H_
-#define _TSQUEUE_H_
+#pragma once
 
 #include <mutex>
 #include <queue>
@@ -52,5 +51,3 @@ namespace AhoViewer
         mutable std::mutex m_Mutex;
     };
 }
-
-#endif /* _TSQUEUE_H_ */

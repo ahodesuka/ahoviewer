@@ -1,5 +1,4 @@
-#ifndef _SITE_H_
-#define _SITE_H_
+#pragma once
 
 #include "config.h"
 #include "curler.h"
@@ -111,5 +110,3 @@ namespace AhoViewer::Booru
 #endif // HAVE_LIBSECRET
     };
 }
-
-#endif /* _SITE_H_ */

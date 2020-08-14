@@ -1,5 +1,4 @@
-#ifndef _RAR_H_
-#define _RAR_H_
+#pragma once
 
 #include "archive.h"
 
@@ -19,5 +18,3 @@ namespace AhoViewer
         static constexpr char Magic[MagicSize]{ 'R', 'a', 'r', '!', 0x1A, 0x07 };
     };
 }
-
-#endif /* _RAR_H_ */

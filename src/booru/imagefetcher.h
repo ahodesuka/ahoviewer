@@ -1,5 +1,4 @@
-#ifndef _IMAGEFETCHER_H_
-#define _IMAGEFETCHER_H_
+#pragma once
 
 #include "curler.h"
 #include "tsqueue.h"
@@ -60,5 +59,3 @@ namespace AhoViewer::Booru
         sigc::connection m_TimeoutConn;
     };
 }
-
-#endif /* _IMAGEFETCHER_H_ */

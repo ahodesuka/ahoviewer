@@ -1,5 +1,4 @@
-#ifndef _ARCHIVE_H_
-#define _ARCHIVE_H_
+#pragma once
 
 #include "../image.h"
 
@@ -72,5 +71,3 @@ namespace AhoViewer
         static constexpr int MagicSize{ 6 };
     };
 }
-
-#endif /* _ARCHIVE_H_ */

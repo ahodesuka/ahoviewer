@@ -1,5 +1,4 @@
-#ifndef _IMAGEBOXNOTE_H_
-#define _IMAGEBOXNOTE_H_
+#pragma once
 
 #include "util.h"
 
@@ -45,5 +44,3 @@ namespace AhoViewer
         sigc::connection m_TimeoutConn;
     };
 }
-
-#endif /* _IMAGEBOXNOTE_H_ */

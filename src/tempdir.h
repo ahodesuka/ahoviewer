@@ -1,5 +1,4 @@
-#ifndef _TEMPDIR_H_
-#define _TEMPDIR_H_
+#pragma once
 
 #include "config.h"
 
@@ -87,5 +86,3 @@ namespace AhoViewer
         std::string m_Path;
     };
 }
-
-#endif /* _TEMPDIR_H_ */

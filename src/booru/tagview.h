@@ -1,5 +1,4 @@
-#ifndef _TAGVIEW_H_
-#define _TAGVIEW_H_
+#pragma once
 
 #include "../util.h"
 #include "tagentry.h"
@@ -117,5 +116,3 @@ namespace AhoViewer::Booru
         SignalNewTabTag m_SignalNewTabTag;
     };
 }
-
-#endif /* _TAGVIEW_H_ */

@@ -1,5 +1,4 @@
-#ifndef _TAGENTRY_H_
-#define _TAGENTRY_H_
+#pragma once
 
 #include "../util.h"
 
@@ -45,5 +44,3 @@ namespace AhoViewer::Booru
         sigc::connection m_ChangedConn;
     };
 }
-
-#endif /* _TAGENTRY_H_ */

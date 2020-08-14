@@ -1,5 +1,4 @@
-#ifndef _IMAGEBOX_H_
-#define _IMAGEBOX_H_
+#pragma once
 
 #include "config.h"
 #include "image.h"
@@ -135,5 +134,3 @@ namespace AhoViewer
         sigc::signal<void> m_SignalSlideshowEnded, m_SignalImageDrawn;
     };
 }
-
-#endif /* _IMAGEBOX_H_ */

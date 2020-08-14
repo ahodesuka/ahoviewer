@@ -1,5 +1,4 @@
-#ifndef _PAGE_H_
-#define _PAGE_H_
+#pragma once
 
 #include "curler.h"
 #include "imagelist.h"
@@ -143,5 +142,3 @@ namespace AhoViewer::Booru
         SignalSaveProgressType m_SignalSaveProgress;
     };
 }
-
-#endif /* _PAGE_H_ */

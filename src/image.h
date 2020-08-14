@@ -1,5 +1,4 @@
-#ifndef _IMAGE_H_
-#define _IMAGE_H_
+#pragma once
 
 #include <gdkmm.h>
 #include <glibmm.h>
@@ -100,5 +99,3 @@ namespace AhoViewer
         static const std::string ThumbnailDir;
     };
 }
-
-#endif /* _IMAGE_H_ */

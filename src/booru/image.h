@@ -1,5 +1,4 @@
-#ifndef _BOORUIMAGE_H_
-#define _BOORUIMAGE_H_
+#pragma once
 
 #include "../image.h"
 #include "../util.h"
@@ -86,5 +85,3 @@ namespace AhoViewer::Booru
         SignalDownloadErrorType m_SignalDownloadError;
     };
 }
-
-#endif /* _BOORUIMAGE_H_ */

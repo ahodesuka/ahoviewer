@@ -1,5 +1,4 @@
-#ifndef _NATURALSORT_H_
-#define _NATURALSORT_H_
+#pragma once
 
 #include "image.h"
 
@@ -62,5 +61,3 @@ namespace AhoViewer
         }
     };
 }
-
-#endif /* _NATURALSORT_H_ */
