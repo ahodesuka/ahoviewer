@@ -36,19 +36,19 @@ void TagEntry::on_grab_focus()
     set_position(-1);
 }
 
+// Finds matching tags in the m_Tags set and adds them to the model
 void TagEntry::on_text_changed()
 {
-    int spos = get_position();
+    int spos{ get_position() };
 
-    size_t pos      = get_text().substr(0, spos).find_last_of(' ');
-    std::string key = pos == std::string::npos ? get_text().substr(0, spos + 1)
-                                               : get_text().substr(pos + 1, spos - pos);
+    size_t pos{ get_text().substr(0, spos).find_last_of(' ') };
+    std::string key{ pos == std::string::npos ? get_text().substr(0, spos + 1)
+                                              : get_text().substr(pos + 1, spos - pos) };
 
     if (key.back() == ' ')
         key.pop_back();
 
     // Check if key is prefixed
-    // FIXME: ~ is a valid prefix (or operator) on gelbooru (new) and danbooru?
     if (key.front() == '-')
         key.erase(key.begin());
 
@@ -56,34 +56,34 @@ void TagEntry::on_text_changed()
 
     if (key.length() >= static_cast<size_t>(m_TagCompletion->get_minimum_key_length()))
     {
-        size_t i = 0;
-        for (const auto& tag : *m_Tags)
-        {
-            if (tag.tag.compare(0, key.length(), key) == 0)
-            {
-                Gtk::TreeIter iter = m_Model->append();
-                iter->set_value(m_Columns.tag, tag);
+        size_t i{ 0 };
+        auto [it, fgr]{ m_Tags->equal_range(key) };
 
-                // Limit list to 20 tags
-                if (++i >= 20)
-                    break;
-            }
+        while (it != m_Tags->end() && it->tag.compare(0, key.length(), key) == 0)
+        {
+            Gtk::TreeIter iter = m_Model->append();
+            iter->set_value(m_Columns.tag, *it++);
+
+            // Limit list to 20 tags
+            if (++i >= 20)
+                break;
         }
     }
 
     m_TagCompletion->complete();
 }
 
+// Temporarly inserts selected matches into the entry (when moving between elements in the popup)
 bool TagEntry::on_cursor_on_match(const Gtk::TreeIter& iter)
 {
-    const std::string tag = iter->get_value(m_Columns.tag);
+    const std::string tag{ iter->get_value(m_Columns.tag) };
     int spos, epos;
     get_selection_bounds(spos, epos);
 
-    size_t pos         = get_text().substr(0, spos).find_last_of(' ');
-    std::string prefix = pos == std::string::npos ? (get_text()[0] == '-' ? "-" : "")
-                                                  : get_text().substr(0, pos + 1),
-                suffix = get_text().substr(epos);
+    size_t pos{ get_text().substr(0, spos).find_last_of(' ') };
+    std::string prefix{ pos == std::string::npos ? (get_text()[0] == '-' ? "-" : "")
+                                                 : get_text().substr(0, pos + 1) },
+        suffix{ get_text().substr(epos) };
 
     if (pos != std::string::npos && get_text().substr(pos + 1, 1) == "-")
         prefix += '-';
@@ -98,15 +98,16 @@ bool TagEntry::on_cursor_on_match(const Gtk::TreeIter& iter)
     return true;
 }
 
+// Inserts the selected tag into the entry
 bool TagEntry::on_match_selected(const Gtk::TreeIter& iter)
 {
     int spos, epos;
     get_selection_bounds(spos, epos);
 
-    size_t pos         = get_text().substr(0, spos).find_last_of(' ');
-    std::string prefix = pos == std::string::npos ? (get_text()[0] == '-' ? "-" : "")
-                                                  : get_text().substr(0, pos + 1),
-                tag = iter->get_value(m_Columns.tag), suffix = get_text().substr(epos);
+    size_t pos{ get_text().substr(0, spos).find_last_of(' ') };
+    std::string prefix{ pos == std::string::npos ? (get_text()[0] == '-' ? "-" : "")
+                                                 : get_text().substr(0, pos + 1) },
+        tag{ iter->get_value(m_Columns.tag) }, suffix{ get_text().substr(epos) };
 
     if (pos != std::string::npos && get_text().substr(pos + 1, 1) == "-")
         prefix += '-';
@@ -119,6 +120,7 @@ bool TagEntry::on_match_selected(const Gtk::TreeIter& iter)
     return true;
 }
 
+// Sets the forground color of the cell based on the tag type
 void TagEntry::on_tag_cell_data(const Gtk::TreeIter& iter)
 {
     Gtk::CellRenderer* c{ m_TagCompletion->get_first_cell() };
