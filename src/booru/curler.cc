@@ -88,15 +88,10 @@ Curler::~Curler()
     curl_easy_cleanup(m_EasyHandle);
 }
 
-void Curler::set_url(const std::string& url)
+void Curler::set_url(std::string url)
 {
-    m_Url = url;
+    m_Url = std::move(url);
     curl_easy_setopt(m_EasyHandle, CURLOPT_URL, m_Url.c_str());
-}
-
-void Curler::set_no_body(const bool n) const
-{
-    curl_easy_setopt(m_EasyHandle, CURLOPT_NOBODY, n);
 }
 
 void Curler::set_follow_location(const bool n) const

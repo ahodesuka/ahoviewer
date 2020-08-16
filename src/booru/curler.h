@@ -21,9 +21,8 @@ namespace AhoViewer::Booru
         Curler(const std::string& url = "", CURLSH* share = nullptr);
         ~Curler();
 
-        void set_url(const std::string& url);
-        void set_no_body(const bool n = true) const;
-        void set_follow_location(const bool n = true) const;
+        void set_url(std::string url);
+        void set_follow_location(const bool n) const;
         void set_referer(const std::string& url) const;
         void set_http_auth(const std::string& u, const std::string& p) const;
         void set_cookie_jar(const std::string& path) const;

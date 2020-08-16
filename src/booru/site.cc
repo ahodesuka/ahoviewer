@@ -129,22 +129,15 @@ void Site::on_password_stored(GObject*, GAsyncResult* result, gpointer ptr)
 Type Site::get_type_from_url(const std::string& url)
 {
     Curler curler;
-    curler.set_no_body();
     curler.set_follow_location(false);
 
-    for (const Type& type : { Type::DANBOORU_V2, Type::GELBOORU, Type::MOEBOORU, Type::DANBOORU })
+    for (auto type : { Type::DANBOORU_V2, Type::GELBOORU, Type::MOEBOORU, Type::DANBOORU })
     {
-        std::string uri{ RequestURI.at(type) };
-
-        if (type == Type::GELBOORU)
-            uri = uri.substr(0, uri.find("&pid"));
-        else
-            uri = uri.substr(0, uri.find("?"));
+        auto uri{ Glib::ustring::compose(
+            RequestURI.at(type), type == Type::GELBOORU ? 0 : 1, 1, "") };
 
         curler.set_url(url + uri);
-        // Danbooru V2 returns a 204 (no content because set_no_body?)
-        if (curler.perform() && (curler.get_response_code() == 200 ||
-                                 (type == Type::DANBOORU_V2 && curler.get_response_code() == 204)))
+        if (curler.perform() && curler.get_response_code() == 200)
             return type;
     }
 
