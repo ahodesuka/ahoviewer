@@ -16,12 +16,20 @@ PreferencesDialog::PreferencesDialog(BaseObjectType* cobj, const Glib::RefPtr<Gt
     bldr->get_widget_derived("BooruSiteEditor", m_SiteEditor);
     bldr->get_widget_derived("KeybindingEditor", m_KeybindingEditor);
 
-    Gtk::Button* close_button = nullptr;
+    Gtk::Button* close_button{ nullptr };
     bldr->get_widget("PreferencesDialog::CloseButton", close_button);
+    Gtk::StackSidebar* stack_sidebar{ nullptr };
+    bldr->get_widget("PreferencesDialog::StackSidebar", stack_sidebar);
+    stack_sidebar->get_style_context()->remove_class("sidebar");
+    auto css{ Gtk::CssProvider::create() };
+    css->load_from_data(
+        "#PreferencesDialogStackSidebar list{border-right-width:1px;border-right-style:solid;}");
+    stack_sidebar->get_style_context()->add_provider_for_screen(
+        Gdk::Screen::get_default(), css, GTK_STYLE_PROVIDER_PRIORITY_APPLICATION);
 
     close_button->signal_clicked().connect([&] { hide(); });
 
-    Gtk::CheckButton* check_button = nullptr;
+    Gtk::CheckButton* check_button{ nullptr };
     bldr->get_widget("SaveThumbnails", check_button);
 #ifdef __linux__
     check_button->show();
@@ -29,7 +37,7 @@ PreferencesDialog::PreferencesDialog(BaseObjectType* cobj, const Glib::RefPtr<Gt
     check_button->hide();
 #endif // __linux__
 
-    Gtk::ColorButton* bg_color = nullptr;
+    Gtk::ColorButton* bg_color{ nullptr };
     bldr->get_widget("BackgroundColor", bg_color);
     signal_realize().connect([bg_color]() { bg_color->set_rgba(Settings.get_background_color()); });
     bg_color->signal_color_set().connect([&, bg_color]() {
@@ -37,7 +45,7 @@ PreferencesDialog::PreferencesDialog(BaseObjectType* cobj, const Glib::RefPtr<Gt
         m_SignalBGColorSet();
     });
 
-    Gtk::Button* reset_bg_color_button = nullptr;
+    Gtk::Button* reset_bg_color_button{ nullptr };
     bldr->get_widget("ResetBGColorButton", reset_bg_color_button);
     reset_bg_color_button->signal_clicked().connect([&, bg_color]() {
         Settings.remove("BackgroundColor");
@@ -45,7 +53,7 @@ PreferencesDialog::PreferencesDialog(BaseObjectType* cobj, const Glib::RefPtr<Gt
         m_SignalBGColorSet();
     });
 
-    Gtk::Entry* fmt_entry = nullptr;
+    Gtk::Entry* fmt_entry{ nullptr };
     bldr->get_widget("TitleFormat", fmt_entry);
     fmt_entry->set_text(Settings.get_string("TitleFormat"));
     fmt_entry->signal_changed().connect([&, fmt_entry]() {
@@ -76,7 +84,7 @@ PreferencesDialog::PreferencesDialog(BaseObjectType* cobj, const Glib::RefPtr<Gt
         "SlideshowDelay",
         "BooruLimit",
     };
-    Gtk::SpinButton* spin_button = nullptr;
+    Gtk::SpinButton* spin_button{ nullptr };
 
     for (const std::string& s : spin_settings)
     {
@@ -91,7 +99,7 @@ PreferencesDialog::PreferencesDialog(BaseObjectType* cobj, const Glib::RefPtr<Gt
     }
     // }}}
 
-    Gtk::ComboBox* combo_box = nullptr;
+    Gtk::ComboBox* combo_box{ nullptr };
     bldr->get_widget("BooruMaxRating", combo_box);
     BooruMaxRatingModelColumns columns;
     Glib::RefPtr<Gtk::ListStore> combo_model = Gtk::ListStore::create(columns);
