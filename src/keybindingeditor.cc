@@ -31,7 +31,7 @@ KeybindingEditor::KeybindingEditor(BaseObjectType* cobj, const Glib::RefPtr<Gtk:
     get_column(0)->set_cell_data_func(*(get_column(0)->get_first_cell()),
                                       sigc::mem_fun(*this, &KeybindingEditor::action_data_func));
 
-    Gtk::CellRendererAccel* accel_renderer = Gtk::manage(new Gtk::CellRendererAccel());
+    auto* accel_renderer{ Gtk::make_managed<Gtk::CellRendererAccel>() };
     accel_renderer->signal_accel_edited().connect(
         sigc::mem_fun(*this, &KeybindingEditor::on_accel_edited));
     accel_renderer->signal_accel_cleared().connect(

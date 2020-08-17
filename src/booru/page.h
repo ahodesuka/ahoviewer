@@ -53,10 +53,10 @@ namespace AhoViewer::Booru
         {
         public:
             CellRendererThumbnail()
-                : Glib::ObjectBase(typeid(CellRendererThumbnail)),
-                  Gtk::CellRenderer(),
-                  m_PixbufProperty(*this, "pixbuf"),
-                  m_PixbufRenderer(Gtk::manage(new Gtk::CellRendererPixbuf()))
+                : Glib::ObjectBase{ typeid(CellRendererThumbnail) },
+                  Gtk::CellRenderer{},
+                  m_PixbufProperty{ *this, "pixbuf" },
+                  m_PixbufRenderer{ Gtk::make_managed<Gtk::CellRendererPixbuf>() }
             {
                 set_alignment(0.5, 0.5);
                 m_PixbufProperty.get_proxy().signal_changed().connect(

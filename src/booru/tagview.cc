@@ -201,7 +201,7 @@ void TagView::set_tags(std::vector<Tag>& tags, const double pos)
     // Loop through tags and make rows..
     for (auto t : *m_Tags)
     {
-        auto row{ Gtk::manage(new Row{ t }) };
+        auto row{ Gtk::make_managed<Row>(t) };
 
         row->signal_tag_button_press_event().connect(
             sigc::mem_fun(*this, &TagView::on_tag_button_press_event));
@@ -368,7 +368,7 @@ void TagView::header_func(Gtk::ListBoxRow* a, Gtk::ListBoxRow* b)
 
     if (!b)
     {
-        auto h{ Gtk::manage(new Header{ ra->tag.type }) };
+        auto h{ Gtk::make_managed<Header>(ra->tag.type) };
         ra->set_header(*h);
     }
     else
@@ -376,7 +376,7 @@ void TagView::header_func(Gtk::ListBoxRow* a, Gtk::ListBoxRow* b)
         auto rb{ static_cast<Row*>(b) };
         if (ra->tag.type != rb->tag.type)
         {
-            auto h{ Gtk::manage(new Header{ ra->tag.type }) };
+            auto h{ Gtk::make_managed<Header>(ra->tag.type) };
             ra->set_header(*h);
         }
         else

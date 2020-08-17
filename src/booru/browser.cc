@@ -128,7 +128,7 @@ void Browser::update_combobox_model()
 
 void Browser::on_new_tab()
 {
-    Page* page = Gtk::manage(new Page);
+    Page* page{ Gtk::make_managed<Page>() };
 
     // If you type into the entry when no tab exists and hit
     // enter it will create a new tab for you

@@ -17,7 +17,7 @@ ImageBoxNote::ImageBoxNote(const Note& note)
     style_context->add_provider(m_CssProvider, GTK_STYLE_PROVIDER_PRIORITY_APPLICATION);
     m_CssProvider->load_from_resource("/ui/css/note.css");
 
-    auto label{ Gtk::manage(new Gtk::Label{ m_Note.body }) };
+    auto label{ Gtk::make_managed<Gtk::Label>(m_Note.body) };
     label->set_line_wrap(true);
     label->set_max_width_chars(40);
     label->show();

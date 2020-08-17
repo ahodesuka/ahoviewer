@@ -918,7 +918,7 @@ void ImageBox::on_notes_changed(/*notes*/)
     double scale{ m_Scale / 100 };
     for (auto& note : m_Image->get_notes())
     {
-        auto n{ Gtk::manage(new ImageBoxNote{ note }) };
+        auto n{ Gtk::make_managed<ImageBoxNote>(note) };
         m_Notes.push_back(n);
 
         n->set_scale(scale);

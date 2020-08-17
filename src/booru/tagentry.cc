@@ -17,7 +17,7 @@ TagEntry::TagEntry(BaseObjectType* cobj, const Glib::RefPtr<Gtk::Builder>& bldr)
 
     m_ChangedConn = signal_changed().connect(sigc::mem_fun(*this, &TagEntry::on_text_changed));
 
-    auto* c{ Gtk::manage(new Gtk::CellRendererText()) };
+    auto* c{ Gtk::make_managed<Gtk::CellRendererText>() };
     c->property_ellipsize() = Pango::ELLIPSIZE_END;
     m_TagCompletion->pack_start(*c);
     m_TagCompletion->set_cell_data_func(*c, sigc::mem_fun(*this, &TagEntry::on_tag_cell_data));

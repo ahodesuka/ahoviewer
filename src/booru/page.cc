@@ -24,12 +24,12 @@ void Page::CellRendererThumbnail::get_preferred_width_vfunc(Gtk::Widget& widget,
 Page::Page()
     : Gtk::ScrolledWindow{},
       m_PopupMenu{ nullptr },
-      m_IconView{ Gtk::manage(new IconView) },
-      m_Tab{ Gtk::manage(new Gtk::EventBox) },
-      m_TabIcon{ Gtk::manage(new Gtk::Image{ Gtk::Stock::NEW, Gtk::ICON_SIZE_MENU }) },
-      m_TabLabel{ Gtk::manage(new Gtk::Label{ _("New Tab") }) },
-      m_MenuLabel{ Gtk::manage(new Gtk::Label{ _("New Tab") }) },
-      m_TabButton{ Gtk::manage(new Gtk::Button) },
+      m_IconView{ Gtk::make_managed<IconView>() },
+      m_Tab{ Gtk::make_managed<Gtk::EventBox>() },
+      m_TabIcon{ Gtk::make_managed<Gtk::Image>(Gtk::Stock::NEW, Gtk::ICON_SIZE_MENU) },
+      m_TabLabel{ Gtk::make_managed<Gtk::Label>(_("New Tab")) },
+      m_MenuLabel{ Gtk::make_managed<Gtk::Label>(_("New Tab")) },
+      m_TabButton{ Gtk::make_managed<Gtk::Button>() },
       m_ImageList{ std::make_shared<ImageList>(this) },
       m_SaveCancel{ Gio::Cancellable::create() }
 {
@@ -37,7 +37,7 @@ Page::Page()
     set_shadow_type(Gtk::SHADOW_ETCHED_IN);
 
     // Create page tab {{{
-    m_TabButton->add(*(Gtk::manage(new Gtk::Image(Gtk::Stock::CLOSE, Gtk::ICON_SIZE_MENU))));
+    m_TabButton->add(*(Gtk::make_managed<Gtk::Image>(Gtk::Stock::CLOSE, Gtk::ICON_SIZE_MENU)));
     m_TabButton->property_relief() = Gtk::RELIEF_NONE;
     m_TabButton->set_focus_on_click(false);
     m_TabButton->set_tooltip_text(_("Close Tab"));
@@ -49,7 +49,7 @@ Page::Page()
     m_MenuLabel->set_alignment(0.0, 0.5);
     m_MenuLabel->set_ellipsize(Pango::ELLIPSIZE_END);
 
-    Gtk::HBox* hbox = Gtk::manage(new Gtk::HBox());
+    auto* hbox{ Gtk::make_managed<Gtk::HBox>() };
     hbox->pack_start(*m_TabIcon, false, false);
     hbox->pack_start(*m_TabLabel, true, true, 2);
     hbox->pack_start(*m_TabButton, false, false);
@@ -76,7 +76,7 @@ Page::Page()
         sigc::mem_fun(*this, &Page::on_button_press_event));
 
     // Workaround to have fully centered pixbufs
-    auto* cell = Gtk::manage(new CellRendererThumbnail());
+    auto* cell{ Gtk::make_managed<CellRendererThumbnail>() };
     m_IconView->pack_start(*cell);
     m_IconView->add_attribute(cell->property_pixbuf(), m_Columns.pixbuf);
 

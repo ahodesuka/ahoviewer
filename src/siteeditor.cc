@@ -10,12 +10,12 @@ using namespace AhoViewer::Booru;
 #include "util.h"
 
 SiteEditor::SiteEditor(BaseObjectType* cobj, const Glib::RefPtr<Gtk::Builder>& bldr)
-    : Gtk::TreeView(cobj),
-      m_Model(Gtk::ListStore::create(m_Columns)),
-      m_NameColumn(Gtk::manage(new Gtk::TreeView::Column(_("Name"), m_Columns.name))),
-      m_UrlColumn(Gtk::manage(new Gtk::TreeView::Column(_("Url"), m_Columns.url))),
-      m_SampleColumn(Gtk::manage(new Gtk::TreeView::Column(_("Samples"), m_Columns.samples))),
-      m_Sites(Settings.get_sites())
+    : Gtk::TreeView{ cobj },
+      m_Model{ Gtk::ListStore::create(m_Columns) },
+      m_NameColumn{ Gtk::make_managed<Gtk::TreeView::Column>(_("Name"), m_Columns.name) },
+      m_UrlColumn{ Gtk::make_managed<Gtk::TreeView::Column>(_("Url"), m_Columns.url) },
+      m_SampleColumn{ Gtk::make_managed<Gtk::TreeView::Column>(_("Samples"), m_Columns.samples) },
+      m_Sites{ Settings.get_sites() }
 {
     bldr->get_widget("BooruRegisterLinkButton", m_RegisterButton);
     bldr->get_widget("BooruUsernameEntry", m_UsernameEntry);
@@ -48,7 +48,7 @@ SiteEditor::SiteEditor(BaseObjectType* cobj, const Glib::RefPtr<Gtk::Builder>& b
     {
     }
 
-    CellRendererIcon* icon_renderer{ Gtk::manage(new CellRendererIcon(this)) };
+    CellRendererIcon* icon_renderer{ Gtk::make_managed<CellRendererIcon>(this) };
     icon_renderer->property_xpad() = 2;
     icon_renderer->property_ypad() = 2;
     append_column("", *icon_renderer);

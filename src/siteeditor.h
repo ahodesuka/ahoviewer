@@ -29,14 +29,14 @@ namespace AhoViewer
         {
         public:
             CellRendererIcon(SiteEditor* const editor)
-                : Glib::ObjectBase(typeid(CellRendererIcon)),
-                  Gtk::CellRenderer(),
-                  m_LoadingProperty(*this, "loading", false),
-                  m_PulseProperty(*this, "pulse", 0u),
-                  m_PixbufProperty(*this, "pixbuf"),
-                  m_SiteEditor(editor),
-                  m_PixbufRenderer(Gtk::manage(new Gtk::CellRendererPixbuf())),
-                  m_SpinnerRenderer(Gtk::manage(new Gtk::CellRendererSpinner()))
+                : Glib::ObjectBase{ typeid(CellRendererIcon) },
+                  Gtk::CellRenderer{},
+                  m_LoadingProperty{ *this, "loading", false },
+                  m_PulseProperty{ *this, "pulse", 0u },
+                  m_PixbufProperty{ *this, "pixbuf" },
+                  m_SiteEditor{ editor },
+                  m_PixbufRenderer{ Gtk::make_managed<Gtk::CellRendererPixbuf>() },
+                  m_SpinnerRenderer{ Gtk::make_managed<Gtk::CellRendererSpinner>() }
             {
                 m_LoadingProperty.get_proxy().signal_changed().connect([&]() {
                     m_SpinnerRenderer->property_active() = m_LoadingProperty.get_value();
