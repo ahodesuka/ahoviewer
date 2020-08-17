@@ -17,8 +17,8 @@ void Page::CellRendererThumbnail::get_preferred_width_vfunc(Gtk::Widget& widget,
                                                             int& natural_width) const
 {
     auto width{ widget.get_width() / (widget.get_width() / Image::BooruThumbnailSize) };
-    minimum_width = width - 12; // 12 = item_padding (6)*2 left+right padding
-    natural_width = width - 12;
+    minimum_width = width - IconViewItemPadding * 2; // Item padding is applied to right and left
+    natural_width = width - IconViewItemPadding * 2;
 }
 
 Page::Page()
