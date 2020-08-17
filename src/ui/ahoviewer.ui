@@ -655,6 +655,7 @@
     <property name="transient_for">MainWindow</property>
     <property name="comments" translatable="yes">ahoviewer is a GTK image viewer, manga reader, and booru browser.</property>
     <property name="logo_icon_name">image-missing</property>
+    <property name="license_type">mit-x11</property>
     <child internal-child="vbox">
       <object class="GtkBox" id="dialog-vbox2">
         <property name="visible">True</property>
