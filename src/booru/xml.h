@@ -15,8 +15,11 @@ namespace AhoViewer::xml
 
         std::string get_attribute(const std::string& name) const
         {
+            if (!m_XmlNode)
+                return "";
+
             std::string attr;
-            xmlChar* prop = xmlGetProp(m_XmlNode, reinterpret_cast<const xmlChar*>(name.c_str()));
+            xmlChar* prop{ xmlGetProp(m_XmlNode, reinterpret_cast<const xmlChar*>(name.c_str())) };
 
             if (prop)
             {
@@ -29,8 +32,11 @@ namespace AhoViewer::xml
 
         void set_attribute(const std::string& a_name, const std::string& a_value)
         {
-            const auto *name  = reinterpret_cast<const xmlChar*>(a_name.c_str()),
-                       *value = reinterpret_cast<const xmlChar*>(a_value.c_str());
+            if (!m_XmlNode)
+                return;
+
+            const auto *name{ reinterpret_cast<const xmlChar*>(a_name.c_str()) },
+                *value{ reinterpret_cast<const xmlChar*>(a_value.c_str()) };
 
             if (!xmlHasProp(m_XmlNode, name))
                 xmlNewProp(m_XmlNode, name, value);
@@ -40,8 +46,11 @@ namespace AhoViewer::xml
 
         std::string get_value() const
         {
+            if (!m_XmlNode)
+                return "";
+
             std::string val;
-            xmlChar* content = xmlNodeGetContent(m_XmlNode);
+            xmlChar* content{ xmlNodeGetContent(m_XmlNode) };
 
             if (content)
             {
@@ -55,6 +64,9 @@ namespace AhoViewer::xml
         // Returns the value of a child node of this node
         std::string get_value(const std::string& name) const
         {
+            if (!m_XmlNode)
+                return "";
+
             xmlNodePtr n{ m_XmlNode->children };
             while (n != nullptr)
             {
@@ -66,7 +78,7 @@ namespace AhoViewer::xml
             return "";
         }
 
-    protected:
+        // protected:
         Node() = default;
         xmlNodePtr m_XmlNode{ nullptr };
     };

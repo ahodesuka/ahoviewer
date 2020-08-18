@@ -122,18 +122,18 @@ void Page::set_pixbuf(const size_t index, const Glib::RefPtr<Gdk::Pixbuf>& pixbu
 
 void Page::set_selected(const size_t index)
 {
-    Gtk::TreePath path(std::to_string(index));
+    Gtk::TreePath path{ std::to_string(index) };
     m_IconView->select_path(path);
     scroll_to_selected();
 }
 
 void Page::scroll_to_selected()
 {
-    std::vector<Gtk::TreePath> paths = m_IconView->get_selected_items();
+    std::vector<Gtk::TreePath> paths{ m_IconView->get_selected_items() };
 
     if (!paths.empty())
     {
-        Gtk::TreePath path = paths[0];
+        Gtk::TreePath path{ paths[0] };
         if (path)
         {
             m_ScrollConn.block();
@@ -165,16 +165,11 @@ void Page::search(const std::shared_ptr<Site>& site)
     // and m_SearchTags which is used to display tags in other places
     if (!m_SearchTags.empty())
     {
-        size_t f = m_SearchTags.find_first_not_of(' '), l = m_SearchTags.find_last_not_of(' ');
-        m_SearchTags = f == std::string::npos ? "*" : m_SearchTags.substr(f, l - f + 1);
+        size_t f{ m_SearchTags.find_first_not_of(' ') }, l{ m_SearchTags.find_last_not_of(' ') };
+        m_SearchTags = f == std::string::npos ? "" : m_SearchTags.substr(f, l - f + 1);
     }
-    else
-    {
-        if (site->get_type() != Type::MOEBOORU)
-            m_SearchTags = "*";
-    }
-    std::string label = m_Site->get_name() +
-                        (m_SearchTags == "*" || m_SearchTags.empty() ? "" : " - " + m_SearchTags);
+
+    std::string label{ m_Site->get_name() + (m_SearchTags.empty() ? "" : " - " + m_SearchTags) };
     m_TabLabel->set_text(label);
     m_MenuLabel->set_text(label);
     m_TabIcon->set(m_Site->get_icon_pixbuf());
@@ -255,7 +250,7 @@ void Page::cancel_save()
 
     for (const std::shared_ptr<AhoViewer::Image>& img : *m_ImageList)
     {
-        std::shared_ptr<Image> bimage = std::static_pointer_cast<Image>(img);
+        std::shared_ptr<Image> bimage{ std::static_pointer_cast<Image>(img) };
         bimage->cancel_download();
     }
 
@@ -267,8 +262,8 @@ void Page::cancel_save()
 
 void Page::get_posts()
 {
-    std::string tags = m_SearchTags;
-    m_KeepAligned    = true;
+    std::string tags{ m_SearchTags };
+    m_KeepAligned = true;
 
     if (m_Tags.find("rating:") == std::string::npos)
     {
@@ -285,7 +280,7 @@ void Page::get_posts()
     tags = m_Curler.escape(tags);
 
     m_GetPostsThread = std::thread([&, tags]() {
-        size_t posts_count = 0;
+        std::string posts_count;
         // Danbooru doesn't give the post count with the posts
         // Get it from thier counts api
         if (m_Page == 1 &&
@@ -296,15 +291,17 @@ void Page::get_posts()
             {
                 try
                 {
-                    xml::Document doc(reinterpret_cast<char*>(m_Curler.get_data()),
-                                      m_Curler.get_data_size());
-                    posts_count = std::stoul(doc.get_children()[0].get_value());
+                    xml::Document doc{ reinterpret_cast<char*>(m_Curler.get_data()),
+                                       m_Curler.get_data_size() };
+                    posts_count = doc.get_children()[0].get_value();
+                    // Usually when you use a wildcard operator danbooru's count api will return a
+                    // blank value here (blank but contains some whitespace and newlines)
+                    if (std::string::npos == posts_count.find_first_not_of(" \n\r"))
+                        posts_count = "";
                 }
                 catch (const std::runtime_error& e)
                 {
-                }
-                catch (const std::invalid_argument& e)
-                {
+                    std::cerr << e.what() << std::endl << m_Curler.get_data() << std::endl;
                 }
             }
             else if (m_Curler.is_cancelled())
@@ -320,8 +317,8 @@ void Page::get_posts()
         else
             m_Curler.set_http_auth(m_Site->get_username(), m_Site->get_password());
 
-        bool success       = false;
-        size_t retry_count = 0;
+        bool success{ false };
+        size_t retry_count{ 0 };
         do
         {
             success = m_Curler.perform();
@@ -347,8 +344,8 @@ void Page::get_posts()
             }
         } while (!m_Curler.is_cancelled() && !success && ++retry_count < RETRY_COUNT);
 
-        if (success && m_Posts && posts_count)
-            m_Posts->set_attribute("count", std::to_string(posts_count));
+        if (success && m_Posts && !posts_count.empty())
+            m_Posts->set_attribute("count", posts_count);
         else if (!success && !m_Curler.is_cancelled())
             std::cerr << "Error while downloading posts on " << m_Curler.get_url() << std::endl
                       << "  " << m_Curler.get_error() << std::endl;

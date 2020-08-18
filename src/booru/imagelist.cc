@@ -65,7 +65,15 @@ void ImageList::load(const xml::Document& posts, const std::vector<Tag>& posts_t
     auto old_size{ m_Images.size() };
     std::string c{ posts.get_attribute("count") };
     if (!c.empty())
-        m_Size = std::stoul(c);
+    {
+        try
+        {
+            m_Size = std::stoul(c);
+        }
+        catch (const std::invalid_argument&)
+        {
+        }
+    }
 
     for (const xml::Node& post : posts.get_children())
     {
