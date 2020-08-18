@@ -7,7 +7,7 @@ namespace AhoViewer::Booru
 {
     class TagView : public Gtk::ListBox
     {
-        using SignalNewTabTag = sigc::signal<void, const std::string&>;
+        using SignalNewTabTagType = sigc::signal<void, const std::string&>;
 
         class Row : public Gtk::ListBoxRow
         {
@@ -84,7 +84,7 @@ namespace AhoViewer::Booru
         void set_sort_order(const TagViewOrder& order);
         void on_toggle_show_headers();
 
-        SignalNewTabTag signal_new_tab_tag() const { return m_SignalNewTabTag; }
+        SignalNewTabTagType signal_new_tab_tag() const { return m_SignalNewTabTag; }
 
     protected:
         void on_realize() override;
@@ -113,6 +113,6 @@ namespace AhoViewer::Booru
         Gdk::RGBA m_Color, m_PrevColor;
         Glib::RefPtr<Gdk::Pixbuf> m_StarPixbuf, m_StarOutlinePixbuf;
 
-        SignalNewTabTag m_SignalNewTabTag;
+        SignalNewTabTagType m_SignalNewTabTag;
     };
 }

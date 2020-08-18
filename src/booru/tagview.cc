@@ -183,6 +183,8 @@ void TagView::clear()
 {
     for (auto w : get_children())
         remove(*w);
+
+    m_Tags = nullptr;
 }
 
 void TagView::set_tags(std::vector<Tag>& tags, const double pos)
