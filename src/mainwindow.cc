@@ -24,22 +24,10 @@ PreferencesDialog* MainWindow::m_PreferencesDialog{ nullptr };
 Gtk::AboutDialog* MainWindow::m_AboutDialog{ nullptr };
 
 MainWindow::MainWindow(BaseObjectType* cobj, Glib::RefPtr<Gtk::Builder> bldr)
-    : Gtk::ApplicationWindow(cobj),
-      m_Builder(std::move(bldr)),
-      m_LastSavePath(Settings.get_string("LastSavePath"))
+    : Gtk::ApplicationWindow{ cobj },
+      m_Builder{ std::move(bldr) },
+      m_LastSavePath{ Settings.get_string("LastSavePath") }
 {
-#ifndef _WIN32
-    try
-    {
-        Glib::RefPtr<Gdk::Pixbuf> icon = Gdk::Pixbuf::create_from_file(
-            AHOVIEWER_DATADIR "/icons/hicolor/64x64/apps/ahoviewer.png");
-        set_icon(icon);
-    }
-    catch (...)
-    {
-    }
-#endif // !_WIN32
-
     m_Builder->get_widget_derived("ThumbnailBar", m_ThumbnailBar);
     m_Builder->get_widget_derived("Booru::Browser", m_BooruBrowser);
     m_Builder->get_widget_derived("Booru::Browser::InfoBox", m_InfoBox);
@@ -118,14 +106,14 @@ MainWindow::MainWindow(BaseObjectType* cobj, Glib::RefPtr<Gtk::Builder> bldr)
         {
 #ifdef _WIN32
             std::string path;
-            gchar* g = g_win32_get_package_installation_directory_of_module(NULL);
+            gchar* g{ g_win32_get_package_installation_directory_of_module(NULL) };
             if (g)
             {
                 path = Glib::build_filename(
                     g, "share", "icons", "hicolor", "256x256", "apps", "ahoviewer.png");
                 g_free(g);
             }
-            Glib::RefPtr<Gdk::Pixbuf> logo = Gdk::Pixbuf::create_from_file(path);
+            Glib::RefPtr<Gdk::Pixbuf> logo{ Gdk::Pixbuf::create_from_file(path) };
             m_AboutDialog->set_logo(logo);
 #else
             m_AboutDialog->set_logo_icon_name(PACKAGE);
@@ -178,6 +166,9 @@ MainWindow::MainWindow(BaseObjectType* cobj, Glib::RefPtr<Gtk::Builder> bldr)
     }
     else
     {
+        auto screen{ Gdk::Screen::get_default() };
+        auto rect{ screen->get_monitor_workarea(screen->get_primary_monitor()) };
+        set_default_geometry(rect.get_width() * 0.75, rect.get_height() * 0.9);
         show_all();
     }
 
