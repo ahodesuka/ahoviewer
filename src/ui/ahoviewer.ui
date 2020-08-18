@@ -626,6 +626,7 @@
               <packing>
                 <property name="expand">False</property>
                 <property name="fill">False</property>
+                <property name="padding">8</property>
                 <property name="position">6</property>
               </packing>
             </child>
