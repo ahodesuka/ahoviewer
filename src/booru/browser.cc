@@ -26,11 +26,7 @@ Browser::Browser(BaseObjectType* cobj, const Glib::RefPtr<Gtk::Builder>& bldr)
 
     // Make the booru browser borders a little less ugly
     auto css{ Gtk::CssProvider::create() };
-    css->load_from_data("notebook.booru-browser \
-    {\
-        border-right-width:0;  \
-        border-bottom-width:0; \
-    }");
+    css->load_from_data("#BooruBrowserNotebook{border-right-width:0;border-bottom-width:0;}");
     m_Notebook->get_style_context()->add_provider(css, GTK_STYLE_PROVIDER_PRIORITY_APPLICATION);
 
     m_TagEntry->signal_key_press_event().connect(
