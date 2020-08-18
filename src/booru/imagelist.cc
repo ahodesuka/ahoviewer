@@ -63,7 +63,8 @@ void ImageList::load(const xml::Document& posts,
     if (!m_ImageFetcher)
         m_ImageFetcher = std::make_unique<ImageFetcher>(m_Site->get_max_connections());
 
-    std::string c = posts.get_attribute("count");
+    auto old_size{ m_Images.size() };
+    std::string c{ posts.get_attribute("count") };
     if (!c.empty())
         m_Size = std::stoul(c);
 
@@ -257,6 +258,8 @@ void ImageList::load(const xml::Document& posts,
     if (m_Images.empty())
         return;
 
+    m_Widget->reserve(m_Images.size() - old_size);
+
     if (m_ThumbnailThread.joinable())
         m_ThumbnailThread.join();
 
@@ -265,9 +268,6 @@ void ImageList::load(const xml::Document& posts,
     // only call set_current if this is the first page
     if (page.get_page_num() == 1)
     {
-        // This ensures that the first image can be selected when set_current emits signal_changed,
-        // and the page selects the first item in the icon view
-        m_Widget->reserve(1);
         set_current(m_Index, false, true);
     }
     else

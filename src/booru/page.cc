@@ -509,7 +509,6 @@ void Page::on_posts_downloaded()
             // Number of posts that actually got added to the image list
             // ie supported file types
             n_posts = m_ImageList->get_vector_size() - size_before;
-            reserve(n_posts);
         }
 
         if (n_posts == 0)
