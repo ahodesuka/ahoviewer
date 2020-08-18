@@ -505,7 +505,7 @@ void Page::on_posts_downloaded()
         if (n_posts > 0)
         {
             auto size_before = m_ImageList->get_vector_size();
-            m_ImageList->load(*m_Posts, *this, m_PostsTags);
+            m_ImageList->load(*m_Posts, m_PostsTags);
             // Number of posts that actually got added to the image list
             // ie supported file types
             n_posts = m_ImageList->get_vector_size() - size_before;

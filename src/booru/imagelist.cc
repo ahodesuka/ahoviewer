@@ -54,11 +54,10 @@ std::string ImageList::get_path()
     return m_Path;
 }
 
-void ImageList::load(const xml::Document& posts,
-                     const Page& page,
-                     const std::vector<Tag>& posts_tags)
+void ImageList::load(const xml::Document& posts, const std::vector<Tag>& posts_tags)
 {
-    m_Site = page.get_site();
+    auto page{ static_cast<Page*>(m_Widget) };
+    m_Site = page->get_site();
 
     if (!m_ImageFetcher)
         m_ImageFetcher = std::make_unique<ImageFetcher>(m_Site->get_max_connections());
@@ -266,7 +265,7 @@ void ImageList::load(const xml::Document& posts,
     m_ThumbnailThread = std::thread(sigc::mem_fun(*this, &ImageList::load_thumbnails));
 
     // only call set_current if this is the first page
-    if (page.get_page_num() == 1)
+    if (page->get_page_num() == 1)
     {
         set_current(m_Index, false, true);
     }
