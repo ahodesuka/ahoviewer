@@ -78,7 +78,7 @@ namespace AhoViewer::xml
             return "";
         }
 
-        // protected:
+    protected:
         Node() = default;
         xmlNodePtr m_XmlNode{ nullptr };
     };
