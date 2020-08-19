@@ -58,6 +58,13 @@ Browser::Browser(BaseObjectType* cobj, const Glib::RefPtr<Gtk::Builder>& bldr)
     g_signal_connect(m_Notebook->gobj(), "create-window", G_CALLBACK(on_create_window), this);
 
     set_focus_chain({ m_TagEntry });
+
+    // The info box doesn't need scroll events, redirect them to the page under it
+    m_InfoBox->signal_scroll_event().connect([&](GdkEventScroll* e) {
+        if (m_CurrentPage)
+            return m_CurrentPage->on_scroll_event(e);
+        return true;
+    });
 }
 
 Browser::~Browser()
