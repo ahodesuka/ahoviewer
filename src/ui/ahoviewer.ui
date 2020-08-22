@@ -117,7 +117,8 @@
                               <object class="GtkImage">
                                 <property name="visible">True</property>
                                 <property name="can_focus">False</property>
-                                <property name="stock">gtk-add</property>
+                                <property name="icon_name">list-add</property>
+                                <property name="use_fallback">True</property>
                               </object>
                             </child>
                           </object>
@@ -140,7 +141,8 @@
                               <object class="GtkImage" id="image3">
                                 <property name="visible">True</property>
                                 <property name="can_focus">False</property>
-                                <property name="stock">gtk-save</property>
+                                <property name="icon_name">document-save</property>
+                                <property name="use_fallback">True</property>
                               </object>
                             </child>
                           </object>
@@ -496,7 +498,6 @@
                     <child>
                       <object class="GtkDrawingArea" id="ImageBox::DrawingArea">
                         <property name="can_focus">False</property>
-                        <property name="double_buffered">False</property>
                       </object>
                     </child>
                     <style>
@@ -690,11 +691,10 @@
             <property name="layout_style">end</property>
             <child>
               <object class="GtkButton" id="PreferencesDialog::CloseButton">
-                <property name="label">gtk-close</property>
+                <property name="label" translatable="yes">Close</property>
                 <property name="visible">True</property>
                 <property name="can_focus">True</property>
                 <property name="receives_default">True</property>
-                <property name="use_stock">True</property>
               </object>
               <packing>
                 <property name="expand">False</property>
@@ -811,7 +811,8 @@
                                           <object class="GtkImage" id="image1">
                                             <property name="visible">True</property>
                                             <property name="can_focus">False</property>
-                                            <property name="stock">gtk-revert-to-saved</property>
+                                            <property name="icon_name">document-revert</property>
+                                            <property name="use_fallback">True</property>
                                           </object>
                                         </child>
                                       </object>
@@ -1491,7 +1492,7 @@
                                 <property name="visible">True</property>
                                 <property name="can_focus">False</property>
                                 <property name="halign">end</property>
-                                <property name="stock_id">gtk-delete</property>
+                                <property name="icon_name">edit-delete</property>
                               </object>
                               <packing>
                                 <property name="expand">True</property>
@@ -1503,7 +1504,7 @@
                                 <property name="visible">True</property>
                                 <property name="can_focus">False</property>
                                 <property name="halign">end</property>
-                                <property name="stock_id">gtk-add</property>
+                                <property name="icon_name">list-add</property>
                               </object>
                               <packing>
                                 <property name="expand">False</property>
@@ -1939,7 +1940,7 @@
                                 <property name="can_focus">False</property>
                                 <property name="tooltip_text" translatable="yes">Revert selected keybinding to default</property>
                                 <property name="halign">end</property>
-                                <property name="stock_id">gtk-revert-to-saved</property>
+                                <property name="icon_name">document-revert</property>
                               </object>
                               <packing>
                                 <property name="expand">True</property>
