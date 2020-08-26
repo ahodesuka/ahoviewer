@@ -166,9 +166,14 @@ MainWindow::MainWindow(BaseObjectType* cobj, Glib::RefPtr<Gtk::Builder> bldr)
     }
     else
     {
-        auto screen{ Gdk::Screen::get_default() };
-        auto rect{ screen->get_monitor_workarea(screen->get_primary_monitor()) };
-        set_default_geometry(rect.get_width() * 0.75, rect.get_height() * 0.9);
+        auto dpy{ Gdk::Display::get_default() };
+        int x, y;
+        Gdk::Rectangle rect;
+
+        dpy->get_default_seat()->get_pointer()->get_position(x, y);
+        dpy->get_monitor_at_point(x, y)->get_workarea(rect);
+
+        set_default_size(rect.get_width() * 0.75, rect.get_height() * 0.9);
         show_all();
     }
 
