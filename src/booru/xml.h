@@ -89,7 +89,7 @@ namespace AhoViewer::xml
     public:
         Document(const char* buf, const size_t size)
         {
-            m_XmlDoc = xmlParseMemory(buf, size);
+            m_XmlDoc = xmlReadMemory(buf, size, nullptr, nullptr, 0);
 
             if (!m_XmlDoc)
                 throw std::runtime_error("Failed to parse XML");
