@@ -1052,7 +1052,7 @@ void MainWindow::on_open_file_dialog()
 {
     auto dialog{ Gtk::FileChooserNative::create("Open", *this, Gtk::FILE_CHOOSER_ACTION_OPEN) };
     auto filter{ Gtk::FileFilter::create() }, image_filter{ Gtk::FileFilter::create() },
-        video_filter{ Gtk::FileFilter::create() }, archive_filter{ Gtk::FileFilter::create() };
+        archive_filter{ Gtk::FileFilter::create() };
 
     filter->set_name(_("All Files"));
     image_filter->set_name(_("All Images"));
@@ -1062,6 +1062,9 @@ void MainWindow::on_open_file_dialog()
     image_filter->add_pixbuf_formats();
 
 #ifdef HAVE_GSTREAMER
+    auto video_filter{ Gtk::FileFilter::create() };
+    video_filter->set_name(_("All Videos"));
+
     filter->add_pattern("*.webm");
     filter->add_pattern("*.mp4");
     video_filter->add_pattern("*.webm");
