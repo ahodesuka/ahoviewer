@@ -50,6 +50,10 @@ or
 ### Plugins
 Some example and usable plugins can be found at [ahodesuka/ahoviewer-plugins](https://github.com/ahodesuka/ahoviewer-plugins)
 
+Plugins should be installed into `$XDG_DATA_HOME/ahoviewer/plugins`, `$XDG_DATA_HOME` is `~/.local/share` by default.
+The .typelib file that is compiled must be installed via ninja install, or you will need to set the
+`GI_TYPELIB_PATH` environment variable to the directory where it is located after compilation.
+
 ### FAQ
 1. **My password/API key is not saved after restarting ahoviewer**
    * See my comment in [issue #20](https://github.com/ahodesuka/ahoviewer/issues/20#issuecomment-157997909)
