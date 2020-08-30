@@ -1,20 +1,17 @@
-#include <iomanip>
-#include <sstream>
-
 #include "statusbar.h"
 using namespace AhoViewer;
 
-StatusBar::StatusBar(BaseObjectType *cobj, const Glib::RefPtr<Gtk::Builder> &bldr)
-  : Gtk::Frame(cobj),
-    m_MessagePriority(Priority::UNUSED),
-    m_ProgressPriority(Priority::UNUSED)
+#include <iomanip>
+#include <sstream>
+
+StatusBar::StatusBar(BaseObjectType* cobj, const Glib::RefPtr<Gtk::Builder>& bldr) : Gtk::Box(cobj)
 {
-    bldr->get_widget("PageInfoLabel",      m_PageInfo);
-    bldr->get_widget("ResolutionLabel",    m_Resolution);
-    bldr->get_widget("FilenameSeparator",  m_FilenameSeparator);
-    bldr->get_widget("FilenameLabel",      m_Filename);
-    bldr->get_widget("MessageLabel",       m_Message);
-    bldr->get_widget("ProgressBar",        m_ProgressBar);
+    bldr->get_widget("PageInfoLabel", m_PageInfo);
+    bldr->get_widget("ResolutionLabel", m_Resolution);
+    bldr->get_widget("FilenameSeparator", m_FilenameSeparator);
+    bldr->get_widget("FilenameLabel", m_Filename);
+    bldr->get_widget("MessageLabel", m_Message);
+    bldr->get_widget("ProgressBar", m_ProgressBar);
 }
 
 void StatusBar::set_page_info(const size_t page, const size_t total)
@@ -22,8 +19,10 @@ void StatusBar::set_page_info(const size_t page, const size_t total)
     m_PageInfo->set_text(std::to_string(page) + " / " + std::to_string(total));
 }
 
-void StatusBar::set_resolution(const int w, const int h, const double scale,
-                               const ImageBox::ZoomMode zoom_mode)
+void StatusBar::set_resolution(const int w,
+                               const int h,
+                               const double scale,
+                               const ZoomMode zoom_mode)
 {
     std::ostringstream ss;
     ss << std::setprecision(1) << std::fixed;
@@ -31,12 +30,14 @@ void StatusBar::set_resolution(const int w, const int h, const double scale,
     m_Resolution->set_text(ss.str());
 }
 
-void StatusBar::set_filename(const std::string &filename)
+void StatusBar::set_filename(const std::string& filename)
 {
     m_Filename->set_text(filename);
 }
 
-void StatusBar::set_message(const std::string &msg, const Priority priority, const std::uint8_t delay)
+void StatusBar::set_message(const std::string& msg,
+                            const Priority priority,
+                            const std::uint8_t delay)
 {
     if (priority < m_MessagePriority)
         return;
@@ -52,14 +53,17 @@ void StatusBar::set_message(const std::string &msg, const Priority priority, con
     // Tooltip messages are manually cleared.
     if (priority != Priority::TOOLTIP && delay > 0)
         m_MessageConn = Glib::signal_timeout().connect_seconds(
-             sigc::bind_return(sigc::bind(sigc::mem_fun(*this, &StatusBar::clear_message),
-                    priority), false), delay);
+            sigc::bind_return(sigc::bind(sigc::mem_fun(*this, &StatusBar::clear_message), priority),
+                              false),
+            delay);
 }
 
 // Same as set_message but shows the progress bar as well
 // This will only update the progress bar if the priority is lower
-void StatusBar::set_progress(const std::string &msg, const double fraction,
-                             const Priority priority, const std::uint8_t delay)
+void StatusBar::set_progress(const std::string& msg,
+                             const double fraction,
+                             const Priority priority,
+                             const std::uint8_t delay)
 {
     if (priority < m_ProgressPriority)
         return;
@@ -74,8 +78,9 @@ void StatusBar::set_progress(const std::string &msg, const double fraction,
 
     if (delay > 0)
         m_ProgressConn = Glib::signal_timeout().connect_seconds(
-             sigc::bind_return(sigc::bind(sigc::mem_fun(*this, &StatusBar::clear_progress),
-                    priority), false), delay);
+            sigc::bind_return(
+                sigc::bind(sigc::mem_fun(*this, &StatusBar::clear_progress), priority), false),
+            delay);
 }
 
 void StatusBar::clear_page_info()

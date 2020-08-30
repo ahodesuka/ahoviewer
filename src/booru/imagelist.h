@@ -1,42 +1,41 @@
-#ifndef _BOORUIMAGELIST_H_
-#define _BOORUIMAGELIST_H_
+#pragma once
 
 #include "../imagelist.h"
 #include "xml.h"
 
-namespace AhoViewer
+namespace AhoViewer::Booru
 {
-    namespace Booru
+    class ImageFetcher;
+    class Page;
+    class Site;
+    class ImageList : public AhoViewer::ImageList
     {
-        class ImageFetcher;
-        class Page;
-        class Site;
-        class ImageList : public AhoViewer::ImageList
+    public:
+        ImageList(Widget* w);
+        ~ImageList() override;
+
+        std::string get_path();
+        size_t get_size() const override
         {
-        public:
-            ImageList(Widget *w);
-            virtual ~ImageList() override;
+            return m_Size ? m_Size : AhoViewer::ImageList::get_size();
+        }
+        size_t get_vector_size() const { return m_Images.size(); }
 
-            std::string get_path();
-            virtual size_t get_size() const override { return m_Size ? m_Size : AhoViewer::ImageList::get_size(); }
-            size_t get_vector_size() const { return m_Images.size(); }
+        void clear() override;
+        void load(const std::vector<PostDataTuple>& posts, const size_t posts_count = 0);
+        bool is_loading() const { return m_ThreadPool.active(); }
 
-            virtual void clear() override;
-            void load(const xml::Document &posts, const Page &page);
-            bool is_loading() const { return m_ThreadPool.active(); }
-        protected:
-            virtual void set_current(const size_t index,
-                                     const bool fromWidget = false, const bool force = false) override;
-            virtual void cancel_thumbnail_thread() override;
-        private:
-            std::unique_ptr<ImageFetcher> m_ImageFetcher;
-            std::shared_ptr<Site> m_Site;
+    protected:
+        void set_current(const size_t index,
+                         const bool from_widget = false,
+                         const bool force       = false) override;
+        void cancel_thumbnail_thread() override;
 
-            std::string m_Path;
-            // This is the total number of posts for the given booru query
-            size_t m_Size;
-        };
-    }
+    private:
+        std::unique_ptr<ImageFetcher> m_ImageFetcher;
+
+        std::string m_Path;
+        // This is the total number of posts for the given booru query
+        size_t m_Size{ 0 };
+    };
 }
-
-#endif /* _BOORUIMAGELIST_H_ */

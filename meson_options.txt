@@ -1,0 +1,41 @@
+option(
+  'curl-config',
+  type : 'string',
+  value : 'curl-config',
+  description : 'Path to curl-config executable'
+)
+
+option(
+  'gstreamer',
+  type : 'feature',
+  value : 'auto',
+  description : 'Enable or disable WebM support with GStreamer'
+)
+
+option(
+  'libpeas',
+  type : 'feature',
+  value : 'auto',
+  description : 'Enable or disable plugin support via libpeas'
+)
+
+option(
+  'libsecret',
+  type : 'feature',
+  value : 'auto',
+  description : 'Enable or disable libsecret support'
+)
+
+option(
+  'libunrar',
+  type : 'feature',
+  value : 'auto',
+  description : 'Enable or disable rar archive support'
+)
+
+option(
+  'libzip',
+  type : 'feature',
+  value : 'auto',
+  description : 'Enable or disable zip archive support'
+)

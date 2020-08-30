@@ -1,39 +1,40 @@
 # ahoviewer
 
-A GTK2 image viewer, manga reader, and booru browser.
+A GTK image viewer, manga reader, and booru browser.
 
 ## Building
 ### Dependencies
-* C++ Compiler that supports the C++14 standard is required.
-* gtkmm-2.4 `>= 2.20.0`
+* C++ Compiler that supports the C++17 standard is required. (g++ 7, clang 5)
+* meson `>= 0.47.0`
+* gtkmm-3.0 `>= 3.22.0`
 * glibmm-2.4 `>= 2.46.0`
 * libgsic++ `>= 2.6.0`
 * libconfig++ `>= 1.4`
-* libcurl `>= 7.32.0`
+* libcurl `>= 7.58.0`
 * libxml2
 * gstreamer-1.0 `optional`
+    * gst-plugins-bad `runtime`
     * gst-plugins-base `runtime`
     * gst-plugins-good `runtime`
-    * gst-plugins-vpx or gst-plugins-libav `runtime`
+    * gst-plugins-vpx `runtime`
+    * gst-plugins-libav `runtime`
+* libpeas `>=1.22.0` `optional`
 * libsecret `optional`
     * gnome-keyring `runtime`
 * libunrar `optional`
 * libzip `optional`
 
 ```
-./bootstrap
-make
-sudo make install
+meson build
+cd build
+ninja
+sudo ninja install
 ```
 
-### OpenSSL and GnuTLS
-By default ahoviewer will assume you built libcurl with OpenSSL.  If you
-are using GnuTLS you need to use --enable-gnutls during configuration (bootstrap).
-If you have OpenSSL installed and curl uses an SSL backend other than
-OpenSSL or GnuTLS then you need to use --disable-ssl during configuration
-or you will get linker errors. (This does not disable encryption)
-These configuration checks are used to provide thread-safe locking for older
-versions of OpenSSL and GnuTLS.
+If you don't want to compile with debug symbols replace the first command with:
+```
+meson build -Dbuildtype=release
+```
 
 ## Usage
 
@@ -44,7 +45,10 @@ or
     ahoviewer file[.zip|.rar|.webm|.(supported gdk-pixbuf file)]
 
 ### Screenshot
-![Booru Browser](https://camo.githubusercontent.com/ad37a28fc1f47a41d1c79409ab31e3e01a1507e9/68747470733a2f2f692e696d6775722e636f6d2f486e47656368662e676966)
+![Booru Browser](https://user-images.githubusercontent.com/1155344/91631124-e4bd4280-e99c-11ea-9432-72194d9b7aeb.gif)
+
+### Plugins
+Some example and usable plugins can be found at [ahodesuka/ahoviewer-plugins](https://github.com/ahodesuka/ahoviewer-plugins)
 
 ### FAQ
 1. **My password/API key is not saved after restarting ahoviewer**

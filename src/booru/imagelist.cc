@@ -7,12 +7,9 @@ using namespace AhoViewer::Booru;
 #include "site.h"
 #include "tempdir.h"
 
-ImageList::ImageList(Widget *w)
-  : AhoViewer::ImageList(w),
-    m_Size(0)
-{
+#include <chrono>
 
-}
+ImageList::ImageList(Widget* w) : AhoViewer::ImageList(w) { }
 
 ImageList::~ImageList()
 {
@@ -39,7 +36,7 @@ void ImageList::clear()
         m_Path.clear();
     }
 
-    m_Size = 0;
+    m_Size         = 0;
     m_ImageFetcher = nullptr;
 }
 
@@ -54,75 +51,76 @@ std::string ImageList::get_path()
     return m_Path;
 }
 
-void ImageList::load(const xml::Document &posts, const Page &page)
+void ImageList::load(const std::vector<PostDataTuple>& posts, const size_t posts_count)
 {
-    m_Site = page.get_site();
+    auto page{ static_cast<Page*>(m_Widget) };
 
     if (!m_ImageFetcher)
-        m_ImageFetcher = std::make_unique<ImageFetcher>(m_Site->get_max_connections());
+        m_ImageFetcher = std::make_unique<ImageFetcher>(page->get_site()->get_multiplexing());
 
-    std::string c = posts.get_attribute("count");
-    if (!c.empty())
-       m_Size = std::stoul(c);
+    auto old_size{ m_Images.size() };
+    m_Size = posts_count;
 
-    for (const xml::Node &post : posts.get_children())
+    for (const auto& post : posts)
     {
-        std::string thumbUrl  = post.get_attribute("preview_url"),
-                    thumbPath = Glib::build_filename(get_path(), "thumbnails",
-                                                   Glib::uri_unescape_string(Glib::path_get_basename(thumbUrl))),
-                    imageUrl  = post.get_attribute(m_Site->use_samples() ? "sample_url" : "file_url"),
-                    imagePath = Glib::build_filename(get_path(),
-                                                   Glib::uri_unescape_string(Glib::path_get_basename(imageUrl)));
+        auto [image_url, thumb_url, post_url, notes_url, tags, post_info]{ post };
+        auto junk_trimmed_image_url{ image_url };
 
-        std::istringstream ss(post.get_attribute("tags"));
-        std::set<std::string> tags { std::istream_iterator<std::string>(ss),
-                                     std::istream_iterator<std::string>() };
-        m_Site->add_tags(tags);
+        // Some file urls may have uri parameters, trim them so is_valid_extension works
+        if (auto last_quest = image_url.find_last_of('?'); last_quest != std::string::npos)
+            junk_trimmed_image_url = image_url.substr(0, last_quest);
 
-        if (thumbUrl[0] == '/')
+        // Check this before we do tag stuff since it would waste time
+        if (!Image::is_valid_extension(junk_trimmed_image_url))
         {
-            if (thumbUrl[1] == '/')
-                thumbUrl = "https:" + thumbUrl;
-            else
-                thumbUrl = m_Site->get_url() + thumbUrl;
+            if (m_Size != 0)
+                --m_Size;
+            continue;
         }
 
-        if (imageUrl[0] == '/')
-        {
-            if (imageUrl[1] == '/')
-                imageUrl = "https:" + imageUrl;
-            else
-                imageUrl = m_Site->get_url() + imageUrl;
-        }
+        auto thumb_path{ Glib::build_filename(
+            get_path(),
+            "thumbnails",
+            Glib::uri_unescape_string(Glib::path_get_basename(thumb_url))) };
+        auto image_path{ Glib::build_filename(
+            get_path(),
+            Glib::uri_unescape_string(Glib::path_get_basename(junk_trimmed_image_url))) };
 
-        std::string postUrl = m_Site->get_post_url(post.get_attribute("id"));
-
-        if (Image::is_valid_extension(imageUrl))
-            m_Images.emplace_back(std::make_shared<Image>(imagePath, imageUrl,
-                                                          thumbPath, thumbUrl,
-                                                          postUrl, tags,
-                                                          m_Site, *m_ImageFetcher));
-        else
-            --m_Size;
+        m_Images.push_back(std::make_shared<Image>(image_path,
+                                                   image_url,
+                                                   thumb_path,
+                                                   thumb_url,
+                                                   post_url,
+                                                   notes_url,
+                                                   tags,
+                                                   post_info,
+                                                   page->get_site(),
+                                                   *m_ImageFetcher));
     }
 
     if (m_Images.empty())
         return;
+
+    m_Widget->reserve(m_Images.size() - old_size);
 
     if (m_ThumbnailThread.joinable())
         m_ThumbnailThread.join();
 
     m_ThumbnailThread = std::thread(sigc::mem_fun(*this, &ImageList::load_thumbnails));
 
-    // only call set_current if this is the first page
-    if (page.get_page_num() == 1)
+    // Select the first image on initial load
+    if (page->get_page_num() == 1)
+    {
         set_current(m_Index, false, true);
+    }
     else
+    {
         m_SignalChanged(m_Images[m_Index]);
+    }
 }
 
 // Override this so we dont cancel and restart the thumbnail thread
-void ImageList::set_current(const size_t index, const bool fromWidget, const bool force)
+void ImageList::set_current(const size_t index, const bool from_widget, const bool force)
 {
     if (index == m_Index && !force)
         return;
@@ -131,7 +129,7 @@ void ImageList::set_current(const size_t index, const bool fromWidget, const boo
     m_SignalChanged(m_Images[m_Index]);
     update_cache();
 
-    if (!fromWidget)
+    if (!from_widget)
         m_Widget->set_selected(m_Index);
 }
 

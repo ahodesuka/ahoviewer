@@ -1,32 +1,43 @@
-#ifndef _APPLICATION_H_
-#define _APPLICATION_H_
+#pragma once
 
-#include <giomm/application.h>
+#include "config.h"
+
+#include <gtkmm/application.h>
+
+#ifdef HAVE_LIBPEAS
+#include "plugin/manager.h"
+#endif // HAVE_LIBPEAS
 
 namespace AhoViewer
 {
     class MainWindow;
-    class Application : public Gio::Application
+    class Application : public Gtk::Application
     {
     public:
         static Application& get_instance();
 
         MainWindow* create_window();
 
-        int run(int argc, char **argv);
+        int run(int argc, char** argv);
+
+#ifdef HAVE_LIBPEAS
+        Plugin::Manager& get_plugin_manager() const { return *m_PluginManager; }
+#endif // HAVE_LIBPEAS
     protected:
         Application();
 
-        virtual void on_open(const std::vector<Glib::RefPtr<Gio::File>> &f,
-                             const Glib::ustring&) override;
-        virtual void on_startup() override;
-        virtual void on_activate() override;
-    private:
-        void add_window(MainWindow* w);
-        void remove_window(MainWindow* w);
+        void on_activate() override;
+        void on_open(const std::vector<Glib::RefPtr<Gio::File>>& f, const Glib::ustring&) override;
+        void on_startup() override;
 
-        std::vector<MainWindow*> m_Windows;
+        void on_window_added(Gtk::Window* w) override;
+        void on_window_removed(Gtk::Window* w) override;
+
+    private:
+        void on_shutdown();
+
+#ifdef HAVE_LIBPEAS
+        std::unique_ptr<Plugin::Manager> m_PluginManager;
+#endif // HAVE_LIBPEAS
     };
 }
-
-#endif /* _APPLICATION_H_ */

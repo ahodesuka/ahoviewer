@@ -1,0 +1,24 @@
+Checks: >
+  -*,
+  modernize-concat-nested-namespaces,
+  modernize-loop-convert,
+  modernize-pass-by-value,
+  modernize-replace-random-shuffle,
+  modernize-return-braced-init-list,
+  modernize-use-auto,
+  modernize-use-noexcept,
+  modernize-use-nullptr,
+  modernize-use-override,
+  modernize-use-using,
+  readability-identifier-naming,
+  readability-make-member-function-const
+CheckOptions:
+  - { key: readability-identifier-naming.ClassCase,             value: CamelCase  }
+  - { key: readability-identifier-naming.StructCase,            value: CamelCase  }
+  - { key: readability-identifier-naming.ProtectedMemberCase,   value: CamelCase  }
+  - { key: readability-identifier-naming.ProtectedMemberPrefix, value: m_         }
+  - { key: readability-identifier-naming.PrivateMemberCase,     value: CamelCase  }
+  - { key: readability-identifier-naming.PrivateMemberPrefix,   value: m_         }
+  - { key: readability-identifier-naming.ClassMethodCase,       value: lower_case }
+  - { key: readability-identifier-naming.ParameterCase,         value: lower_case }
+  - { key: readability-identifier-naming.LocalVariableCase,     value: lower_case }

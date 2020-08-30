@@ -1,10 +1,11 @@
+#include "archive.h"
+
 #include <cctype>
 #include <cstring>
 #include <fstream>
 #include <giomm.h>
 #include <glib.h>
-
-#include "archive.h"
+#include <utility>
 using namespace AhoViewer;
 
 #include "config.h"
@@ -16,24 +17,17 @@ using namespace AhoViewer;
 #include "zip.h"
 #endif // HAVE_LIBZIP
 
-const std::vector<std::string> Archive::MimeTypes =
-{
+const std::vector<std::string> Archive::MimeTypes = {
 #ifdef HAVE_LIBZIP
-    "application/x-zip",
-    "application/x-zip-compressed",
-    "application/zip",
-    "application/cbz",
+    "application/x-zip", "application/x-zip-compressed", "application/zip",   "application/cbz",
 #endif // HAVE_LIBZIP
 
 #ifdef HAVE_LIBUNRAR
-    "application/x-rar",
-    "application/x-rar-compressed",
-    "application/x-cbr",
+    "application/x-rar", "application/x-rar-compressed", "application/x-cbr",
 #endif // HAVE_LIBUNRAR
 };
 
-const std::vector<std::string> Archive::FileExtensions =
-{
+const std::vector<std::string> Archive::FileExtensions = {
 #ifdef HAVE_LIBZIP
     "zip",
     "cbz",
@@ -45,24 +39,24 @@ const std::vector<std::string> Archive::FileExtensions =
 #endif // HAVE_LIBUNRAR
 };
 
-bool Archive::is_valid(const std::string &path)
+bool Archive::is_valid(const std::string& path)
 {
     return get_type(path) != Type::UNKNOWN;
 }
 
-bool Archive::is_valid_extension(const std::string &path)
+bool Archive::is_valid_extension(const std::string& path)
 {
     std::string ext = path.substr(path.find_last_of('.') + 1);
     std::transform(ext.begin(), ext.end(), ext.begin(), ::tolower);
 
-    for (const std::string &e : FileExtensions)
+    for (const std::string& e : FileExtensions)
         if (ext == e)
             return true;
 
     return false;
 }
 
-std::unique_ptr<Archive> Archive::create(const std::string &path, const std::string &parentDir)
+std::unique_ptr<Archive> Archive::create(const std::string& path, const std::string& parent_dir)
 {
     std::string dir;
     Type type = get_type(path);
@@ -70,9 +64,9 @@ std::unique_ptr<Archive> Archive::create(const std::string &path, const std::str
     if (type != Type::UNKNOWN)
     {
         dir = TempDir::get_instance().make_dir(
-            !parentDir.empty() ? Glib::build_filename(Glib::path_get_basename(parentDir),
-                                                      Glib::path_get_basename(path)) :
-                                 Glib::path_get_basename(path));
+            !parent_dir.empty() ? Glib::build_filename(Glib::path_get_basename(parent_dir),
+                                                       Glib::path_get_basename(path))
+                                : Glib::path_get_basename(path));
 
         // Make sure temp directory was created
         if (!dir.empty())
@@ -92,15 +86,15 @@ std::unique_ptr<Archive> Archive::create(const std::string &path, const std::str
     return nullptr;
 }
 
-Archive::Type Archive::get_type(const std::string &path)
+Archive::Type Archive::get_type(const std::string& path)
 {
     if (Glib::file_test(path, Glib::FILE_TEST_IS_DIR))
         return Type::UNKNOWN;
 
-    Glib::RefPtr<Gio::File> file = Gio::File::create_for_path(path);
+    Glib::RefPtr<Gio::File> file           = Gio::File::create_for_path(path);
     Glib::RefPtr<Gio::FileInputStream> ifs = file->read();
 
-    char magic[MagicSize] = { };
+    char magic[MagicSize] = {};
     ifs->read(magic, MagicSize);
 
 #ifdef HAVE_LIBZIP
@@ -116,11 +110,10 @@ Archive::Type Archive::get_type(const std::string &path)
     return Type::UNKNOWN;
 }
 
-Archive::Archive(const std::string &path, const std::string &exDir)
-  : m_Path(path),
-    m_ExtractedPath(exDir)
+Archive::Archive(std::string path, std::string ex_dir)
+    : m_Path(std::move(path)),
+      m_ExtractedPath(std::move(ex_dir))
 {
-
 }
 
 Archive::~Archive()

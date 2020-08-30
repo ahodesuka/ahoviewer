@@ -1,84 +1,87 @@
-#ifndef _BOORUIMAGE_H_
-#define _BOORUIMAGE_H_
-
-#include <condition_variable>
-#include <set>
-#include <shared_mutex>
+#pragma once
 
 #include "../image.h"
+#include "../util.h"
 #include "curler.h"
 #include "imagefetcher.h"
 
-namespace AhoViewer
+#include <condition_variable>
+#include <shared_mutex>
+#include <vector>
+
+namespace AhoViewer::Booru
 {
-    namespace Booru
+    class Site;
+    class Image : public AhoViewer::Image, public sigc::trackable
     {
-        class Site;
-        class Image : public AhoViewer::Image,
-                      public sigc::trackable
-        {
-            friend class Browser;
+        friend class Browser;
 
-            using SignalProgressType = sigc::signal<void, const Image*, double, double>;
-            using SignalDownloadErrorType = sigc::signal<void, const std::string&>;
-        public:
-            Image(const std::string &path, const std::string &url,
-                  const std::string &thumbPath, const std::string &thumbUrl,
-                  const std::string &postUrl,
-                  std::set<std::string> tags,
-                  std::shared_ptr<Site> site,
-                  ImageFetcher &fetcher);
-            virtual ~Image() override;
+        using SignalProgressType      = sigc::signal<void, const Image*, double, double>;
+        using SignalDownloadErrorType = sigc::signal<void, const std::string&>;
 
-            std::set<std::string> get_tags() const { return m_Tags; }
+    public:
+        Image(std::string path,
+              std::string url,
+              std::string thumb_path,
+              std::string thumb_url,
+              std::string post_url,
+              const std::string& notes_url,
+              std::vector<Tag> tags,
+              PostInfo& post_info,
+              std::shared_ptr<Site> site,
+              ImageFetcher& fetcher);
+        ~Image() override;
 
-            std::string get_url() const { return m_Url; }
-            std::string get_post_url() const { return m_PostUrl; }
+        std::vector<Tag>& get_tags() { return m_Tags; }
 
-            virtual bool is_loading() const override;
-            virtual std::string get_filename() const override;
-            virtual const Glib::RefPtr<Gdk::Pixbuf>& get_thumbnail(Glib::RefPtr<Gio::Cancellable>) override;
+        std::string get_url() const { return m_Url; }
+        std::string get_post_url() const { return m_PostUrl; }
+        const PostInfo& get_post_info() const { return m_PostInfo; }
 
-            virtual void load_pixbuf(Glib::RefPtr<Gio::Cancellable> c) override;
-            virtual void reset_pixbuf() override;
+        bool is_loading() const override;
+        std::string get_filename() const override;
+        const Glib::RefPtr<Gdk::Pixbuf>& get_thumbnail(Glib::RefPtr<Gio::Cancellable>) override;
 
-            void save(const std::string &path);
-            void cancel_download();
-            void cancel_thumbnail_download();
+        void load_pixbuf(Glib::RefPtr<Gio::Cancellable> c) override;
+        void reset_pixbuf() override;
 
-            SignalProgressType signal_progress() const { return m_SignalProgress; }
-            SignalDownloadErrorType signal_download_error() const { return m_SignalDownloadError; }
+        void save(const std::string& path);
+        void cancel_download();
+        void cancel_thumbnail_download();
 
-            static const size_t BooruThumbnailSize = 150;
-        private:
-            bool start_download();
+        SignalProgressType signal_progress() const { return m_SignalProgress; }
+        SignalDownloadErrorType signal_download_error() const { return m_SignalDownloadError; }
 
-            void on_write(const unsigned char *d, size_t l);
-            void on_progress();
-            void on_finished();
-            void on_area_prepared();
-            void on_area_updated(int, int, int, int);
+        static const size_t BooruThumbnailSize{ 150 };
 
-            std::string m_Url, m_ThumbnailUrl, m_PostUrl;
-            std::set<std::string> m_Tags;
-            std::shared_ptr<Site> m_Site;
-            ImageFetcher &m_ImageFetcher;
+    private:
+        bool start_download();
+        void close_loader();
 
-            time_point_t m_LastDraw;
+        void on_write(const unsigned char* d, size_t l);
+        void on_progress();
+        void on_finished();
+        void on_area_prepared();
+        void on_area_updated(int, int, int, int);
+        void on_notes_downloaded();
 
-            Curler m_Curler,
-                   m_ThumbnailCurler;
-            Glib::RefPtr<Gdk::PixbufLoader> m_Loader;
-            bool m_PixbufError, m_isGIFChecked;
-            std::shared_timed_mutex m_ThumbnailLock;
+        std::string m_Url, m_ThumbnailUrl, m_PostUrl;
+        std::vector<Tag> m_Tags;
+        const PostInfo m_PostInfo;
+        std::shared_ptr<Site> m_Site;
+        ImageFetcher& m_ImageFetcher;
 
-            std::condition_variable m_DownloadCond, m_ThumbnailCond;
-            std::mutex m_DownloadMutex, m_ThumbnailMutex;
+        time_point_t m_LastDraw;
 
-            SignalProgressType m_SignalProgress;
-            SignalDownloadErrorType m_SignalDownloadError;
-        };
-    }
+        Curler m_Curler, m_ThumbnailCurler, m_NotesCurler;
+        Glib::RefPtr<Gdk::PixbufLoader> m_Loader;
+        bool m_PixbufError{ false }, m_IsGifChecked{ false };
+        std::shared_mutex m_ThumbnailLock;
+
+        std::condition_variable m_DownloadCond, m_ThumbnailCond;
+        std::mutex m_DownloadMutex, m_ThumbnailMutex;
+
+        SignalProgressType m_SignalProgress;
+        SignalDownloadErrorType m_SignalDownloadError;
+    };
 }
-
-#endif /* _BOORUIMAGE_H_ */

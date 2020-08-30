@@ -1,26 +1,29 @@
-#include <cctype>
-#include <glib.h>
-#include <iostream>
-
 #include "image.h"
 using namespace AhoViewer;
 
 #include "settings.h"
 
-std::string Image::ThumbnailDir = Glib::build_filename(Glib::get_user_cache_dir(), "thumbnails", "normal");
+#include <cctype>
+#include <giomm.h>
+#include <glib.h>
+#include <gtkmm.h>
+#include <iostream>
 
-bool Image::is_valid(const std::string &path)
+const std::string Image::ThumbnailDir =
+    Glib::build_filename(Glib::get_user_cache_dir(), "thumbnails", "normal");
+
+bool Image::is_valid(const std::string& path)
 {
-    return gdk_pixbuf_get_file_info(path.c_str(), 0, 0) != NULL || is_webm(path);
+    return gdk_pixbuf_get_file_info(path.c_str(), nullptr, nullptr) != nullptr || is_webm(path);
 }
 
-bool Image::is_valid_extension(const std::string &path)
+bool Image::is_valid_extension(const std::string& path)
 {
     std::string ext = path.substr(path.find_last_of('.') + 1);
     std::transform(ext.begin(), ext.end(), ext.begin(), ::tolower);
 
 #ifdef HAVE_GSTREAMER
-    if (ext == "webm")
+    if (ext == "webm" || ext == "mp4")
         return true;
 #endif // HAVE_GSTREAMER
 
@@ -28,8 +31,8 @@ bool Image::is_valid_extension(const std::string &path)
 
     for (Gdk::PixbufFormat i : Gdk::Pixbuf::get_formats())
     {
-        gchar **extensions = gdk_pixbuf_format_get_extensions(i.gobj());
-        for (int j = 0; extensions[j] != NULL; ++j)
+        gchar** extensions = gdk_pixbuf_format_get_extensions(i.gobj());
+        for (int j = 0; extensions[j] != nullptr; ++j)
         {
             if (strcmp(ext.c_str(), extensions[j]) == 0)
                 r = true;
@@ -44,25 +47,23 @@ bool Image::is_valid_extension(const std::string &path)
     return r;
 }
 
-bool Image::is_webm(const std::string &path)
+bool Image::is_webm([[maybe_unused]] const std::string& path)
 {
 #ifdef HAVE_GSTREAMER
     bool uncertain;
-    std::string ct       = Gio::content_type_guess(path, NULL, 0, uncertain);
-    std::string mimeType = Gio::content_type_get_mime_type(ct);
+    std::string ct{ Gio::content_type_guess(path, nullptr, 0, uncertain) };
+    std::string mime_type{ Gio::content_type_get_mime_type(ct) };
 
-    return mimeType == "video/webm";
-#else
-    (void)path;
+    return mime_type == "video/webm" || mime_type == "video/mp4";
+#else  // !HAVE_GSTREAMER
     return false;
-#endif // HAVE_GSTREAMER
+#endif // !HAVE_GSTREAMER
 }
 
 const Glib::RefPtr<Gdk::Pixbuf>& Image::get_missing_pixbuf()
 {
-    static const Glib::RefPtr<Gdk::Pixbuf> pixbuf =
-        Gtk::IconTheme::get_default()->load_icon("image-missing", 48,
-            Gtk::ICON_LOOKUP_USE_BUILTIN | Gtk::ICON_LOOKUP_GENERIC_FALLBACK);
+    static const Glib::RefPtr<Gdk::Pixbuf> pixbuf = Gtk::IconTheme::get_default()->load_icon(
+        "image-missing", 48, Gtk::ICON_LOOKUP_USE_BUILTIN | Gtk::ICON_LOOKUP_GENERIC_FALLBACK);
 
     return pixbuf;
 }
@@ -72,7 +73,7 @@ static void* _def_bitmap_create(int width, int height)
     return new unsigned char[width * height * 4];
 }
 
-static void _def_bitmap_destroy(void *bitmap)
+static void _def_bitmap_destroy(void* bitmap)
 {
     if (bitmap)
     {
@@ -81,18 +82,12 @@ static void _def_bitmap_destroy(void *bitmap)
     }
 }
 
-static unsigned char* _def_bitmap_get_buffer(void *bitmap)
+static unsigned char* _def_bitmap_get_buffer(void* bitmap)
 {
     return static_cast<unsigned char*>(bitmap);
 }
 
-Image::Image(const std::string &path)
-  : m_isWebM(Image::is_webm(path)),
-    m_Loading(true),
-    m_Path(path),
-    m_GIFanim(nullptr),
-    m_GIFcurFrame(0),
-    m_GIFcurLoop(1)
+Image::Image(std::string path) : m_IsWebM{ Image::is_webm(path) }, m_Path{ std::move(path) }
 {
     m_BitmapCallbacks.bitmap_create      = _def_bitmap_create;
     m_BitmapCallbacks.bitmap_destroy     = _def_bitmap_destroy;
@@ -104,66 +99,46 @@ Image::Image(const std::string &path)
 
 Image::~Image()
 {
-    if (m_GIFanim)
-    {
-        gif_finalise(m_GIFanim);
-        delete m_GIFanim;
-        m_GIFanim = nullptr;
-    }
+    reset_pixbuf();
 }
 
 std::string Image::get_filename() const
 {
-    return Glib::build_filename(
-            Glib::path_get_basename(Glib::path_get_dirname(m_Path)),
-            Glib::path_get_basename(m_Path));
+    return Glib::build_filename(Glib::path_get_basename(Glib::path_get_dirname(m_Path)),
+                                Glib::path_get_basename(m_Path));
 }
 
 const Glib::RefPtr<Gdk::Pixbuf>& Image::get_pixbuf()
 {
-    std::lock_guard<std::mutex> lock(m_Mutex);
-    // Get the current frame without advancing
-    if (m_GIFanim && m_GIFanim->frame_count > 0)
-        m_Pixbuf = get_gif_frame_pixbuf(false);
-
+    std::scoped_lock lock{ m_Mutex };
     return m_Pixbuf;
 }
 
-const Glib::RefPtr<Gdk::Pixbuf>& Image::get_gif_frame_pixbuf(const bool advance)
+// Private method used internally by gif_advance_frame
+// and by get_pixbuf when m_Pixbuf is null
+void Image::create_gif_frame_pixbuf()
 {
+    std::scoped_lock lock{ m_Mutex };
     gif_result result = gif_decode_frame(m_GIFanim, m_GIFcurFrame);
 
     if (result == GIF_OK)
     {
-        m_Pixbuf = Gdk::Pixbuf::create_from_data(
-            static_cast<unsigned char*>(m_GIFanim->frame_image), Gdk::COLORSPACE_RGB, true, 8,
-            m_GIFanim->width, m_GIFanim->height, (m_GIFanim->width * 4 + 3) & ~3);
-
-        // Handle frame advacing and looping.
-        if (m_GIFanim->frame_count > 1 && advance)
-        {
-            // Currently on the last frame, reset to first frame unless we finished
-            // the final loop
-            if (m_GIFcurFrame == static_cast<int>(m_GIFanim->frame_count) - 1 && m_GIFcurLoop != m_GIFanim->loop_count)
-            {
-                // Only increment the loop counter if it's not looping forever.
-                if (m_GIFanim->loop_count > 0)
-                    ++m_GIFcurLoop;
-                m_GIFcurFrame = 0;
-            }
-            else if (m_GIFcurFrame < static_cast<int>(m_GIFanim->frame_count) - 1)
-            {
-                ++m_GIFcurFrame;
-            }
-        }
+        m_Pixbuf =
+            Gdk::Pixbuf::create_from_data(static_cast<unsigned char*>(m_GIFanim->frame_image),
+                                          Gdk::COLORSPACE_RGB,
+                                          true,
+                                          8,
+                                          m_GIFanim->width,
+                                          m_GIFanim->height,
+                                          (m_GIFanim->width * 4 + 3) & ~3);
+        m_SignalPixbufChanged();
     }
     else
     {
-        std::cerr << "Error while decoding GIF frame " << m_GIFcurFrame << " of " << m_Path << std::endl
+        std::cerr << "Error while decoding GIF frame " << m_GIFcurFrame << " of " << m_Path
+                  << std::endl
                   << "gif_result: " << result << std::endl;
     }
-
-    return m_Pixbuf;
 }
 
 const Glib::RefPtr<Gdk::Pixbuf>& Image::get_thumbnail(Glib::RefPtr<Gio::Cancellable> c)
@@ -172,26 +147,27 @@ const Glib::RefPtr<Gdk::Pixbuf>& Image::get_thumbnail(Glib::RefPtr<Gio::Cancella
         return m_ThumbnailPixbuf;
 
 #ifdef __linux__
-    std::string thumbFilename = Glib::Checksum::compute_checksum(
-            Glib::Checksum::CHECKSUM_MD5, Glib::filename_to_uri(m_Path)) + ".png";
-    m_ThumbnailPath = Glib::build_filename(ThumbnailDir, thumbFilename);
+    std::string thumb_filename = Glib::Checksum::compute_checksum(Glib::Checksum::CHECKSUM_MD5,
+                                                                  Glib::filename_to_uri(m_Path)) +
+                                 ".png";
+    m_ThumbnailPath = Glib::build_filename(ThumbnailDir, thumb_filename);
 
     if (is_valid(m_ThumbnailPath))
     {
-        Glib::RefPtr<Gdk::Pixbuf> pixbuf = create_pixbuf_at_size(m_ThumbnailPath,
-                                                    ThumbnailSize, ThumbnailSize, c);
+        Glib::RefPtr<Gdk::Pixbuf> pixbuf =
+            create_pixbuf_at_size(m_ThumbnailPath, ThumbnailSize, ThumbnailSize, c);
 
         if (pixbuf)
         {
-            struct stat fileInfo;
-            std::string s = pixbuf->get_option("tEXt::Thumb::MTime");
+            struct stat file_info;
+            std::string s{ pixbuf->get_option("tEXt::Thumb::MTime") };
 
             // Make sure the file hasn't been modified since this thumbnail was created
             if (!s.empty())
             {
-                time_t mtime = strtol(s.c_str(), nullptr, 10);
+                time_t mtime{ std::stol(s) };
 
-                if ((stat(m_Path.c_str(), &fileInfo) == 0) && fileInfo.st_mtime == mtime)
+                if ((stat(m_Path.c_str(), &file_info) == 0) && file_info.st_mtime == mtime)
                     m_ThumbnailPixbuf = pixbuf;
             }
         }
@@ -206,50 +182,47 @@ const Glib::RefPtr<Gdk::Pixbuf>& Image::get_thumbnail(Glib::RefPtr<Gio::Cancella
 
 void Image::load_pixbuf(Glib::RefPtr<Gio::Cancellable> c)
 {
-    if (!m_Pixbuf && !m_isWebM)
+    if (!m_Pixbuf && !m_IsWebM)
     {
-        Glib::RefPtr<Gio::File> file = Gio::File::create_for_path(m_Path);
+        Glib::RefPtr<Gio::File> file{ Gio::File::create_for_path(m_Path) };
 
         std::array<unsigned char, 4> data;
         file->read()->read(&data, 4);
 
         if (is_gif(data.data()))
         {
-            gif_result result;
-            char *gif_data;
-            gsize bufSize;
             m_GIFanim = new gif_animation;
-
             gif_create(m_GIFanim, &m_BitmapCallbacks);
 
-            // returns false if c was cancelled
-            if (file->load_contents(c, gif_data, bufSize))
+            char* buffer;
+            // returns false if c was cancelled, and frees the buffer for us?
+            if (file->load_contents(c, buffer, m_GIFdataSize))
             {
-                do {
-                    result = gif_initialise(m_GIFanim, bufSize, reinterpret_cast<unsigned char*>(gif_data));
-                    if (result != GIF_OK && result != GIF_WORKING)
-                    {
-                        std::cerr << "Error while loading GIF " << m_Path << std::endl
-                                  << "gif_result: " << result << std::endl;
-                        break;
-                    }
-                    else if (result == GIF_OK)
-                    {
-                        // Load the first frame
-                        m_Pixbuf = get_gif_frame_pixbuf(false);
-                    }
-                } while (result != GIF_OK);
+                m_GIFdata = new unsigned char[m_GIFdataSize];
+                memcpy(m_GIFdata, buffer, m_GIFdataSize);
+                free(buffer);
+
+                load_gif();
             }
         }
         else
         {
-            Glib::RefPtr<Gdk::Pixbuf> p = Gdk::Pixbuf::create_from_stream(file->read(), c);
+            Glib::RefPtr<Gdk::Pixbuf> p{ nullptr };
+            try
+            {
+                p = Gdk::Pixbuf::create_from_stream(file->read(), c);
+            }
+            catch (const Gdk::PixbufError& e)
+            {
+                std::cerr << "Failed to load pixbuf from file '" << m_Path << "'" << std::endl
+                          << e.what() << std::endl;
+            }
 
-            if (c->is_cancelled())
+            if (!p || c->is_cancelled())
                 return;
 
             {
-                std::lock_guard<std::mutex> lock(m_Mutex);
+                std::scoped_lock lock{ m_Mutex };
                 m_Pixbuf = p;
             }
         }
@@ -259,32 +232,78 @@ void Image::load_pixbuf(Glib::RefPtr<Gio::Cancellable> c)
     }
 }
 
+// Call this once m_GIFdata has been set
+void Image::load_gif()
+{
+    gif_result result;
+    do
+    {
+        result = gif_initialise(m_GIFanim, m_GIFdataSize, m_GIFdata);
+        if (result != GIF_OK && result != GIF_WORKING)
+        {
+            std::cerr << "Error while loading GIF " << m_Path << std::endl
+                      << "gif_result: " << result << std::endl;
+            break;
+        }
+        else if (result == GIF_OK)
+        {
+            // Load the first frame
+            create_gif_frame_pixbuf();
+        }
+    } while (result != GIF_OK);
+}
+
 void Image::reset_pixbuf()
 {
     m_Loading = true;
-    std::lock_guard<std::mutex> lock(m_Mutex);
+    std::scoped_lock lock{ m_Mutex };
     m_Pixbuf.reset();
 
     if (m_GIFanim)
     {
         gif_finalise(m_GIFanim);
         delete m_GIFanim;
-
         m_GIFanim = nullptr;
+
+        if (m_GIFdata)
+        {
+            delete[] m_GIFdata;
+            m_GIFdata = nullptr;
+        }
+
         reset_gif_animation();
     }
 }
 
-void Image::reset_gif_animation()
+bool Image::gif_advance_frame()
 {
-    m_GIFcurFrame = 0;
-    m_GIFcurLoop  = 1;
+    // Handle frame advacing and looping.
+    if (m_GIFanim->frame_count > 1)
+    {
+        // Currently on the last frame, reset to first frame unless we finished
+        // the final loop
+        if (m_GIFcurFrame == static_cast<int>(m_GIFanim->frame_count) - 1 &&
+            m_GIFcurLoop != m_GIFanim->loop_count)
+        {
+            // Only increment the loop counter if it's not looping forever.
+            if (m_GIFanim->loop_count > 0)
+                ++m_GIFcurLoop;
+            m_GIFcurFrame = 0;
+        }
+        else if (m_GIFcurFrame < static_cast<int>(m_GIFanim->frame_count) - 1)
+        {
+            ++m_GIFcurFrame;
+        }
+    }
+
+    create_gif_frame_pixbuf();
+
+    return get_gif_finished_looping();
 }
 
 bool Image::get_gif_finished_looping() const
 {
-    return m_GIFanim &&
-           m_GIFcurLoop == m_GIFanim->loop_count &&
+    return m_GIFanim && m_GIFcurLoop == m_GIFanim->loop_count &&
            m_GIFcurFrame == static_cast<int>(m_GIFanim->frame_count) - 1;
 }
 
@@ -298,12 +317,17 @@ unsigned int Image::get_gif_frame_delay() const
     return delay ? delay * 10 : 100;
 }
 
-// This assumes data's length is at least 3
-bool Image::is_gif(const unsigned char *data)
+void Image::reset_gif_animation()
 {
-    return data[0] == 'G' &&
-           data[1] == 'I' &&
-           data[2] == 'F';
+    m_GIFcurFrame = 0;
+    m_GIFcurLoop  = 1;
+    m_Pixbuf.reset();
+}
+
+// This assumes data's length is at least 4
+bool Image::is_gif(const unsigned char* data)
+{
+    return data[0] == 'G' && data[1] == 'I' && data[2] == 'F' && data[3] == '8';
 }
 
 void Image::create_thumbnail(Glib::RefPtr<Gio::Cancellable> c, bool save)
@@ -311,12 +335,21 @@ void Image::create_thumbnail(Glib::RefPtr<Gio::Cancellable> c, bool save)
     Glib::RefPtr<Gdk::Pixbuf> pixbuf;
     save = save && Settings.get_bool("SaveThumbnails");
 
-    if (m_isWebM)
+    if (!save)
+    {
+        m_ThumbnailPixbuf = m_IsWebM
+                                ? create_webm_thumbnail(ThumbnailSize, ThumbnailSize)
+                                : create_pixbuf_at_size(m_Path, ThumbnailSize, ThumbnailSize, c);
+        return;
+    }
+
+    if (m_IsWebM)
     {
         pixbuf = create_webm_thumbnail(128, 128);
 
 #ifdef __linux__
-        if (pixbuf && save)
+        // FIXME: video/mp4 for mp4 files
+        if (pixbuf)
             save_thumbnail(pixbuf, "video/webm");
 #endif // __linux__
     }
@@ -329,13 +362,13 @@ void Image::create_thumbnail(Glib::RefPtr<Gio::Cancellable> c, bool save)
 
 #ifdef __linux__
         int w, h;
-        GdkPixbufFormat *format = gdk_pixbuf_get_file_info(m_Path.c_str(), &w, &h);
+        GdkPixbufFormat* format = gdk_pixbuf_get_file_info(m_Path.c_str(), &w, &h);
 
-        if (save && format && (w > 128 || h > 128))
+        if (format && (w > 128 || h > 128))
         {
-            gchar **mimeTypes = gdk_pixbuf_format_get_mime_types(format);
-            save_thumbnail(pixbuf, mimeTypes[0]);
-            g_strfreev(mimeTypes);
+            gchar** mime_types = gdk_pixbuf_format_get_mime_types(format);
+            save_thumbnail(pixbuf, mime_types[0]);
+            g_strfreev(mime_types);
         }
 #endif // __linux__
     }
@@ -344,11 +377,12 @@ void Image::create_thumbnail(Glib::RefPtr<Gio::Cancellable> c, bool save)
         m_ThumbnailPixbuf = scale_pixbuf(pixbuf, ThumbnailSize, ThumbnailSize);
 }
 
-Glib::RefPtr<Gdk::Pixbuf> Image::create_pixbuf_at_size(const std::string &path,
-                                                       const int w, const int h,
+Glib::RefPtr<Gdk::Pixbuf> Image::create_pixbuf_at_size(const std::string& path,
+                                                       const int w,
+                                                       const int h,
                                                        Glib::RefPtr<Gio::Cancellable> c) const
 {
-    Glib::RefPtr<Gio::File> file = Gio::File::create_for_path(path);
+    Glib::RefPtr<Gio::File> file{ Gio::File::create_for_path(path) };
     Glib::RefPtr<Gdk::Pixbuf> pixbuf;
 
     try
@@ -358,15 +392,15 @@ Glib::RefPtr<Gdk::Pixbuf> Image::create_pixbuf_at_size(const std::string &path,
     catch (...)
     {
         if (!c->is_cancelled())
-            std::cerr << "Error while loading thumbnail " << path
-                      << " for " << get_filename() << std::endl;
+            std::cerr << "Error while loading thumbnail " << path << " for " << get_filename()
+                      << std::endl;
     }
 
     return pixbuf;
 }
 
-Glib::RefPtr<Gdk::Pixbuf> Image::scale_pixbuf(Glib::RefPtr<Gdk::Pixbuf> &pixbuf,
-                                              const int w, const int h) const
+Glib::RefPtr<Gdk::Pixbuf>
+Image::scale_pixbuf(Glib::RefPtr<Gdk::Pixbuf>& pixbuf, const int w, const int h) const
 {
     double r = std::min(static_cast<double>(w) / pixbuf->get_width(),
                         static_cast<double>(h) / pixbuf->get_height());
@@ -376,23 +410,29 @@ Glib::RefPtr<Gdk::Pixbuf> Image::scale_pixbuf(Glib::RefPtr<Gdk::Pixbuf> &pixbuf,
                                 Gdk::INTERP_BILINEAR);
 }
 
-Glib::RefPtr<Gdk::Pixbuf> Image::create_webm_thumbnail(int w, int h) const
+// TODO: make this cancellable
+Glib::RefPtr<Gdk::Pixbuf> Image::create_webm_thumbnail([[maybe_unused]] int w,
+                                                       [[maybe_unused]] int h) const
 {
     Glib::RefPtr<Gdk::Pixbuf> pixbuf;
 #ifdef HAVE_GSTREAMER
     gint64 dur, pos;
-    GstSample *sample;
+    GstSample* sample;
     GstMapInfo map;
 
-    std::string des = Glib::ustring::compose("uridecodebin uri=%1 ! videoconvert ! videoscale ! "
-           "appsink name=sink caps=\"video/x-raw,format=RGB,width=%2,pixel-aspect-ratio=1/1\"",
-           Glib::filename_to_uri(m_Path).c_str(), w);
-    GError *error = nullptr;
-    GstElement *pipeline = gst_parse_launch(des.c_str(), &error);
+    std::string des =
+        Glib::ustring::compose("uridecodebin uri=%1 ! videoconvert ! videoscale ! "
+                               "appsink name=sink "
+                               "caps=\"video/x-raw,format=RGB,width=%2,pixel-aspect-ratio=1/1\"",
+                               Glib::filename_to_uri(m_Path).c_str(),
+                               w);
+    GError* error        = nullptr;
+    GstElement* pipeline = gst_parse_launch(des.c_str(), &error);
 
     if (error != nullptr)
     {
-        std::cerr << "create_webm_thumbnail: could not construct pipeline: " << error->message << std::endl;
+        std::cerr << "create_webm_thumbnail: could not construct pipeline: " << error->message
+                  << std::endl;
         g_error_free(error);
 
         if (pipeline)
@@ -401,18 +441,16 @@ Glib::RefPtr<Gdk::Pixbuf> Image::create_webm_thumbnail(int w, int h) const
         return pixbuf;
     }
 
-    GstElement *sink = gst_bin_get_by_name(GST_BIN(pipeline), "sink");
+    GstElement* sink = gst_bin_get_by_name(GST_BIN(pipeline), "sink");
 
     gst_element_set_state(pipeline, GST_STATE_PAUSED);
-    gst_element_get_state(pipeline, NULL, NULL, 5 * GST_SECOND);
+    gst_element_get_state(pipeline, nullptr, nullptr, 5 * GST_SECOND);
     gst_element_query_duration(pipeline, GST_FORMAT_TIME, &dur);
 
-    static auto is_pixbuf_interesting = [](Glib::RefPtr<Gdk::Pixbuf> &p)
-    {
-        size_t len      = p->get_rowstride() * p->get_height();
-        guint8 *buf     = p->get_pixels();
-        double xbar     = 0.0,
-               variance = 0.0;
+    static auto is_pixbuf_interesting = [](Glib::RefPtr<Gdk::Pixbuf>& p) {
+        size_t len  = p->get_rowstride() * p->get_height();
+        guint8* buf = p->get_pixels();
+        double xbar = 0.0, variance = 0.0;
 
         for (size_t i = 0; i < len; ++i)
             xbar += static_cast<double>(buf[i]);
@@ -430,21 +468,26 @@ Glib::RefPtr<Gdk::Pixbuf> Image::create_webm_thumbnail(int w, int h) const
     {
         pos = dur == -1 ? 1 * GST_SECOND : dur / GST_MSECOND * offset * GST_MSECOND;
 
-        if (!gst_element_seek_simple(pipeline, GST_FORMAT_TIME,
-            static_cast<GstSeekFlags>(GST_SEEK_FLAG_KEY_UNIT | GST_SEEK_FLAG_FLUSH), pos))
+        if (!gst_element_seek_simple(pipeline,
+                                     GST_FORMAT_TIME,
+                                     GstSeekFlags(GST_SEEK_FLAG_KEY_UNIT | GST_SEEK_FLAG_FLUSH),
+                                     pos))
             break;
 
         g_signal_emit_by_name(sink, "pull-preroll", &sample, NULL);
 
         if (sample)
         {
-            GstBuffer *buffer;
-            GstCaps *caps;
-            GstStructure *s;
+            GstBuffer* buffer;
+            GstCaps* caps;
+            GstStructure* s;
 
             caps = gst_sample_get_caps(sample);
             if (!caps)
+            {
+                gst_sample_unref(sample);
                 break;
+            }
 
             s = gst_caps_get_structure(caps, 0);
 
@@ -453,12 +496,12 @@ Glib::RefPtr<Gdk::Pixbuf> Image::create_webm_thumbnail(int w, int h) const
 
             buffer = gst_sample_get_buffer(sample);
             gst_buffer_map(buffer, &map, GST_MAP_READ);
-            pixbuf = Gdk::Pixbuf::create_from_data(map.data,
-                                                    Gdk::COLORSPACE_RGB, false, 8, w, h,
-                                                    GST_ROUND_UP_4(w * 3));
+            pixbuf = Gdk::Pixbuf::create_from_data(
+                map.data, Gdk::COLORSPACE_RGB, false, 8, w, h, GST_ROUND_UP_4(w * 3));
 
             /* save the pixbuf */
-            gst_buffer_unmap (buffer, &map);
+            gst_buffer_unmap(buffer, &map);
+            gst_sample_unref(sample);
 
             if (dur == -1 || is_pixbuf_interesting(pixbuf))
                 break;
@@ -468,50 +511,43 @@ Glib::RefPtr<Gdk::Pixbuf> Image::create_webm_thumbnail(int w, int h) const
     gst_object_unref(sink);
     gst_element_set_state(pipeline, GST_STATE_NULL);
     gst_object_unref(pipeline);
-#else
-    (void)w;
-    (void)h;
 #endif // HAVE_GSTREAMER
     return pixbuf;
 }
 
-void Image::save_thumbnail(Glib::RefPtr<Gdk::Pixbuf> &pixbuf, const gchar *mimeType) const
+void Image::save_thumbnail(Glib::RefPtr<Gdk::Pixbuf>& pixbuf, const gchar* mime_type) const
 {
-    struct stat fileInfo;
-    if (stat(m_Path.c_str(), &fileInfo) == 0)
+    struct stat file_info;
+    if (stat(m_Path.c_str(), &file_info) == 0)
     {
-        std::vector<std::string> opts =
-        {
-            "tEXt::Thumb::URI",
-            "tEXt::Thumb::MTime",
-            "tEXt::Thumb::Size",
-            "tEXt::Thumb::Image::Mimetype",
-            "tEXt::Software"
-        },
-        vals =
-        {
-            Glib::filename_to_uri(m_Path),      // URI
-            std::to_string(fileInfo.st_mtime),  // MTime
-            std::to_string(fileInfo.st_size),   // Size
-            mimeType,                           // Mimetype
-            PACKAGE_STRING                      // Software
-        };
+        const std::vector<Glib::ustring> opts = { "tEXt::Thumb::URI",
+                                                  "tEXt::Thumb::MTime",
+                                                  "tEXt::Thumb::Size",
+                                                  "tEXt::Thumb::Image::Mimetype",
+                                                  "tEXt::Software" },
+                                         vals = {
+                                             Glib::filename_to_uri(m_Path),      // URI
+                                             std::to_string(file_info.st_mtime), // MTime
+                                             std::to_string(file_info.st_size),  // Size
+                                             mime_type,                          // Mimetype
+                                             PACKAGE                             // Software
+                                         };
 
         if (!Glib::file_test(ThumbnailDir, Glib::FILE_TEST_EXISTS))
             g_mkdir_with_parents(ThumbnailDir.c_str(), 0700);
 
-        gchar *buf;
-        gsize bufSize;
-        pixbuf->save_to_buffer(buf, bufSize, "png", opts, vals);
+        gchar* buf;
+        gsize buf_size;
+        pixbuf->save_to_buffer(buf, buf_size, "png", opts, vals);
 
-        if (bufSize > 0)
+        if (buf_size > 0)
         {
             try
             {
-                Glib::file_set_contents(m_ThumbnailPath, buf, bufSize);
+                Glib::file_set_contents(m_ThumbnailPath, buf, buf_size);
                 chmod(m_ThumbnailPath.c_str(), S_IRUSR | S_IWUSR);
             }
-            catch (const Glib::FileError &ex)
+            catch (const Glib::FileError& ex)
             {
                 std::cerr << "Glib::file_set_contents: " << ex.what() << std::endl;
             }
