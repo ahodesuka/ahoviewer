@@ -1,11 +1,4 @@
 #include "application.h"
-
-#include <curl/curl.h>
-// This can be removed once it's implemented in C++20
-#include <date/tz.h>
-#include <gtkmm.h>
-#include <iostream>
-#include <libxml/parser.h>
 using namespace AhoViewer;
 
 #include "booru/site.h"
@@ -13,6 +6,17 @@ using namespace AhoViewer;
 #include "imagelist.h"
 #include "mainwindow.h"
 #include "settings.h"
+
+#ifdef HAVE_LIBPEAS
+#include "plugin/manager.h"
+#endif // HAVE_LIBPEAS
+
+#include <curl/curl.h>
+// This can be removed once it's implemented in C++20
+#include <date/tz.h>
+#include <gtkmm.h>
+#include <iostream>
+#include <libxml/parser.h>
 
 #ifdef USE_OPENSSL
 #include <openssl/opensslv.h>
@@ -71,14 +75,15 @@ void init_gnutls_locks()
 #include <gst/gst.h>
 #endif // HAVE_GSTREAMER
 
-static void glibmm_log_filter(const gchar* ld, GLogLevelFlags ll, const gchar* msg, gpointer ud)
-{
-    if (strcmp(msg, "Dropped dispatcher message as the dispatcher no longer exists") != 0)
-        g_log_default_handler(ld, ll, msg, ud);
-}
-
 Application::Application()
     : Gtk::Application("com.github.ahodesuka.ahoviewer", Gio::APPLICATION_HANDLES_OPEN)
+#ifdef HAVE_LIBPEAS
+      ,
+      m_PluginManager
+{
+    std::make_unique<Plugin::Manager>()
+}
+#endif // HAVE_LIBPEAS
 {
     // Disgusting win32 api to start dbus-daemon and make it close when
     // the ahoviewer process ends
@@ -115,10 +120,9 @@ Application::Application()
     signal_shutdown().connect(sigc::mem_fun(*this, &Application::on_shutdown));
 }
 
-Glib::RefPtr<Application> Application::create()
+Application& Application::get_instance()
 {
-    static Glib::RefPtr<Application> app{ new Application };
-    set_default(app);
+    static Application app;
     return app;
 }
 
@@ -214,10 +218,6 @@ void Application::on_startup()
 
     Gtk::Main::init_gtkmm_internals();
 
-    // Get rid of the stupid dispatcher warnings from glibmm
-    // That happen when cancelling downloads
-    g_log_set_handler("glibmm", G_LOG_LEVEL_WARNING, glibmm_log_filter, nullptr);
-
     Gtk::Application::on_startup();
 
     std::string cache_dir{ Glib::build_filename(Glib::get_user_cache_dir(), PACKAGE, "tzdata") };
@@ -229,9 +229,13 @@ void Application::on_startup()
         }
         catch (const std::runtime_error& e)
         {
-            std::cerr << "Failed to fetch tzdata, times will be displayed in UTC" << std::endl;
+            std::cerr << "Failed to fetch IANA timezone database, times will be displayed in UTC"
+                      << std::endl;
         }
     } }.detach();
+
+    // Load this after plugins have been loaded so the active plugins can have their keybindings set
+    Settings.load_keybindings();
 }
 
 void Application::on_window_added(Gtk::Window* w)
@@ -250,9 +254,9 @@ void Application::on_window_removed(Gtk::Window* w)
     // Set a new original window if the previous was closed
     if (windows.size() > 0)
     {
-        auto it = std::find_if(windows.cbegin(), windows.cend(), [](Gtk::Window* mw) {
+        auto it{ std::find_if(windows.cbegin(), windows.cend(), [](Gtk::Window* mw) {
             return static_cast<MainWindow*>(mw)->m_OriginalWindow;
-        });
+        }) };
 
         if (it == windows.cend())
             static_cast<MainWindow*>(windows.front())->m_OriginalWindow = true;

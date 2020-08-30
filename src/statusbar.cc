@@ -1,8 +1,8 @@
 #include "statusbar.h"
+using namespace AhoViewer;
 
 #include <iomanip>
 #include <sstream>
-using namespace AhoViewer;
 
 StatusBar::StatusBar(BaseObjectType* cobj, const Glib::RefPtr<Gtk::Builder>& bldr) : Gtk::Box(cobj)
 {

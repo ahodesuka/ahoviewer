@@ -22,7 +22,7 @@ namespace AhoViewer::Booru
         size_t get_vector_size() const { return m_Images.size(); }
 
         void clear() override;
-        void load(const xml::Document& posts, const std::vector<Tag>& posts_tags);
+        void load(const std::vector<PostDataTuple>& posts, const size_t posts_count = 0);
         bool is_loading() const { return m_ThreadPool.active(); }
 
     protected:
@@ -33,7 +33,6 @@ namespace AhoViewer::Booru
 
     private:
         std::unique_ptr<ImageFetcher> m_ImageFetcher;
-        std::shared_ptr<Site> m_Site;
 
         std::string m_Path;
         // This is the total number of posts for the given booru query

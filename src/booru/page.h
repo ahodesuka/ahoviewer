@@ -2,7 +2,7 @@
 
 #include "curler.h"
 #include "imagelist.h"
-#include "xml.h"
+#include "site.h"
 
 #include <atomic>
 #include <gtkmm.h>
@@ -10,7 +10,6 @@
 namespace AhoViewer::Booru
 {
     class Image;
-    class Site;
     class Page : public Gtk::ScrolledWindow, public ImageList::Widget
     {
         friend class Browser;
@@ -121,15 +120,14 @@ namespace AhoViewer::Booru
         Curler m_Curler;
 
         // m_Tags stores tags that are inside the entry
-        // while m_SearchTags are the whitespace trimmed tags or *
-        std::string m_Tags, m_SearchTags, m_Path;
+        // while m_SearchTags are the whitespace trimmed tags used for the actual API query
+        std::string m_Tags, m_SearchTags, m_Path, m_PostsError;
         double m_TagViewPos{ 0.0 };
-        size_t m_Page{ 0 }, m_SaveImagesTotal{ 0 };
+        size_t m_Page{ 0 }, m_SaveImagesTotal{ 0 }, m_PostsCount{ 0 };
         std::atomic<size_t> m_SaveImagesCurrent{ 0 };
         std::atomic<bool> m_Saving{ false };
         bool m_LastPage{ false }, m_KeepAligned{ false };
-        std::unique_ptr<xml::Document> m_Posts{ nullptr };
-        std::vector<Tag> m_PostsTags;
+        std::vector<PostDataTuple> m_Posts;
 
         Glib::RefPtr<Gio::Cancellable> m_SaveCancel;
         std::thread m_GetPostsThread, m_SaveImagesThread;

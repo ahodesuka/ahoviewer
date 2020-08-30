@@ -3,6 +3,7 @@ project('ahoviewer', ['c', 'cpp'],
     license : 'MIT',
     meson_version : '>= 0.47.0',
     default_options : ['cpp_std=c++17'])
+
 project_url = 'https://github.com/ahodesuka/ahoviewer'
 project_bugreport = 'https://github.com/ahodesuka/ahoviewer/issues'
 
@@ -13,6 +14,7 @@ threads = dependency('threads')
 glibmm = dependency('glibmm-2.4', version : ['>=2.46.0'])
 # >= 2.6.0 since we use lambdas with return values
 sigcpp = dependency('sigc++-2.0', version : ['>=2.6.0'])
+gtk = [ dependency('gtk+-3.0', version : ['>=3.22.0']) ]
 gtkmm = [ dependency('gtkmm-3.0', version : ['>=3.22.0']) ]
 if host_machine.system() != 'windows' and not get_option('gstreamer').disabled()
   gtkmm += dependency('x11')
@@ -20,7 +22,7 @@ endif
 libconfig = dependency('libconfig++', version : ['>=1.4'])
 libxml = dependency('libxml-2.0')
 
-# CURL_LOCK_DATA_CONNECT was implemented in 7.57, but had crashing issues that
+# CURL_LOCK_DATA_CONNECT was implemented in 7.57, but had deadlocking issues that
 # weren't fixed until 7.58
 # 7.58 also added --ssl-backends to curl-config (this is used below)
 curl = dependency('libcurl', version : '>= 7.58.0')
@@ -51,6 +53,9 @@ gstreamer = dependency('gstreamer-1.0', required : get_option('gstreamer'))
 gstaudio = dependency('gstreamer-audio-1.0', required : get_option('gstreamer'))
 # GstVideoOverlay (rendering directly to the ahoviewer window)
 gstvideo = dependency('gstreamer-video-1.0', required : get_option('gstreamer'))
+
+# Plugin support
+libpeas = dependency('libpeas-1.0', version : ['>=1.22.0'], required : get_option('libpeas'))
 
 # Used to securely store passowrds/api keys
 libsecret = dependency('libsecret-1', required : get_option('libsecret'))

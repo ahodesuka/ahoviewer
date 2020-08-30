@@ -1,9 +1,9 @@
 #include "preferences.h"
-
-#include <glibmm/i18n.h>
 using namespace AhoViewer;
 
 #include "settings.h"
+
+#include <glibmm/i18n.h>
 
 PreferencesDialog::PreferencesDialog(BaseObjectType* cobj, const Glib::RefPtr<Gtk::Builder>& bldr)
     : Gtk::Dialog(cobj),
@@ -33,9 +33,9 @@ PreferencesDialog::PreferencesDialog(BaseObjectType* cobj, const Glib::RefPtr<Gt
     bldr->get_widget("SaveThumbnails", check_button);
 #ifdef __linux__
     check_button->show();
-#else
+#else  // !__linux__
     check_button->hide();
-#endif // __linux__
+#endif // !__linux__
 
     Gtk::ColorButton* bg_color{ nullptr };
     bldr->get_widget("BackgroundColor", bg_color);

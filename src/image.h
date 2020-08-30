@@ -64,7 +64,7 @@ namespace AhoViewer
 
         void load_gif();
         void create_gif_frame_pixbuf();
-        bool is_gif(const unsigned char*);
+        bool is_gif(const unsigned char* data);
         void create_thumbnail(Glib::RefPtr<Gio::Cancellable> c, bool save = true);
         Glib::RefPtr<Gdk::Pixbuf> create_pixbuf_at_size(const std::string& path,
                                                         const int w,

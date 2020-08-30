@@ -10,7 +10,7 @@ namespace AhoViewer::Booru
     class ImageFetcher : public sigc::trackable
     {
     public:
-        ImageFetcher(const int max_cons);
+        ImageFetcher(const bool multiplex);
         virtual ~ImageFetcher();
 
         void shutdown();
@@ -36,7 +36,6 @@ namespace AhoViewer::Booru
         static int timer_cb(CURLM*, long timeout_ms, void* userp);
 
         void on_handle_added();
-        void on_handle_pause();
         void on_handle_unpause();
         void remove_handle(Curler* curler);
         bool event_cb(curl_socket_t sockfd, Glib::IOCondition cond);

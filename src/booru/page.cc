@@ -1,7 +1,4 @@
 #include "page.h"
-
-#include <glibmm/i18n.h>
-#include <iostream>
 using namespace AhoViewer::Booru;
 
 #include "curler.h"
@@ -9,6 +6,9 @@ using namespace AhoViewer::Booru;
 #include "settings.h"
 #include "site.h"
 #include "threadpool.h"
+
+#include <glibmm/i18n.h>
+#include <iostream>
 
 #define RETRY_COUNT 5
 
@@ -282,11 +282,9 @@ void Page::get_posts()
     tags = m_Curler.escape(tags);
 
     m_GetPostsThread = std::thread([&, tags]() {
-        std::string posts_count;
-        // Danbooru doesn't give the post count with the posts
+        // DanbooruV2 doesn't give the post count with the posts
         // Get it from thier counts api
-        if (m_Page == 1 &&
-            (m_Site->get_type() == Type::DANBOORU || m_Site->get_type() == Type::DANBOORU_V2))
+        if (m_Page == 1 && m_Site->get_type() == Type::DANBOORU_V2)
         {
             m_Curler.set_url(m_Site->get_url() + "/counts/posts.xml?tags=" + tags);
             if (m_Curler.perform())
@@ -295,15 +293,20 @@ void Page::get_posts()
                 {
                     xml::Document doc{ reinterpret_cast<char*>(m_Curler.get_data()),
                                        m_Curler.get_data_size() };
-                    posts_count = doc.get_children()[0].get_value();
+                    std::string posts_count{ doc.get_children()[0].get_value() };
                     // Usually when you use a wildcard operator danbooru's count api will return a
                     // blank value here (blank but contains some whitespace and newlines)
-                    if (std::string::npos == posts_count.find_first_not_of(" \n\r"))
-                        posts_count = "";
+                    if (posts_count.find_first_not_of(" \n\r") != std::string::npos)
+                        m_PostsCount = std::stoul(posts_count);
                 }
                 catch (const std::runtime_error& e)
                 {
                     std::cerr << e.what() << std::endl << m_Curler.get_data() << std::endl;
+                }
+                catch (const std::invalid_argument& e)
+                {
+                    std::cerr << e.what() << std::endl
+                              << "Failed to parse posts_count" << std::endl;
                 }
             }
             else if (m_Curler.is_cancelled())
@@ -326,143 +329,27 @@ void Page::get_posts()
             success = m_Curler.perform();
             if (success)
             {
-                try
-                {
-                    m_Posts = std::make_unique<xml::Document>(
-                        reinterpret_cast<char*>(m_Curler.get_data()), m_Curler.get_data_size());
-                }
-                catch (const std::runtime_error& e)
-                {
-                    std::cerr << e.what() << std::endl;
-                    m_Posts = nullptr;
-                }
-
-                // XXX: Ocassionally Danbooru returns a 500 internal server error
-                // "uninitialized constant LegacyController::Builder"
-                // and sets success to false
-                // XXX: Does this still happen? and does it happen with _V2?
-                if (m_Posts && m_Site->get_type() == Type::DANBOORU)
-                    success = m_Posts->get_attribute("success") != "false";
+                auto [posts, posts_count, error]{ m_Site->parse_post_data(
+                    m_Curler.get_data(), m_Curler.get_data_size()) };
+                m_Posts = std::move(posts);
+                if (posts_count > 0)
+                    m_PostsCount = posts_count;
+                m_PostsError = error;
             }
         } while (!m_Curler.is_cancelled() && !success && ++retry_count < RETRY_COUNT);
 
-        if (success && m_Posts && !posts_count.empty())
-            m_Posts->set_attribute("count", posts_count);
-        else if (!success && !m_Curler.is_cancelled())
+        if (!success && !m_Curler.is_cancelled())
+        {
             std::cerr << "Error while downloading posts on " << m_Curler.get_url() << std::endl
                       << "  " << m_Curler.get_error() << std::endl;
 
-        m_Curler.clear();
+            m_PostsError =
+                Glib::ustring::compose(_("Failed to download posts on %1"), m_Site->get_name());
+        }
+
         if (!m_Curler.is_cancelled())
-        {
-            // Get Tag types, only works on gelbooru.com not other gelbooru based sites
-            if (success && m_Posts && m_Site->get_url().find("gelbooru.com") != std::string::npos)
-                get_posts_tags();
-
             m_SignalPostsDownloaded();
-        }
     });
-}
-
-void Page::get_posts_tags()
-{
-    std::string tags;
-    {
-        std::set<std::string> all_tags;
-
-        for (const auto& post : m_Posts->get_children())
-        {
-            std::istringstream ss{ post.get_attribute("tags") };
-            std::set<std::string> tags{ std::istream_iterator<std::string>{ ss },
-                                        std::istream_iterator<std::string>{} };
-            all_tags.insert(tags.begin(), tags.end());
-        }
-
-        std::ostringstream oss;
-        std::copy(all_tags.begin(), all_tags.end(), std::ostream_iterator<std::string>(oss, " "));
-        tags = oss.str();
-    }
-
-    if (tags.empty())
-        return;
-
-    // The above will leavea a trailing space, remove it
-    tags.erase(tags.find_last_of(' '));
-    tags = m_Curler.escape(tags);
-
-    // We need to split the tags into multiple requests if they are larger than 5K bytes because
-    // Gelbooru has a max request header size of 6K bytes, generally the other data in the header
-    // should not exceed 1K bytes (but this may have to be looked at)
-    const int max_query_size{ 5120 };
-    static const std::string space{ "%20" };
-
-    size_t splits_needed{ tags.length() / max_query_size };
-    std::vector<std::string> split_tags;
-    std::string::iterator it, last_it{ tags.begin() };
-
-    for (size_t i{ 0 }; i < splits_needed; ++i)
-    {
-        // Find the last encoded space before max_query_size * (i+1)
-        it = std::find_end(
-            last_it, tags.begin() + max_query_size * (i + 1), space.begin(), space.end());
-        split_tags.push_back(
-            tags.substr(std::distance(tags.begin(), last_it), std::distance(last_it, it)));
-        // Advance past the space so the next string wont start with it
-        last_it = it + space.length();
-    }
-    // Add any remaining tags or all the tags if tags.length() < max_query_size
-    split_tags.push_back(tags.substr(std::distance(tags.begin(), last_it)));
-    std::vector<std::future<std::vector<Tag>>> jobs;
-
-    static const auto tag_task = [](const std::shared_ptr<Site>& site, const std::string& t) {
-        static const std::string tag_uri{ "/index.php?page=dapi&s=tag&q=index&limit=0&names=%1" };
-        static const std::map<int, Tag::Type> gelbooru_type_lookup{ {
-            { 0, Tag::Type::GENERAL },
-            { 1, Tag::Type::ARTIST },
-            { 3, Tag::Type::COPYRIGHT },
-            { 4, Tag::Type::CHARACTER },
-            { 5, Tag::Type::METADATA },
-            { 6, Tag::Type::DEPRECATED },
-        } };
-        Curler c{ site->get_url() + Glib::ustring::compose(tag_uri, t) };
-        std::vector<Tag> tags;
-        if (c.perform())
-        {
-            try
-            {
-                xml::Document xml{ reinterpret_cast<char*>(c.get_data()), c.get_data_size() };
-                auto nodes{ xml.get_children() };
-                std::transform(
-                    nodes.begin(), nodes.end(), std::back_inserter(tags), [](const auto& n) {
-                        Tag::Type type;
-                        auto i{ std::stoi(n.get_attribute("type")) };
-                        if (gelbooru_type_lookup.find(i) != gelbooru_type_lookup.end())
-                            type = gelbooru_type_lookup.at(i);
-                        else
-                            type = Tag::Type::UNKNOWN;
-                        return Tag(n.get_attribute("name"), type);
-                    });
-            }
-            catch (const std::runtime_error& e)
-            {
-                std::cerr << e.what() << std::endl;
-            }
-        }
-        return tags;
-    };
-
-    for (const auto& t : split_tags)
-        jobs.push_back(std::async(std::launch::async, tag_task, m_Site, t));
-
-    // Wait for all the jobs to finish and combine all the tags
-    for (auto& job : jobs)
-    {
-        auto tags{ job.get() };
-        m_PostsTags.insert(m_PostsTags.end(), tags.begin(), tags.end());
-    }
-
-    // Does this speed the lookup up?
-    std::sort(m_PostsTags.begin(), m_PostsTags.end());
 }
 
 bool Page::get_next_page()
@@ -491,25 +378,30 @@ bool Page::get_next_page()
 // Adds the downloaded posts to the image list.
 void Page::on_posts_downloaded()
 {
-    if (m_Posts && m_Posts->get_attribute("success") == "false" &&
-        (!m_Posts->get_attribute("reason").empty() || !m_Posts->get_value().empty()))
+    if (!m_PostsError.empty())
     {
-        auto reason =
-            m_Posts->get_value().empty() ? m_Posts->get_attribute("reason") : m_Posts->get_value();
-        m_SignalDownloadError(reason);
+        m_SignalDownloadError(m_PostsError);
     }
-    else if (m_Posts)
+    // 401 = Unauthorized
+    else if (m_Curler.get_response_code() == 401)
     {
-        auto n_posts = m_Posts->get_n_nodes();
-        if (n_posts > 0)
+        auto e{ Glib::ustring::compose(
+            _("Failed to login as %1 on %2"), m_Site->get_username(), m_Site->get_name()) };
+        m_SignalDownloadError(e);
+    }
+    else
+    {
+        auto n_posts{ m_Posts.size() };
+        if (!m_Posts.empty())
         {
-            auto size_before = m_ImageList->get_vector_size();
-            m_ImageList->load(*m_Posts, m_PostsTags);
+            auto size_before{ m_ImageList->get_vector_size() };
+            m_ImageList->load(m_Posts, m_PostsCount);
             // Number of posts that actually got added to the image list
             // ie supported file types
             n_posts = m_ImageList->get_vector_size() - size_before;
         }
 
+        // No posts added to the imagelist
         if (n_posts == 0)
         {
             if (m_Page == 1)
@@ -518,23 +410,9 @@ void Page::on_posts_downloaded()
             m_LastPage = true;
         }
     }
-    // 401 = Unauthorized
-    else if (m_Curler.get_response_code() == 401)
-    {
-        std::string e = Glib::ustring::compose(
-            _("Failed to login as %1 on %2"), m_Site->get_username(), m_Site->get_name());
-        m_SignalDownloadError(e);
-    }
-    // No network connection?
-    else
-    {
-        std::string e =
-            Glib::ustring::compose(_("Failed to download posts on %1"), m_Site->get_name());
-        m_SignalDownloadError(e);
-    }
 
-    m_Posts = nullptr;
-    m_PostsTags.clear();
+    m_Curler.clear();
+    m_Posts.clear();
     m_GetPostsThread.join();
 }
 

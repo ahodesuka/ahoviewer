@@ -1,6 +1,12 @@
 #pragma once
 
+#include "config.h"
+
 #include <gtkmm/application.h>
+
+#ifdef HAVE_LIBPEAS
+#include "plugin/manager.h"
+#endif // HAVE_LIBPEAS
 
 namespace AhoViewer
 {
@@ -8,12 +14,15 @@ namespace AhoViewer
     class Application : public Gtk::Application
     {
     public:
-        static Glib::RefPtr<Application> create();
+        static Application& get_instance();
 
         MainWindow* create_window();
 
         int run(int argc, char** argv);
 
+#ifdef HAVE_LIBPEAS
+        Plugin::Manager& get_plugin_manager() const { return *m_PluginManager; }
+#endif // HAVE_LIBPEAS
     protected:
         Application();
 
@@ -26,5 +35,9 @@ namespace AhoViewer
 
     private:
         void on_shutdown();
+
+#ifdef HAVE_LIBPEAS
+        std::unique_ptr<Plugin::Manager> m_PluginManager;
+#endif // HAVE_LIBPEAS
     };
 }

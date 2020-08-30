@@ -78,6 +78,8 @@ namespace AhoViewer::xml
             return "";
         }
 
+        std::string get_name() const { return reinterpret_cast<const char*>(m_XmlNode->name); }
+
     protected:
         Node() = default;
         xmlNodePtr m_XmlNode{ nullptr };

@@ -1,5 +1,6 @@
 #pragma once
 
+#include <date/date.h>
 #include <gdkmm.h>
 #include <glibmm.h>
 #include <string>
@@ -67,12 +68,11 @@ namespace AhoViewer
             GELBOORU    = 1,
             MOEBOORU    = 2,
             DANBOORU    = 4,
+            PLUGIN      = 5,
         };
         struct Tag
         {
             // These values determine the order when sorting by type
-            // They do not reflect the actual value of Gelbooru's type attribute,
-            // that is converted when the tag list is retrieved
             enum class Type
             {
                 ARTIST     = 0,
@@ -114,5 +114,12 @@ namespace AhoViewer
             TYPE = 0,
             TAG  = 1,
         };
+
+        using PostDataTuple = std::
+            //    image_url    thumb_url    post_url     notes_url
+            tuple<std::string, std::string, std::string, std::string, std::vector<Tag>, PostInfo>;
+
+        std::string format_date_time(const date::sys_seconds t);
+        std::string get_rating_string(std::string_view rating);
     }
 }

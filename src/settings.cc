@@ -1,14 +1,15 @@
 #include "settings.h"
+using namespace AhoViewer;
+using namespace AhoViewer::Booru;
+
+#include "application.h"
+#include "booru/site.h"
+#include "config.h"
+#include "imagebox.h"
 
 #include <fstream>
 #include <glib/gstdio.h>
 #include <iostream>
-using namespace AhoViewer;
-#include "booru/site.h"
-using namespace AhoViewer::Booru;
-
-#include "config.h"
-#include "imagebox.h"
 
 SettingsManager AhoViewer::Settings;
 
@@ -50,71 +51,78 @@ SettingsManager::SettingsManager()
           { "TagMetadataColor", "#F80" },
       }),
       m_DefaultSites({
-          std::make_tuple("Danbooru", "https://danbooru.donmai.us", Type::DANBOORU_V2, "", "", 0),
-          std::make_tuple("Gelbooru", "https://gelbooru.com", Type::GELBOORU, "", "", 0),
-          std::make_tuple("Konachan", "https://konachan.com", Type::MOEBOORU, "", "", 6),
-          std::make_tuple("yande.re", "https://yande.re", Type::MOEBOORU, "", "", 0),
-          std::make_tuple("Safebooru", "https://safebooru.org", Type::GELBOORU, "", "", 0),
+          std::make_tuple("Danbooru", "https://danbooru.donmai.us", Type::DANBOORU_V2),
+          std::make_tuple("Gelbooru", "https://gelbooru.com", Type::GELBOORU),
+          std::make_tuple("Konachan", "https://konachan.com", Type::MOEBOORU),
+          std::make_tuple("yande.re", "https://yande.re", Type::MOEBOORU),
+          std::make_tuple("Safebooru", "https://safebooru.org", Type::GELBOORU),
       }),
-      m_DefaultKeybindings({ { "File",
-                               {
-                                   { "OpenFile", "<Primary>o" },
-                                   { "Preferences", "p" },
-                                   { "Close", "<Primary>w" },
-                                   { "Quit", "<Primary>q" },
-                               } },
-                             { "ViewMode",
-                               {
-                                   { "ToggleMangaMode", "g" },
-                                   { "AutoFitMode", "a" },
-                                   { "FitWidthMode", "w" },
-                                   { "FitHeightMode", "h" },
-                                   { "ManualZoomMode", "m" },
-                               } },
-                             { "UserInterface",
-                               {
-                                   { "ToggleFullscreen", "f" },
-                                   { "ToggleMenuBar", "<Primary>m" },
-                                   { "ToggleStatusBar", "<Primary>b" },
-                                   { "ToggleScrollbars", "<Primary>l" },
-                                   { "ToggleThumbnailBar", "t" },
-                                   { "ToggleBooruBrowser", "b" },
-                                   { "ToggleHideAll", "i" },
-                               } },
-                             { "Zoom",
-                               {
-                                   { "ZoomIn", "<Primary>equal" },
-                                   { "ZoomOut", "<Primary>minus" },
-                                   { "ResetZoom", "<Primary>0" },
-                               } },
-                             { "Navigation",
-                               {
-                                   { "NextImage", "Page_Down" },
-                                   { "PreviousImage", "Page_Up" },
-                                   { "FirstImage", "Home" },
-                                   { "LastImage", "End" },
-                                   { "ToggleSlideshow", "s" },
-                               } },
-                             { "Scroll",
-                               {
-                                   { "ScrollUp", "Up" },
-                                   { "ScrollDown", "Down" },
-                                   { "ScrollLeft", "Left" },
-                                   { "ScrollRight", "Right" },
-                               } },
-                             { "BooruBrowser",
-                               {
-                                   { "NewTab", "<Primary>t" },
-                                   { "SaveImage", "<Primary>s" },
-                                   { "SaveImages", "<Primary><Shift>s" },
-                                   { "ViewPost", "<Primary><Shift>o" },
-                                   { "CopyImageURL", "y" },
-                                   { "CopyImageData", "<Primary><Shift>y" },
-                                   { "CopyPostURL", "<Primary>y" },
-                               } } })
+      m_DefaultKeybindings({
+          { "File",
+            {
+                { "OpenFile", "<Primary>o" },
+                { "Preferences", "p" },
+                { "Close", "<Primary>w" },
+                { "Quit", "<Primary>q" },
+            } },
+          { "ViewMode",
+            {
+                { "ToggleMangaMode", "g" },
+                { "AutoFitMode", "a" },
+                { "FitWidthMode", "w" },
+                { "FitHeightMode", "h" },
+                { "ManualZoomMode", "m" },
+            } },
+          { "UserInterface",
+            {
+                { "ToggleFullscreen", "f" },
+                { "ToggleMenuBar", "<Primary>m" },
+                { "ToggleStatusBar", "<Primary>b" },
+                { "ToggleScrollbars", "<Primary>l" },
+                { "ToggleThumbnailBar", "t" },
+                { "ToggleBooruBrowser", "b" },
+                { "ToggleHideAll", "i" },
+            } },
+          { "Zoom",
+            {
+                { "ZoomIn", "<Primary>equal" },
+                { "ZoomOut", "<Primary>minus" },
+                { "ResetZoom", "<Primary>0" },
+            } },
+          { "Navigation",
+            {
+                { "NextImage", "Page_Down" },
+                { "PreviousImage", "Page_Up" },
+                { "FirstImage", "Home" },
+                { "LastImage", "End" },
+                { "ToggleSlideshow", "s" },
+            } },
+          { "Scroll",
+            {
+                { "ScrollUp", "Up" },
+                { "ScrollDown", "Down" },
+                { "ScrollLeft", "Left" },
+                { "ScrollRight", "Right" },
+            } },
+          { "BooruBrowser",
+            {
+                { "NewTab", "<Primary>t" },
+                { "SaveImage", "<Primary>s" },
+                { "SaveImages", "<Primary><Shift>s" },
+                { "ViewPost", "<Primary><Shift>o" },
+                { "CopyImageURL", "y" },
+                { "CopyImageData", "<Primary><Shift>y" },
+                { "CopyPostURL", "<Primary>y" },
+            } },
+#ifdef HAVE_LIBPEAS
+          { "Plugins",
+            {
+
+            } },
+#endif // HAVE_LIBPEAS
+      })
 // }}}
 {
-    m_Config.setTabWidth(4);
     if (Glib::file_test(m_ConfigFilePath, Glib::FILE_TEST_EXISTS))
     {
         try
@@ -138,8 +146,6 @@ SettingsManager::SettingsManager()
                       std::istream_iterator<Booru::Tag>{},
                       std::back_inserter(m_FavoriteTags));
     }
-
-    load_keybindings();
 }
 
 SettingsManager::~SettingsManager()
@@ -198,7 +204,7 @@ std::string SettingsManager::get_string(const std::string& key) const
 
 std::vector<std::shared_ptr<Site>>& SettingsManager::get_sites()
 {
-    if (m_Sites.size())
+    if (!m_Sites.empty())
     {
         return m_Sites;
     }
@@ -213,48 +219,62 @@ std::vector<std::shared_ptr<Site>>& SettingsManager::get_sites()
                 std::string name{ s.exists("name") ? s["name"] : "" },
                     url{ s.exists("url") ? s["url"] : "" },
                     username{ s.exists("username") ? s["username"] : "" },
-                    password{ s.exists("password") ? s["password"] : "" };
-                int type{ s["type"] }, max_cons{ 0 };
+                    password{ s.exists("password") ? s["password"] : "" },
+                    plugin_name{ s.exists("plugin_name") ? s["plugin_name"] : "" };
+                Type type{ static_cast<Type>(static_cast<int>(s["type"])) };
+                bool use_samples{ s["use_samples"] };
 
-                // Old saved versions of danbooru probably have the wrong type, change it to use
-                // the newer API
-                if (url.find("danbooru.donmai.us") != std::string::npos)
-                    type = static_cast<int>(Booru::Type::DANBOORU_V2);
+                auto site{ Site::create(name, url, type, username, password, use_samples) };
 
-                s.lookupValue("max_connections", max_cons);
-                // cachesize * 2 + 1 < 6 < max_cons
-                if (max_cons != 0)
-                    max_cons = std::max(max_cons, std::min(get_int("CacheSize") * 2 + 1, 6));
-                bool use_samples = false;
-                s.lookupValue("use_samples", use_samples);
-                m_Sites.push_back(Site::create(
-                    name, url, static_cast<Type>(type), username, password, max_cons, use_samples));
+                // unlikely
+                if (!site)
+                    continue;
+
+                if (type == Type::PLUGIN)
+                {
+#ifdef HAVE_LIBPEAS
+                    const auto& plugins{
+                        Application::get_instance().get_plugin_manager().get_site_plugins()
+                    };
+                    auto it{ std::find_if(
+                        plugins.cbegin(), plugins.cend(), [&plugin_name](const auto& p) {
+                            return p->get_name() == plugin_name;
+                        }) };
+
+                    if (it != plugins.cend())
+                    {
+                        site->set_plugin(*it);
+                    }
+                    else
+                    {
+                        std::cerr << "Previously saved site '" << name
+                                  << "' uses a plugin that is no longer installed" << std::endl;
+                        continue;
+                    }
+#else  // !HAVE_LIBPEAS
+                    std::cerr << "Previously saved site '" << name
+                              << "' uses a plugin, but plugin support was not enabled" << std::endl;
+                    continue;
+#endif // !HAVE_LIBPEAS
+                }
+
+                m_Sites.push_back(std::move(site));
             }
 
             return m_Sites;
         }
     }
 
-    for (const SiteTuple& s : m_DefaultSites)
-        m_Sites.push_back(Site::create(std::get<0>(s),
-                                       std::get<1>(s),
-                                       std::get<2>(s),
-                                       std::get<3>(s),
-                                       std::get<4>(s),
-                                       std::get<5>(s)));
+    for (const auto& s : m_DefaultSites)
+        m_Sites.push_back(Site::create(std::get<0>(s), std::get<1>(s), std::get<2>(s)));
 
     return m_Sites;
 }
 
 bool SettingsManager::get_geometry(int& x, int& y, int& w, int& h) const
 {
-    if (m_Config.lookupValue("Geometry.x", x) && m_Config.lookupValue("Geometry.y", y) &&
-        m_Config.lookupValue("Geometry.w", w) && m_Config.lookupValue("Geometry.h", h))
-    {
-        return true;
-    }
-
-    return false;
+    return m_Config.lookupValue("Geometry.x", x) && m_Config.lookupValue("Geometry.y", y) &&
+           m_Config.lookupValue("Geometry.w", w) && m_Config.lookupValue("Geometry.h", h);
 }
 
 void SettingsManager::set_geometry(const int x, const int y, const int w, const int h)
@@ -262,7 +282,7 @@ void SettingsManager::set_geometry(const int x, const int y, const int w, const 
     if (!m_Config.exists("Geometry"))
         m_Config.getRoot().add("Geometry", Setting::TypeGroup);
 
-    Setting& geo = m_Config.lookup("Geometry");
+    Setting& geo{ m_Config.lookup("Geometry") };
 
     set("x", x, Setting::TypeInt, geo);
     set("y", y, Setting::TypeInt, geo);
@@ -272,7 +292,14 @@ void SettingsManager::set_geometry(const int x, const int y, const int w, const 
 
 std::string SettingsManager::get_keybinding(const std::string& group, const std::string& name) const
 {
-    return m_Keybindings.at(group).at(name);
+    try
+    {
+        return m_Keybindings.at(group).at(name);
+    }
+    catch (const std::out_of_range&)
+    {
+        return "";
+    }
 }
 
 // Clears the first (only) binding that has the same value as value
@@ -309,7 +336,7 @@ void SettingsManager::set_keybinding(const std::string& group,
     if (!m_Config.exists("Keybindings"))
         m_Config.getRoot().add("Keybindings", Setting::TypeGroup);
 
-    Setting& keys = m_Config.lookup("Keybindings");
+    Setting& keys{ m_Config.lookup("Keybindings") };
 
     if (!keys.exists(group))
         keys.add(group, Setting::TypeGroup);
@@ -322,13 +349,20 @@ std::string SettingsManager::reset_keybinding(const std::string& group, const st
 {
     if (m_Config.exists("Keybindings"))
     {
-        Setting& keys = m_Config.lookup("Keybindings");
+        Setting& keys{ m_Config.lookup("Keybindings") };
 
         if (keys.exists(group) && keys[group.c_str()].exists(name))
             keys[group.c_str()].remove(name);
     }
 
-    return m_Keybindings[group][name] = m_DefaultKeybindings.at(group).at(name);
+    try
+    {
+        return m_DefaultKeybindings.at(group).at(name);
+    }
+    catch (const std::out_of_range&)
+    {
+        return "";
+    }
 }
 
 Gdk::RGBA SettingsManager::get_background_color() const
@@ -393,12 +427,31 @@ void SettingsManager::load_keybindings()
 {
     if (m_Config.exists("Keybindings"))
     {
-        Setting& keys = m_Config.lookup("Keybindings");
+        Setting& keys{ m_Config.lookup("Keybindings") };
 
         for (auto& i : m_DefaultKeybindings)
         {
             if (keys.exists(i.first))
             {
+#ifdef HAVE_LIBPEAS
+                // Assign keybindings only for plugins that have been loaded
+                if (i.first == "Plugins")
+                {
+                    const auto& plugins{
+                        Application::get_instance().get_plugin_manager().get_window_plugins()
+                    };
+                    for (auto& p : plugins)
+                    {
+                        if (!p->get_action_name().empty() &&
+                            keys[i.first.c_str()].exists(p->get_action_name().c_str()))
+                        {
+                            m_Keybindings[i.first][p->get_action_name()] =
+                                keys[i.first.c_str()][p->get_action_name()].c_str();
+                        }
+                    }
+                    continue;
+                }
+#endif // HAVE_LIBPEAS
                 for (auto& j : i.second)
                 {
                     if (keys[i.first.c_str()].exists(j.first))
@@ -428,19 +481,25 @@ void SettingsManager::load_keybindings()
 void SettingsManager::save_sites()
 {
     remove("Sites");
-    Setting& sites = m_Config.getRoot().add("Sites", Setting::TypeList);
+    Setting& sites{ m_Config.getRoot().add("Sites", Setting::TypeList) };
 
     for (const std::shared_ptr<Site>& s : m_Sites)
     {
-        Setting& site = sites.add(Setting::TypeGroup);
+        Setting& site{ sites.add(Setting::TypeGroup) };
+
         set("name", s->get_name(), Setting::TypeString, site);
         set("url", s->get_url(), Setting::TypeString, site);
         set("type", static_cast<int>(s->get_type()), Setting::TypeInt, site);
-        set("username", s->get_username(), Setting::TypeString, site);
+        if (!s->get_username().empty())
+            set("username", s->get_username(), Setting::TypeString, site);
 #if !defined(HAVE_LIBSECRET) && !defined(_WIN32)
-        set("password", s->get_password(), Setting::TypeString, site);
+        if (!s->get_password().empty())
+            set("password", s->get_password(), Setting::TypeString, site);
 #endif // !defined(HAVE_LIBSECRET) && !defined(_WIN32)
-        set("max_connections", static_cast<int>(s->get_max_connections()), Setting::TypeInt, site);
         set("use_samples", s->use_samples(), Setting::TypeBoolean, site);
+#ifdef HAVE_LIBPEAS
+        if (s->get_type() == Type::PLUGIN)
+            set("plugin_name", s->get_plugin_name(), Setting::TypeString, site);
+#endif // HAVE_LIBPEAS
     }
 }

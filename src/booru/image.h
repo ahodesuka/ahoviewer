@@ -25,9 +25,9 @@ namespace AhoViewer::Booru
               std::string thumb_path,
               std::string thumb_url,
               std::string post_url,
-              std::vector<Tag> tags,
-              const PostInfo& post_info,
               const std::string& notes_url,
+              std::vector<Tag> tags,
+              PostInfo& post_info,
               std::shared_ptr<Site> site,
               ImageFetcher& fetcher);
         ~Image() override;

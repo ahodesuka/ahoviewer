@@ -1,7 +1,7 @@
 #include "curler.h"
+using namespace AhoViewer::Booru;
 
 #include "imagefetcher.h"
-using namespace AhoViewer::Booru;
 
 // Used for looking closer at what libcurl is doing
 // set it to 1 with CXXFLAGS and prepare to be spammed
@@ -9,9 +9,7 @@ using namespace AhoViewer::Booru;
 #define VERBOSE_LIBCURL 0
 #endif
 
-// Can this be changed to something like ahoviewer?
-// Some sites might need a specific UA to work
-const char* Curler::UserAgent = "Mozilla/5.0";
+const char* Curler::UserAgent{ "Mozilla/5.0" };
 
 size_t Curler::write_cb(const unsigned char* ptr, size_t size, size_t nmemb, void* userp)
 {
@@ -137,7 +135,7 @@ void Curler::set_share_handle(CURLSH* s) const
 std::string Curler::escape(const std::string& str) const
 {
     std::string r;
-    char* s = curl_easy_escape(m_EasyHandle, str.c_str(), str.length());
+    char* s{ curl_easy_escape(m_EasyHandle, str.c_str(), str.length()) };
 
     if (s)
     {

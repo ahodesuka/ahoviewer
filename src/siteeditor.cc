@@ -1,13 +1,13 @@
 #include "siteeditor.h"
-
-#include <gdk/gdkkeysyms-compat.h>
-#include <glibmm/i18n.h>
 using namespace AhoViewer;
 using namespace AhoViewer::Booru;
 
 #include "booru/site.h"
 #include "settings.h"
 #include "util.h"
+
+#include <glibmm/i18n.h>
+#include <iostream>
 
 SiteEditor::SiteEditor(BaseObjectType* cobj, const Glib::RefPtr<Gtk::Builder>& bldr)
     : Gtk::TreeView{ cobj },
@@ -42,10 +42,10 @@ SiteEditor::SiteEditor(BaseObjectType* cobj, const Glib::RefPtr<Gtk::Builder>& b
             "edit-delete",
             Gtk::ICON_SIZE_MENU,
             Gtk::ICON_LOOKUP_USE_BUILTIN | Gtk::ICON_LOOKUP_GENERIC_FALLBACK);
-        // TODO: Capture and print something useful
     }
-    catch (...)
+    catch (const Glib::Error& e)
     {
+        std::cerr << "SiteEditor: Failed to load 'edit-delete' icon" << std::endl;
     }
 
     CellRendererIcon* icon_renderer{ Gtk::make_managed<CellRendererIcon>(this) };
@@ -69,7 +69,7 @@ SiteEditor::SiteEditor(BaseObjectType* cobj, const Glib::RefPtr<Gtk::Builder>& b
     m_UrlColumn->set_expand(true);
     append_column(*m_UrlColumn);
 
-    auto* toggle_renderer = static_cast<Gtk::CellRendererToggle*>(m_SampleColumn->get_first_cell());
+    auto toggle_renderer{ static_cast<Gtk::CellRendererToggle*>(m_SampleColumn->get_first_cell()) };
     toggle_renderer->signal_toggled().connect(
         sigc::mem_fun(*this, &SiteEditor::on_samples_toggled));
     toggle_renderer->set_activatable(true);
@@ -124,8 +124,8 @@ SiteEditor::~SiteEditor()
 
 bool SiteEditor::on_key_release_event(GdkEventKey* e)
 {
-    if (e->keyval == GDK_Return || e->keyval == GDK_ISO_Enter || e->keyval == GDK_KP_Enter ||
-        e->keyval == GDK_Tab)
+    if (e->keyval == GDK_KEY_Return || e->keyval == GDK_KEY_ISO_Enter ||
+        e->keyval == GDK_KEY_KP_Enter || e->keyval == GDK_KEY_Tab)
     {
         Gtk::TreeIter iter{ get_selection()->get_selected() };
         Gtk::TreePath p(iter);
@@ -152,7 +152,7 @@ void SiteEditor::on_my_cursor_changed()
     if (s)
     {
         m_RegisterButton->set_label(_("Register account on ") + s->get_name());
-        m_RegisterButton->set_uri(s->get_register_uri());
+        m_RegisterButton->set_uri(s->get_register_url());
 
         m_UsernameEntry->set_text(s->get_username());
         m_PasswordEntry->set_text(s->get_password());
@@ -168,11 +168,12 @@ void SiteEditor::on_my_cursor_changed()
     m_UsernameConn.unblock();
     m_PasswordConn.unblock();
 
-    m_RegisterButton->set_sensitive(!!s);
-    m_UsernameEntry->set_sensitive(!!s);
-    m_PasswordEntry->set_sensitive(!!s);
+    bool can_register{ s && !s->get_register_url().empty() };
+    m_RegisterButton->set_sensitive(can_register);
+    m_UsernameEntry->set_sensitive(can_register);
+    m_PasswordEntry->set_sensitive(can_register);
 
-    if (!s || s->get_type() == Type::GELBOORU)
+    if (!can_register || s->get_type() == Type::GELBOORU)
         m_PasswordLabel->set_text(_("Password:"));
     else
         m_PasswordLabel->set_text(_("API Key:"));
@@ -317,9 +318,8 @@ void SiteEditor::add_edit_site(const Gtk::TreeIter& iter)
 
     m_SiteCheckIter = iter;
 
-    std::vector<std::shared_ptr<Site>>::iterator i{ std::find(
-        m_Sites.begin(), m_Sites.end(), iter->get_value(m_Columns.site)) };
-    std::shared_ptr<Site> site{ i != m_Sites.end() ? *i : nullptr };
+    auto it{ std::find(m_Sites.begin(), m_Sites.end(), iter->get_value(m_Columns.site)) };
+    std::shared_ptr<Site> site{ it != m_Sites.end() ? *it : nullptr };
 
     // editting
     if (site)

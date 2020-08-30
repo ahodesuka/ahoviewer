@@ -1,11 +1,7 @@
 #include "mainwindow.h"
-
-#include <glibmm/i18n.h>
-#include <iomanip>
-#include <iostream>
-#include <utility>
 using namespace AhoViewer;
 
+#include "application.h"
 #include "booru/browser.h"
 #include "booru/infobox.h"
 #include "config.h"
@@ -17,6 +13,11 @@ using namespace AhoViewer;
 #include "statusbar.h"
 #include "tempdir.h"
 #include "thumbnailbar.h"
+
+#include <glibmm/i18n.h>
+#include <iomanip>
+#include <iostream>
+#include <utility>
 
 extern const char* const ahoviewer_version;
 
@@ -115,9 +116,9 @@ MainWindow::MainWindow(BaseObjectType* cobj, Glib::RefPtr<Gtk::Builder> bldr)
             }
             Glib::RefPtr<Gdk::Pixbuf> logo{ Gdk::Pixbuf::create_from_file(path) };
             m_AboutDialog->set_logo(logo);
-#else
+#else  // !_WIN32
             m_AboutDialog->set_logo_icon_name(PACKAGE);
-#endif // _WIN32
+#endif // !_WIN32
         }
         catch (...)
         {
@@ -504,6 +505,7 @@ void MainWindow::create_actions()
 {
     // Create the action group for the UIManager
     m_ActionGroup = Gtk::ActionGroup::create(PACKAGE);
+    m_ActionGroup->set_accel_group(m_UIManager->get_accel_group());
 
     // Menu actions {{{
     m_ActionGroup->add(Gtk::Action::create("FileMenu", _("_File")));
@@ -802,7 +804,7 @@ void MainWindow::create_actions()
     m_RecentAction->set_show_tips();
     m_RecentAction->set_sort_type(Gtk::RECENT_SORT_MRU);
 
-    Glib::RefPtr<Gtk::RecentFilter> filter = Gtk::RecentFilter::create();
+    Glib::RefPtr<Gtk::RecentFilter> filter{ Gtk::RecentFilter::create() };
     filter->add_pixbuf_formats();
 
     for (const std::string& mime_type : Archive::MimeTypes)
@@ -821,14 +823,41 @@ void MainWindow::create_actions()
     m_RecentAction->add_filter(filter);
 
     // Add the accel group to the window.
-    add_accel_group(m_UIManager->get_accel_group());
+    add_accel_group(m_ActionGroup->get_accel_group());
 
     // Finally attach the menubar to the main window's grid
-    Gtk::Grid* grid = nullptr;
+    Gtk::Grid* grid{ nullptr };
     m_Builder->get_widget("MainWindow::Grid", grid);
 
     m_MenuBar = static_cast<Gtk::MenuBar*>(m_UIManager->get_widget("/MenuBar"));
     m_MenuBar->set_hexpand();
+
+#ifdef HAVE_LIBPEAS
+    auto plugins_menuitem{ Gtk::make_managed<Gtk::MenuItem>(_("Plugins")) };
+    auto plugins_menu{ Gtk::make_managed<Gtk::Menu>() };
+    plugins_menuitem->set_submenu(*plugins_menu);
+
+    for (auto& p : Application::get_instance().get_plugin_manager().get_window_plugins())
+    {
+        if (p->get_action_name().empty())
+            continue;
+
+        auto action{ Gtk::Action::create(
+            p->get_action_name(), p->get_name(), p->get_description()) };
+        m_ActionGroup->add(action,
+                           Gtk::AccelKey(Settings.get_keybinding("Plugins", p->get_action_name())),
+                           sigc::bind(sigc::mem_fun(*p, &Plugin::WindowPlugin::on_activate), this));
+
+        if (!p->is_hidden())
+            plugins_menu->append(*action->create_menu_item());
+    }
+
+    // Only add the plugins menu item if there are plugin actions to show
+    //   3 = after the Go menuitem
+    if (plugins_menu->get_children().size() > 0)
+        m_MenuBar->insert(*plugins_menuitem, 3);
+#endif // HAVE_LIBPEAS
+
     grid->attach(*m_MenuBar, 0, 0, 2, 1);
 }
 
@@ -873,20 +902,20 @@ void MainWindow::set_sensitives()
     bool hide_all{ Glib::RefPtr<Gtk::ToggleAction>::cast_static(
                        m_ActionGroup->get_action("ToggleHideAll"))
                        ->get_active() };
-    std::vector<std::string> names{ {
+    static const std::array ui_names{
         "ToggleMenuBar",
         "ToggleStatusBar",
         "ToggleBooruBrowser",
-    } };
+    };
 
-    for (const std::string& s : names)
+    for (const std::string& s : ui_names)
         m_ActionGroup->get_action(s)->set_sensitive(!hide_all);
 
-    names = {
+    static const std::array action_names{
         "NextImage", "PreviousImage", "FirstImage", "LastImage", "ToggleSlideshow",
     };
 
-    for (const std::string& s : names)
+    for (const std::string& s : action_names)
     {
         bool sens{ m_ActiveImageList && !m_ActiveImageList->empty() };
 

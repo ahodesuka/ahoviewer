@@ -1,13 +1,13 @@
 #include "image.h"
+using namespace AhoViewer;
+
+#include "settings.h"
 
 #include <cctype>
 #include <giomm.h>
 #include <glib.h>
 #include <gtkmm.h>
 #include <iostream>
-using namespace AhoViewer;
-
-#include "settings.h"
 
 const std::string Image::ThumbnailDir =
     Glib::build_filename(Glib::get_user_cache_dir(), "thumbnails", "normal");
@@ -55,9 +55,9 @@ bool Image::is_webm([[maybe_unused]] const std::string& path)
     std::string mime_type{ Gio::content_type_get_mime_type(ct) };
 
     return mime_type == "video/webm" || mime_type == "video/mp4";
-#else
+#else  // !HAVE_GSTREAMER
     return false;
-#endif // HAVE_GSTREAMER
+#endif // !HAVE_GSTREAMER
 }
 
 const Glib::RefPtr<Gdk::Pixbuf>& Image::get_missing_pixbuf()
@@ -207,9 +207,18 @@ void Image::load_pixbuf(Glib::RefPtr<Gio::Cancellable> c)
         }
         else
         {
-            Glib::RefPtr<Gdk::Pixbuf> p = Gdk::Pixbuf::create_from_stream(file->read(), c);
+            Glib::RefPtr<Gdk::Pixbuf> p{ nullptr };
+            try
+            {
+                p = Gdk::Pixbuf::create_from_stream(file->read(), c);
+            }
+            catch (const Gdk::PixbufError& e)
+            {
+                std::cerr << "Failed to load pixbuf from file '" << m_Path << "'" << std::endl
+                          << e.what() << std::endl;
+            }
 
-            if (c->is_cancelled())
+            if (!p || c->is_cancelled())
                 return;
 
             {
@@ -315,10 +324,10 @@ void Image::reset_gif_animation()
     m_Pixbuf.reset();
 }
 
-// This assumes data's length is at least 3
+// This assumes data's length is at least 4
 bool Image::is_gif(const unsigned char* data)
 {
-    return data[0] == 'G' && data[1] == 'I' && data[2] == 'F';
+    return data[0] == 'G' && data[1] == 'I' && data[2] == 'F' && data[3] == '8';
 }
 
 void Image::create_thumbnail(Glib::RefPtr<Gio::Cancellable> c, bool save)

@@ -1,9 +1,9 @@
 #include "thumbnailbar.h"
-
-#include <algorithm>
 using namespace AhoViewer;
 
 #include "image.h"
+
+#include <algorithm>
 
 ThumbnailBar::ThumbnailBar(BaseObjectType* cobj, const Glib::RefPtr<Gtk::Builder>& bldr)
     : Gtk::ScrolledWindow(cobj)

@@ -1,12 +1,13 @@
 #include "keybindingeditor.h"
+using namespace AhoViewer;
+
+#include "application.h"
+#include "config.h"
+#include "settings.h"
 
 #include <cctype>
 #include <glibmm/i18n.h>
 #include <gtkmm/accelmap.h>
-using namespace AhoViewer;
-
-#include "config.h"
-#include "settings.h"
 
 KeybindingEditor::KeybindingEditor(BaseObjectType* cobj, const Glib::RefPtr<Gtk::Builder>& bldr)
     : Gtk::TreeView(cobj),
@@ -18,6 +19,27 @@ KeybindingEditor::KeybindingEditor(BaseObjectType* cobj, const Glib::RefPtr<Gtk:
         parent_iter->set_value(m_Columns.editable, false);
         parent_iter->set_value(m_Columns.name, i.first);
 
+#ifdef HAVE_LIBPEAS
+        // Only show keybindings for plugins that have been loaded
+        if (i.first == "Plugins")
+        {
+            const auto& plugins{
+                Application::get_instance().get_plugin_manager().get_window_plugins()
+            };
+            for (auto& p : plugins)
+            {
+                if (!p->get_action_name().empty())
+                {
+                    Gtk::TreeIter iter = m_Model->append(parent_iter->children());
+                    iter->set_value(m_Columns.editable, true);
+                    iter->set_value(m_Columns.name, p->get_action_name());
+                    iter->set_value(m_Columns.binding,
+                                    Settings.get_keybinding(i.first, p->get_action_name()));
+                }
+            }
+            continue;
+        }
+#endif // HAVE_LIBPEAS
         for (const auto& j : i.second)
         {
             Gtk::TreeIter iter = m_Model->append(parent_iter->children());
@@ -45,7 +67,7 @@ KeybindingEditor::KeybindingEditor(BaseObjectType* cobj, const Glib::RefPtr<Gtk:
 
     set_model(m_Model);
 
-    Gtk::ToolButton* tool_button = nullptr;
+    Gtk::ToolButton* tool_button{ nullptr };
     bldr->get_widget("KeybindingEditor::ResetSelectedButton", tool_button);
     tool_button->signal_clicked().connect(
         sigc::mem_fun(*this, &KeybindingEditor::on_reset_selected));
@@ -53,7 +75,7 @@ KeybindingEditor::KeybindingEditor(BaseObjectType* cobj, const Glib::RefPtr<Gtk:
 
 void KeybindingEditor::on_reset_selected()
 {
-    Gtk::TreeIter iter = get_selection()->get_selected();
+    Gtk::TreeIter iter{ get_selection()->get_selected() };
 
     if (iter && iter->parent())
     {
@@ -68,10 +90,12 @@ void KeybindingEditor::on_reset_selected()
     }
 }
 
+// Transforms action names into readable keybinding names
+//   ScrollDown -> Scroll Down
 void KeybindingEditor::action_data_func(Gtk::CellRenderer* c, const Gtk::TreeIter& iter) const
 {
-    auto* cell         = static_cast<Gtk::CellRendererText*>(c);
-    std::string action = iter->get_value(m_Columns.name), val;
+    auto* cell{ static_cast<Gtk::CellRendererText*>(c) };
+    std::string action{ iter->get_value(m_Columns.name) }, val;
 
     for (std::string::iterator i = action.begin(); i != action.end(); ++i)
     {
@@ -85,8 +109,8 @@ void KeybindingEditor::action_data_func(Gtk::CellRenderer* c, const Gtk::TreeIte
 
 void KeybindingEditor::accel_data_func(Gtk::CellRenderer* c, const Gtk::TreeIter& iter) const
 {
-    auto* cell        = static_cast<Gtk::CellRendererText*>(c);
-    std::string accel = iter->get_value(m_Columns.binding);
+    auto* cell{ static_cast<Gtk::CellRendererText*>(c) };
+    std::string accel{ iter->get_value(m_Columns.binding) };
     guint key;
     Gdk::ModifierType mods;
 
@@ -100,11 +124,11 @@ void KeybindingEditor::on_accel_edited(const std::string& path,
                                        Gdk::ModifierType mods,
                                        guint)
 {
-    Gtk::TreeIter iter = m_Model->get_iter(path);
-    std::string accel  = Gtk::AccelGroup::name(key, mods), group, name;
-    std::string accel_path =
-        Glib::ustring::compose("<Actions>/" PACKAGE "/%1", iter->get_value(m_Columns.name));
-    bool exists = Gtk::AccelMap::lookup_entry(accel_path);
+    Gtk::TreeIter iter{ m_Model->get_iter(path) };
+    std::string accel{ Gtk::AccelGroup::name(key, mods) }, group, name;
+    std::string accel_path{ Glib::ustring::compose("<Actions>/" PACKAGE "/%1",
+                                                   iter->get_value(m_Columns.name)) };
+    bool exists{ Gtk::AccelMap::lookup_entry(accel_path) };
 
     // Clear binding if it is using this accelerator
     if (Settings.clear_keybinding(accel, group, name))
@@ -136,9 +160,9 @@ void KeybindingEditor::on_accel_edited(const std::string& path,
 
 void KeybindingEditor::on_accel_cleared(const std::string& path)
 {
-    Gtk::TreeIter iter = m_Model->get_iter(path);
-    std::string accel_path =
-        Glib::ustring::compose("<Actions>/" PACKAGE "/%1", iter->get_value(m_Columns.name));
+    Gtk::TreeIter iter{ m_Model->get_iter(path) };
+    std::string accel_path{ Glib::ustring::compose("<Actions>/" PACKAGE "/%1",
+                                                   iter->get_value(m_Columns.name)) };
 
     Settings.set_keybinding(
         iter->parent()->get_value(m_Columns.name), iter->get_value(m_Columns.name), "");

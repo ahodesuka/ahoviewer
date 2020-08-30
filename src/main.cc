@@ -2,6 +2,5 @@
 
 int main(int argc, char** argv)
 {
-    auto app{ AhoViewer::Application::create() };
-    return app->run(argc, argv);
+    return AhoViewer::Application::get_instance().run(argc, argv);
 }

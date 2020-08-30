@@ -1,8 +1,4 @@
 #include "browser.h"
-
-#include <gdk/gdkkeysyms.h>
-#include <glibmm/i18n.h>
-#include <iostream>
 using namespace AhoViewer::Booru;
 
 #include "application.h"
@@ -10,6 +6,10 @@ using namespace AhoViewer::Booru;
 #include "infobox.h"
 #include "mainwindow.h"
 #include "tempdir.h"
+
+#include <gdk/gdkkeysyms.h>
+#include <glibmm/i18n.h>
+#include <iostream>
 
 Browser::Browser(BaseObjectType* cobj, const Glib::RefPtr<Gtk::Builder>& bldr)
     : Gtk::Paned{ cobj },
@@ -367,12 +367,12 @@ void Browser::on_image_progress(const Image* bimage, double c, double t)
 
 GtkNotebook* Browser::on_create_window(GtkNotebook*, GtkWidget*, gint x, gint y, gpointer*)
 {
-    auto w{ Glib::RefPtr<Application>::cast_static(Application::get_default())->create_window() };
+    auto window{ Application::get_instance().create_window() };
 
-    if (w)
+    if (window)
     {
-        w->move(x, y);
-        return w->m_BooruBrowser->m_Notebook->gobj();
+        window->move(x, y);
+        return window->m_BooruBrowser->m_Notebook->gobj();
     }
 
     return nullptr;

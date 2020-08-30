@@ -18,8 +18,7 @@ namespace AhoViewer
     }
     class SettingsManager
     {
-        using SiteTuple =
-            std::tuple<std::string, std::string, Booru::Type, std::string, std::string, int>;
+        using SiteTuple = std::tuple<std::string, std::string, Booru::Type>;
 
     public:
         SettingsManager();
@@ -40,6 +39,7 @@ namespace AhoViewer
             return m_Keybindings;
         }
 
+        void load_keybindings();
         bool clear_keybinding(const std::string& value, std::string& group, std::string& name);
         std::string reset_keybinding(const std::string& group, const std::string& name);
 
@@ -84,7 +84,6 @@ namespace AhoViewer
         }
 
     private:
-        void load_keybindings();
         void save_sites();
 
         libconfig::Config m_Config;

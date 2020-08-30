@@ -1,28 +1,23 @@
 #include "image.h"
+using namespace AhoViewer::Booru;
+
+#include "browser.h"
+#include "settings.h"
+#include "site.h"
 
 #include <chrono>
 #include <fstream>
 #include <iostream>
 #include <utility>
 
-using namespace AhoViewer::Booru;
-
-#include "browser.h"
-extern "C"
-{
-#include "entities.h"
-}
-#include "settings.h"
-#include "site.h"
-
 Image::Image(std::string path,
              std::string url,
              std::string thumb_path,
              std::string thumb_url,
              std::string post_url,
-             std::vector<Tag> tags,
-             const PostInfo& post_info,
              const std::string& notes_url,
+             std::vector<Tag> tags,
+             PostInfo& post_info,
              std::shared_ptr<Site> site,
              ImageFetcher& fetcher)
     : AhoViewer::Image{ path },
@@ -44,6 +39,7 @@ Image::Image(std::string path,
         m_Curler.signal_write().connect(sigc::mem_fun(*this, &Image::on_write));
 
     m_ThumbnailCurler.signal_finished().connect([&]() { m_ThumbnailCond.notify_one(); });
+    m_ThumbnailCurler.set_referer(m_Site->get_url());
     m_Curler.set_referer(m_PostUrl);
     m_Curler.signal_progress().connect(sigc::mem_fun(*this, &Image::on_progress));
     m_Curler.signal_finished().connect(sigc::mem_fun(*this, &Image::on_finished));
@@ -342,56 +338,7 @@ void Image::on_area_updated(int, int, int, int)
 
 void Image::on_notes_downloaded()
 {
-    try
-    {
-        xml::Document doc(reinterpret_cast<char*>(m_NotesCurler.get_data()),
-                          m_NotesCurler.get_data_size());
-
-        for (const xml::Node& n : doc.get_children())
-        {
-            std::string body;
-            int w, h, x, y;
-
-            if (m_Site->get_type() == Type::DANBOORU_V2)
-            {
-                if (n.get_value("is-active") != "true")
-                    continue;
-
-                body = n.get_value("body");
-                w    = std::stoi(n.get_value("width"));
-                h    = std::stoi(n.get_value("height"));
-                x    = std::stoi(n.get_value("x"));
-                y    = std::stoi(n.get_value("y"));
-            }
-            else
-            {
-                if (n.get_attribute("is_active") != "true")
-                    continue;
-
-                body = n.get_attribute("body");
-                w    = std::stoi(n.get_attribute("width"));
-                h    = std::stoi(n.get_attribute("height"));
-                x    = std::stoi(n.get_attribute("x"));
-                y    = std::stoi(n.get_attribute("y"));
-            }
-
-            // Remove all html tags
-            std::string::size_type sp;
-            while ((sp = body.find('<')) != std::string::npos)
-            {
-                std::string::size_type ep{ body.find('>') };
-                if (ep == std::string::npos)
-                    break;
-                body.erase(sp, ep + 1 - sp);
-            }
-
-            decode_html_entities_utf8(body.data(), nullptr);
-            m_Notes.emplace_back(body, w, h, x, y);
-        }
-    }
-    catch (...)
-    {
-    }
+    m_Notes = m_Site->parse_note_data(m_NotesCurler.get_data(), m_NotesCurler.get_data_size());
 
     if (m_Notes.size() > 0)
         m_SignalNotesChanged();

@@ -3,8 +3,8 @@ using namespace AhoViewer::Booru;
 
 int ImageFetcher::socket_cb(CURL*, curl_socket_t s, int action, void* userp, void* sockp)
 {
-    auto* self = static_cast<ImageFetcher*>(userp);
-    auto* fdp  = static_cast<SockInfo*>(sockp);
+    auto* self{ static_cast<ImageFetcher*>(userp) };
+    auto* fdp{ static_cast<SockInfo*>(sockp) };
 
     if (action == CURL_POLL_REMOVE)
     {
@@ -13,7 +13,7 @@ int ImageFetcher::socket_cb(CURL*, curl_socket_t s, int action, void* userp, voi
     }
     else
     {
-        bool need_assign = false;
+        bool need_assign{ false };
 
         if (!fdp)
         {
@@ -22,11 +22,11 @@ int ImageFetcher::socket_cb(CURL*, curl_socket_t s, int action, void* userp, voi
             fdp->chan   = Glib::IOChannel::create_from_fd(s);
         }
 
-        auto kind = static_cast<Glib::IOCondition>(((action & CURL_POLL_IN) ? Glib::IO_IN : 0) |
-                                                   ((action & CURL_POLL_OUT) ? Glib::IO_OUT : 0));
+        auto kind{ static_cast<Glib::IOCondition>(((action & CURL_POLL_IN) ? Glib::IO_IN : 0) |
+                                                  ((action & CURL_POLL_OUT) ? Glib::IO_OUT : 0)) };
 
-        Glib::RefPtr<Glib::IOSource> source = fdp->chan->create_watch(kind);
-        fdp->sockfd                         = s;
+        Glib::RefPtr<Glib::IOSource> source{ fdp->chan->create_watch(kind) };
+        fdp->sockfd = s;
 
         if (fdp->conn)
             fdp->conn.disconnect();
@@ -43,7 +43,7 @@ int ImageFetcher::socket_cb(CURL*, curl_socket_t s, int action, void* userp, voi
 
 int ImageFetcher::timer_cb(CURLM*, long timeout_ms, void* userp)
 {
-    auto* self = static_cast<ImageFetcher*>(userp);
+    auto* self{ static_cast<ImageFetcher*>(userp) };
 
     if (timeout_ms > 0)
         self->m_TimeoutConn = self->m_MainContext->signal_timeout().connect(
@@ -56,7 +56,7 @@ int ImageFetcher::timer_cb(CURLM*, long timeout_ms, void* userp)
     return 0;
 }
 
-ImageFetcher::ImageFetcher(const int max_cons)
+ImageFetcher::ImageFetcher(const bool multiplex)
     : m_MainContext(Glib::MainContext::create()),
       m_MainLoop(Glib::MainLoop::create(m_MainContext)),
       m_MultiHandle(curl_multi_init())
@@ -78,9 +78,11 @@ ImageFetcher::ImageFetcher(const int max_cons)
     curl_multi_setopt(m_MultiHandle, CURLMOPT_SOCKETDATA, this);
     curl_multi_setopt(m_MultiHandle, CURLMOPT_TIMERFUNCTION, &ImageFetcher::timer_cb);
     curl_multi_setopt(m_MultiHandle, CURLMOPT_TIMERDATA, this);
-    curl_multi_setopt(m_MultiHandle, CURLMOPT_MAX_HOST_CONNECTIONS, max_cons);
-    // Enable HTTP/2 multiplexing (this is on by default with curl >=7.62.0)
-    curl_multi_setopt(m_MultiHandle, CURLMOPT_PIPELINING, CURLPIPE_MULTIPLEX);
+
+    if (multiplex)
+        curl_multi_setopt(m_MultiHandle, CURLMOPT_PIPELINING, CURLPIPE_MULTIPLEX);
+    else
+        curl_multi_setopt(m_MultiHandle, CURLMOPT_PIPELINING, CURLPIPE_NOTHING);
 }
 
 ImageFetcher::~ImageFetcher()
@@ -90,9 +92,6 @@ ImageFetcher::~ImageFetcher()
     curl_multi_cleanup(m_MultiHandle);
 }
 
-// This is used in the Booru::Page destructor in order to
-// prevent any undefined behavior between the ImageList and this
-// while destructing each.
 void ImageFetcher::shutdown()
 {
     m_Shutdown = true;
@@ -134,7 +133,7 @@ void ImageFetcher::unpause_handle(Curler* curler)
 
 void ImageFetcher::on_handle_added()
 {
-    Curler* curler = nullptr;
+    Curler* curler{ nullptr };
     while (!m_Shutdown && m_CurlerQueue.pop(curler))
     {
         m_Curlers.push_back(curler);
@@ -147,7 +146,7 @@ void ImageFetcher::on_handle_added()
 
 void ImageFetcher::on_handle_unpause()
 {
-    Curler* curler = nullptr;
+    Curler* curler{ nullptr };
     while (!m_Shutdown && m_CurlerUnpauseQueue.pop(curler))
     {
         curler->m_Pause = false;
@@ -169,8 +168,8 @@ void ImageFetcher::remove_handle(Curler* curler)
 
 bool ImageFetcher::event_cb(curl_socket_t sockfd, Glib::IOCondition cond)
 {
-    int action =
-        (cond & Glib::IO_IN ? CURL_CSELECT_IN : 0) | (cond & Glib::IO_OUT ? CURL_CSELECT_OUT : 0);
+    int action{ (cond & Glib::IO_IN ? CURL_CSELECT_IN : 0) |
+                (cond & Glib::IO_OUT ? CURL_CSELECT_OUT : 0) };
 
     curl_multi_socket_action(m_MultiHandle, sockfd, action, &m_RunningHandles);
     read_info();
@@ -195,13 +194,13 @@ bool ImageFetcher::timeout_cb()
 void ImageFetcher::read_info()
 {
     int msgs;
-    CURLMsg* msg = nullptr;
+    CURLMsg* msg{ nullptr };
 
     while ((msg = curl_multi_info_read(m_MultiHandle, &msgs)))
     {
         if (msg->msg == CURLMSG_DONE)
         {
-            Curler* curler = nullptr;
+            Curler* curler{ nullptr };
             curl_easy_getinfo(msg->easy_handle, CURLINFO_PRIVATE, &curler);
 
             if (curler)

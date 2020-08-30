@@ -13,6 +13,13 @@ option(
 )
 
 option(
+  'libpeas',
+  type : 'feature',
+  value : 'auto',
+  description : 'Enable or disable plugin support via libpeas'
+)
+
+option(
   'libsecret',
   type : 'feature',
   value : 'auto',

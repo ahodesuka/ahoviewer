@@ -1,12 +1,12 @@
 #include "imagelist.h"
-
-#include <numeric>
-#include <thread>
 using namespace AhoViewer;
 
 #include "booru/image.h"
 #include "naturalsort.h"
 #include "settings.h"
+
+#include <numeric>
+#include <thread>
 
 ImageList::ImageList(Widget* const w)
     : m_Widget{ w },
@@ -65,7 +65,7 @@ void ImageList::clear()
 // The parameter index is used when reopening an archive at a given index.
 bool ImageList::load(const std::string path, std::string& error, int index)
 {
-    std::unique_ptr<Archive> archive = nullptr;
+    std::unique_ptr<Archive> archive{ nullptr };
     std::string dir_path;
 
     if (Glib::file_test(path, Glib::FILE_TEST_EXISTS))
@@ -94,8 +94,8 @@ bool ImageList::load(const std::string path, std::string& error, int index)
         return false;
     }
 
-    std::vector<std::string> entries =
-        archive ? archive->get_entries(Archive::IMAGES) : get_entries<Image>(dir_path);
+    std::vector<std::string> entries{ archive ? archive->get_entries(Archive::IMAGES)
+                                              : get_entries<Image>(dir_path) };
 
     // No valid images in this directory
     if (entries.empty())
@@ -433,7 +433,7 @@ void ImageList::update_cache()
     if (!m_Cache.empty())
     {
         // Copy the cache to preserve the desired sort order
-        auto tmp = cache;
+        auto tmp{ cache };
         std::sort(m_Cache.begin(), m_Cache.end());
         std::sort(tmp.begin(), tmp.end());
         std::set_difference(
