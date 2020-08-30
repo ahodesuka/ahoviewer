@@ -249,6 +249,8 @@ void Application::on_window_added(Gtk::Window* w)
 void Application::on_window_removed(Gtk::Window* w)
 {
     Gtk::Application::on_window_removed(w);
+    delete w;
+
     auto windows{ get_windows() };
 
     // Set a new original window if the previous was closed
