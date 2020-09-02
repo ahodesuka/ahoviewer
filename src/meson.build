@@ -18,6 +18,7 @@ sources = [ ]
 
 incdirs += include_directories('../ext/entities')
 incdirs += include_directories('../ext/date/include')
+incdirs += include_directories('../ext/json')
 
 ahoviewer_cpp_args += [
   '-DHAS_REMOTE_API=1',

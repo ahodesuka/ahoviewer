@@ -121,6 +121,10 @@ namespace AhoViewer::Booru
         bool m_NewAccount{ false }, m_UseSamples;
         uint64_t m_CookieTS{ 0 };
         std::set<Tag> m_Tags;
+
+        std::unordered_map<std::string, Tag::Type> m_MoebooruTags;
+        std::mutex m_TagMutex;
+
         int m_MaxConnections{ 0 };
         CURLSH* m_ShareHandle;
         std::map<curl_lock_data, std::mutex> m_MutexMap;

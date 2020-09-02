@@ -183,7 +183,7 @@ void ahoviewer_note_unref(AhoviewerNote* note)
     if (note->ref_count > 0)
         return;
 
-    if (note->body)
+    if (G_LIKELY(note->body))
         g_free(note->body);
 
     g_slice_free(AhoviewerNote, note);
@@ -243,7 +243,7 @@ void ahoviewer_tag_unref(AhoviewerTag* tag)
     if (tag->ref_count > 0)
         return;
 
-    if (tag->tag)
+    if (G_LIKELY(tag->tag))
         g_free(tag->tag);
 
     g_slice_free(AhoviewerTag, tag);
@@ -334,7 +334,7 @@ const gchar* ahoviewer_site_activatable_get_icon_url(AhoviewerSiteActivatable* a
     g_return_val_if_fail(AHOVIEWER_IS_SITE_ACTIVATABLE(activatable), NULL);
 
     iface = AHOVIEWER_SITE_ACTIVATABLE_GET_IFACE(activatable);
-    if (iface->get_icon_url)
+    if (G_LIKELY(iface->get_icon_url))
         return iface->get_icon_url(activatable, url);
 
     return url;

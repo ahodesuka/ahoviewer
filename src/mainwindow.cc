@@ -902,7 +902,7 @@ void MainWindow::set_sensitives()
     bool hide_all{ Glib::RefPtr<Gtk::ToggleAction>::cast_static(
                        m_ActionGroup->get_action("ToggleHideAll"))
                        ->get_active() };
-    static const std::array ui_names{
+    static constexpr std::array ui_names{
         "ToggleMenuBar",
         "ToggleStatusBar",
         "ToggleBooruBrowser",
@@ -911,7 +911,7 @@ void MainWindow::set_sensitives()
     for (const std::string& s : ui_names)
         m_ActionGroup->get_action(s)->set_sensitive(!hide_all);
 
-    static const std::array action_names{
+    static constexpr std::array action_names{
         "NextImage", "PreviousImage", "FirstImage", "LastImage", "ToggleSlideshow",
     };
 

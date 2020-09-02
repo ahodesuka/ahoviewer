@@ -24,6 +24,7 @@ extern "C"
 #include <glib/gstdio.h>
 #include <gtkmm.h>
 #include <iostream>
+#include <json.hpp>
 #include <utility>
 
 #ifdef HAVE_LIBSECRET
@@ -64,6 +65,31 @@ const std::map<Type, std::string> Site::RegisterURI{
     { Type::MOEBOORU, "/user/signup" },
     { Type::DANBOORU, "/user/signup" },
 };
+
+static constexpr std::array<std::pair<int, Tag::Type>, 6> gb_types{ {
+    { 0, Tag::Type::GENERAL },
+    { 1, Tag::Type::ARTIST },
+    { 3, Tag::Type::COPYRIGHT },
+    { 4, Tag::Type::CHARACTER },
+    { 5, Tag::Type::METADATA },
+    { 6, Tag::Type::DEPRECATED },
+} };
+static constexpr std::array<std::pair<int, Tag::Type>, 6> yd_types{ {
+    { 0, Tag::Type::GENERAL },
+    { 1, Tag::Type::ARTIST },
+    { 3, Tag::Type::COPYRIGHT },
+    { 4, Tag::Type::CHARACTER },
+    { 5, Tag::Type::COPYRIGHT }, // circle
+    { 6, Tag::Type::METADATA },
+} };
+static constexpr std::array<std::pair<int, Tag::Type>, 6> kc_types{ {
+    { 0, Tag::Type::GENERAL },
+    { 1, Tag::Type::ARTIST },
+    { 3, Tag::Type::COPYRIGHT },
+    { 4, Tag::Type::CHARACTER },
+    { 5, Tag::Type::METADATA },
+    { 6, Tag::Type::COPYRIGHT }, // circle
+} };
 
 // This is a workaround to have a private/protected constructor
 // and still be able to use make_shared.
@@ -339,6 +365,64 @@ Site::Site(std::string name,
             std::copy(std::istream_iterator<Tag>(ifs),
                       std::istream_iterator<Tag>(),
                       std::inserter(m_Tags, m_Tags.begin()));
+    }
+
+    // Download /tag/summary.json, konachan has 2 tld's .com for nsfw and .net for only sfw
+    if (m_Type == Type::MOEBOORU && (m_Url.find("yande.re") != std::string::npos ||
+                                     m_Url.find("konachan.") != std::string::npos))
+    {
+        std::thread{ [&]() {
+            using nlohmann::json;
+            using nlohmann::detail::parse_error;
+            Curler curler{ m_Url + "/tag/summary.json", m_ShareHandle };
+
+            if (curler.perform())
+            {
+                try
+                {
+                    json j{ json::parse(curler.get_data()) };
+
+                    std::string data{ j["data"].get<std::string>() }, line;
+                    std::istringstream iss{ data };
+
+                    auto& types{ m_Url.find("yande.re") != std::string::npos ? yd_types
+                                                                             : kc_types };
+
+                    std::scoped_lock lock{ m_TagMutex };
+                    while (std::getline(iss, line, ' '))
+                    {
+                        int i{ -1 };
+                        iss >> i;
+
+                        if (i == -1)
+                            break;
+
+                        Tag::Type type{ Tag::Type::UNKNOWN };
+                        auto it{ std::find_if(types.begin(), types.end(), [i](const auto& t) {
+                            return t.first == i;
+                        }) };
+                        if (it != types.end())
+                            type = it->second;
+
+                        std::string tags, tag;
+                        iss >> tags;
+
+                        // Remove the surrounding back ticks
+                        tags = tags.substr(1, tags.length() - 2);
+
+                        std::istringstream tags_iss{ tags };
+
+                        while (std::getline(tags_iss, tag, '`'))
+                            m_MoebooruTags.emplace(tag, type);
+                    }
+                }
+                catch (const parse_error& e)
+                {
+                    std::cerr << "Failed to parse summary.json for " << m_Name << std::endl
+                              << "  " << e.what() << std::endl;
+                }
+            }
+        } }.detach();
     }
 }
 
@@ -681,9 +765,22 @@ Site::parse_post_data(unsigned char* data, const size_t size)
                     }
                 }
 
-                std::unordered_map<std::string, Tag::Type> posts_tags;
+                // Use a pointer here to prevent copying m_MoebooruTags for no reason when used
+                std::unordered_map<std::string, Tag::Type> cpy;
+                std::unordered_map<std::string, Tag::Type>* posts_tags{ nullptr };
+
                 if (m_Url.find("gelbooru.com") != std::string::npos)
-                    posts_tags = get_posts_tags(posts_xml);
+                {
+                    cpy        = get_posts_tags(posts_xml);
+                    posts_tags = &cpy;
+                }
+                else if (m_Url.find("yande.re") != std::string::npos ||
+                         m_Url.find("konachan.") != std::string::npos)
+                {
+                    // The tag map could still be loading at this point, although it is unlikely
+                    std::scoped_lock lock{ m_TagMutex };
+                    posts_tags = &m_MoebooruTags;
+                }
 
                 for (const xml::Node& post : posts_xml.get_children())
                 {
@@ -736,16 +833,16 @@ Site::parse_post_data(unsigned char* data, const size_t size)
                         std::istringstream ss{ post.get_attribute("tags") };
 
                         // Use the posts_tags from gelbooru to find the tag type for every tag
-                        if (!posts_tags.empty())
+                        if (posts_tags && !posts_tags->empty())
                         {
                             std::transform(std::istream_iterator<std::string>{ ss },
                                            std::istream_iterator<std::string>{},
                                            std::back_inserter(tags),
                                            [&posts_tags](const std::string& t) {
-                                               auto it{ posts_tags.find(t) };
+                                               auto it{ posts_tags->find(t) };
 
                                                return Tag(t,
-                                                          it != posts_tags.end()
+                                                          it != posts_tags->end()
                                                               ? it->second
                                                               : Tag::Type::UNKNOWN);
                                            });
@@ -759,13 +856,13 @@ Site::parse_post_data(unsigned char* data, const size_t size)
                         }
                     }
 
-                    // This makes this function not thread-safe, but realistically you're not going
-                    // to be calling this more than once at the same time unless you have 4 hands
-                    // and 2 mice/kbs
+                    // This makes this function not thread-safe, but realistically you're not
+                    // going to be calling this more than once at the same time
                     add_tags(tags);
 
                     // Prepends either the site url or https (not sure if any sites give links
-                    // without a protocol), or does nothing to the url if it doesnt start with a /
+                    // without a protocol), or does nothing to the url if it doesnt start with a
+                    // /
                     static const auto ensure_url = [&](std::string& url) {
                         if (url[0] == '/')
                         {
@@ -787,7 +884,7 @@ Site::parse_post_data(unsigned char* data, const size_t size)
                     if (m_Type == Type::MOEBOORU)
                         has_notes = post.get_attribute("last_noted_at") != "0";
                     else if (m_Type == Type::DANBOORU_V2)
-                        has_notes = post.get_value("last-noted-at") != "";
+                        has_notes = !post.get_value("last-noted-at").empty();
                     else
                         has_notes = post.get_attribute("has_notes") == "true";
 
@@ -991,14 +1088,6 @@ std::unordered_map<std::string, Tag::Type> Site::get_posts_tags(const xml::Docum
 
     static const auto tag_task = [](const std::string& url, const std::string& t) {
         static const std::string tag_uri{ "/index.php?page=dapi&s=tag&q=index&limit=0&names=%1" };
-        static constexpr std::array<std::pair<int, Tag::Type>, 6> gb_types{ {
-            { 0, Tag::Type::GENERAL },
-            { 1, Tag::Type::ARTIST },
-            { 3, Tag::Type::COPYRIGHT },
-            { 4, Tag::Type::CHARACTER },
-            { 5, Tag::Type::METADATA },
-            { 6, Tag::Type::DEPRECATED },
-        } };
         Curler c{ url + Glib::ustring::compose(tag_uri, t) };
         TagMap tags;
         if (c.perform())

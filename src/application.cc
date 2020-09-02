@@ -220,8 +220,7 @@ void Application::on_startup()
 
     Gtk::Application::on_startup();
 
-    std::string cache_dir{ Glib::build_filename(Glib::get_user_cache_dir(), PACKAGE, "tzdata") };
-    date::set_install(cache_dir);
+    date::set_install(Glib::build_filename(Glib::get_user_cache_dir(), PACKAGE, "tzdata"));
     std::thread{ []() {
         try
         {
