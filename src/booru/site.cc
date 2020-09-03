@@ -380,7 +380,7 @@ Site::Site(std::string name,
             {
                 try
                 {
-                    json j{ json::parse(curler.get_data()) };
+                    json j = json::parse(curler.get_data());
 
                     std::string data{ j["data"].get<std::string>() }, line;
                     std::istringstream iss{ data };
