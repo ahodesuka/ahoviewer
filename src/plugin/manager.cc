@@ -89,6 +89,9 @@ Manager::Manager() : m_Engine{ peas_engine_get_default() }
 
 Manager::~Manager()
 {
+    m_WindowPlugins.clear();
+    m_SitePlugins.clear();
+
     g_object_unref(m_SiteExtensionSet);
     g_object_unref(m_WindowExtensionSet);
     g_object_unref(m_Engine);
