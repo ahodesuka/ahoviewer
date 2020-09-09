@@ -67,7 +67,7 @@ namespace AhoViewer::Booru
             auto my_zone{ date::make_zoned(date::current_zone(), t) };
             return date::format("%c", my_zone);
         }
-        // current_zone will throw if no timezone data is available, this will fallback
+        // current_zone will throw if timezone data is unavailable, this will fallback
         // and format dates with in UTC
         catch (const std::runtime_error& e)
         {

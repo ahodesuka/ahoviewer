@@ -213,7 +213,7 @@ void SiteEditor::on_name_edited(const std::string& p, const std::string& text)
     std::string name{ text };
 
     // make sure the site name is unique
-    for (size_t i{ 1 }; !is_name_unique(iter, name); ++i)
+    for (size_t i = 1; !is_name_unique(iter, name); ++i)
         name = text + std::to_string(i);
 
     iter->set_value(m_Columns.name, name);

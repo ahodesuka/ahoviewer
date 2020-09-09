@@ -909,24 +909,21 @@ Site::parse_post_data(unsigned char* data, const size_t size)
                             std::cerr << "Failed to parse date '" << date << "' on site " << m_Name
                                       << std::endl;
                     }
+                    // Moebooru provides unix timestamp
+                    else if (m_Type == Type::MOEBOORU)
+                    {
+                        t = static_cast<date::sys_seconds>(
+                            std::chrono::duration<long long>(std::stoll(date)));
+                    }
+                    // Gelbooru, Danbooru "%a %b %d %T %z %Y"
                     else
                     {
-                        // Moebooru provides unix timestamp
-                        if (m_Type == Type::MOEBOORU)
-                        {
-                            t = static_cast<date::sys_seconds>(
-                                std::chrono::duration<long long>(std::stoll(date)));
-                        }
-                        // Gelbooru, Danbooru "%a %b %d %T %z %Y"
-                        else
-                        {
-                            std::istringstream stream{ date };
-                            stream >> date::parse("%a %b %d %T %z %Y", t);
+                        std::istringstream stream{ date };
+                        stream >> date::parse("%a %b %d %T %z %Y", t);
 
-                            if (stream.fail())
-                                std::cerr << "Failed to parse date '" << date << "' on site "
-                                          << m_Name << std::endl;
-                        }
+                        if (stream.fail())
+                            std::cerr << "Failed to parse date '" << date << "' on site " << m_Name
+                                      << std::endl;
                     }
 
                     PostInfo post_info{
@@ -1072,7 +1069,7 @@ std::unordered_map<std::string, Tag::Type> Site::get_posts_tags(const xml::Docum
     std::vector<std::string> split_tags;
     std::string::iterator it, last_it{ tags.begin() };
 
-    for (size_t i{ 0 }; i < splits_needed; ++i)
+    for (size_t i = 0; i < splits_needed; ++i)
     {
         // Find the last encoded space before max_query_size * (i+1)
         it = std::find_end(

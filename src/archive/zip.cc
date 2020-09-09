@@ -76,7 +76,7 @@ std::vector<std::string> Zip::get_entries(const FileType t) const
 
     if (zip)
     {
-        for (zip_int64_t i{ 0 }, n{ zip_get_num_entries(zip, 0) }; i < n; ++i)
+        for (zip_int64_t i = 0, n = zip_get_num_entries(zip, 0); i < n; ++i)
         {
             struct zip_stat st;
             zip_stat_init(&st);
