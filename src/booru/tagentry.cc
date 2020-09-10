@@ -39,11 +39,17 @@ void TagEntry::on_grab_focus()
 // Finds matching tags in the m_Tags set and adds them to the model
 void TagEntry::on_text_changed()
 {
+    if (get_text().empty())
+        return;
+
     int spos{ get_position() };
 
     size_t pos{ get_text().substr(0, spos).find_last_of(' ') };
     std::string key{ pos == std::string::npos ? get_text().substr(0, spos + 1)
                                               : get_text().substr(pos + 1, spos - pos) };
+
+    if (key.empty())
+        return;
 
     if (key.back() == ' ')
         key.pop_back();
