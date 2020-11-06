@@ -83,6 +83,7 @@ namespace AhoViewer
         void on_first_image();
         void on_toggle_slideshow();
         void on_save_image();
+        void on_save_image_as();
         // }}}
 
         static PreferencesDialog* m_PreferencesDialog;

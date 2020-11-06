@@ -606,7 +606,12 @@ void MainWindow::create_actions()
                        sigc::mem_fun(m_BooruBrowser, &Booru::Browser::on_new_tab));
     m_ActionGroup->add(
         Gtk::Action::create(
-            "SaveImage", Gtk::Stock::SAVE_AS, _("Save Image as..."), _("Save the selected image")),
+            "SaveImageAs", Gtk::Stock::SAVE_AS, _("Save Image as..."), _("Save the selected image with file chooser")),
+        Gtk::AccelKey(Settings.get_keybinding("BooruBrowser", "SaveImageAs")),
+        sigc::mem_fun(*this, &MainWindow::on_save_image_as));
+    m_ActionGroup->add(
+        Gtk::Action::create(
+            "SaveImage", Gtk::Stock::SAVE, _("Save Image"), _("Save the selected image")),
         Gtk::AccelKey(Settings.get_keybinding("BooruBrowser", "SaveImage")),
         sigc::mem_fun(*this, &MainWindow::on_save_image));
     m_ActionGroup->add(
@@ -1425,6 +1430,42 @@ void MainWindow::on_toggle_slideshow()
 }
 
 void MainWindow::on_save_image()
+{
+    const Booru::Page* page{ m_BooruBrowser->get_active_page() };
+    bool archive{ !m_LocalImageList->empty() && m_LocalImageList == m_ActiveImageList &&
+                  m_LocalImageList->from_archive() },
+        booru{ page && page->get_imagelist() == m_ActiveImageList };
+
+    if (booru)
+    {
+        m_BooruBrowser->on_save_image();
+    }
+    else if (archive)
+    {
+        const auto image{ std::static_pointer_cast<Archive::Image>(
+            m_ActiveImageList->get_current()) };
+
+        if (!m_LastSavePath.empty())
+        {
+            image->save(m_LastSavePath + "/" + Glib::path_get_basename(image->get_filename()));
+        }
+        else{
+			auto dialog{ Gtk::FileChooserNative::create(
+				"Save Image As", *this, Gtk::FILE_CHOOSER_ACTION_SAVE) };
+			dialog->set_modal();
+			dialog->set_current_name(Glib::path_get_basename(image->get_filename()));
+
+			if (dialog->run() == Gtk::RESPONSE_ACCEPT)
+			{
+				std::string path = dialog->get_filename();
+				m_LastSavePath   = Glib::path_get_dirname(path);
+				image->save(path);
+			}
+        }
+    }
+}
+
+void MainWindow::on_save_image_as()
 {
     const Booru::Page* page{ m_BooruBrowser->get_active_page() };
     bool archive{ !m_LocalImageList->empty() && m_LocalImageList == m_ActiveImageList &&

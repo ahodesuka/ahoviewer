@@ -42,6 +42,7 @@ namespace AhoViewer
             void on_new_tab();
             void on_close_tab();
             void on_save_image();
+            void on_save_image_as();
             void on_save_images();
             void on_view_post() const;
             void on_copy_image_url();
