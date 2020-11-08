@@ -165,21 +165,23 @@ void Browser::on_save_image()
 
     if (!m_LastSavePath.empty())
     {
-        get_active_page()->save_image(m_LastSavePath + "/" + Glib::path_get_basename(image->get_filename()), image);
+        get_active_page()->save_image(
+            m_LastSavePath + "/" + Glib::path_get_basename(image->get_filename()), image);
     }
-    else{
-		auto* window{ static_cast<Gtk::Window*>(get_toplevel()) };
-		auto dialog{ Gtk::FileChooserNative::create(
-			"Save Image As", *window, Gtk::FILE_CHOOSER_ACTION_SAVE) };
-		dialog->set_modal();
+    else
+    {
+        auto* window{ static_cast<Gtk::Window*>(get_toplevel()) };
+        auto dialog{ Gtk::FileChooserNative::create(
+            "Save Image As", *window, Gtk::FILE_CHOOSER_ACTION_SAVE) };
+        dialog->set_modal();
 
-		dialog->set_current_name(Glib::path_get_basename(image->get_filename()));
-		if (dialog->run() == Gtk::RESPONSE_ACCEPT)
-		{
-			std::string path = dialog->get_filename();
-			m_LastSavePath   = Glib::path_get_dirname(path);
-			get_active_page()->save_image(path, image);
-		}
+        dialog->set_current_name(Glib::path_get_basename(image->get_filename()));
+        if (dialog->run() == Gtk::RESPONSE_ACCEPT)
+        {
+            std::string path = dialog->get_filename();
+            m_LastSavePath   = Glib::path_get_dirname(path);
+            get_active_page()->save_image(path, image);
+        }
     }
 }
 

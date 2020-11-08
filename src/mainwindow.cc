@@ -604,11 +604,12 @@ void MainWindow::create_actions()
     m_ActionGroup->add(Gtk::Action::create("NewTab", Gtk::Stock::ADD, _("New Tab"), _("New Tab")),
                        Gtk::AccelKey(Settings.get_keybinding("BooruBrowser", "NewTab")),
                        sigc::mem_fun(m_BooruBrowser, &Booru::Browser::on_new_tab));
-    m_ActionGroup->add(
-        Gtk::Action::create(
-            "SaveImageAs", Gtk::Stock::SAVE_AS, _("Save Image as..."), _("Save the selected image with file chooser")),
-        Gtk::AccelKey(Settings.get_keybinding("BooruBrowser", "SaveImageAs")),
-        sigc::mem_fun(*this, &MainWindow::on_save_image_as));
+    m_ActionGroup->add(Gtk::Action::create("SaveImageAs",
+                                           Gtk::Stock::SAVE_AS,
+                                           _("Save Image as..."),
+                                           _("Save the selected image with file chooser")),
+                       Gtk::AccelKey(Settings.get_keybinding("BooruBrowser", "SaveImageAs")),
+                       sigc::mem_fun(*this, &MainWindow::on_save_image_as));
     m_ActionGroup->add(
         Gtk::Action::create(
             "SaveImage", Gtk::Stock::SAVE, _("Save Image"), _("Save the selected image")),
@@ -1449,18 +1450,19 @@ void MainWindow::on_save_image()
         {
             image->save(m_LastSavePath + "/" + Glib::path_get_basename(image->get_filename()));
         }
-        else{
-			auto dialog{ Gtk::FileChooserNative::create(
-				"Save Image As", *this, Gtk::FILE_CHOOSER_ACTION_SAVE) };
-			dialog->set_modal();
-			dialog->set_current_name(Glib::path_get_basename(image->get_filename()));
+        else
+        {
+            auto dialog{ Gtk::FileChooserNative::create(
+                "Save Image As", *this, Gtk::FILE_CHOOSER_ACTION_SAVE) };
+            dialog->set_modal();
+            dialog->set_current_name(Glib::path_get_basename(image->get_filename()));
 
-			if (dialog->run() == Gtk::RESPONSE_ACCEPT)
-			{
-				std::string path = dialog->get_filename();
-				m_LastSavePath   = Glib::path_get_dirname(path);
-				image->save(path);
-			}
+            if (dialog->run() == Gtk::RESPONSE_ACCEPT)
+            {
+                std::string path = dialog->get_filename();
+                m_LastSavePath   = Glib::path_get_dirname(path);
+                image->save(path);
+            }
         }
     }
 }
