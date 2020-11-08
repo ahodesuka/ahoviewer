@@ -135,6 +135,7 @@ MainWindow::MainWindow(BaseObjectType* cobj, Glib::RefPtr<Gtk::Builder> bldr)
                                               "oliwer",
                                               "HaxtonFale",
                                               "WebFreak001",
+                                              "theKlanc",
                                           });
     }
     // }}}
