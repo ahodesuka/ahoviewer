@@ -1471,6 +1471,8 @@ void MainWindow::on_save_image()
                 m_ActiveImageList->get_current()) };
 
             image->save(m_LastSavePath + "/" + Glib::path_get_basename(image->get_filename()));
+
+            m_StatusBar->set_message(_("Saving image to ") + m_LastSavePath);
         }
         else
         {

@@ -167,6 +167,8 @@ void Browser::on_save_image()
 
         get_active_page()->save_image(
             m_LastSavePath + "/" + Glib::path_get_basename(image->get_filename()), image);
+
+        m_StatusBar->set_message(_("Saving image to ") + m_LastSavePath);
     }
     else
     {
