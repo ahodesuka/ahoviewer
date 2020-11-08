@@ -2054,6 +2054,7 @@
       <accelerator action="ScrollRight"/>
       <accelerator action="NewTab"/>
       <accelerator action="SaveImage"/>
+      <accelerator action="SaveImageAs"/>
       <accelerator action="SaveImages"/>
       <popup name="PopupMenu">
         <menuitem action="OpenFile"/>
@@ -2087,6 +2088,7 @@
       </popup>
       <popup name="BooruPopupMenu">
         <menuitem action="SaveImage"/>
+        <menuitem action="SaveImageAs"/>
         <separator/>
         <menuitem action="ViewPost"/>
         <menuitem action="CopyImageURL"/>

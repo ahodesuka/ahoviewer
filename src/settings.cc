@@ -107,7 +107,8 @@ SettingsManager::SettingsManager()
           { "BooruBrowser",
             {
                 { "NewTab", "<Primary>t" },
-                { "SaveImage", "<Primary>s" },
+                { "SaveImage", "<Shift>s" },
+                { "SaveImageAs", "<Primary>s" },
                 { "SaveImages", "<Primary><Shift>s" },
                 { "ViewPost", "<Primary><Shift>o" },
                 { "CopyImageURL", "y" },

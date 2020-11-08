@@ -52,6 +52,7 @@ namespace AhoViewer
         void set_sensitives();
         void set_booru_sensitives();
         void update_title();
+        void save_image_as();
 
         bool is_fullscreen() const;
 
@@ -83,6 +84,7 @@ namespace AhoViewer
         void on_first_image();
         void on_toggle_slideshow();
         void on_save_image();
+        void on_save_image_as();
         // }}}
 
         static PreferencesDialog* m_PreferencesDialog;
