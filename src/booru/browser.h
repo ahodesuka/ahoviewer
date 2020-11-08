@@ -86,6 +86,7 @@ namespace AhoViewer
 
             bool check_saving_page();
             void connect_image_signals(const std::shared_ptr<Image> bimage);
+            void save_image_as();
 
             std::shared_ptr<Site> get_active_site() const
             {

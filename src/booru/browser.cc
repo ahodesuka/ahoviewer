@@ -160,28 +160,17 @@ void Browser::on_save_image()
     if (get_active_page()->is_saving())
         return;
 
-    const std::shared_ptr<Image> image =
-        std::static_pointer_cast<Image>(get_active_page()->get_imagelist()->get_current());
-
     if (!m_LastSavePath.empty())
     {
+        const std::shared_ptr<Image> image{ std::static_pointer_cast<Image>(
+            get_active_page()->get_imagelist()->get_current()) };
+
         get_active_page()->save_image(
             m_LastSavePath + "/" + Glib::path_get_basename(image->get_filename()), image);
     }
     else
     {
-        auto* window{ static_cast<Gtk::Window*>(get_toplevel()) };
-        auto dialog{ Gtk::FileChooserNative::create(
-            "Save Image As", *window, Gtk::FILE_CHOOSER_ACTION_SAVE) };
-        dialog->set_modal();
-
-        dialog->set_current_name(Glib::path_get_basename(image->get_filename()));
-        if (dialog->run() == Gtk::RESPONSE_ACCEPT)
-        {
-            std::string path = dialog->get_filename();
-            m_LastSavePath   = Glib::path_get_dirname(path);
-            get_active_page()->save_image(path, image);
-        }
+        save_image_as();
     }
 }
 
@@ -190,25 +179,7 @@ void Browser::on_save_image_as()
     if (get_active_page()->is_saving())
         return;
 
-    auto* window{ static_cast<Gtk::Window*>(get_toplevel()) };
-    auto dialog{ Gtk::FileChooserNative::create(
-        "Save Image As", *window, Gtk::FILE_CHOOSER_ACTION_SAVE) };
-    dialog->set_modal();
-
-    const std::shared_ptr<Image> image =
-        std::static_pointer_cast<Image>(get_active_page()->get_imagelist()->get_current());
-
-    if (!m_LastSavePath.empty())
-        dialog->set_current_folder(m_LastSavePath);
-
-    dialog->set_current_name(Glib::path_get_basename(image->get_filename()));
-
-    if (dialog->run() == Gtk::RESPONSE_ACCEPT)
-    {
-        std::string path = dialog->get_filename();
-        m_LastSavePath   = Glib::path_get_dirname(path);
-        get_active_page()->save_image(path, image);
-    }
+    save_image_as();
 }
 
 void Browser::on_save_images()
@@ -443,6 +414,29 @@ void Browser::connect_image_signals(const std::shared_ptr<Image> bimage)
     // Update progress immediatly when switching to a downloading image
     if (bimage->m_Curler.is_active())
         bimage->on_progress();
+}
+
+void Browser::save_image_as()
+{
+    auto* window{ static_cast<Gtk::Window*>(get_toplevel()) };
+    auto dialog{ Gtk::FileChooserNative::create(
+        "Save Image As", *window, Gtk::FILE_CHOOSER_ACTION_SAVE) };
+    dialog->set_modal();
+
+    const std::shared_ptr<Image> image{ std::static_pointer_cast<Image>(
+        get_active_page()->get_imagelist()->get_current()) };
+
+    if (!m_LastSavePath.empty())
+        dialog->set_current_folder(m_LastSavePath);
+
+    dialog->set_current_name(Glib::path_get_basename(image->get_filename()));
+
+    if (dialog->run() == Gtk::RESPONSE_ACCEPT)
+    {
+        std::string path = dialog->get_filename();
+        m_LastSavePath   = Glib::path_get_dirname(path);
+        get_active_page()->save_image(path, image);
+    }
 }
 
 bool Browser::on_entry_key_press_event(GdkEventKey* e)

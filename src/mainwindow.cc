@@ -945,6 +945,7 @@ void MainWindow::set_sensitives()
     m_ActionGroup->get_action("Close")->set_sensitive(local || booru);
     m_ActionGroup->get_action("NewTab")->set_sensitive(m_BooruBrowser->get_visible());
     m_ActionGroup->get_action("SaveImage")->set_sensitive(save);
+    m_ActionGroup->get_action("SaveImageAs")->set_sensitive(save);
     m_ActionGroup->get_action("SaveImages")
         ->set_sensitive(booru && !page->get_imagelist()->empty());
     m_ActionGroup->get_action("ViewPost")->set_sensitive(booru && !page->get_imagelist()->empty());
@@ -1013,6 +1014,27 @@ void MainWindow::update_title()
     else
     {
         set_title(PACKAGE);
+    }
+}
+
+void MainWindow::save_image_as()
+{
+    auto dialog{ Gtk::FileChooserNative::create(
+        "Save Image As", *this, Gtk::FILE_CHOOSER_ACTION_SAVE) };
+    dialog->set_modal();
+
+    const auto image{ std::static_pointer_cast<Archive::Image>(m_ActiveImageList->get_current()) };
+
+    if (!m_LastSavePath.empty())
+        dialog->set_current_folder(m_LastSavePath);
+
+    dialog->set_current_name(Glib::path_get_basename(image->get_filename()));
+
+    if (dialog->run() == Gtk::RESPONSE_ACCEPT)
+    {
+        std::string path = dialog->get_filename();
+        m_LastSavePath   = Glib::path_get_dirname(path);
+        image->save(path);
     }
 }
 
@@ -1443,26 +1465,16 @@ void MainWindow::on_save_image()
     }
     else if (archive)
     {
-        const auto image{ std::static_pointer_cast<Archive::Image>(
-            m_ActiveImageList->get_current()) };
-
         if (!m_LastSavePath.empty())
         {
+            const auto image{ std::static_pointer_cast<Archive::Image>(
+                m_ActiveImageList->get_current()) };
+
             image->save(m_LastSavePath + "/" + Glib::path_get_basename(image->get_filename()));
         }
         else
         {
-            auto dialog{ Gtk::FileChooserNative::create(
-                "Save Image As", *this, Gtk::FILE_CHOOSER_ACTION_SAVE) };
-            dialog->set_modal();
-            dialog->set_current_name(Glib::path_get_basename(image->get_filename()));
-
-            if (dialog->run() == Gtk::RESPONSE_ACCEPT)
-            {
-                std::string path = dialog->get_filename();
-                m_LastSavePath   = Glib::path_get_dirname(path);
-                image->save(path);
-            }
+            save_image_as();
         }
     }
 }
@@ -1476,27 +1488,10 @@ void MainWindow::on_save_image_as()
 
     if (booru)
     {
-        m_BooruBrowser->on_save_image();
+        m_BooruBrowser->on_save_image_as();
     }
     else if (archive)
     {
-        auto dialog{ Gtk::FileChooserNative::create(
-            "Save Image As", *this, Gtk::FILE_CHOOSER_ACTION_SAVE) };
-        dialog->set_modal();
-
-        const auto image{ std::static_pointer_cast<Archive::Image>(
-            m_ActiveImageList->get_current()) };
-
-        if (!m_LastSavePath.empty())
-            dialog->set_current_folder(m_LastSavePath);
-
-        dialog->set_current_name(Glib::path_get_basename(image->get_filename()));
-
-        if (dialog->run() == Gtk::RESPONSE_ACCEPT)
-        {
-            std::string path = dialog->get_filename();
-            m_LastSavePath   = Glib::path_get_dirname(path);
-            image->save(path);
-        }
+        save_image_as();
     }
 }

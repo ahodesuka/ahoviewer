@@ -52,6 +52,7 @@ namespace AhoViewer
         void set_sensitives();
         void set_booru_sensitives();
         void update_title();
+        void save_image_as();
 
         bool is_fullscreen() const;
 
