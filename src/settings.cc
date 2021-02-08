@@ -447,7 +447,7 @@ void SettingsManager::load_keybindings()
                             keys[i.first.c_str()].exists(p->get_action_name().c_str()))
                         {
                             m_Keybindings[i.first][p->get_action_name()] =
-                                keys[i.first.c_str()][p->get_action_name()].c_str();
+                                keys[i.first.c_str()][p->get_action_name().c_str()].c_str();
                         }
                     }
                     continue;
