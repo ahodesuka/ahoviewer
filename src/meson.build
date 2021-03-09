@@ -20,8 +20,12 @@ incdirs += include_directories('../ext/entities')
 incdirs += include_directories('../ext/date/include')
 incdirs += include_directories('../ext/json')
 
+if host_machine.system() != 'windows'
+  ahoviewer_cpp_args += [
+    '-DHAS_REMOTE_API=1',
+  ]
+endif
 ahoviewer_cpp_args += [
-  '-DHAS_REMOTE_API=1',
   '-DHAS_UNCAUGHT_EXCEPTIONS=1',
 ]
 
