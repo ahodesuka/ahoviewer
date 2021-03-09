@@ -223,7 +223,8 @@ std::vector<std::shared_ptr<Site>>& SettingsManager::get_sites()
                     password{ s.exists("password") ? s["password"] : "" },
                     plugin_name{ s.exists("plugin_name") ? s["plugin_name"] : "" };
                 Type type{ static_cast<Type>(static_cast<int>(s["type"])) };
-                bool use_samples{ s["use_samples"] };
+                bool use_samples{ false };
+                s.lookupValue("use_samples", use_samples);
 
                 auto site{ Site::create(name, url, type, username, password, use_samples) };
 
