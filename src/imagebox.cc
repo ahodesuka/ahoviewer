@@ -274,6 +274,7 @@ void ImageBox::clear_image()
     m_DrawConn.disconnect();
     m_AnimConn.disconnect();
     m_GtkImage->clear();
+    m_Overlay->hide();
     m_DrawingArea->hide();
     m_Layout->set_size(0, 0);
 
@@ -678,6 +679,7 @@ void ImageBox::draw_image(bool scroll)
     {
         m_Layout->move(*m_Overlay, x, y);
         m_GtkImage->set(temp_pixbuf);
+        m_Overlay->show();
     }
 #ifdef HAVE_GSTREAMER
     else
@@ -685,13 +687,16 @@ void ImageBox::draw_image(bool scroll)
         if (!m_Playing)
         {
             m_GtkImage->clear();
+            m_Overlay->hide();
             m_DrawingArea->show();
         }
 
         m_Layout->move(*m_DrawingArea, x, y);
         m_DrawingArea->set_size_request(w, h);
+#ifndef _WIN32
         gst_video_overlay_set_render_rectangle(GST_VIDEO_OVERLAY(m_VideoSink), 0, 0, w, h);
         gst_video_overlay_expose(GST_VIDEO_OVERLAY(m_VideoSink));
+#endif // !_WIN32
     }
 #endif // HAVE_GSTREAMER
 
