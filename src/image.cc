@@ -415,7 +415,7 @@ Glib::RefPtr<Gdk::Pixbuf> Image::create_webm_thumbnail([[maybe_unused]] int w,
                                                        [[maybe_unused]] int h) const
 {
     Glib::RefPtr<Gdk::Pixbuf> pixbuf;
-#ifdef HAVE_GSTREAMER
+#if defined(HAVE_GSTREAMER) && !defined(_WIN32)
     gint64 dur, pos;
     GstSample* sample;
     GstMapInfo map;
@@ -447,7 +447,7 @@ Glib::RefPtr<Gdk::Pixbuf> Image::create_webm_thumbnail([[maybe_unused]] int w,
     gst_element_get_state(pipeline, nullptr, nullptr, 5 * GST_SECOND);
     gst_element_query_duration(pipeline, GST_FORMAT_TIME, &dur);
 
-    static auto is_pixbuf_interesting = [](Glib::RefPtr<Gdk::Pixbuf>& p) {
+    static auto is_pixbuf_interesting = [](const Glib::RefPtr<Gdk::Pixbuf>& p) {
         size_t len  = p->get_rowstride() * p->get_height();
         guint8* buf = p->get_pixels();
         double xbar = 0.0, variance = 0.0;
@@ -474,7 +474,7 @@ Glib::RefPtr<Gdk::Pixbuf> Image::create_webm_thumbnail([[maybe_unused]] int w,
                                      pos))
             break;
 
-        g_signal_emit_by_name(sink, "pull-preroll", &sample, NULL);
+        g_signal_emit_by_name(sink, "pull-preroll", &sample, nullptr);
 
         if (sample)
         {
@@ -495,12 +495,15 @@ Glib::RefPtr<Gdk::Pixbuf> Image::create_webm_thumbnail([[maybe_unused]] int w,
             gst_structure_get_int(s, "height", &h);
 
             buffer = gst_sample_get_buffer(sample);
-            gst_buffer_map(buffer, &map, GST_MAP_READ);
-            pixbuf = Gdk::Pixbuf::create_from_data(
-                map.data, Gdk::COLORSPACE_RGB, false, 8, w, h, GST_ROUND_UP_4(w * 3));
 
-            /* save the pixbuf */
-            gst_buffer_unmap(buffer, &map);
+            if (gst_buffer_map(buffer, &map, GST_MAP_READ))
+            {
+                pixbuf = Gdk::Pixbuf::create_from_data(
+                    map.data, Gdk::COLORSPACE_RGB, false, 8, w, h, GST_ROUND_UP_4(w * 3));
+
+                gst_buffer_unmap(buffer, &map);
+            }
+
             gst_sample_unref(sample);
 
             if (dur == -1 || is_pixbuf_interesting(pixbuf))
@@ -511,7 +514,7 @@ Glib::RefPtr<Gdk::Pixbuf> Image::create_webm_thumbnail([[maybe_unused]] int w,
     gst_object_unref(sink);
     gst_element_set_state(pipeline, GST_STATE_NULL);
     gst_object_unref(pipeline);
-#endif // HAVE_GSTREAMER
+#endif // defined(HAVE_GSTREAMER) && !defined(_WIN32)
     return pixbuf;
 }
 
