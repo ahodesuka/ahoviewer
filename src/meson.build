@@ -54,34 +54,36 @@ if libpeas.found()
   ]
 
   # Dummy executable that gir needs
-  gir_dummy = executable(
-    'gir_dummy',
-    sources : [
-      plugin_sources,
-      'plugin/gir-dummy.c',
-    ],
-    c_args : [ '-DGIR_DUMMY' ],
-    dependencies : [ libpeas, gtk ],
-    install : false,
-  )
+  if host_machine.system() != 'windows'
+    gir_dummy = executable(
+      'gir_dummy',
+      sources : [
+        plugin_sources,
+        'plugin/gir-dummy.c',
+      ],
+      c_args : [ '-DGIR_DUMMY' ],
+      dependencies : [ libpeas, gtk ],
+      install : false,
+    )
 
-  gnome.generate_gir(
-    gir_dummy,
-    sources : [
-      plugin_sources,
-      'plugin/gir-dummy.c',
-    ],
-    namespace : 'Ahoviewer',
-    nsversion : '1.0',
-    includes : [
-      'GObject-2.0',
-      'Gio-2.0',
-      'Gtk-3.0',
-    ],
-    symbol_prefix : 'ahoviewer',
-    identifier_prefix : 'Ahoviewer',
-    install : true,
-  )
+    gnome.generate_gir(
+      gir_dummy,
+      sources : [
+        plugin_sources,
+        'plugin/gir-dummy.c',
+      ],
+      namespace : 'Ahoviewer',
+      nsversion : '1.0',
+      includes : [
+        'GObject-2.0',
+        'Gio-2.0',
+        'Gtk-3.0',
+      ],
+      symbol_prefix : 'ahoviewer',
+      identifier_prefix : 'Ahoviewer',
+      install : true,
+    )
+  endif
 
   sources += [
     'plugin/siteactivatable.c',
