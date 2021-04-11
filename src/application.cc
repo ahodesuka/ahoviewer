@@ -85,34 +85,6 @@ Application::Application()
 }
 #endif // HAVE_LIBPEAS
 {
-    // Disgusting win32 api to start dbus-daemon and make it close when
-    // the ahoviewer process ends
-#ifdef _WIN32
-    HANDLE job                                = CreateJobObject(NULL, NULL);
-    JOBOBJECT_EXTENDED_LIMIT_INFORMATION jeli = { 0 };
-    PROCESS_INFORMATION pi                    = { 0 };
-    STARTUPINFO si                            = { 0 };
-    char cmd[]                                = "dbus-daemon.exe --session";
-
-    jeli.BasicLimitInformation.LimitFlags = JOB_OBJECT_LIMIT_KILL_ON_JOB_CLOSE;
-    SetInformationJobObject(job, JobObjectExtendedLimitInformation, &jeli, sizeof(jeli));
-    si.cb = sizeof(si);
-
-    if (CreateProcess(NULL,
-                      cmd,
-                      NULL,
-                      NULL,
-                      FALSE,
-                      CREATE_NO_WINDOW | CREATE_SUSPENDED | CREATE_BREAKAWAY_FROM_JOB,
-                      NULL,
-                      NULL,
-                      &si,
-                      &pi))
-    {
-        AssignProcessToJobObject(job, pi.hProcess);
-        ResumeThread(pi.hThread);
-    }
-#endif // _WIN32
     // The ImageBox needs this, disabling it is silly unless proven otherwise
     Glib::setenv("GTK_OVERLAY_SCROLLING", "", true);
     Glib::set_application_name(PACKAGE);
