@@ -1165,7 +1165,7 @@ void MainWindow::on_open_file_dialog()
         std::string path{ m_LocalImageList->from_archive()
                               ? m_LocalImageList->get_archive().get_path()
                               : m_LocalImageList->get_current()->get_path() };
-        dialog->set_filename(path);
+        dialog->set_current_folder(Glib::path_get_dirname(path));
     }
 
     if (dialog->run() == Gtk::RESPONSE_ACCEPT)
