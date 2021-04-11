@@ -219,7 +219,7 @@ void Image::load_pixbuf(Glib::RefPtr<Gio::Cancellable> c)
             {
                 p = Gdk::Pixbuf::create_from_stream(file->read(), c);
             }
-            catch (const Gdk::PixbufError& e)
+            catch (const Glib::Error& e)
             {
                 std::cerr << "Failed to load pixbuf from file '" << m_Path << "'" << std::endl
                           << e.what() << std::endl;
