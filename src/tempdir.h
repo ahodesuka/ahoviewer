@@ -80,6 +80,10 @@ namespace AhoViewer
 
             std::string tmpl(Glib::build_filename(Glib::get_tmp_dir(), PACKAGE ".XXXXXX"));
             m_Path = g_mkdtemp(const_cast<char*>(tmpl.c_str()));
+#ifdef _WIN32
+            // Get around NTFS 260 character path limit
+            m_Path = "\\\\?\\" + m_Path;
+#endif
         }
         ~TempDir() { remove_dir(m_Path); }
 
