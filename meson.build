@@ -73,7 +73,7 @@ if not libunrar.found() and not get_option('libunrar').disabled()
   elif cpp.has_header('dll.hpp', args : '-I/usr/include/unrar')
     unrar_dll_hpp = true
   endif
-  if not libunrar_dll_hpp and not unrar_dll_hpp and get_option('libunrar').enabled()
+  if not libunrar_dll_hpp and not unrar_dll_hpp and get_option('libunrar').enabled() and host_machine.system() != 'windows'
     error('libunrar enabled but was not found')
   endif
 endif

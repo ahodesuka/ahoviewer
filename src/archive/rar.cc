@@ -11,7 +11,11 @@ using namespace AhoViewer;
 #define _UNIX
 #endif // _UNIX
 
+#ifndef _WIN32
 #include <dll.hpp>
+#else
+#include <unrar/dll.hpp>
+#endif // _WIN32
 
 Rar::Rar(const std::string& path, const std::string& ex_dir) : Archive::Archive(path, ex_dir) { }
 
