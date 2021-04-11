@@ -175,7 +175,10 @@ ImageBox::ImageBox(BaseObjectType* cobj, const Glib::RefPtr<Gtk::Builder>& bldr)
             gst_element_set_state(m_Playbin, GST_STATE_READY);
 
             // This isn't needed right away and causes an input focus issue on Windows
-            Glib::signal_idle().connect_once([&]() { m_DrawingArea->hide(); });
+            Glib::signal_idle().connect_once([&]() {
+                if (!m_Playing)
+                    m_DrawingArea->hide();
+            });
         });
 
         gst_object_ref(m_VideoSink);
