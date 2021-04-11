@@ -2,12 +2,19 @@
 using namespace AhoViewer;
 
 #include "settings.h"
+#include "util.h"
 
 #include <cctype>
 #include <giomm.h>
 #include <glib.h>
 #include <gtkmm.h>
 #include <iostream>
+
+#ifdef _WIN32
+#include <shobjidl.h>
+#include <wincodec.h>
+#include <windows.h>
+#endif // _WIN32
 
 const std::string Image::ThumbnailDir =
     Glib::build_filename(Glib::get_user_cache_dir(), "thumbnails", "normal");
@@ -514,6 +521,65 @@ Glib::RefPtr<Gdk::Pixbuf> Image::create_webm_thumbnail([[maybe_unused]] int w,
     gst_object_unref(sink);
     gst_element_set_state(pipeline, GST_STATE_NULL);
     gst_object_unref(pipeline);
+#elif defined(HAVE_GSTREAMER) && defined(_WIN32)
+    CoInitializeEx(nullptr, COINIT_MULTITHREADED);
+    HBITMAP hbmp = nullptr;
+
+    IShellItemImageFactory* pImageFactory;
+    HRESULT hr = SHCreateItemFromParsingName(
+        Util::utf8_to_utf16(m_Path).c_str(), nullptr, IID_PPV_ARGS(&pImageFactory));
+
+    if (SUCCEEDED(hr))
+    {
+        SIZE size = { ThumbnailSize, ThumbnailSize };
+
+        hr = pImageFactory->GetImage(size, SIIGBF_THUMBNAILONLY | SIIGBF_SCALEUP, &hbmp);
+
+        if (SUCCEEDED(hr))
+        {
+            guchar* bits = nullptr;
+            BITMAP bm    = { 0 };
+            GetObject(hbmp, sizeof(bm), std::addressof(bm));
+
+            auto hDC = GetDC(nullptr);
+
+            BITMAPINFO bmi              = { 0 };
+            bmi.bmiHeader.biSize        = sizeof(BITMAPINFOHEADER);
+            bmi.bmiHeader.biWidth       = bm.bmWidth;
+            bmi.bmiHeader.biHeight      = -bm.bmHeight;
+            bmi.bmiHeader.biPlanes      = 1;
+            bmi.bmiHeader.biBitCount    = 32;
+            bmi.bmiHeader.biCompression = BI_RGB;
+
+            bits = (guchar*)g_malloc0(4 * bm.bmWidth * bm.bmHeight);
+
+            GetDIBits(hDC, hbmp, 0, bm.bmHeight, bits, &bmi, DIB_RGB_COLORS);
+            ReleaseDC(nullptr, hDC);
+
+            pixbuf = Gdk::Pixbuf::create(Gdk::COLORSPACE_RGB, false, 8, bm.bmWidth, bm.bmHeight);
+            auto pixels    = pixbuf->get_pixels();
+            auto rowstride = pixbuf->get_rowstride();
+
+            for (int y = 0; y < bm.bmHeight; y++)
+            {
+                for (int x = 0; x < bm.bmWidth; x++)
+                {
+                    pixels[2] = bits[(x + y * bm.bmWidth) * 4];
+                    pixels[1] = bits[(x + y * bm.bmWidth) * 4 + 1];
+                    pixels[0] = bits[(x + y * bm.bmWidth) * 4 + 2];
+                    pixels += 3;
+                }
+                pixels += (bm.bmWidth * 3 - rowstride);
+            }
+
+            g_free(bits);
+            DeleteObject(hbmp);
+        }
+
+        pImageFactory->Release();
+    }
+
+    CoUninitialize();
 #endif // defined(HAVE_GSTREAMER) && !defined(_WIN32)
     return pixbuf;
 }
