@@ -4,44 +4,14 @@
 #include "rar.h"
 using namespace AhoViewer;
 
+#include "../util.h"
+
 // Needed for unrar's header with mingw and linux
 #ifndef _UNIX
 #define _UNIX
 #endif // _UNIX
 
-#if defined(HAVE_LIBUNRAR_DLL_HPP)
-#include <libunrar/dll.hpp>
-#elif defined(HAVE_UNRAR_DLL_HPP)
-#include <unrar/dll.hpp>
-#endif
-
-std::wstring utf8_to_utf16(const std::string& s)
-{
-    std::wstring r;
-    auto* g = reinterpret_cast<wchar_t*>(g_utf8_to_utf16(s.c_str(), -1, nullptr, nullptr, nullptr));
-
-    if (g)
-    {
-        r = g;
-        g_free(g);
-    }
-
-    return r;
-}
-std::string utf16_to_utf8(const std::wstring& s)
-{
-    std::string r;
-    gchar* g = g_utf16_to_utf8(
-        reinterpret_cast<const gunichar2*>(s.c_str()), -1, nullptr, nullptr, nullptr);
-
-    if (g)
-    {
-        r = g;
-        g_free(g);
-    }
-
-    return r;
-}
+#include <dll.hpp>
 
 Rar::Rar(const std::string& path, const std::string& ex_dir) : Archive::Archive(path, ex_dir) { }
 
@@ -53,7 +23,7 @@ bool Rar::extract(const std::string& file) const
     memset(&archive, 0, sizeof(archive));
 
 #ifdef _WIN32
-    std::wstring wPath = utf8_to_utf16(m_Path), wEPath = utf8_to_utf16(m_ExtractedPath);
+    std::wstring wPath = Util::utf8_to_utf16(m_Path), wEPath = Util::utf8_to_utf16(m_ExtractedPath);
     archive.ArcNameW = const_cast<wchar_t*>(wPath.c_str());
 #else  // !_WIN32
     archive.ArcName = const_cast<char*>(m_Path.c_str());
@@ -67,7 +37,7 @@ bool Rar::extract(const std::string& file) const
         while (RARReadHeaderEx(rar, &header) == ERAR_SUCCESS)
         {
 #ifdef _WIN32
-            std::string filename = utf16_to_utf8(header.FileNameW);
+            std::string filename = Util::utf16_to_utf8(header.FileNameW);
 #else  // !_WIN32
             std::string filename = header.FileName;
 #endif // !_WIN32
@@ -107,7 +77,7 @@ std::vector<std::string> Rar::get_entries(const FileType t) const
     memset(&archive, 0, sizeof(archive));
 
 #ifdef _WIN32
-    std::wstring wPath = utf8_to_utf16(m_Path);
+    std::wstring wPath = Util::utf8_to_utf16(m_Path);
     archive.ArcNameW   = const_cast<wchar_t*>(wPath.c_str());
 #else  // !_WIN32
     archive.ArcName = const_cast<char*>(m_Path.c_str());
@@ -122,7 +92,7 @@ std::vector<std::string> Rar::get_entries(const FileType t) const
         while (RARReadHeaderEx(rar, &header) == ERAR_SUCCESS)
         {
 #ifdef _WIN32
-            std::string filename = utf16_to_utf8(header.FileNameW);
+            std::string filename = Util::utf16_to_utf8(header.FileNameW);
 #else  // !_WIN32
             std::string filename = header.FileName;
 #endif // !_WIN32

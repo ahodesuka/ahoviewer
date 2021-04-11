@@ -122,4 +122,10 @@ namespace AhoViewer
         std::string format_date_time(const date::sys_seconds t);
         std::string get_rating_string(std::string_view rating);
     }
+
+    namespace Util
+    {
+        std::wstring utf8_to_utf16(const std::string& s);
+        std::string utf16_to_utf8(const std::wstring& s);
+    }
 }

@@ -5,6 +5,39 @@
 #include <date/tz.h>
 #include <glibmm/i18n.h>
 
+namespace AhoViewer::Util
+{
+    std::wstring utf8_to_utf16(const std::string& s)
+    {
+        std::wstring r;
+        auto* g =
+            reinterpret_cast<wchar_t*>(g_utf8_to_utf16(s.c_str(), -1, nullptr, nullptr, nullptr));
+
+        if (g)
+        {
+            r = g;
+            g_free(g);
+        }
+
+        return r;
+    }
+
+    std::string utf16_to_utf8(const std::wstring& s)
+    {
+        std::string r;
+        gchar* g = g_utf16_to_utf8(
+            reinterpret_cast<const gunichar2*>(s.c_str()), -1, nullptr, nullptr, nullptr);
+
+        if (g)
+        {
+            r = g;
+            g_free(g);
+        }
+
+        return r;
+    }
+}
+
 namespace AhoViewer::Booru
 {
     std::istream& operator>>(std::istream& in, Tag& e)

@@ -7,7 +7,7 @@ conf.set_quoted('PACKAGE', meson.project_name())
 conf.set_quoted('PACKAGE_URL', project_url)
 conf.set_quoted('PACKAGE_BUGREPORT', project_bugreport)
 
-ahoviewer_cpp_args = [ ]
+ahoviewer_cpp_args = [ '-Wno-attributes' ]
 
 deps = [
   threads, glibmm, sigcpp, gtkmm, libconfig, libxml, curl,
@@ -100,9 +100,9 @@ endif
 if libunrar.found()
   conf.set('HAVE_LIBUNRAR', 1)
   if libunrar_dll_hpp
-    conf.set('HAVE_LIBUNRAR_DLL_HPP', 1)
+    incdirs += include_directories('/usr/include/libunrar')
   elif unrar_dll_hpp
-    conf.set('HAVE_UNRAR_DLL_HPP', 1)
+    incdirs += include_directories('/usr/include/unrar')
   endif
 endif
 
