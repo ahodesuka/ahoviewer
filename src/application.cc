@@ -272,9 +272,10 @@ void Application::on_shutdown()
 
     for (auto&& i : Glib::Dir(Glib::get_tmp_dir()))
     {
+        std::string filename{ "gdbus-nonce-file-" };
         // 6 = random characters
-        if (i.find("gdbus-nonce-file-") != std::string::npos &&
-            i.length() == strlen("gdbus-nonce-file-") + 6)
+        if (i.compare(0, filename.length(), filename) == 0 &&
+            i.length() == filename.length() + 6)
             g_unlink(Glib::build_filename(tmp_dir, i).c_str());
     }
 #endif // _WIN32
