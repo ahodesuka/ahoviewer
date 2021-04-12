@@ -30,8 +30,7 @@ namespace AhoViewer
             // Make sure the directory is in the tempdir
             if (dir_path.compare(0, m_Path.length(), m_Path) == 0)
             {
-                Glib::Dir dir(dir_path);
-                for (auto&& i : dir)
+                for (auto&& i : Glib::Dir(dir_path))
                 {
                     std::string path = Glib::build_filename(dir_path, i);
                     if (Glib::file_test(path, Glib::FILE_TEST_IS_DIR))
@@ -48,15 +47,13 @@ namespace AhoViewer
         TempDir()
         {
             // Clean up previous temp directories if they exist
-            Glib::Dir dir(Glib::get_tmp_dir());
-            std::vector<std::string> dirs(dir.begin(), dir.end());
             std::string tmp_path{ Glib::get_tmp_dir() };
 #ifdef _WIN32
             // Get around NTFS 260 character path limit
             tmp_path = "\\\\?\\" + tmp_path;
 #endif
 
-            for (auto& dir : dirs)
+            for (auto&& dir : Glib::Dir(Glib::get_tmp_dir()))
             {
                 // 7 = strlen(".XXXXXX")
                 if (dir.find(PACKAGE ".") != std::string::npos && dir.length() == strlen(PACKAGE) + 7)

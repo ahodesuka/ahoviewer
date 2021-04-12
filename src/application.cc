@@ -18,6 +18,10 @@ using namespace AhoViewer;
 #include <iostream>
 #include <libxml/parser.h>
 
+#ifdef _WIN32
+#include <glib/gstdio.h>
+#endif // _WIN32
+
 #ifdef USE_OPENSSL
 #include <openssl/opensslv.h>
 #if (OPENSSL_VERSION_NUMBER < 0x10100000L)
@@ -134,6 +138,27 @@ int Application::run(int argc, char** argv)
 #ifdef HAVE_GSTREAMER
         gst_init(&argc, &argv);
 #endif // HAVE_GSTREAMER
+
+#if _WIN32
+        // Detect if windows 10 dark theme is enabled and change to my dark theme
+        DWORD value = 0, value_size = sizeof(value);
+        if (RegGetValueW(HKEY_CURRENT_USER,
+                        L"Software\\Microsoft\\Windows\\CurrentVersion\\Themes\\Personalize",
+                        L"AppsUseLightTheme", RRF_RT_REG_DWORD, nullptr, &value, &value_size) == ERROR_SUCCESS)
+        {
+            auto gtk_settings{ Gtk::Settings::get_default() };
+
+            if (value == 0)
+            {
+                // ahoka-light is the default theme for Windows binary distribution
+                if (gtk_settings->property_gtk_theme_name() == "ahoka-light")
+                    gtk_settings->property_gtk_theme_name() = "ahoka";
+
+                if (gtk_settings->property_gtk_icon_theme_name() == "ahoka-light")
+                    gtk_settings->property_gtk_icon_theme_name() = "ahoka";
+            }
+        }
+#endif // _WIN32
     }
 
     return Gtk::Application::run(argc, argv);
@@ -240,4 +265,17 @@ void Application::on_shutdown()
 {
     for (const std::shared_ptr<Booru::Site>& site : Settings.get_sites())
         site->save_tags();
+
+    // Clean up gdbus-nonce-file-XXXXXX
+#if _WIN32
+    std::string tmp_dir{ Glib::get_tmp_dir() };
+
+    for (auto&& i : Glib::Dir(Glib::get_tmp_dir()))
+    {
+        // 6 = random characters
+        if (i.find("gdbus-nonce-file-") != std::string::npos &&
+            i.length() == strlen("gdbus-nonce-file-") + 6)
+            g_unlink(Glib::build_filename(tmp_dir, i).c_str());
+    }
+#endif // _WIN32
 }
