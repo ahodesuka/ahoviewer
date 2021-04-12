@@ -47,8 +47,7 @@ namespace AhoViewer
 
         static bool is_valid(const std::string& path);
         static bool is_valid_extension(const std::string& path);
-        static std::unique_ptr<Archive> create(const std::string& path,
-                                               const std::string& parent_dir = "");
+        static std::unique_ptr<Archive> create(const std::string& path);
 
         virtual bool extract(const std::string& file) const                  = 0;
         virtual bool has_valid_files(const FileType t) const                 = 0;

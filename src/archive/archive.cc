@@ -56,17 +56,14 @@ bool Archive::is_valid_extension(const std::string& path)
     return false;
 }
 
-std::unique_ptr<Archive> Archive::create(const std::string& path, const std::string& parent_dir)
+std::unique_ptr<Archive> Archive::create(const std::string& path)
 {
     std::string dir;
     Type type = get_type(path);
 
     if (type != Type::UNKNOWN)
     {
-        dir = TempDir::get_instance().make_dir(
-            !parent_dir.empty() ? Glib::build_filename(Glib::path_get_basename(parent_dir),
-                                                       Glib::path_get_basename(path))
-                                : Glib::path_get_basename(path));
+        dir = TempDir::get_instance().make_dir();
 
         // Make sure temp directory was created
         if (!dir.empty())
