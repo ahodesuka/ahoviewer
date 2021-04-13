@@ -55,8 +55,10 @@ namespace AhoViewer
 
             for (auto&& dir : Glib::Dir(Glib::get_tmp_dir()))
             {
+                std::string filename{ PACKAGE "." };
                 // 7 = strlen(".XXXXXX")
-                if (dir.find(PACKAGE ".") != std::string::npos && dir.length() == strlen(PACKAGE) + 7)
+                if (dir.compare(0, filename.length(), filename) == 0 &&
+                    dir.length() == filename.length() + 7)
                     remove_dir(Glib::build_filename(tmp_path, dir));
             }
 
