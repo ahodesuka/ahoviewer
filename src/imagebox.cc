@@ -81,8 +81,9 @@ GstBusSyncReply ImageBox::create_window(GstBus* bus, GstMessage* msg, void* user
 
         // XXX: This is needed for waylandsink otherwise the initial draw will
         // only be black pixels
-        gst_video_overlay_set_render_rectangle(
-            GST_VIDEO_OVERLAY(self->m_VideoSink), 0, 0, 10, 10);
+        if (self->m_UsingWayland)
+            gst_video_overlay_set_render_rectangle(
+                GST_VIDEO_OVERLAY(self->m_VideoSink), 0, 0, 10, 10);
 
         gst_message_unref(msg);
         return GST_BUS_DROP;
