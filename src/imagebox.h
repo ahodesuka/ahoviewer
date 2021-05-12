@@ -106,7 +106,7 @@ namespace AhoViewer
 
         GstElement *m_Playbin{ nullptr }, *m_VideoSink{ nullptr };
         guintptr m_WindowHandle{ 0 };
-        bool m_Playing{ false };
+        bool m_Playing{ false }, m_UsingWayland{ false };
 #endif // HAVE_GSTREAMER
 
         StatusBar* m_StatusBar;

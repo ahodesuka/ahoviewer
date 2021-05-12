@@ -900,6 +900,9 @@ void MainWindow::update_widgets_visibility()
     m_ThumbnailBar->set_visible(!hide_all && thumbnail_bar_visible && !booru_browser_visible &&
                                 !m_LocalImageList->empty());
 
+    while (Glib::MainContext::get_default()->pending())
+        Glib::MainContext::get_default()->iteration(true);
+
     m_ImageBox->queue_draw_image();
     set_sensitives();
 }

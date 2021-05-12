@@ -11,25 +11,84 @@ using namespace AhoViewer;
 #ifdef HAVE_GSTREAMER
 #include <gst/audio/streamvolume.h>
 #include <gst/video/videooverlay.h>
-#if defined(GDK_WINDOWING_X11)
+#ifdef GDK_WINDOWING_X11
 #include <gdk/gdkx.h>
-#elif defined(GDK_WINDOWING_WIN32)
+#endif // GDK_WINDOWING_X11
+#ifdef GDK_WINDOWING_WAYLAND
+#include <gdk/gdkwayland.h>
+#endif // GDK_WINDOWING_WAYLAND
+#ifdef GDK_WINDOWING_WIN32
 #include <gdk/gdkwin32.h>
-#elif defined(GDK_WINDOWING_QUARTZ)
+#endif // GDK_WINDOWING_WIN32
+#ifdef GDK_WINDOWING_QUARTZ
 #include <gdk/gdkquartz.h>
-#endif
+#endif // GDK_WINDOWING_QUARTZ
+
+#ifdef GDK_WINDOWING_WAYLAND
+#define GST_WAYLAND_DISPLAY_HANDLE_CONTEXT_TYPE "GstWaylandDisplayHandleContextType"
+
+bool gst_is_wayland_display_handle_need_context_message(GstMessage* msg)
+{
+    const gchar* type = nullptr;
+
+    if (!GST_IS_MESSAGE(msg))
+        return false;
+
+    if (GST_MESSAGE_TYPE(msg) == GST_MESSAGE_NEED_CONTEXT &&
+        gst_message_parse_context_type(msg, &type))
+        return !g_strcmp0(type, GST_WAYLAND_DISPLAY_HANDLE_CONTEXT_TYPE);
+
+    return false;
+}
+
+GstContext* gst_wayland_display_handle_context_new(struct wl_display* display)
+{
+    GstContext* context =
+        gst_context_new(GST_WAYLAND_DISPLAY_HANDLE_CONTEXT_TYPE, TRUE);
+    gst_structure_set(gst_context_writable_structure(context),
+                      "handle", G_TYPE_POINTER, display, NULL);
+    return context;
+}
+#endif // GDK_WINDOWING_WAYLAND
+
 
 GstBusSyncReply ImageBox::create_window(GstBus* bus, GstMessage* msg, void* userp)
 {
-    if (!gst_is_video_overlay_prepare_window_handle_message(msg))
-        return GST_BUS_PASS;
+#ifdef GDK_WINDOWING_WAYLAND
+    GdkDisplayManager* dpm{ gdk_display_manager_get() };
+    GdkDisplay* dpy{ gdk_display_manager_get_default_display(dpm) };
 
-    auto* self = static_cast<ImageBox*>(userp);
-    gst_video_overlay_set_window_handle(GST_VIDEO_OVERLAY(self->m_VideoSink), self->m_WindowHandle);
+    if (GDK_IS_WAYLAND_DISPLAY(dpy) && gst_is_wayland_display_handle_need_context_message(msg))
+    {
+        auto* self = static_cast<ImageBox*>(userp);
+        GdkDisplay* display = self->m_DrawingArea->get_display()->gobj();
+        struct wl_display* dpy_handle = gdk_wayland_display_get_wl_display(display);
+        GstContext* ctx = gst_wayland_display_handle_context_new(dpy_handle);
 
-    gst_message_unref(msg);
+        gst_element_set_context(GST_ELEMENT(GST_MESSAGE_SRC(msg)), ctx);
 
-    return GST_BUS_DROP;
+        gst_message_unref(msg);
+        return GST_BUS_DROP;
+    }
+    else
+#endif // GDK_WINDOWING_WAYLAND
+    if (gst_is_video_overlay_prepare_window_handle_message(msg))
+    {
+        auto* self = static_cast<ImageBox*>(userp);
+
+        gst_video_overlay_set_window_handle(
+            GST_VIDEO_OVERLAY(self->m_VideoSink), self->m_WindowHandle);
+
+        // XXX: This is needed for waylandsink otherwise the initial draw will
+        // only be black pixels
+        gst_video_overlay_set_render_rectangle(
+            GST_VIDEO_OVERLAY(self->m_VideoSink), 0, 0, 10, 10);
+
+        gst_message_unref(msg);
+        return GST_BUS_DROP;
+    }
+
+    return GST_BUS_PASS;
 }
 
 gboolean ImageBox::bus_cb(GstBus*, GstMessage* msg, void* userp)
@@ -103,8 +162,11 @@ ImageBox::ImageBox(BaseObjectType* cobj, const Glib::RefPtr<Gtk::Builder>& bldr)
             std::cerr << "Invalid VideoSink setting provided '" << videosink << "'" << std::endl;
     }
 
+    GdkDisplayManager* dpm{ gdk_display_manager_get() };
+    GdkDisplay* dpy{ gdk_display_manager_get_default_display(dpm) };
+
 #ifdef GDK_WINDOWING_X11
-    if (!m_VideoSink)
+    if (GDK_IS_X11_DISPLAY(dpy) && !m_VideoSink)
     {
         m_VideoSink = create_video_sink("xvimagesink");
         // Make sure the X server has the X video extension enabled
@@ -135,11 +197,21 @@ ImageBox::ImageBox(BaseObjectType* cobj, const Glib::RefPtr<Gtk::Builder>& bldr)
                           << std::endl;
             }
         }
-    }
 
-    if (!m_VideoSink)
-        m_VideoSink = create_video_sink("ximagesink");
+        if (!m_VideoSink)
+            m_VideoSink = create_video_sink("ximagesink");
+    }
 #endif // GDK_WINDOWING_X11
+
+#ifdef GDK_WINDOWING_WAYLAND
+    if (GDK_IS_WAYLAND_DISPLAY(dpy) && !m_VideoSink)
+    {
+        m_VideoSink = create_video_sink("waylandsink");
+
+        if (m_VideoSink)
+            m_UsingWayland = true;
+    }
+#endif // GDK_WINDOWING_WAYLAND
 
 #ifdef GDK_WINDOWING_WIN32
     if (!m_VideoSink)
@@ -164,14 +236,44 @@ ImageBox::ImageBox(BaseObjectType* cobj, const Glib::RefPtr<Gtk::Builder>& bldr)
 
         // Store the window handle in order to use it in ::create_window
         m_DrawingArea->signal_realize().connect([&]() {
-#if defined(GDK_WINDOWING_X11)
-            m_WindowHandle = GDK_WINDOW_XID(m_DrawingArea->get_window()->gobj());
-#elif defined(GDK_WINDOWING_WIN32)
-            m_WindowHandle = (guintptr)GDK_WINDOW_HWND(m_DrawingArea->get_window()->gobj());
-#elif defined(GDK_WINDOWING_QUARTZ)
-            m_WindowHandle =
-                (guintptr)gdk_quartz_window_get_nsview(m_DrawingArea->get_window()->gobj());
-#endif
+            GdkDisplayManager* dpm{ gdk_display_manager_get() };
+            GdkDisplay* dpy{ gdk_display_manager_get_default_display(dpm) };
+
+#ifdef GDK_WINDOWING_X11
+            if (GDK_IS_X11_DISPLAY(dpy))
+            {
+                m_WindowHandle = GDK_WINDOW_XID(m_DrawingArea->get_window()->gobj());
+            }
+            else
+#endif // GDK_WINDOWING_X11
+#ifdef GDK_WINDOWING_WAYLAND
+            if (GDK_IS_WAYLAND_DISPLAY(dpy))
+            {
+                m_WindowHandle = (guintptr)gdk_wayland_window_get_wl_surface(
+                    m_DrawingArea->get_window()->gobj());
+            }
+            else
+#endif // GDK_WINDOWING_WAYLAND
+#ifdef GDK_WINDOWING_WIN32
+            if (GDK_IS_WIN32_DISPLAY(dpy))
+            {
+                m_WindowHandle = (guintptr)GDK_WINDOW_HWND(m_DrawingArea->get_window()->gobj());
+            }
+            else
+#endif // GDK_WINDOWING_WIN32
+#ifdef GDK_WINDOWING_QUARTZ
+            if (GDK_IS_QUARTZ_DISPLAY(dpy))
+            {
+                m_WindowHandle =
+                    (guintptr)gdk_quartz_window_get_nsview(m_DrawingArea->get_window()->gobj());
+            }
+            else
+#endif // GDK_WINDOWING_QUARTZ
+            {
+                std::cerr << "Unsupported Gtk backend" << std::endl;
+                return;
+            }
+
             gst_element_set_state(m_Playbin, GST_STATE_READY);
 
             // This isn't needed right away and causes an input focus issue on Windows
@@ -690,6 +792,9 @@ void ImageBox::draw_image(bool scroll)
 #ifdef HAVE_GSTREAMER
     else
     {
+        m_Layout->move(*m_DrawingArea, x, y);
+        m_DrawingArea->set_size_request(w, h);
+#ifndef _WIN32
         if (!m_Playing)
         {
             m_GtkImage->clear();
@@ -697,11 +802,21 @@ void ImageBox::draw_image(bool scroll)
             m_DrawingArea->show();
         }
 
-        m_Layout->move(*m_DrawingArea, x, y);
-        m_DrawingArea->set_size_request(w, h);
-#ifndef _WIN32
-        gst_video_overlay_set_render_rectangle(GST_VIDEO_OVERLAY(m_VideoSink), 0, 0, w, h);
-        gst_video_overlay_expose(GST_VIDEO_OVERLAY(m_VideoSink));
+        if (m_UsingWayland)
+        {
+            // waylandsink needs coordinates relative to the main window
+            int wx { 0 }, wy{ 0 };
+            auto* toplevel = get_toplevel();
+            m_Layout->translate_coordinates(*toplevel, 0, 0, wx, wy);
+            gst_video_overlay_set_render_rectangle(
+                GST_VIDEO_OVERLAY(m_VideoSink), wx+x, wy+y, w, h);
+            gst_video_overlay_expose(GST_VIDEO_OVERLAY(m_VideoSink));
+        }
+        else
+        {
+            gst_video_overlay_set_render_rectangle(GST_VIDEO_OVERLAY(m_VideoSink), 0, 0, w, h);
+            gst_video_overlay_expose(GST_VIDEO_OVERLAY(m_VideoSink));
+        }
 #endif // !_WIN32
     }
 #endif // HAVE_GSTREAMER
