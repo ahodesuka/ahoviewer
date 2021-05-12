@@ -793,9 +793,6 @@ void ImageBox::draw_image(bool scroll)
 #ifdef HAVE_GSTREAMER
     else
     {
-        m_Layout->move(*m_DrawingArea, x, y);
-        m_DrawingArea->set_size_request(w, h);
-#ifndef _WIN32
         if (!m_Playing)
         {
             m_GtkImage->clear();
@@ -803,6 +800,9 @@ void ImageBox::draw_image(bool scroll)
             m_DrawingArea->show();
         }
 
+        m_Layout->move(*m_DrawingArea, x, y);
+        m_DrawingArea->set_size_request(w, h);
+#ifndef _WIN32
         if (m_UsingWayland)
         {
             // waylandsink needs coordinates relative to the main window
@@ -811,7 +811,6 @@ void ImageBox::draw_image(bool scroll)
             m_Layout->translate_coordinates(*toplevel, 0, 0, wx, wy);
             gst_video_overlay_set_render_rectangle(
                 GST_VIDEO_OVERLAY(m_VideoSink), wx+x, wy+y, w, h);
-            gst_video_overlay_expose(GST_VIDEO_OVERLAY(m_VideoSink));
         }
         else
         {
