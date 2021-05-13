@@ -638,8 +638,8 @@ void MainWindow::create_actions()
         Gtk::AccelKey(Settings.get_keybinding("BooruBrowser", "SaveImages")),
         sigc::mem_fun(m_BooruBrowser, &Booru::Browser::on_save_images));
     m_ActionGroup->add(
-        Gtk::Action::create(
-            "DeleteImage", Gtk::Stock::DELETE, _("Delete Image"), _("Delete the selected image")),
+        Gtk::Action::create_with_icon_name(
+            "DeleteImage", "edit-delete", _("Delete Image"), _("Delete the selected image")),
         Gtk::AccelKey(Settings.get_keybinding("File", "DeleteImage")),
         sigc::mem_fun(*this, &MainWindow::on_delete_image));
 

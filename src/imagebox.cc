@@ -43,14 +43,12 @@ bool gst_is_wayland_display_handle_need_context_message(GstMessage* msg)
 
 GstContext* gst_wayland_display_handle_context_new(struct wl_display* display)
 {
-    GstContext* context =
-        gst_context_new(GST_WAYLAND_DISPLAY_HANDLE_CONTEXT_TYPE, TRUE);
-    gst_structure_set(gst_context_writable_structure(context),
-                      "handle", G_TYPE_POINTER, display, NULL);
+    GstContext* context = gst_context_new(GST_WAYLAND_DISPLAY_HANDLE_CONTEXT_TYPE, TRUE);
+    gst_structure_set(
+        gst_context_writable_structure(context), "handle", G_TYPE_POINTER, display, NULL);
     return context;
 }
 #endif // GDK_WINDOWING_WAYLAND
-
 
 GstBusSyncReply ImageBox::create_window(GstBus* bus, GstMessage* msg, void* userp)
 {
@@ -60,10 +58,10 @@ GstBusSyncReply ImageBox::create_window(GstBus* bus, GstMessage* msg, void* user
 
     if (GDK_IS_WAYLAND_DISPLAY(dpy) && gst_is_wayland_display_handle_need_context_message(msg))
     {
-        auto* self = static_cast<ImageBox*>(userp);
-        GdkDisplay* display = self->m_DrawingArea->get_display()->gobj();
+        auto* self                    = static_cast<ImageBox*>(userp);
+        GdkDisplay* display           = self->m_DrawingArea->get_display()->gobj();
         struct wl_display* dpy_handle = gdk_wayland_display_get_wl_display(display);
-        GstContext* ctx = gst_wayland_display_handle_context_new(dpy_handle);
+        GstContext* ctx               = gst_wayland_display_handle_context_new(dpy_handle);
 
         gst_element_set_context(GST_ELEMENT(GST_MESSAGE_SRC(msg)), ctx);
 
@@ -72,12 +70,12 @@ GstBusSyncReply ImageBox::create_window(GstBus* bus, GstMessage* msg, void* user
     }
     else
 #endif // GDK_WINDOWING_WAYLAND
-    if (gst_is_video_overlay_prepare_window_handle_message(msg))
+        if (gst_is_video_overlay_prepare_window_handle_message(msg))
     {
         auto* self = static_cast<ImageBox*>(userp);
 
-        gst_video_overlay_set_window_handle(
-            GST_VIDEO_OVERLAY(self->m_VideoSink), self->m_WindowHandle);
+        gst_video_overlay_set_window_handle(GST_VIDEO_OVERLAY(self->m_VideoSink),
+                                            self->m_WindowHandle);
 
         // XXX: This is needed for waylandsink otherwise the initial draw will
         // only be black pixels
@@ -164,7 +162,7 @@ ImageBox::ImageBox(BaseObjectType* cobj, const Glib::RefPtr<Gtk::Builder>& bldr)
     }
 
     GdkDisplayManager* dpm{ gdk_display_manager_get() };
-    GdkDisplay* dpy{ gdk_display_manager_get_default_display(dpm) };
+    [[maybe_unused]] GdkDisplay* dpy{ gdk_display_manager_get_default_display(dpm) };
 
 #ifdef GDK_WINDOWING_X11
     if (GDK_IS_X11_DISPLAY(dpy) && !m_VideoSink)
@@ -215,7 +213,7 @@ ImageBox::ImageBox(BaseObjectType* cobj, const Glib::RefPtr<Gtk::Builder>& bldr)
 #endif // GDK_WINDOWING_WAYLAND
 
 #ifdef GDK_WINDOWING_WIN32
-    if (!m_VideoSink)
+    if (GDK_IS_WIN32_DISPLAY(dpy) && !m_VideoSink)
         m_VideoSink = create_video_sink("d3dvideosink");
 #endif // GDK_WINDOWING_WIN32
 
@@ -248,7 +246,7 @@ ImageBox::ImageBox(BaseObjectType* cobj, const Glib::RefPtr<Gtk::Builder>& bldr)
             else
 #endif // GDK_WINDOWING_X11
 #ifdef GDK_WINDOWING_WAYLAND
-            if (GDK_IS_WAYLAND_DISPLAY(dpy))
+                if (GDK_IS_WAYLAND_DISPLAY(dpy))
             {
                 m_WindowHandle = (guintptr)gdk_wayland_window_get_wl_surface(
                     m_DrawingArea->get_window()->gobj());
@@ -256,14 +254,14 @@ ImageBox::ImageBox(BaseObjectType* cobj, const Glib::RefPtr<Gtk::Builder>& bldr)
             else
 #endif // GDK_WINDOWING_WAYLAND
 #ifdef GDK_WINDOWING_WIN32
-            if (GDK_IS_WIN32_DISPLAY(dpy))
+                if (GDK_IS_WIN32_DISPLAY(dpy))
             {
                 m_WindowHandle = (guintptr)GDK_WINDOW_HWND(m_DrawingArea->get_window()->gobj());
             }
             else
 #endif // GDK_WINDOWING_WIN32
 #ifdef GDK_WINDOWING_QUARTZ
-            if (GDK_IS_QUARTZ_DISPLAY(dpy))
+                if (GDK_IS_QUARTZ_DISPLAY(dpy))
             {
                 m_WindowHandle =
                     (guintptr)gdk_quartz_window_get_nsview(m_DrawingArea->get_window()->gobj());
@@ -806,11 +804,11 @@ void ImageBox::draw_image(bool scroll)
         if (m_UsingWayland)
         {
             // waylandsink needs coordinates relative to the main window
-            int wx { 0 }, wy{ 0 };
+            int wx{ 0 }, wy{ 0 };
             auto* toplevel = get_toplevel();
             m_Layout->translate_coordinates(*toplevel, 0, 0, wx, wy);
             gst_video_overlay_set_render_rectangle(
-                GST_VIDEO_OVERLAY(m_VideoSink), wx+x, wy+y, w, h);
+                GST_VIDEO_OVERLAY(m_VideoSink), wx + x, wy + y, w, h);
         }
         else
         {
