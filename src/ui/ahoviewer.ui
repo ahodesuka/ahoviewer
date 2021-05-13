@@ -1335,13 +1335,13 @@
                                   </packing>
                                 </child>
                                 <child>
-                                  <object class="GtkBox" id="SectionRowHBox6">
+                                  <object class="GtkBox" id="SectionRowHBox19">
                                     <property name="visible">True</property>
                                     <property name="can-focus">False</property>
                                     <property name="spacing">12</property>
                                     <child>
-                                      <object class="GtkCheckButton" id="SaveThumbnails">
-                                        <property name="label" translatable="yes">Save thumbnails for opened files</property>
+                                      <object class="GtkCheckButton" id="AskDeleteConfirm">
+                                        <property name="label" translatable="yes">Ask for confirmation before deleting files</property>
                                         <property name="visible">True</property>
                                         <property name="can-focus">True</property>
                                         <property name="receives-default">False</property>
@@ -1363,13 +1363,13 @@
                                   </packing>
                                 </child>
                                 <child>
-                                  <object class="GtkBox" id="SectionRowHBox19">
+                                  <object class="GtkBox" id="SectionRowHBox6">
                                     <property name="visible">True</property>
                                     <property name="can-focus">False</property>
                                     <property name="spacing">12</property>
                                     <child>
-                                      <object class="GtkCheckButton" id="AskDeleteConfirm">
-                                        <property name="label" translatable="yes">Ask for confirmation before deleting files</property>
+                                      <object class="GtkCheckButton" id="SaveThumbnails">
+                                        <property name="label" translatable="yes">Save thumbnails for opened files</property>
                                         <property name="visible">True</property>
                                         <property name="can-focus">True</property>
                                         <property name="receives-default">False</property>

@@ -341,8 +341,7 @@ void Image::trash()
     }
     catch (const Glib::Error& e)
     {
-        std::cerr << "Failed to move file to trash: " << std::endl
-                  << e.what() << std::endl;
+        std::cerr << "Failed to move file to trash: " << std::endl << e.what() << std::endl;
 
         file->remove();
     }
