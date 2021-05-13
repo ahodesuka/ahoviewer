@@ -87,13 +87,34 @@ const Glib::RefPtr<Gdk::Pixbuf>& Image::get_thumbnail(Glib::RefPtr<Gio::Cancella
             m_ThumbnailCurler.save_file(m_ThumbnailPath);
 
             m_ThumbnailLock.lock();
-            // This doesn't need to be cancellable since booru
-            // thumbnails are already small in size
-            m_ThumbnailPixbuf = create_pixbuf_at_size(m_ThumbnailPath,
-                                                      BooruThumbnailSize,
-                                                      BooruThumbnailSize,
-                                                      Gio::Cancellable::create());
+            Glib::RefPtr<Gio::File> file{ Gio::File::create_for_path(m_ThumbnailPath) };
+
+            try
+            {
+                m_UnscaledThumbnailPixbuf = Gdk::Pixbuf::create_from_stream(file->read(), c);
+            }
+            catch (...)
+            {
+                if (!c->is_cancelled())
+                    std::cerr << "Error while loading thumbnail "
+                              << m_ThumbnailPath << " for " << get_filename()
+                              << std::endl;
+            }
             m_ThumbnailLock.unlock();
+
+            // Make the actual thumbnail square by cropping/scaling the original pixbuf
+            if (m_UnscaledThumbnailPixbuf && !c->is_cancelled())
+            {
+                auto orig_width{ m_UnscaledThumbnailPixbuf->get_width() },
+                     orig_height{ m_UnscaledThumbnailPixbuf->get_height() };
+                auto m{ std::min(orig_width, orig_height) };
+                int x{ (orig_width - m) / 2 },
+                    y{ (orig_height - m) / 2 };
+
+                m_ThumbnailPixbuf = Gdk::Pixbuf::create_subpixbuf(
+                    m_UnscaledThumbnailPixbuf, x, y, m, m)->scale_simple(
+                    BooruThumbnailSize, BooruThumbnailSize, Gdk::INTERP_BILINEAR);
+            }
         }
         else if (!m_ThumbnailCurler.is_cancelled())
         {
@@ -291,15 +312,16 @@ void Image::on_finished()
     }
 
     close_loader();
+    m_UnscaledThumbnailPixbuf.reset();
 }
 
 void Image::on_area_prepared()
 {
     m_ThumbnailLock.lock_shared();
-    if (m_ThumbnailPixbuf && m_ThumbnailPixbuf != get_missing_pixbuf())
+    if (m_UnscaledThumbnailPixbuf && m_UnscaledThumbnailPixbuf != get_missing_pixbuf())
     {
         Glib::RefPtr<Gdk::Pixbuf> pixbuf = m_Loader->get_pixbuf();
-        m_ThumbnailPixbuf->composite(
+        m_UnscaledThumbnailPixbuf->composite(
             pixbuf,
             0,
             0,
@@ -307,8 +329,8 @@ void Image::on_area_prepared()
             pixbuf->get_height(),
             0,
             0,
-            static_cast<double>(pixbuf->get_width()) / m_ThumbnailPixbuf->get_width(),
-            static_cast<double>(pixbuf->get_height()) / m_ThumbnailPixbuf->get_height(),
+            static_cast<double>(pixbuf->get_width()) / m_UnscaledThumbnailPixbuf->get_width(),
+            static_cast<double>(pixbuf->get_height()) / m_UnscaledThumbnailPixbuf->get_height(),
             Gdk::INTERP_BILINEAR,
             255);
     }

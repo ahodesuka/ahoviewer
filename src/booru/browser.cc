@@ -52,8 +52,9 @@ Browser::Browser(BaseObjectType* cobj, const Glib::RefPtr<Gtk::Builder>& bldr)
     m_Notebook->signal_page_removed().connect(sigc::mem_fun(*this, &Browser::on_page_removed));
     m_Notebook->signal_page_added().connect(sigc::mem_fun(*this, &Browser::on_page_added));
 
-    // This essentially sets the minimum size to match 2 columns of a pages icon view
-    m_Notebook->set_size_request((Image::BooruThumbnailSize + IconViewItemPadding * 2) * 2, -1);
+    // This sets the minimum size to match 4 columns of a pages icon view
+    // 1.25 is some mysterious padding that gtk adds somewhere
+    m_Notebook->set_size_request((Image::BooruThumbnailSize + 1.25 + IconViewItemPadding * 2) * 4, -1);
 
     g_signal_connect(m_Notebook->gobj(), "create-window", G_CALLBACK(on_create_window), this);
 

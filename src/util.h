@@ -42,7 +42,7 @@ namespace AhoViewer
 
     namespace Booru
     {
-        static const int IconViewItemPadding{ 6 };
+        static const int IconViewItemPadding{ 2 };
         struct PostInfo
         {
             PostInfo(std::string date, std::string source, std::string rating, std::string score)

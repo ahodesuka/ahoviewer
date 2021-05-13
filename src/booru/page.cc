@@ -67,6 +67,7 @@ Page::Page()
         sigc::mem_fun(*this, &Page::on_value_changed));
 
     m_IconView->set_column_spacing(0);
+    m_IconView->set_row_spacing(0);
     m_IconView->set_margin(0);
     m_IconView->set_item_padding(IconViewItemPadding);
 

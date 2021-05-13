@@ -52,7 +52,7 @@ namespace AhoViewer::Booru
         SignalProgressType signal_progress() const { return m_SignalProgress; }
         SignalDownloadErrorType signal_download_error() const { return m_SignalDownloadError; }
 
-        static const size_t BooruThumbnailSize{ 150 };
+        static const size_t BooruThumbnailSize{ 100 };
 
     private:
         bool start_download();
@@ -75,6 +75,7 @@ namespace AhoViewer::Booru
 
         Curler m_Curler, m_ThumbnailCurler, m_NotesCurler;
         Glib::RefPtr<Gdk::PixbufLoader> m_Loader;
+        Glib::RefPtr<Gdk::Pixbuf> m_UnscaledThumbnailPixbuf;
         bool m_PixbufError{ false }, m_IsGifChecked{ false };
         std::shared_mutex m_ThumbnailLock;
 
