@@ -9,6 +9,7 @@ ThumbnailBar::ThumbnailBar(BaseObjectType* cobj, const Glib::RefPtr<Gtk::Builder
     : Gtk::ScrolledWindow(cobj)
 {
     bldr->get_widget("ThumbnailBar::TreeView", m_TreeView);
+    m_UIManager = Glib::RefPtr<Gtk::UIManager>::cast_static(bldr->get_object("UIManager"));
 
     m_VAdjust =
         Glib::RefPtr<Gtk::Adjustment>::cast_static(bldr->get_object("ThumbnailBar::VAdjust"));
@@ -18,6 +19,8 @@ ThumbnailBar::ThumbnailBar(BaseObjectType* cobj, const Glib::RefPtr<Gtk::Builder
     m_TreeView->set_size_request(Image::ThumbnailSize + 9, -1);
     m_CursorConn = m_TreeView->signal_cursor_changed().connect(
         sigc::mem_fun(*this, &ThumbnailBar::on_cursor_changed));
+    m_TreeView->signal_button_press_event().connect(
+        sigc::mem_fun(*this, &ThumbnailBar::on_button_press_event), false);
 
     // If the user scrolls the widget, this will keep scroll_to_selected from being
     // called when thumbnails are being loaded
@@ -42,6 +45,13 @@ void ThumbnailBar::set_pixbuf(const size_t index, const Glib::RefPtr<Gdk::Pixbuf
     // Keep the selected image centered while thumbnails are being added
     if (m_KeepAligned)
         scroll_to_selected();
+}
+
+void ThumbnailBar::on_realize()
+{
+    Gtk::ScrolledWindow::on_realize();
+
+    m_PopupMenu = static_cast<Gtk::Menu*>(m_UIManager->get_widget("/ThumbnailBarPopupMenu"));
 }
 
 void ThumbnailBar::on_show()
@@ -84,6 +94,28 @@ void ThumbnailBar::scroll_to_selected()
 
         get_window()->thaw_updates();
     }
+}
+
+bool ThumbnailBar::on_button_press_event(GdkEventButton* e)
+{
+    if (e->type == GDK_BUTTON_PRESS && e->button == 3)
+    {
+        Gtk::TreePath path;
+
+        if (m_TreeView->get_path_at_pos(e->x, e->y, path))
+        {
+            m_TreeView->set_cursor(path);
+            m_ScrollConn.block();
+            m_TreeView->scroll_to_row(path);
+            m_ScrollConn.unblock();
+
+            m_PopupMenu->popup_at_pointer((GdkEvent*)e);
+
+            return true;
+        }
+    }
+
+    return false;
 }
 
 void ThumbnailBar::on_cursor_changed()

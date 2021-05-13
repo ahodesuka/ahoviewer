@@ -54,6 +54,8 @@ namespace AhoViewer
         unsigned int get_gif_frame_delay() const;
         void reset_gif_animation();
 
+        void trash();
+
         Glib::Dispatcher& signal_pixbuf_changed() { return m_SignalPixbufChanged; }
         Glib::Dispatcher& signal_notes_changed() { return m_SignalNotesChanged; }
 

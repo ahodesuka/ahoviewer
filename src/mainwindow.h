@@ -85,10 +85,13 @@ namespace AhoViewer
         void on_toggle_slideshow();
         void on_save_image();
         void on_save_image_as();
+        void on_delete_image();
         // }}}
 
         static PreferencesDialog* m_PreferencesDialog;
         static Gtk::AboutDialog* m_AboutDialog;
+        static Gtk::MessageDialog* m_AskDeleteConfirmDialog;
+        static Gtk::CheckButton* m_AskDeleteConfirmCheckButton;
 
         Glib::RefPtr<Gtk::Builder> m_Builder;
         Glib::RefPtr<Gtk::ActionGroup> m_ActionGroup;

@@ -331,6 +331,23 @@ void Image::reset_gif_animation()
     m_Pixbuf.reset();
 }
 
+void Image::trash()
+{
+    auto file{ Gio::File::create_for_path(m_Path) };
+
+    try
+    {
+        file->trash();
+    }
+    catch (const Glib::Error& e)
+    {
+        std::cerr << "Failed to move file to trash: " << std::endl
+                  << e.what() << std::endl;
+
+        file->remove();
+    }
+}
+
 // This assumes data's length is at least 4
 bool Image::is_gif(const unsigned char* data)
 {

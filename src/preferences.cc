@@ -15,6 +15,11 @@ PreferencesDialog::PreferencesDialog(BaseObjectType* cobj, const Glib::RefPtr<Gt
 {
     bldr->get_widget_derived("BooruSiteEditor", m_SiteEditor);
     bldr->get_widget_derived("KeybindingEditor", m_KeybindingEditor);
+    bldr->get_widget("AskDeleteConfirm", m_AskDeleteConfirm);
+
+    m_AskDeleteConfirm->signal_toggled().connect([&] {
+        m_SignalAskDeleteConfirmChanged(m_AskDeleteConfirm->get_active());
+    });
 
     Gtk::Button* close_button{ nullptr };
     bldr->get_widget("PreferencesDialog::CloseButton", close_button);
@@ -63,9 +68,9 @@ PreferencesDialog::PreferencesDialog(BaseObjectType* cobj, const Glib::RefPtr<Gt
 
     // {{{ Check Buttons
     std::vector<std::string> check_settings = {
-        "StartFullscreen", "HideAllFullscreen",    "RememberWindowSize", "RememberWindowPos",
-        "SmartNavigation", "AutoOpenArchive",      "RememberLastFile",   "StoreRecentFiles",
-        "SaveThumbnails",  "RememberLastSavePath", "SaveImageTags",
+        "StartFullscreen", "HideAllFullscreen", "RememberWindowSize",   "RememberWindowPos",
+        "SmartNavigation", "AutoOpenArchive",   "RememberLastFile",     "StoreRecentFiles",
+        "SaveThumbnails",  "AskDeleteConfirm",  "RememberLastSavePath", "SaveImageTags",
     };
 
     for (const std::string& s : check_settings)

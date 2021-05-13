@@ -30,6 +30,7 @@ SettingsManager::SettingsManager()
           { "HideAll", false },           { "HideAllFullscreen", true },
           { "RememberWindowSize", true }, { "RememberWindowPos", true },
           { "ShowTagTypeHeaders", true }, { "AutoHideInfoBox", true },
+          { "AskDeleteConfirm", true },
       }),
       m_DefaultInts({ { "ArchiveIndex", -1 },
                       { "CacheSize", 2 },
@@ -61,6 +62,7 @@ SettingsManager::SettingsManager()
           { "File",
             {
                 { "OpenFile", "<Primary>o" },
+                { "DeleteImage", "<Shift>Delete" },
                 { "Preferences", "p" },
                 { "Close", "<Primary>w" },
                 { "Quit", "<Primary>q" },

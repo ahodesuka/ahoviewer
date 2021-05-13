@@ -91,7 +91,9 @@ The .typelib file that is compiled must be installed via ninja install, or you w
 | Toggle Slideshow                          | s               |
 | New Booru Browser Tab                     | Control+t       |
 | Save Booru Browser Tab                    | Control+Shift+s |
-| Save Current Booru Image                  | Control+s       |
+| Save Image                                | Shift+s         |
+| Save Image As                             | Control+s       |
+| Delete Image                              | Shift+Delete    |
 | Open Booru Post in Web Browser            | Control+Shift+o |
 | Copy Booru Post URL to Clipboard          | Control+y       |
 | Copy Booru Image URL to Clipboard         | y               |
