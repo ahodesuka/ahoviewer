@@ -2,6 +2,12 @@
 
 #include <glib-object.h>
 
+#ifdef _WIN32
+#define AHOVIEWER_EXPORT __declspec(dllexport)
+#else // !_WIN32
+#define AHOVIEWER_EXPORT
+#endif // !_WIN32
+
 G_BEGIN_DECLS
 
 #define AHOVIEWER_WINDOW_TYPE_ABSTRACT         (ahoviewer_window_abstract_get_type())
@@ -32,8 +38,8 @@ struct _AhoviewerWindowAbstractClass
     void (*open_file)(AhoviewerWindowAbstract* abstract, const gchar* path);
 };
 
-GType ahoviewer_window_abstract_get_type(void) G_GNUC_CONST;
+AHOVIEWER_EXPORT GType ahoviewer_window_abstract_get_type(void) G_GNUC_CONST;
 
-void ahoviewer_window_abstract_open_file(AhoviewerWindowAbstract* abstract, const gchar* path);
+AHOVIEWER_EXPORT void ahoviewer_window_abstract_open_file(AhoviewerWindowAbstract* abstract, const gchar* path);
 
 G_END_DECLS

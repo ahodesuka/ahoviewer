@@ -146,15 +146,13 @@ MainWindow::MainWindow(BaseObjectType* cobj, Glib::RefPtr<Gtk::Builder> bldr)
     if (!m_AskDeleteConfirmDialog)
     {
         m_Builder->get_widget("AskDeleteConfirmDialog", m_AskDeleteConfirmDialog);
-        m_AskDeleteConfirmDialog->signal_response().connect([&](const int) {
-            m_AskDeleteConfirmDialog->hide();
-        });
+        m_AskDeleteConfirmDialog->signal_response().connect(
+            [&](const int) { m_AskDeleteConfirmDialog->hide(); });
 
         m_Builder->get_widget("AskDeleteConfirmDialog::CheckButton", m_AskDeleteConfirmCheckButton);
 
-        m_PreferencesDialog->signal_ask_delete_confirm_changed().connect([&](bool v) {
-            m_AskDeleteConfirmCheckButton->set_active(v);
-        });
+        m_PreferencesDialog->signal_ask_delete_confirm_changed().connect(
+            [&](bool v) { m_AskDeleteConfirmCheckButton->set_active(v); });
     }
 
     // Setup drag and drop
@@ -546,10 +544,10 @@ void MainWindow::create_actions()
         Gtk::Action::create("OpenFile", Gtk::Stock::OPEN, _("_Open File"), _("Open a file")),
         Gtk::AccelKey(Settings.get_keybinding("File", "OpenFile")),
         sigc::mem_fun(*this, &MainWindow::on_open_file_dialog));
-    m_ActionGroup->add(Gtk::Action::create("Preferences",
-                                           Gtk::Stock::PREFERENCES,
-                                           _("_Preferences"),
-                                           _("Open the preferences dialog")),
+    m_ActionGroup->add(Gtk::Action::create_with_icon_name("Preferences",
+                                                          "preferences-system",
+                                                          _("_Preferences"),
+                                                          _("Open the preferences dialog")),
                        Gtk::AccelKey(Settings.get_keybinding("File", "Preferences")),
                        sigc::mem_fun(*this, &MainWindow::on_show_preferences));
     m_ActionGroup->add(
@@ -974,7 +972,8 @@ void MainWindow::set_sensitives()
     m_ActionGroup->get_action("SaveImageAs")->set_sensitive(save);
     m_ActionGroup->get_action("SaveImages")
         ->set_sensitive(booru && !page->get_imagelist()->empty());
-    m_ActionGroup->get_action("DeleteImage")->set_sensitive(local && !m_ActiveImageList->from_archive());
+    m_ActionGroup->get_action("DeleteImage")
+        ->set_sensitive(local && !m_ActiveImageList->from_archive());
     m_ActionGroup->get_action("ViewPost")->set_sensitive(booru && !page->get_imagelist()->empty());
     m_ActionGroup->get_action("CopyImageURL")
         ->set_sensitive(booru && !page->get_imagelist()->empty());
@@ -1530,11 +1529,12 @@ void MainWindow::on_delete_image()
     if (Settings.get_bool("AskDeleteConfirm"))
     {
         auto text{ Glib::ustring::compose(
-                _("Are you sure that you want to delete '%1'?"),
-                Glib::path_get_basename(m_ActiveImageList->get_current()->get_filename())) };
+            _("Are you sure that you want to delete '%1'?"),
+            Glib::path_get_basename(m_ActiveImageList->get_current()->get_filename())) };
 
         m_AskDeleteConfirmDialog->set_message(text);
-        m_AskDeleteConfirmDialog->property_transient_for() = static_cast<Gtk::Window*>(get_toplevel());
+        m_AskDeleteConfirmDialog->property_transient_for() =
+            static_cast<Gtk::Window*>(get_toplevel());
         // Set the default focus to the yes button
         m_AskDeleteConfirmDialog->get_widget_for_response(Gtk::RESPONSE_YES)->grab_focus();
 

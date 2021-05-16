@@ -24,9 +24,6 @@ Manager::Manager() : m_Engine{ peas_engine_get_default() }
         std::string plugin_path{ Glib::build_filename(g, "plugins") };
         peas_engine_prepend_search_path(m_Engine, plugin_path.c_str(), nullptr);
 
-        // typelib file should be in the same folder as the exe
-        g_irepository_prepend_search_path(g);
-
         g_free(g);
     }
 #else  // !_WIN32

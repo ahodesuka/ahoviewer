@@ -54,38 +54,42 @@ if libpeas.found()
   ]
 
   # Dummy executable that gir needs
-  if host_machine.system() != 'windows'
-    gir_dummy = executable(
-      'gir_dummy',
-      sources : [
-        plugin_sources,
-        'plugin/gir-dummy.c',
-      ],
-      c_args : [ '-DGIR_DUMMY' ],
-      dependencies : [ libpeas, gtk ],
-      install : false,
-    )
+  gir_dummy = executable(
+    'gir_dummy',
+    sources : [
+      plugin_sources,
+      'plugin/gir-dummy.c',
+    ],
+    c_args : [ '-DGIR_DUMMY' ],
+    dependencies : [ libpeas, gtk ],
+    link_args: [ '-Wl,--export-all-symbols' ],
+    install : false,
+  )
 
-    gnome.generate_gir(
-      gir_dummy,
-      sources : [
-        plugin_sources,
-        'plugin/gir-dummy.c',
-      ],
-      namespace : 'Ahoviewer',
-      nsversion : '1.0',
-      includes : [
-        'GObject-2.0',
-        'Gio-2.0',
-        'Gtk-3.0',
-      ],
-      symbol_prefix : 'ahoviewer',
-      identifier_prefix : 'Ahoviewer',
-      install : true,
-    )
-  endif
+  ahoviewer_gir = gnome.generate_gir(
+    gir_dummy,
+    sources : [
+      plugin_sources,
+      'plugin/gir-dummy.c',
+    ],
+    namespace : 'Ahoviewer',
+    nsversion : '1.0',
+    includes : [
+      'GObject-2.0',
+      'Gio-2.0',
+      'Gtk-3.0',
+    ],
+    symbol_prefix : 'ahoviewer',
+    identifier_prefix : 'Ahoviewer',
+    link_with: gir_dummy,
+    install : true,
+    extra_args: [
+      '--warn-all',
+    ],
+  )
 
   sources += [
+    ahoviewer_gir,
     'plugin/siteactivatable.c',
     'plugin/windowabstract.c',
     'plugin/manager.cc',

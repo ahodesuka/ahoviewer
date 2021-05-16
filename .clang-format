@@ -34,8 +34,7 @@ BraceWrapping:
   AfterExternBlock:      true
   BeforeCatch:           true
   BeforeElse:            true
-# This will be added in clang11
-#BeforeLambdaBody:      true
+  BeforeLambdaBody:      false
   IndentBraces:          false
   SplitEmptyFunction:    true
   SplitEmptyRecord:      true

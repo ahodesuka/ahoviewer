@@ -2,6 +2,12 @@
 
 #include <glib-object.h>
 
+#ifdef _WIN32
+#define AHOVIEWER_EXPORT __declspec(dllexport)
+#else // !_WIN32
+#define AHOVIEWER_EXPORT
+#endif // !_WIN32
+
 G_BEGIN_DECLS
 
 #define AHOVIEWER_TYPE_POST                (ahoviewer_post_get_type())
@@ -66,25 +72,25 @@ struct _AhoviewerTag
     AhoviewerTagType type;
 };
 
-GType ahoviewer_posts_get_type(void) G_GNUC_CONST;
-AhoviewerPosts* ahoviewer_posts_new(GPtrArray* posts, guint64 count, gchar* error);
-AhoviewerPosts* ahoviewer_posts_ref(AhoviewerPosts* post);
-void ahoviewer_posts_unref(AhoviewerPosts* post);
+AHOVIEWER_EXPORT GType ahoviewer_posts_get_type(void) G_GNUC_CONST;
+AHOVIEWER_EXPORT AhoviewerPosts* ahoviewer_posts_new(GPtrArray* posts, guint64 count, gchar* error);
+AHOVIEWER_EXPORT AhoviewerPosts* ahoviewer_posts_ref(AhoviewerPosts* post);
+AHOVIEWER_EXPORT void ahoviewer_posts_unref(AhoviewerPosts* post);
 
-GType ahoviewer_post_get_type(void) G_GNUC_CONST;
-AhoviewerPost* ahoviewer_post_new(GPtrArray* tags);
-AhoviewerPost* ahoviewer_post_ref(AhoviewerPost* post);
-void ahoviewer_post_unref(AhoviewerPost* post);
+AHOVIEWER_EXPORT GType ahoviewer_post_get_type(void) G_GNUC_CONST;
+AHOVIEWER_EXPORT AhoviewerPost* ahoviewer_post_new(GPtrArray* tags);
+AHOVIEWER_EXPORT AhoviewerPost* ahoviewer_post_ref(AhoviewerPost* post);
+AHOVIEWER_EXPORT void ahoviewer_post_unref(AhoviewerPost* post);
 
-GType ahoviewer_note_get_type(void) G_GNUC_CONST;
-AhoviewerNote* ahoviewer_note_new(gchar* body, gint32 w, gint32 h, gint32 x, gint32 y);
-AhoviewerNote* ahoviewer_note_ref(AhoviewerNote* note);
-void ahoviewer_note_unref(AhoviewerNote* note);
+AHOVIEWER_EXPORT GType ahoviewer_note_get_type(void) G_GNUC_CONST;
+AHOVIEWER_EXPORT AhoviewerNote* ahoviewer_note_new(gchar* body, gint32 w, gint32 h, gint32 x, gint32 y);
+AHOVIEWER_EXPORT AhoviewerNote* ahoviewer_note_ref(AhoviewerNote* note);
+AHOVIEWER_EXPORT void ahoviewer_note_unref(AhoviewerNote* note);
 
-GType ahoviewer_tag_get_type(void) G_GNUC_CONST;
-AhoviewerTag* ahoviewer_tag_new(gchar* tag, AhoviewerTagType type);
-AhoviewerTag* ahoviewer_tag_ref(AhoviewerTag* tag);
-void ahoviewer_tag_unref(AhoviewerTag* tag);
+AHOVIEWER_EXPORT GType ahoviewer_tag_get_type(void) G_GNUC_CONST;
+AHOVIEWER_EXPORT AhoviewerTag* ahoviewer_tag_new(gchar* tag, AhoviewerTagType type);
+AHOVIEWER_EXPORT AhoviewerTag* ahoviewer_tag_ref(AhoviewerTag* tag);
+AHOVIEWER_EXPORT void ahoviewer_tag_unref(AhoviewerTag* tag);
 
 #define AHOVIEWER_SITE_TYPE_ACTIVATABLE         (ahoviewer_site_activatable_get_type())
 #define AHOVIEWER_SITE_ACTIVATABLE(o)           (G_TYPE_CHECK_INSTANCE_CAST ((o), AHOVIEWER_SITE_TYPE_ACTIVATABLE, AhoviewerSiteActivatable))
@@ -105,19 +111,25 @@ struct _AhoviewerSiteActivatableInterface
     GPtrArray* (*parse_note_data)(AhoviewerSiteActivatable* activatable, const unsigned char* data, const size_t size);
 };
 
-GType ahoviewer_site_activatable_get_type(void) G_GNUC_CONST;
+AHOVIEWER_EXPORT GType ahoviewer_site_activatable_get_type(void) G_GNUC_CONST;
 
+AHOVIEWER_EXPORT
 const gchar* ahoviewer_site_activatable_get_test_uri(AhoviewerSiteActivatable* activatable);
 
+AHOVIEWER_EXPORT
 const gchar* ahoviewer_site_activatable_get_posts_uri(AhoviewerSiteActivatable* activatable, const gchar* tags, size_t page, size_t limit);
 
+AHOVIEWER_EXPORT
 const gchar* ahoviewer_site_activatable_get_register_url(AhoviewerSiteActivatable* activatable, const gchar* url);
 
+AHOVIEWER_EXPORT
 const gchar* ahoviewer_site_activatable_get_icon_url(AhoviewerSiteActivatable* activatable, const gchar* url);
 
+AHOVIEWER_EXPORT
 AhoviewerPosts* ahoviewer_site_activatable_parse_post_data(
     AhoviewerSiteActivatable* activatable, const unsigned char* data, const size_t size, const gchar* url, const gboolean samples);
 
+AHOVIEWER_EXPORT
 GPtrArray* ahoviewer_site_activatable_parse_note_data(AhoviewerSiteActivatable* activatable, const unsigned char* data, const size_t size);
 
 G_END_DECLS

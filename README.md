@@ -51,7 +51,8 @@ or
 Some example and usable plugins can be found at [ahodesuka/ahoviewer-plugins](https://github.com/ahodesuka/ahoviewer-plugins)
 
 Plugins should be installed into `$XDG_DATA_HOME/ahoviewer/plugins`, `$XDG_DATA_HOME` is `~/.local/share` by default.
-The .typelib file that is compiled must be installed via ninja install, or you will need to set the
+This is `%LOCALAPPDATA%\ahoviewer\plugins` on Windows.
+The .typelib file that is compiled must be installed via `ninja install`, or you will need to set the
 `GI_TYPELIB_PATH` environment variable to the directory where it is located after compilation.
 
 ### FAQ

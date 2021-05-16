@@ -143,8 +143,12 @@ int Application::run(int argc, char** argv)
         // Detect if windows 10 dark theme is enabled and change to my dark theme
         DWORD value = 0, value_size = sizeof(value);
         if (RegGetValueW(HKEY_CURRENT_USER,
-                        L"Software\\Microsoft\\Windows\\CurrentVersion\\Themes\\Personalize",
-                        L"AppsUseLightTheme", RRF_RT_REG_DWORD, nullptr, &value, &value_size) == ERROR_SUCCESS)
+                         L"Software\\Microsoft\\Windows\\CurrentVersion\\Themes\\Personalize",
+                         L"AppsUseLightTheme",
+                         RRF_RT_REG_DWORD,
+                         nullptr,
+                         &value,
+                         &value_size) == ERROR_SUCCESS)
         {
             auto gtk_settings{ Gtk::Settings::get_default() };
 
@@ -266,7 +270,7 @@ void Application::on_shutdown()
     for (const std::shared_ptr<Booru::Site>& site : Settings.get_sites())
         site->save_tags();
 
-    // Clean up gdbus-nonce-file-XXXXXX
+        // Clean up gdbus-nonce-file-XXXXXX
 #if _WIN32
     std::string tmp_dir{ Glib::get_tmp_dir() };
 
@@ -274,8 +278,7 @@ void Application::on_shutdown()
     {
         std::string filename{ "gdbus-nonce-file-" };
         // 6 = random characters
-        if (i.compare(0, filename.length(), filename) == 0 &&
-            i.length() == filename.length() + 6)
+        if (i.compare(0, filename.length(), filename) == 0 && i.length() == filename.length() + 6)
             g_unlink(Glib::build_filename(tmp_dir, i).c_str());
     }
 #endif // _WIN32

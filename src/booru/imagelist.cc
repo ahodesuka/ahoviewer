@@ -64,11 +64,14 @@ void ImageList::load(const std::vector<PostDataTuple>& posts, const size_t posts
     for (const auto& post : posts)
     {
         auto [image_url, thumb_url, post_url, notes_url, tags, post_info]{ post };
-        auto junk_trimmed_image_url{ image_url };
+        auto junk_trimmed_image_url{ image_url }, junk_trimmed_thumb_url{ thumb_url };
 
         // Some file urls may have uri parameters, trim them so is_valid_extension works
         if (auto last_quest = image_url.find_last_of('?'); last_quest != std::string::npos)
             junk_trimmed_image_url = image_url.substr(0, last_quest);
+
+        if (auto last_quest = thumb_url.find_last_of('?'); last_quest != std::string::npos)
+            junk_trimmed_thumb_url = thumb_url.substr(0, last_quest);
 
         // Check this before we do tag stuff since it would waste time
         if (!Image::is_valid_extension(junk_trimmed_image_url))
@@ -81,7 +84,7 @@ void ImageList::load(const std::vector<PostDataTuple>& posts, const size_t posts
         auto thumb_path{ Glib::build_filename(
             get_path(),
             "thumbnails",
-            Glib::uri_unescape_string(Glib::path_get_basename(thumb_url))) };
+            Glib::uri_unescape_string(Glib::path_get_basename(junk_trimmed_thumb_url))) };
         auto image_path{ Glib::build_filename(
             get_path(),
             Glib::uri_unescape_string(Glib::path_get_basename(junk_trimmed_image_url))) };
