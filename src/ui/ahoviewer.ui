@@ -190,7 +190,7 @@
                               <object class="GtkImage" id="image3">
                                 <property name="visible">True</property>
                                 <property name="can-focus">False</property>
-                                <property name="icon-name">document-save</property>
+                                <property name="icon-name">document-save-all</property>
                                 <property name="use-fallback">True</property>
                               </object>
                             </child>

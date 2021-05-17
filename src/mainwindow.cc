@@ -631,10 +631,10 @@ void MainWindow::create_actions()
             "SaveImage", Gtk::Stock::SAVE, _("Save Image"), _("Save the selected image")),
         Gtk::AccelKey(Settings.get_keybinding("BooruBrowser", "SaveImage")),
         sigc::mem_fun(*this, &MainWindow::on_save_image));
-    m_ActionGroup->add(
-        Gtk::Action::create("SaveImages", Gtk::Stock::SAVE, _("Save Images"), _("Save Images")),
-        Gtk::AccelKey(Settings.get_keybinding("BooruBrowser", "SaveImages")),
-        sigc::mem_fun(m_BooruBrowser, &Booru::Browser::on_save_images));
+    m_ActionGroup->add(Gtk::Action::create_with_icon_name(
+                           "SaveImages", "document-save-all", _("Save Images"), _("Save Images")),
+                       Gtk::AccelKey(Settings.get_keybinding("BooruBrowser", "SaveImages")),
+                       sigc::mem_fun(m_BooruBrowser, &Booru::Browser::on_save_images));
     m_ActionGroup->add(
         Gtk::Action::create_with_icon_name(
             "DeleteImage", "edit-delete", _("Delete Image"), _("Delete the selected image")),
