@@ -96,9 +96,8 @@ const Glib::RefPtr<Gdk::Pixbuf>& Image::get_thumbnail(Glib::RefPtr<Gio::Cancella
             catch (...)
             {
                 if (!c->is_cancelled())
-                    std::cerr << "Error while loading thumbnail "
-                              << m_ThumbnailPath << " for " << get_filename()
-                              << std::endl;
+                    std::cerr << "Error while loading thumbnail " << m_ThumbnailPath << " for "
+                              << get_filename() << std::endl;
             }
             m_ThumbnailLock.unlock();
 
@@ -106,14 +105,16 @@ const Glib::RefPtr<Gdk::Pixbuf>& Image::get_thumbnail(Glib::RefPtr<Gio::Cancella
             if (m_UnscaledThumbnailPixbuf && !c->is_cancelled())
             {
                 auto orig_width{ m_UnscaledThumbnailPixbuf->get_width() },
-                     orig_height{ m_UnscaledThumbnailPixbuf->get_height() };
+                    orig_height{ m_UnscaledThumbnailPixbuf->get_height() };
                 auto m{ std::min(orig_width, orig_height) };
-                int x{ (orig_width - m) / 2 },
-                    y{ (orig_height - m) / 2 };
+                int x{ (orig_width - m) / 2 }, y{ (orig_height - m) / 2 };
 
-                m_ThumbnailPixbuf = Gdk::Pixbuf::create_subpixbuf(
-                    m_UnscaledThumbnailPixbuf, x, y, m, m)->scale_simple(
-                    BooruThumbnailSize, BooruThumbnailSize, Gdk::INTERP_BILINEAR);
+                m_ThumbnailPixbuf =
+                    Gdk::Pixbuf::create_subpixbuf(m_UnscaledThumbnailPixbuf, x, y, m, m);
+
+                if (m != BooruThumbnailSize)
+                    m_ThumbnailPixbuf = m_ThumbnailPixbuf->scale_simple(
+                        BooruThumbnailSize, BooruThumbnailSize, Gdk::INTERP_BILINEAR);
             }
         }
         else if (!m_ThumbnailCurler.is_cancelled())
