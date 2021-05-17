@@ -852,10 +852,6 @@ void MainWindow::create_actions()
     // Add the accel group to the window.
     add_accel_group(m_ActionGroup->get_accel_group());
 
-    // Finally attach the menubar to the main window's grid
-    Gtk::Grid* grid{ nullptr };
-    m_Builder->get_widget("MainWindow::Grid", grid);
-
     m_MenuBar = static_cast<Gtk::MenuBar*>(m_UIManager->get_widget("/MenuBar"));
     m_MenuBar->set_hexpand();
 
@@ -885,7 +881,12 @@ void MainWindow::create_actions()
         m_MenuBar->insert(*plugins_menuitem, 3);
 #endif // HAVE_LIBPEAS
 
-    grid->attach(*m_MenuBar, 0, 0, 2, 1);
+    // Finally pack the menubar into the main window's box
+    Gtk::Box* box{ nullptr };
+    m_Builder->get_widget("MainWindow::Box", box);
+    box->pack_start(*m_MenuBar, false, true);
+    // pack_start doesn't seem to put the menu bar at the top of the box, so it needs to be moved
+    box->reorder_child(*m_MenuBar, 0);
 }
 
 void MainWindow::update_widgets_visibility()
