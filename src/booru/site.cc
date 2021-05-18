@@ -372,14 +372,20 @@ Site::Site(std::string name,
                                      m_Url.find("konachan.") != std::string::npos))
     {
         std::thread{ [&]() {
-            bool is_yandere{ m_Url.find("yande.re") != std::string::npos };
-            auto url{ Glib::ustring::compose(
-                m_Url + "/tag/summary.json?version=%1",
-                Settings.get_int(is_yandere ? "YandereTagsVersion" : "KonachanTagsVersion")) };
             using nlohmann::json;
             using nlohmann::detail::parse_error;
-            Curler curler{ url, m_ShareHandle };
 
+            bool is_yandere{ m_Url.find("yande.re") != std::string::npos };
+            auto url{ m_Url + "/tag/summary.json?version=%1" };
+
+            if (Glib::file_test(m_TagsPath + "-types", Glib::FILE_TEST_EXISTS))
+                url = Glib::ustring::compose(
+                    url,
+                    Settings.get_int(is_yandere ? "YandereTagsVersion" : "KonachanTagsVersion"));
+            else
+                url = Glib::ustring::compose(url, 0);
+
+            Curler curler{ url, m_ShareHandle };
             if (curler.perform())
             {
                 try
