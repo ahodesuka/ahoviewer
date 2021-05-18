@@ -52,7 +52,7 @@ namespace AhoViewer::Booru
         SignalProgressType signal_progress() const { return m_SignalProgress; }
         SignalDownloadErrorType signal_download_error() const { return m_SignalDownloadError; }
 
-        static const size_t BooruThumbnailSize{ 100 };
+        static const size_t BooruThumbnailSize{ 125 };
 
     private:
         bool start_download();
