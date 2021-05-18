@@ -1,0 +1,286 @@
+Unicode True
+
+!define AppName "ahoviewer"
+!define DisplayName "${AppName} ${ReleaseVersion}"
+!define Author "ahoka"
+!define Homepage "https://github.com/ahodesuka/ahoviewer"
+!define ReleaseNotes "${Homepage}/releases/${ReleaseVersion}"
+
+!define AppDir "${AppName}"
+!define AppFile "${AppName}.exe"
+!define InstallerFile "${AppName}-v${ReleaseVersion}-${Arch}-installer.exe"
+!define UninstallerFile "Uninstall ${AppName}.exe"
+
+!define RegKeyInstall "SOFTWARE\${AppName}"
+!define RegKeyUninstall "SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\${AppName}"
+
+!define RegKeyCapabilities "SOFTWARE\Clients\Media\${AppName}"
+!define RegKeyAppPath "SOFTWARE\Microsoft\Windows\CurrentVersion\App Paths\${AppFile}"
+!define RegKeyApplications "SOFTWARE\Classes\Applications\${AppFile}"
+!define RegKeyOpenWith "SOFTWARE\Classes\SystemFileAssociations\image\OpenWithList\${AppFile}"
+
+!define KillCmd 'cmd /c taskkill /f /im "${AppFile}"'
+
+RequestExecutionLevel admin
+
+# Modules
+!include "MUI2.nsh"
+!include "LogicLib.nsh"
+!include "FileFunc.nsh"
+!include "x64.nsh"
+
+# Installer/Uninstaller params
+Name "${AppName}"
+Caption "${DisplayName}"
+BrandingText "${DisplayName}"
+ShowInstDetails show
+ShowUninstDetails show
+InstallDir ""
+InstallDirRegKey HKLM "${RegKeyInstall}" "InstallPath"
+
+# Package params
+CRCCheck on
+SetCompressor /SOLID lzma
+
+# NSIS Installer output dir
+OutFile "${InstallerFile}"
+
+# Metadata params
+VIProductVersion "${ReleaseVersion}.0"
+VIAddVersionKey "ProductName" "${AppName}"
+VIAddVersionKey "ProductVersion" "${ReleaseVersion}"
+VIAddVersionKey "FileDescription" "${DisplayName}"
+VIAddVersionKey "FileVersion" "${ReleaseVersion}"
+VIAddVersionKey "LegalCopyright" "${Author}"
+
+# GUI
+!define MUI_ICON "src\ahoviewer.ico"
+!define MUI_WELCOMEPAGE_TITLE "${DisplayName}"
+!define MUI_WELCOMEPAGE_TITLE_3LINES
+!define MUI_ABORTWARNING
+!define MUI_ABORTWARNING_CANCEL_DEFAULT
+!define MUI_FINISHPAGE_NOAUTOCLOSE
+!define MUI_FINISHPAGE_RUN_TEXT "Launch ${AppName}"
+!define MUI_FINISHPAGE_RUN "$INSTDIR\${AppFile}"
+!define MUI_FINISHPAGE_NOREBOOTSUPPORT
+!define MUI_FINISHPAGE_SHOWREADME "${ReleaseNotes}"
+!define MUI_FINISHPAGE_SHOWREADME_TEXT "Open release notes in web browser"
+!define MUI_UNICON "${NSISDIR}/Contrib/Graphics/Icons/modern-uninstall.ico"
+!define MUI_UNFINISHPAGE_NOAUTOCLOSE
+!insertmacro MUI_PAGE_WELCOME
+!insertmacro MUI_PAGE_DIRECTORY
+!insertmacro MUI_PAGE_COMPONENTS
+!insertmacro MUI_PAGE_INSTFILES
+!insertmacro MUI_PAGE_FINISH
+!insertmacro MUI_UNPAGE_WELCOME
+!insertmacro MUI_UNPAGE_CONFIRM
+!insertmacro MUI_UNPAGE_INSTFILES
+!insertmacro MUI_UNPAGE_FINISH
+!insertmacro MUI_LANGUAGE "English"
+
+# File Association macros
+!macro APP_ASSOCIATE EXT FILECLASS
+  ; Backup the previously associated file class
+  ReadRegStr $R0 HKCR ".${EXT}" ""
+  WriteRegStr HKCR ".${EXT}" "${FILECLASS}_backup" "$R0"
+  WriteRegStr HKCR ".${EXT}" "" "${FILECLASS}"
+!macroend
+
+!macro APP_FILECLASS EXT FILECLASS DESCRIPTION
+  WriteRegStr HKCR "${FILECLASS}" "" `${DESCRIPTION}`
+  WriteRegStr HKCR "${FILECLASS}\DefaultIcon" "" ""
+  WriteRegStr HKCR "${FILECLASS}\shell" "" "view"
+  WriteRegStr HKCR "${FILECLASS}\shell\view" "" "&View"
+  WriteRegStr HKCR "${FILECLASS}\shell\view\command" "" '"$INSTDIR\${AppFile}" "%1"'
+
+  WriteRegStr HKCR ".${EXT}\OpenWithProgids" `${FILECLASS}` ""
+!macroend
+
+!macro APP_UNASSOCIATE EXT FILECLASS
+  ; Backup the previously associated file class
+  ReadRegStr $R0 HKCR ".${EXT}" `${FILECLASS}_backup`
+  WriteRegStr HKCR ".${EXT}" "" "$R0"
+  DeleteRegValue HKCR ".${EXT}" `${FILECLASS}_backup`
+ 
+  DeleteRegValue HKCR ".${EXT}\OpenWithProgids" `${FILECLASS}`
+  DeleteRegKey HKCR `${FILECLASS}`
+!macroend
+
+; !defines for use with SHChangeNotify
+!ifdef SHCNE_ASSOCCHANGED
+!undef SHCNE_ASSOCCHANGED
+!endif
+!define SHCNE_ASSOCCHANGED 0x08000000
+!ifdef SHCNF_FLUSH
+!undef SHCNF_FLUSH
+!endif
+!define SHCNF_FLUSH        0x1000
+ 
+!macro UPDATEFILEASSOC
+; Using the system.dll plugin to call the SHChangeNotify Win32 API function so we
+; can update the shell.
+  System::Call "shell32::SHChangeNotify(i,i,i,i) (${SHCNE_ASSOCCHANGED}, ${SHCNF_FLUSH}, 0, 0)"
+!macroend
+
+# Installer
+Section "${DisplayName}" SEC_DEFAULT
+  DetailPrint '${KillCmd}'
+  nsExec::Exec /TIMEOUT=3000 '${KillCmd}'
+
+  SetOutPath $INSTDIR
+  File /r "mingw-build\${AppName}-${ReleaseVersion}-${Arch}\*"
+
+  WriteUninstaller "$INSTDIR\${UninstallerFile}"
+
+  WriteRegStr HKLM "${RegKeyInstall}" "InstallPath" "$INSTDIR"
+  WriteRegStr HKLM "${RegKeyUninstall}" "DisplayName" "${DisplayName}"
+  WriteRegStr HKLM "${RegKeyUninstall}" "UninstallString" "$INSTDIR\${UninstallerFile}"
+  WriteRegStr HKLM "${RegKeyUninstall}" "DisplayIcon" "$INSTDIR\${AppFile}"
+  WriteRegStr HKLM "${RegKeyUninstall}" "DisplayVersion" "${ReleaseVersion}"
+  WriteRegStr HKLM "${RegKeyUninstall}" "Publisher" "${Author}"
+  WriteRegStr HKLM "${RegKeyUninstall}" "URLInfoAbout" "${Homepage}"
+
+  # Default program entry
+  WriteRegStr HKLM "${RegKeyCapabilities}\Capabilities" "ApplicationName" "${AppName}"
+  # App path, allows ahoviewer to be launched from ShellExecute, and run command (win+r)
+  WriteRegStr HKLM "${RegKeyAppPath}" "" "$INSTDIR\${AppFile}"
+  # Applications open with menu entries
+  WriteRegStr HKLM "${RegKeyApplications}" "FriendlyAppName" "${AppName}"
+  # Supported Types
+  WriteRegStr HKLM "${RegKeyApplications}\SupportedTypes" ".gif" ""
+  WriteRegStr HKLM "${RegKeyApplications}\SupportedTypes" ".jpe" ""
+  WriteRegStr HKLM "${RegKeyApplications}\SupportedTypes" ".jpg" ""
+  WriteRegStr HKLM "${RegKeyApplications}\SupportedTypes" ".jpeg" ""
+  WriteRegStr HKLM "${RegKeyApplications}\SupportedTypes" ".png" ""
+  WriteRegStr HKLM "${RegKeyApplications}\SupportedTypes" ".webm" ""
+  WriteRegStr HKLM "${RegKeyApplications}\SupportedTypes" ".rar" ""
+  WriteRegStr HKLM "${RegKeyApplications}\SupportedTypes" ".cbr" ""
+  WriteRegStr HKLM "${RegKeyApplications}\SupportedTypes" ".zip" ""
+  WriteRegStr HKLM "${RegKeyApplications}\SupportedTypes" ".cbz" ""
+  # Open With entry
+  WriteRegStr HKLM "${RegKeyOpenWith}" "" ""
+
+  ${GetSize} "$INSTDIR" "/S=0K" $0 $1 $2
+  IntFmt $0 "0x%08X" $0
+  WriteRegDWORD HKLM "${RegKeyUninstall}" "EstimatedSize" "$0"
+
+  !insertmacro UPDATEFILEASSOC
+SectionEnd
+
+# Components
+Section "Create Desktop shortcut" SEC_SHORTCUT_DESKTOP
+  ${If} ${SectionIsSelected} ${SEC_SHORTCUT_DESKTOP}
+    SetOutPath $INSTDIR
+    CreateShortCut "$DESKTOP\${AppName}.lnk" "$INSTDIR\${AppFile}"
+  ${EndIf}
+SectionEnd
+
+Section "Create Start Menu shortcut" SEC_SHORTCUT_START
+  ${If} ${SectionIsSelected} ${SEC_SHORTCUT_START}
+    SetOutPath $INSTDIR
+    CreateShortCut "$SMPROGRAMS\${AppName}.lnk" "$INSTDIR\${AppFile}"
+  ${EndIf}
+SectionEnd
+
+SectionGroup "File Associations"
+  Section ".gif" SEC_FILE_GIF
+    !insertmacro APP_FILECLASS "gif" "${AppName}.AssocFile.GIF" "GIF Image File"
+    ${If} ${SectionIsSelected} ${SEC_FILE_GIF}
+      !insertmacro APP_ASSOCIATE "gif" "${AppName}.AssocFile.GIF"
+    ${EndIf}
+  SectionEnd
+  Section ".jpg" SEC_FILE_JPG
+    !insertmacro APP_FILECLASS "jpe" "${AppName}.AssocFile.JPE" "JPEG Image File"
+    !insertmacro APP_FILECLASS "jpg" "${AppName}.AssocFile.JPG" "JPEG Image File"
+    !insertmacro APP_FILECLASS "jpeg" "${AppName}.AssocFile.JPEG" "JPEG Image File"
+    ${If} ${SectionIsSelected} ${SEC_FILE_JPG}
+      !insertmacro APP_ASSOCIATE "jpe" "${AppName}.AssocFile.JPE"
+      !insertmacro APP_ASSOCIATE "jpg" "${AppName}.AssocFile.JPG"
+      !insertmacro APP_ASSOCIATE "jpeg" "${AppName}.AssocFile.JPEG"
+    ${EndIf}
+  SectionEnd
+  Section ".png" SEC_FILE_PNG
+    !insertmacro APP_FILECLASS "png" "${AppName}.AssocFile.PNG" "PNG Image File"
+    ${If} ${SectionIsSelected} ${SEC_FILE_PNG}
+      !insertmacro APP_ASSOCIATE "png" "${AppName}.AssocFile.PNG"
+    ${EndIf}
+  SectionEnd
+  Section ".webm" SEC_FILE_WEBM
+    !insertmacro APP_FILECLASS "webm" "${AppName}.AssocFile.WEBM" "WebM Video File"
+    ${If} ${SectionIsSelected} ${SEC_FILE_WEBM}
+      !insertmacro APP_ASSOCIATE "webm" "${AppName}.AssocFile.WEBM"
+    ${EndIf}
+  SectionEnd
+  Section ".rar" SEC_FILE_RAR
+    !insertmacro APP_FILECLASS "rar" "${AppName}.AssocFile.RAR" "RAR Archive"
+    ${If} ${SectionIsSelected} ${SEC_FILE_RAR}
+      !insertmacro APP_ASSOCIATE "rar" "${AppName}.AssocFile.RAR"
+    ${EndIf}
+  SectionEnd
+  Section ".cbr" SEC_FILE_CBR
+    !insertmacro APP_FILECLASS "cbr" "${AppName}.AssocFile.CBR" "Comic Book RAR Archive"
+    ${If} ${SectionIsSelected} ${SEC_FILE_CBR}
+      !insertmacro APP_ASSOCIATE "cbr" "${AppName}.AssocFile.CBR"
+    ${EndIf}
+  SectionEnd
+  Section ".zip" SEC_FILE_ZIP
+    !insertmacro APP_FILECLASS "zip" "${AppName}.AssocFile.ZIP" "Zip Archive"
+    ${If} ${SectionIsSelected} ${SEC_FILE_ZIP}
+      !insertmacro APP_ASSOCIATE "zip" "${AppName}.AssocFile.ZIP"
+    ${EndIf}
+  SectionEnd
+  Section ".cbz" SEC_FILE_CBZ
+    !insertmacro APP_FILECLASS "cbz" "${AppName}.AssocFile.CBZ" "Comic Book Zip Archive"
+    ${If} ${SectionIsSelected} ${SEC_FILE_CBZ}
+      !insertmacro APP_ASSOCIATE "cbz" "${AppName}.AssocFile.CBZ"
+    ${EndIf}
+  SectionEnd
+SectionGroupEnd
+
+# Uninstaller
+Section "Uninstall"
+  DetailPrint '${KillCmd}'
+  nsExec::Exec /TIMEOUT=3000 '${KillCmd}'
+
+  Delete "$INSTDIR\${UninstallerFile}"
+  RMDir /r "$INSTDIR"
+
+  Delete "$DESKTOP\${AppName}.lnk"
+  Delete "$SMPROGRAMS\${AppName}.lnk"
+
+  !insertmacro APP_UNASSOCIATE "gif"  "${AppName}.AssocFile.GIF"
+  !insertmacro APP_UNASSOCIATE "jpe"  "${AppName}.AssocFile.JPE"
+  !insertmacro APP_UNASSOCIATE "jpg"  "${AppName}.AssocFile.JPG"
+  !insertmacro APP_UNASSOCIATE "jpeg" "${AppName}.AssocFile.JPEG"
+  !insertmacro APP_UNASSOCIATE "png"  "${AppName}.AssocFile.PNG"
+  !insertmacro APP_UNASSOCIATE "webm" "${AppName}.AssocFile.WEBM"
+  !insertmacro APP_UNASSOCIATE "rar"  "${AppName}.AssocFile.RAR"
+  !insertmacro APP_UNASSOCIATE "cbr"  "${AppName}.AssocFile.CBR"
+  !insertmacro APP_UNASSOCIATE "zip"  "${AppName}.AssocFile.ZIP"
+  !insertmacro APP_UNASSOCIATE "cbz"  "${AppName}.AssocFile.CBZ"
+
+  DeleteRegKey HKLM "${RegKeyInstall}"
+  DeleteRegKey HKLM "${RegKeyUninstall}"
+
+  DeleteRegKey HKLM "${RegKeyCapabilities}"
+  DeleteRegKey HKLM "${RegKeyAppPath}"
+  DeleteRegKey HKLM "${RegKeyApplications}"
+  DeleteRegKey HKLM "${RegKeyOpenWith}"
+
+  !insertmacro UPDATEFILEASSOC
+SectionEnd
+
+# Functions
+Function .onInit
+  # set default section as read only
+  SectionSetFlags ${SEC_DEFAULT} 17
+
+  ${If} $InstDir == ""
+    ${If} ${RunningX64}
+    ${AndIf} "${Arch}" == "win64"
+      StrCpy $InstDir "$PROGRAMFILES64\${AppDir}\"
+    ${Else}
+      StrCpy $InstDir "$PROGRAMFILES32\${AppDir}\"
+    ${EndIf}
+  ${EndIf}
+FunctionEnd
