@@ -582,8 +582,11 @@ void Browser::on_switch_page(Gtk::Widget* w, guint)
         bimage = std::static_pointer_cast<Image>(page->get_imagelist()->get_current());
 
     m_DownloadErrorConn.disconnect();
-    m_DownloadErrorConn = page->signal_no_results().connect(
-        [&](const std::string msg) { m_StatusBar->set_message(msg); });
+    m_DownloadErrorConn = page->signal_no_results().connect([&](const std::string msg) {
+        m_TagEntry->set_progress_fraction(0.0);
+        m_PostsDownloadPulseConn.disconnect();
+        m_StatusBar->set_message(msg);
+    });
 
     m_ImageListConn.disconnect();
     m_ImageListConn = page->get_imagelist()->signal_changed().connect(
