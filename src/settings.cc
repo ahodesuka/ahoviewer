@@ -42,7 +42,9 @@ SettingsManager::SettingsManager()
                       { "BooruWidth", -1 },
                       { "Volume", 50 },
                       { "ScrollPosH", -1 },
-                      { "ScrollPosV", -1 } }),
+                      { "ScrollPosV", -1 },
+                      { "YandereTagsVersion", 0 },
+                      { "KonachanTagsVersion", 0 } }),
       m_DefaultStrings({
           { "TitleFormat", "[%i / %c] %f - %p" },
           { "AudioSink", "fakesink" },

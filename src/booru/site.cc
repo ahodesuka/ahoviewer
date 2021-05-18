@@ -372,9 +372,13 @@ Site::Site(std::string name,
                                      m_Url.find("konachan.") != std::string::npos))
     {
         std::thread{ [&]() {
+            bool is_yandere{ m_Url.find("yande.re") != std::string::npos };
+            auto url{ Glib::ustring::compose(
+                m_Url + "/tag/summary.json?version=%1",
+                Settings.get_int(is_yandere ? "YandereTagsVersion" : "KonachanTagsVersion")) };
             using nlohmann::json;
             using nlohmann::detail::parse_error;
-            Curler curler{ m_Url + "/tag/summary.json", m_ShareHandle };
+            Curler curler{ url, m_ShareHandle };
 
             if (curler.perform())
             {
@@ -382,7 +386,27 @@ Site::Site(std::string name,
                 {
                     json j = json::parse(curler.get_data());
 
-                    std::string data{ j["data"].get<std::string>() }, line;
+                    Settings.set(is_yandere ? "YandereTagsVersion" : "KonachanTagsVersion",
+                                 j["version"].get<int>());
+
+                    std::string data, line;
+
+                    // Load saved tag types
+                    if (j.contains("unchanged"))
+                    {
+                        std::ifstream ifs(m_TagsPath + "-types");
+                        if (ifs)
+                            data.assign((std::istreambuf_iterator<char>(ifs)),
+                                        std::istreambuf_iterator<char>());
+                    }
+                    else
+                    {
+                        data = j["data"].get<std::string>();
+
+                        std::ofstream ofs(m_TagsPath + "-types");
+                        ofs << data;
+                    }
+
                     std::istringstream iss{ data };
 
                     auto& types{ m_Url.find("yande.re") != std::string::npos ? yd_types
