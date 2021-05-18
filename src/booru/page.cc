@@ -354,6 +354,8 @@ void Page::get_posts()
         if (!m_Curler.is_cancelled())
             m_SignalPostsDownloaded();
     });
+
+    m_SignalPostsDownloadStarted();
 }
 
 bool Page::get_next_page()

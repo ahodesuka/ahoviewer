@@ -24,6 +24,10 @@ namespace AhoViewer
         // Emitted when AutoOpenArchive is true and loading an archive fails.
         using SignalArchiveErrorType = sigc::signal<void, const std::string>;
 
+        // Used by booru/archive lists to report progress while loading
+        // First argument is the number loaded, second is the total to load
+        using SignalLoadProgressType = sigc::signal<void, size_t, size_t>;
+
         // Used for async thumbnail pixbuf loading
         using PixbufPair = std::pair<size_t, Glib::RefPtr<Gdk::Pixbuf>>;
 
@@ -130,6 +134,7 @@ namespace AhoViewer
 
         SignalChangedType signal_changed() const { return m_SignalChanged; }
         SignalArchiveErrorType signal_archive_error() const { return m_SignalArchiveError; }
+        SignalLoadProgressType signal_load_progress() const { return m_SignalLoadProgress; }
         sigc::signal<void> signal_cleared() const { return m_SignalCleared; }
         sigc::signal<void> signal_load_success() const { return m_SignalLoadSuccess; }
         sigc::signal<void> signal_size_changed() const { return m_SignalSizeChanged; }
@@ -139,6 +144,8 @@ namespace AhoViewer
         virtual void load_thumbnails();
         virtual void cancel_thumbnail_thread();
         void update_cache();
+
+        virtual void on_thumbnail_loaded();
 
         Widget* const m_Widget;
         ImageVector m_Images;
@@ -150,8 +157,10 @@ namespace AhoViewer
         std::thread m_ThumbnailThread;
         ThreadPool m_ThreadPool;
         TSQueue<PixbufPair> m_ThumbnailQueue;
+        std::atomic<size_t> m_ThumbnailsLoading{ 0 }, m_ThumbnailsLoaded{ 0 };
 
         SignalChangedType m_SignalChanged;
+        SignalLoadProgressType m_SignalLoadProgress;
         sigc::signal<void> m_SignalCleared;
 
     private:
@@ -159,7 +168,6 @@ namespace AhoViewer
         template<typename T>
         std::vector<std::string> get_entries(const std::string& path) const;
 
-        void on_thumbnail_loaded();
         void on_directory_changed(const Glib::RefPtr<Gio::File>& file,
                                   const Glib::RefPtr<Gio::File>&,
                                   Gio::FileMonitorEvent event);

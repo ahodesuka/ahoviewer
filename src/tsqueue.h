@@ -45,6 +45,11 @@ namespace AhoViewer
             std::scoped_lock lock{ m_Mutex };
             return m_Queue.empty();
         }
+        size_t size() const
+        {
+            std::scoped_lock lock{ m_Mutex };
+            return m_Queue.size();
+        }
 
     private:
         std::queue<T> m_Queue;

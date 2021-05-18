@@ -36,8 +36,9 @@ void ImageList::clear()
         m_Path.clear();
     }
 
-    m_Size         = 0;
-    m_ImageFetcher = nullptr;
+    m_Size             = 0;
+    m_ThumbnailsLoaded = 0;
+    m_ImageFetcher     = nullptr;
 }
 
 std::string ImageList::get_path()
@@ -66,10 +67,9 @@ void ImageList::load(const std::vector<PostDataTuple>& posts, const size_t posts
         auto [image_url, thumb_url, post_url, notes_url, tags, post_info]{ post };
         auto junk_trimmed_image_url{ image_url }, junk_trimmed_thumb_url{ thumb_url };
 
-        // Some file urls may have uri parameters, trim them so is_valid_extension works
+        // Some image/thumb urls may have uri parameters, trim them so is_valid_extension works
         if (auto last_quest = image_url.find_last_of('?'); last_quest != std::string::npos)
             junk_trimmed_image_url = image_url.substr(0, last_quest);
-
         if (auto last_quest = thumb_url.find_last_of('?'); last_quest != std::string::npos)
             junk_trimmed_thumb_url = thumb_url.substr(0, last_quest);
 
@@ -146,4 +146,10 @@ void ImageList::cancel_thumbnail_thread()
         auto bimage = std::static_pointer_cast<Image>(img);
         bimage->cancel_thumbnail_download();
     }
+}
+
+void ImageList::on_thumbnail_loaded()
+{
+    m_SignalLoadProgress(m_ThumbnailsLoaded, m_ThumbnailsLoading);
+    AhoViewer::ImageList::on_thumbnail_loaded();
 }

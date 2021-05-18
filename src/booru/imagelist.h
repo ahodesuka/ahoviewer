@@ -30,6 +30,7 @@ namespace AhoViewer::Booru
                          const bool from_widget = false,
                          const bool force       = false) override;
         void cancel_thumbnail_thread() override;
+        void on_thumbnail_loaded() override;
 
     private:
         std::unique_ptr<ImageFetcher> m_ImageFetcher;

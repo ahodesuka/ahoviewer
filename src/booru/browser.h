@@ -123,7 +123,8 @@ namespace AhoViewer
             std::vector<sigc::connection> m_SiteIconConns;
             sigc::connection m_ComboChangedConn, m_DownloadErrorConn, m_ImageListConn,
                 m_ImageProgConn, m_ImageErrorConn, m_PosChangedConn, m_SaveProgConn,
-                m_PageSwitchedConn;
+                m_PageSwitchedConn, m_PostsDownloadStartedConn, m_PostsDownloadFinishedConn,
+                m_PostsDownloadPulseConn, m_PostsLoadProgressConn;
 
             SignalPageChangedType m_SignalPageChanged;
             sigc::signal<void> m_SignalEntryBlur;

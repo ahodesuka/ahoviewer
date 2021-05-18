@@ -226,6 +226,7 @@ void ImageList::set_current(const size_t index, const bool from_widget, const bo
 void ImageList::load_thumbnails()
 {
     m_ThumbnailCancel->reset();
+    m_ThumbnailsLoading = m_ThumbnailsLoaded = 0;
 
     std::vector<size_t> indices(m_Images.size());
     std::iota(indices.begin(), indices.end(), 0);
@@ -239,6 +240,7 @@ void ImageList::load_thumbnails()
         // Only load thumbnails that haven't been already
         auto it = m_Widget->m_ListStore->get_iter(std::to_string(i));
         if (!it || !it->get_value(m_Widget->m_Columns.pixbuf))
+        {
             m_ThreadPool.push([&, i]() {
                 Glib::RefPtr<Gdk::Pixbuf> thumb = m_Images[i]->get_thumbnail(m_ThumbnailCancel);
 
@@ -248,9 +250,13 @@ void ImageList::load_thumbnails()
                         thumb = Image::get_missing_pixbuf();
 
                     m_ThumbnailQueue.emplace(i, std::move(thumb));
+                    ++m_ThumbnailsLoaded;
                     m_SignalThumbnailLoaded();
                 }
             });
+
+            ++m_ThumbnailsLoading;
+        }
     }
 }
 

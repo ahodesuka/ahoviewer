@@ -299,7 +299,7 @@ void Browser::on_realize()
     });
 }
 
-void Browser::on_show()
+void Browser::on_show() // NOLINT
 {
     Gtk::Paned::on_show();
     Page* page = get_active_page();
@@ -321,7 +321,9 @@ void Browser::search(const bool new_tab)
     }
 
     m_TagView->clear();
-    get_active_page()->search(get_active_site());
+    auto page{ get_active_page() };
+
+    page->search(get_active_site());
 }
 
 void Browser::close_page(Page* page)
@@ -490,6 +492,7 @@ void Browser::on_page_removed(Gtk::Widget* w, guint)
     if (m_Notebook->get_n_pages() == 0)
     {
         m_TagEntry->set_text("");
+        m_TagEntry->set_progress_fraction(0.0);
         m_TagView->show_favorite_tags();
         m_InfoBox->clear();
         m_SaveImagesButton->set_sensitive(false);
@@ -498,6 +501,10 @@ void Browser::on_page_removed(Gtk::Widget* w, guint)
         m_ImageProgConn.disconnect();
         m_ImageListConn.disconnect();
         m_DownloadErrorConn.disconnect();
+        m_PostsDownloadStartedConn.disconnect();
+        m_PostsDownloadFinishedConn.disconnect();
+        m_PostsLoadProgressConn.disconnect();
+        m_PostsDownloadPulseConn.disconnect();
 
         m_StatusBar->clear_progress(StatusBar::Priority::SAVE);
         m_StatusBar->clear_message(StatusBar::Priority::SAVE);
@@ -581,6 +588,32 @@ void Browser::on_switch_page(Gtk::Widget* w, guint)
     m_ImageListConn.disconnect();
     m_ImageListConn = page->get_imagelist()->signal_changed().connect(
         sigc::mem_fun(*this, &Browser::on_imagelist_changed));
+
+    m_TagEntry->set_progress_fraction(0.0);
+    m_PostsDownloadStartedConn.disconnect();
+    m_PostsDownloadStartedConn = page->signal_posts_download_started().connect([&]() {
+        m_TagEntry->set_progress_fraction(0.0);
+        m_PostsDownloadPulseConn.disconnect();
+        m_PostsDownloadPulseConn = Glib::signal_timeout().connect(
+            [&]() {
+                m_TagEntry->progress_pulse();
+                return !!page;
+            },
+            50);
+    });
+
+    m_PostsDownloadFinishedConn.disconnect();
+    m_PostsDownloadFinishedConn = page->get_imagelist()->signal_thumbnails_loaded().connect([&]() {
+        m_PostsDownloadPulseConn.disconnect();
+        m_TagEntry->set_progress_fraction(0.0);
+    });
+
+    m_PostsLoadProgressConn.disconnect();
+    m_PostsLoadProgressConn =
+        page->get_imagelist()->signal_load_progress().connect([&](size_t c, size_t t) {
+            m_PostsDownloadPulseConn.disconnect();
+            m_TagEntry->set_progress_fraction(static_cast<double>(c) / t);
+        });
 
     if (!check_saving_page())
     {
