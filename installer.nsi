@@ -81,26 +81,30 @@ VIAddVersionKey "LegalCopyright" "${Author}"
 # File Association macros
 !macro APP_ASSOCIATE EXT FILECLASS
   ; Backup the previously associated file class
-  ReadRegStr $R0 HKCR ".${EXT}" ""
-  WriteRegStr HKCR ".${EXT}" "${FILECLASS}_backup" "$R0"
-  WriteRegStr HKCR ".${EXT}" "" "${FILECLASS}"
+  #ReadRegStr $R0 HKCR ".${EXT}" ""
+  #WriteRegStr HKCR ".${EXT}" "${FILECLASS}_backup" "$R0"
+  #WriteRegStr HKCR ".${EXT}" "" "${FILECLASS}"
+  WriteRegStr HKLM "${RegKeyCapabilities}\Capabilities\FileAssociations" ".${EXT}" "${FILECLASS}"
 !macroend
 
-!macro APP_FILECLASS EXT FILECLASS DESCRIPTION
+!macro APP_FILECLASS EXT FILECLASS DESCRIPTION ICON
   WriteRegStr HKCR "${FILECLASS}" "" `${DESCRIPTION}`
-  WriteRegStr HKCR "${FILECLASS}\DefaultIcon" "" ""
+  WriteRegDWORD HKCR "${FILECLASS}" "EditFlags" "4259840"
+  WriteRegStr HKCR "${FILECLASS}" "FriendlyNameType" `${DESCRIPTION}`
+  WriteRegStr HKCR "${FILECLASS}\DefaultIcon" "" `${ICON}`
   WriteRegStr HKCR "${FILECLASS}\shell" "" "view"
   WriteRegStr HKCR "${FILECLASS}\shell\view" "" "&View"
   WriteRegStr HKCR "${FILECLASS}\shell\view\command" "" '"$INSTDIR\${AppFile}" "%1"'
 
+  WriteRegStr HKLM "${RegKeyApplications}\SupportedTypes" ".${EXT}" ""
   WriteRegStr HKCR ".${EXT}\OpenWithProgids" `${FILECLASS}` ""
 !macroend
 
 !macro APP_UNASSOCIATE EXT FILECLASS
   ; Backup the previously associated file class
-  ReadRegStr $R0 HKCR ".${EXT}" `${FILECLASS}_backup`
-  WriteRegStr HKCR ".${EXT}" "" "$R0"
-  DeleteRegValue HKCR ".${EXT}" `${FILECLASS}_backup`
+  #ReadRegStr $R0 HKCR ".${EXT}" `${FILECLASS}_backup`
+  #WriteRegStr HKCR ".${EXT}" "" "$R0"
+  #DeleteRegValue HKCR ".${EXT}" `${FILECLASS}_backup`
  
   DeleteRegValue HKCR ".${EXT}\OpenWithProgids" `${FILECLASS}`
   DeleteRegKey HKCR `${FILECLASS}`
@@ -142,21 +146,14 @@ Section "${DisplayName}" SEC_DEFAULT
 
   # Default program entry
   WriteRegStr HKLM "${RegKeyCapabilities}\Capabilities" "ApplicationName" "${AppName}"
+  WriteRegStr HKLM "${RegKeyCapabilities}\Capabilities" "ApplicationDescription" "A GTK image viewer, manga reader, and booru browser"
   # App path, allows ahoviewer to be launched from ShellExecute, and run command (win+r)
   WriteRegStr HKLM "${RegKeyAppPath}" "" "$INSTDIR\${AppFile}"
   # Applications open with menu entries
   WriteRegStr HKLM "${RegKeyApplications}" "FriendlyAppName" "${AppName}"
-  # Supported Types
-  WriteRegStr HKLM "${RegKeyApplications}\SupportedTypes" ".gif" ""
-  WriteRegStr HKLM "${RegKeyApplications}\SupportedTypes" ".jpe" ""
-  WriteRegStr HKLM "${RegKeyApplications}\SupportedTypes" ".jpg" ""
-  WriteRegStr HKLM "${RegKeyApplications}\SupportedTypes" ".jpeg" ""
-  WriteRegStr HKLM "${RegKeyApplications}\SupportedTypes" ".png" ""
-  WriteRegStr HKLM "${RegKeyApplications}\SupportedTypes" ".webm" ""
-  WriteRegStr HKLM "${RegKeyApplications}\SupportedTypes" ".rar" ""
-  WriteRegStr HKLM "${RegKeyApplications}\SupportedTypes" ".cbr" ""
-  WriteRegStr HKLM "${RegKeyApplications}\SupportedTypes" ".zip" ""
-  WriteRegStr HKLM "${RegKeyApplications}\SupportedTypes" ".cbz" ""
+  WriteRegStr HKLM "${RegKeyApplications}\shell" "" "view"
+  WriteRegStr HKLM "${RegKeyApplications}\shell\view" "" "&View"
+  WriteRegStr HKLM "${RegKeyApplications}\shell\view\command" "" '"$INSTDIR\${AppFile}" "%1"'
   # Open With entry
   WriteRegStr HKLM "${RegKeyOpenWith}" "" ""
 
@@ -184,15 +181,15 @@ SectionEnd
 
 SectionGroup "File Associations"
   Section ".gif" SEC_FILE_GIF
-    !insertmacro APP_FILECLASS "gif" "${AppName}.AssocFile.GIF" "GIF Image File"
+    !insertmacro APP_FILECLASS "gif" "${AppName}.AssocFile.GIF" "GIF Image File" ""
     ${If} ${SectionIsSelected} ${SEC_FILE_GIF}
       !insertmacro APP_ASSOCIATE "gif" "${AppName}.AssocFile.GIF"
     ${EndIf}
   SectionEnd
   Section ".jpg" SEC_FILE_JPG
-    !insertmacro APP_FILECLASS "jpe" "${AppName}.AssocFile.JPE" "JPEG Image File"
-    !insertmacro APP_FILECLASS "jpg" "${AppName}.AssocFile.JPG" "JPEG Image File"
-    !insertmacro APP_FILECLASS "jpeg" "${AppName}.AssocFile.JPEG" "JPEG Image File"
+    !insertmacro APP_FILECLASS "jpe" "${AppName}.AssocFile.JPE" "JPEG Image File" ""
+    !insertmacro APP_FILECLASS "jpg" "${AppName}.AssocFile.JPG" "JPEG Image File" ""
+    !insertmacro APP_FILECLASS "jpeg" "${AppName}.AssocFile.JPEG" "JPEG Image File" ""
     ${If} ${SectionIsSelected} ${SEC_FILE_JPG}
       !insertmacro APP_ASSOCIATE "jpe" "${AppName}.AssocFile.JPE"
       !insertmacro APP_ASSOCIATE "jpg" "${AppName}.AssocFile.JPG"
@@ -200,37 +197,37 @@ SectionGroup "File Associations"
     ${EndIf}
   SectionEnd
   Section ".png" SEC_FILE_PNG
-    !insertmacro APP_FILECLASS "png" "${AppName}.AssocFile.PNG" "PNG Image File"
+    !insertmacro APP_FILECLASS "png" "${AppName}.AssocFile.PNG" "PNG Image File" ""
     ${If} ${SectionIsSelected} ${SEC_FILE_PNG}
       !insertmacro APP_ASSOCIATE "png" "${AppName}.AssocFile.PNG"
     ${EndIf}
   SectionEnd
   Section ".webm" SEC_FILE_WEBM
-    !insertmacro APP_FILECLASS "webm" "${AppName}.AssocFile.WEBM" "WebM Video File"
+    !insertmacro APP_FILECLASS "webm" "${AppName}.AssocFile.WEBM" "WebM Video File" ""
     ${If} ${SectionIsSelected} ${SEC_FILE_WEBM}
       !insertmacro APP_ASSOCIATE "webm" "${AppName}.AssocFile.WEBM"
     ${EndIf}
   SectionEnd
   Section ".rar" SEC_FILE_RAR
-    !insertmacro APP_FILECLASS "rar" "${AppName}.AssocFile.RAR" "RAR Archive"
+    !insertmacro APP_FILECLASS "rar" "${AppName}.AssocFile.RAR" "RAR Archive" ""
     ${If} ${SectionIsSelected} ${SEC_FILE_RAR}
       !insertmacro APP_ASSOCIATE "rar" "${AppName}.AssocFile.RAR"
     ${EndIf}
   SectionEnd
   Section ".cbr" SEC_FILE_CBR
-    !insertmacro APP_FILECLASS "cbr" "${AppName}.AssocFile.CBR" "Comic Book RAR Archive"
+    !insertmacro APP_FILECLASS "cbr" "${AppName}.AssocFile.CBR" "Comic Book RAR Archive" ""
     ${If} ${SectionIsSelected} ${SEC_FILE_CBR}
       !insertmacro APP_ASSOCIATE "cbr" "${AppName}.AssocFile.CBR"
     ${EndIf}
   SectionEnd
   Section ".zip" SEC_FILE_ZIP
-    !insertmacro APP_FILECLASS "zip" "${AppName}.AssocFile.ZIP" "Zip Archive"
+    !insertmacro APP_FILECLASS "zip" "${AppName}.AssocFile.ZIP" "Zip Archive" "%SystemRoot%\system32\zipfldr.dll"
     ${If} ${SectionIsSelected} ${SEC_FILE_ZIP}
       !insertmacro APP_ASSOCIATE "zip" "${AppName}.AssocFile.ZIP"
     ${EndIf}
   SectionEnd
   Section ".cbz" SEC_FILE_CBZ
-    !insertmacro APP_FILECLASS "cbz" "${AppName}.AssocFile.CBZ" "Comic Book Zip Archive"
+    !insertmacro APP_FILECLASS "cbz" "${AppName}.AssocFile.CBZ" "Comic Book Zip Archive" ""
     ${If} ${SectionIsSelected} ${SEC_FILE_CBZ}
       !insertmacro APP_ASSOCIATE "cbz" "${AppName}.AssocFile.CBZ"
     ${EndIf}
