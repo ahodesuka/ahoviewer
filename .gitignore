@@ -31,4 +31,3 @@ src/version.h
 stamp-h1
 vgdump
 **/.vscode
-copy_dlls.sh

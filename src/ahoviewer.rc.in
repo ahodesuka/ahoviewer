@@ -1,0 +1,24 @@
+0 ICON "..\\..\\src\\ahoviewer.ico"
+1 VERSIONINFO
+FILEVERSION     @VERSION_MAJOR@,@VERSION_MINOR@,@VERSION_PATCH@,0
+PRODUCTVERSION  @VERSION_MAJOR@,@VERSION_MINOR@,@VERSION_PATCH@,0
+BEGIN
+  BLOCK "StringFileInfo"
+  BEGIN
+    BLOCK "040904E4"
+    BEGIN
+      VALUE "CompanyName", "ahoka"
+      VALUE "FileDescription", "A image viewer, manga reader, and booru browser"
+      VALUE "FileVersion", "@VERSION_MAJOR@.@VERSION_MINOR@.@VERSION_PATCH@"
+      VALUE "InternalName", "ahoviewer"
+      VALUE "LegalCopyright", "Copyright (c) 2013-2021 ahoka"
+      VALUE "OriginalFilename", "ahoviewer.exe"
+      VALUE "ProductName", "ahoviewer"
+      VALUE "ProductVersion", "@VERSION_MAJOR@.@VERSION_MINOR@.@VERSION_PATCH@"
+    END
+  END
+  BLOCK "VarFileInfo"
+  BEGIN
+    VALUE "Translation", 0x409, 1252
+  END
+END

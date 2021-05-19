@@ -116,17 +116,12 @@ if libzip.found()
   conf.set('HAVE_LIBZIP', 1)
 endif
 
-configure_file(
-  output : 'config.h',
-  configuration : conf
-)
-
 # Falls back to project version when there's no .git directory, but still outputs a "fatal" error
 # message (which can just be ignored since it doesn't actually stop the configuring process)
 vcs_tag(
   command : ['git', 'describe', '--dirty'],
   input : 'version.h.in',
-  output : 'version.h'
+  output : 'version.h',
 )
 
 resources = gnome.compile_resources(
@@ -134,8 +129,34 @@ resources = gnome.compile_resources(
 )
 
 if host_machine.system() == 'windows'
-  resources += import('windows').compile_resources('ahoviewer.rc')
+  version_array = meson.project_version().split('.')
+  version_major = version_array[0].to_int()
+  version_minor = version_array[1].to_int()
+  if version_array[2].contains('-')
+    version_patch = version_array[2].split('-')[0].to_int()
+  else
+    version_patch = version_array[2].to_int()
+  endif
+
+  version_data = configuration_data()
+  version_data.set('VERSION_MAJOR', version_major)
+  version_data.set('VERSION_MINOR', version_minor)
+  version_data.set('VERSION_PATCH', version_patch)
+  ahoviewer_rc = vcs_tag(
+    input : configure_file(
+      input : 'ahoviewer.rc.in',
+      output : 'ahoviewer.rc.in',
+      configuration : version_data,
+    ),
+    output : 'ahoviewer.rc',
+  )
+  resources += import('windows').compile_resources(ahoviewer_rc)
 endif
+
+configure_file(
+  output : 'config.h',
+  configuration : conf,
+)
 
 sources += [
   resources,
