@@ -14,6 +14,7 @@ Unicode True
 !define RegKeyInstall "SOFTWARE\${AppName}"
 !define RegKeyUninstall "SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\${AppName}"
 
+!define RegKeyCapabilities "SOFTWARE\Clients\Media\${AppName}"
 !define RegKeyAppPath "SOFTWARE\Microsoft\Windows\CurrentVersion\App Paths\${AppFile}"
 !define RegKeyApplications "SOFTWARE\Classes\Applications\${AppFile}"
 !define RegKeyOpenWith "SOFTWARE\Classes\SystemFileAssociations\image\OpenWithList\${AppFile}"
@@ -139,6 +140,8 @@ Section "${DisplayName}" SEC_DEFAULT
   WriteRegStr HKLM "${RegKeyUninstall}" "Publisher" "${Author}"
   WriteRegStr HKLM "${RegKeyUninstall}" "URLInfoAbout" "${Homepage}"
 
+  # Default program entry
+  WriteRegStr HKLM "${RegKeyCapabilities}\Capabilities" "ApplicationName" "${AppName}"
   # App path, allows ahoviewer to be launched from ShellExecute, and run command (win+r)
   WriteRegStr HKLM "${RegKeyAppPath}" "" "$INSTDIR\${AppFile}"
   # Applications open with menu entries
@@ -259,6 +262,7 @@ Section "Uninstall"
   DeleteRegKey HKLM "${RegKeyInstall}"
   DeleteRegKey HKLM "${RegKeyUninstall}"
 
+  DeleteRegKey HKLM "${RegKeyCapabilities}"
   DeleteRegKey HKLM "${RegKeyAppPath}"
   DeleteRegKey HKLM "${RegKeyApplications}"
   DeleteRegKey HKLM "${RegKeyOpenWith}"
