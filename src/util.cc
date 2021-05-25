@@ -36,6 +36,13 @@ namespace AhoViewer::Util
 
         return r;
     }
+
+    std::string null_check_string(const gchar* s)
+    {
+        if (s)
+            return s;
+        return "";
+    }
 }
 
 namespace AhoViewer::Booru

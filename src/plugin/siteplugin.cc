@@ -5,13 +5,8 @@ using AhoViewer::Booru::PostDataTuple;
 using AhoViewer::Booru::PostInfo;
 using AhoViewer::Booru::Tag;
 
-static std::string null_check_string(const gchar* s)
-{
-    if (s)
-        return s;
-
-    return "";
-}
+#include "util.h"
+using AhoViewer::Util::null_check_string;
 
 SitePlugin::SitePlugin(PeasPluginInfo* pi, AhoviewerSiteActivatable* a)
     : m_Activatable{ a },

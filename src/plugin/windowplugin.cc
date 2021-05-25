@@ -1,18 +1,15 @@
 #include "windowplugin.h"
 using namespace AhoViewer::Plugin;
 
+#include "util.h"
+using AhoViewer::Util::null_check_string;
+
 #include <iostream>
 
 WindowPlugin::WindowPlugin(PeasPluginInfo* pi, AhoviewerWindowAbstract* a)
     : m_Abstract{ a },
       m_Hidden{ static_cast<bool>(peas_plugin_info_is_hidden(pi)) }
 {
-    static const auto null_check_string = [](const gchar* s) -> std::string {
-        if (s)
-            return s;
-        return "";
-    };
-
     m_Name        = null_check_string(peas_plugin_info_get_name(pi));
     m_Description = null_check_string(peas_plugin_info_get_description(pi));
     m_ActionName  = null_check_string(peas_plugin_info_get_external_data(pi, "ActionName"));
