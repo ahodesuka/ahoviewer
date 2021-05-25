@@ -34,6 +34,7 @@ namespace AhoViewer::Booru
         {
             return m_SignalPostsDownloadStarted;
         }
+        sigc::signal<void> signal_on_last_page() const { return m_SignalOnLastPage; }
 
     protected:
         void set_pixbuf(const size_t index, const Glib::RefPtr<Gdk::Pixbuf>& pixbuf) override;
@@ -142,6 +143,6 @@ namespace AhoViewer::Booru
         SignalClosedType m_SignalClosed;
         SignalDownloadErrorType m_SignalDownloadError;
         SignalSaveProgressType m_SignalSaveProgress;
-        sigc::signal<void> m_SignalPostsDownloadStarted;
+        sigc::signal<void> m_SignalPostsDownloadStarted, m_SignalOnLastPage;
     };
 }

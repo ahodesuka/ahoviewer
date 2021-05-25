@@ -445,6 +445,12 @@ void Browser::save_image_as()
     }
 }
 
+void Browser::reset_tag_entry_progress()
+{
+    m_PostsDownloadPulseConn.disconnect();
+    m_TagEntry->set_progress_fraction(0.0);
+}
+
 bool Browser::on_entry_key_press_event(GdkEventKey* e)
 {
     // we only care if enter/return was pressed while shift or no modifier was down
@@ -503,6 +509,7 @@ void Browser::on_page_removed(Gtk::Widget* w, guint)
         m_DownloadErrorConn.disconnect();
         m_PostsDownloadStartedConn.disconnect();
         m_PostsDownloadFinishedConn.disconnect();
+        m_PostsOnLastPageConn.disconnect();
         m_PostsLoadProgressConn.disconnect();
         m_PostsDownloadPulseConn.disconnect();
 
@@ -595,8 +602,7 @@ void Browser::on_switch_page(Gtk::Widget* w, guint)
     m_TagEntry->set_progress_fraction(0.0);
     m_PostsDownloadStartedConn.disconnect();
     m_PostsDownloadStartedConn = page->signal_posts_download_started().connect([&]() {
-        m_TagEntry->set_progress_fraction(0.0);
-        m_PostsDownloadPulseConn.disconnect();
+        reset_tag_entry_progress();
         m_PostsDownloadPulseConn = Glib::signal_timeout().connect(
             [&]() {
                 m_TagEntry->progress_pulse();
@@ -606,10 +612,11 @@ void Browser::on_switch_page(Gtk::Widget* w, guint)
     });
 
     m_PostsDownloadFinishedConn.disconnect();
-    m_PostsDownloadFinishedConn = page->get_imagelist()->signal_thumbnails_loaded().connect([&]() {
-        m_PostsDownloadPulseConn.disconnect();
-        m_TagEntry->set_progress_fraction(0.0);
-    });
+    m_PostsDownloadFinishedConn = page->get_imagelist()->signal_thumbnails_loaded().connect(
+        sigc::mem_fun(*this, &Browser::reset_tag_entry_progress));
+    m_PostsOnLastPageConn.disconnect();
+    m_PostsOnLastPageConn = page->signal_on_last_page().connect(
+        sigc::mem_fun(*this, &Browser::reset_tag_entry_progress));
 
     m_PostsLoadProgressConn.disconnect();
     m_PostsLoadProgressConn =

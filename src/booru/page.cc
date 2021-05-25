@@ -412,6 +412,8 @@ void Page::on_posts_downloaded()
         {
             if (m_Page == 1)
                 m_SignalDownloadError(_("No results found"));
+            else
+                m_SignalOnLastPage();
 
             m_LastPage = true;
         }
