@@ -8,12 +8,12 @@ BEGIN
     BLOCK "040904E4"
     BEGIN
       VALUE "CompanyName", "ahoka"
-      VALUE "FileDescription", "A image viewer, manga reader, and booru browser"
+      VALUE "FileDescription", @PACKAGE@
       VALUE "FileVersion", "@VERSION_MAJOR@.@VERSION_MINOR@.@VERSION_PATCH@"
-      VALUE "InternalName", "ahoviewer"
+      VALUE "InternalName", @PACKAGE@
       VALUE "LegalCopyright", "Copyright (c) 2013-2021 ahoka"
       VALUE "OriginalFilename", "ahoviewer.exe"
-      VALUE "ProductName", "ahoviewer"
+      VALUE "ProductName", @PACKAGE@
       VALUE "ProductVersion", "@VERSION_MAJOR@.@VERSION_MINOR@.@VERSION_PATCH@"
     END
   END
