@@ -86,6 +86,33 @@ libnsgif = dependency('libnsgif', required : false)
 prefix = get_option('prefix')
 datadir = join_paths(prefix, get_option('datadir'))
 
+if host_machine.system() == 'windows'
+  version_array = meson.project_version().split('.')
+  version_major = version_array[0].to_int()
+  version_minor = version_array[1].to_int()
+  if version_array[2].contains('-')
+    version_patch = version_array[2].split('-')[0].to_int()
+  else
+    version_patch = version_array[2].to_int()
+  endif
+
+  version_data = configuration_data()
+  version_data.set('VERSION_MAJOR', version_major)
+  version_data.set('VERSION_MINOR', version_minor)
+  version_data.set('VERSION_PATCH', version_patch)
+
+  version_data.set_quoted('VERSION', version_major.to_string() + '.' + version_minor.to_string() + '.' + version_patch.to_string())
+  version_data.set_quoted('HOST_MACHINE_ARCH', host_machine.cpu_family() == 'x86' ? 'win32' : 'win64')
+  version_data.set_quoted('PACKAGE', meson.project_name())
+  installer_nsi = configure_file(
+    input : 'installer.nsi.in',
+    output : 'installer.nsi',
+    configuration : version_data,
+  )
+
+  run_target('installer', command : ['C:\\Program Files (x86)\\NSIS\\makensis.exe', installer_nsi])
+endif
+
 subdir('data')
 subdir('po')
 subdir('src')
