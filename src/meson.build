@@ -54,17 +54,30 @@ if libpeas.found()
   ]
 
   # Dummy executable that gir needs
-  gir_dummy = executable(
-    'gir_dummy',
-    sources : [
-      plugin_sources,
-      'plugin/gir-dummy.c',
-    ],
-    c_args : [ '-DGIR_DUMMY' ],
-    dependencies : [ libpeas, gtk ],
-    link_args: [ '-Wl,--export-all-symbols' ],
-    install : false,
-  )
+  if host_machine.system() == 'windows'
+    gir_dummy = executable(
+      'gir_dummy',
+      sources : [
+	plugin_sources,
+	'plugin/gir-dummy.c',
+      ],
+      c_args : [ '-DGIR_DUMMY' ],
+      dependencies : [ libpeas, gtk ],
+      link_args: [ '-Wl,--export-all-symbols' ],
+      install : false,
+    )
+  else
+    gir_dummy = executable(
+      'gir_dummy',
+      sources : [
+	plugin_sources,
+	'plugin/gir-dummy.c',
+      ],
+      c_args : [ '-DGIR_DUMMY' ],
+      dependencies : [ libpeas, gtk ],
+      install : false,
+    )
+  endif
 
   ahoviewer_gir = gnome.generate_gir(
     gir_dummy,
