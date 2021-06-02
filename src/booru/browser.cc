@@ -29,6 +29,10 @@ Browser::Browser(BaseObjectType* cobj, const Glib::RefPtr<Gtk::Builder>& bldr)
     css->load_from_data("#BooruBrowserNotebook{border-right-width:0;border-bottom-width:0;}");
     m_Notebook->get_style_context()->add_provider(css, GTK_STYLE_PROVIDER_PRIORITY_APPLICATION);
 
+    // XXX: Gtk3 bug? if you set it to 0.0 without setting it previously it's set to 0.1? instead
+    m_TagEntry->set_progress_fraction(1.0);
+    m_TagEntry->set_progress_fraction(0.0);
+
     m_TagEntry->signal_key_press_event().connect(
         sigc::mem_fun(*this, &Browser::on_entry_key_press_event), false);
     m_TagEntry->signal_changed().connect(sigc::mem_fun(*this, &Browser::on_entry_value_changed));
