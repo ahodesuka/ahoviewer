@@ -776,7 +776,7 @@
                 <property name="name">PreferencesDialogStackSidebar</property>
                 <property name="visible">True</property>
                 <property name="can-focus">False</property>
-                <property name="stack">stack1</property>
+                <property name="stack">PreferencesDialog::Stack</property>
               </object>
               <packing>
                 <property name="expand">False</property>
@@ -785,7 +785,7 @@
               </packing>
             </child>
             <child>
-              <object class="GtkStack" id="stack1">
+              <object class="GtkStack" id="PreferencesDialog::Stack">
                 <property name="visible">True</property>
                 <property name="can-focus">False</property>
                 <property name="transition-type">slide-up-down</property>
