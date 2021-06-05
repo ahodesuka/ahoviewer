@@ -221,7 +221,16 @@ void Application::on_startup()
 
     Gtk::Application::on_startup();
 
+#ifdef _WIN32
+    gchar* g{ g_win32_get_package_installation_directory_of_module(NULL) };
+    if (g)
+    {
+        date::set_install(Glib::build_filename(g, "tzdata"));
+        g_free(g);
+    }
+#else  // !_WIN32
     date::set_install(Glib::build_filename(Glib::get_user_cache_dir(), PACKAGE, "tzdata"));
+#endif // !_WIN32
     std::thread{ []() {
         try
         {
