@@ -116,12 +116,10 @@ if libsecret.found()
   conf.set('HAVE_LIBSECRET', 1)
 endif
 
-if libunrar.found()
+if libunrar_found
   conf.set('HAVE_LIBUNRAR', 1)
-  if libunrar_dll_hpp
-    incdirs += include_directories('/usr/include/libunrar')
-  elif unrar_dll_hpp
-    incdirs += include_directories('/usr/include/unrar')
+  if host_machine.system() != 'windows'
+    incdirs += include_directories(unrar_incdir)
   endif
 endif
 

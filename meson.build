@@ -64,16 +64,27 @@ libunrar = dependency('libunrar', required : false)
 # libunrar doesn't package a .pc file so we need to find it manually
 # worse yet not all distros put the header into the same directory
 if not libunrar.found() and not get_option('libunrar').disabled()
-  libunrar_dll_hpp = false
-  unrar_dll_hpp = false
   cpp = meson.get_compiler('cpp')
+  libunrar_found = host_machine.system() == 'windows'
   libunrar = cpp.find_library('libunrar', required : get_option('libunrar'))
-  if cpp.has_header('dll.hpp', args : '-I/usr/include/libunrar')
-    libunrar_dll_hpp = true
-  elif cpp.has_header('dll.hpp', args : '-I/usr/include/unrar')
-    unrar_dll_hpp = true
+  if libunrar.found() and host_machine.system() != 'windows'
+    foreach idir : [ get_option('libunrar-path'), '/usr/include/unrar', '/usr/include/libunrar',
+                    '/usr/include/x86_64-linux-gnu/unrar', '/usr/include/x86_64-linux-gnu/libunrar',
+                    '/usr/local/include/unrar', '/usr/local/include/libunrar']
+      if idir == ''
+        continue
+      endif
+      inc_arg = '-I' + idir
+      if cpp.has_header('dll.hpp', args: inc_arg)
+        unrar_incdir = idir
+        libunrar_found = true
+        break
+      endif
+    endforeach
   endif
-  if not libunrar_dll_hpp and not unrar_dll_hpp and get_option('libunrar').enabled() and host_machine.system() != 'windows'
+  # For whatever reason the has_header check fails no matter what I do on msys2
+  # even though it compiles fine
+  if not (libunrar_found and libunrar.found()) and get_option('libunrar').enabled()
     error('libunrar enabled but was not found')
   endif
 endif

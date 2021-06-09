@@ -34,6 +34,13 @@ option(
 )
 
 option(
+  'libunrar-path',
+  type: 'string',
+  value: '',
+  description: 'The path to libunrar include directory containing dll.hpp'
+)
+
+option(
   'libzip',
   type : 'feature',
   value : 'auto',
