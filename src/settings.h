@@ -18,7 +18,16 @@ namespace AhoViewer
     }
     class SettingsManager
     {
+        // name, url, type
         using SiteTuple = std::tuple<std::string, std::string, Booru::Type>;
+        // name, url, username, pass, type, use_samples, plugin_name
+        using DisabledSiteTuple = std::tuple<std::string,
+                                             std::string,
+                                             std::string,
+                                             std::string,
+                                             Booru::Type,
+                                             bool,
+                                             std::string>;
 
     public:
         SettingsManager();
@@ -100,6 +109,7 @@ namespace AhoViewer
         const Booru::TagViewOrder m_DefaultTagViewOrder{ Booru::TagViewOrder::TYPE };
 
         std::vector<std::shared_ptr<Booru::Site>> m_Sites;
+        std::vector<DisabledSiteTuple> m_DisabledSites;
         std::map<std::string, std::map<std::string, std::string>> m_Keybindings;
         std::vector<Booru::Tag> m_FavoriteTags;
 

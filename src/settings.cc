@@ -255,6 +255,8 @@ std::vector<std::shared_ptr<Site>>& SettingsManager::get_sites()
                     {
                         std::cerr << "Previously saved site '" << name
                                   << "' uses a plugin that is no longer installed" << std::endl;
+                        m_DisabledSites.emplace_back(
+                            name, url, username, password, type, use_samples, plugin_name);
                         continue;
                     }
 #else  // !HAVE_LIBPEAS
@@ -506,6 +508,28 @@ void SettingsManager::save_sites()
 #ifdef HAVE_LIBPEAS
         if (s->get_type() == Type::PLUGIN)
             set("plugin_name", s->get_plugin_name(), Setting::TypeString, site);
+#endif // HAVE_LIBPEAS
+    }
+
+    for (const auto& s : m_DisabledSites)
+    {
+        Setting& site{ sites.add(Setting::TypeGroup) };
+        auto [name, url, username, password, type, use_samples, plugin_name] = s;
+
+        set("name", name, Setting::TypeString, site);
+        set("url", url, Setting::TypeString, site);
+        set("type", static_cast<int>(type), Setting::TypeInt, site);
+
+        if (!username.empty())
+            set("username", username, Setting::TypeString, site);
+#if !defined(HAVE_LIBSECRET) && !defined(_WIN32)
+        if (!password.empty())
+            set("password", password, Setting::TypeString, site);
+#endif // !defined(HAVE_LIBSECRET) && !defined(_WIN32)
+        set("use_samples", use_samples, Setting::TypeBoolean, site);
+#ifdef HAVE_LIBPEAS
+        if (type == Type::PLUGIN)
+            set("plugin_name", plugin_name, Setting::TypeString, site);
 #endif // HAVE_LIBPEAS
     }
 }
