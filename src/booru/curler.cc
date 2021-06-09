@@ -63,6 +63,10 @@ Curler::Curler(const std::string& url, CURLSH* share)
       m_Cancel(Gio::Cancellable::create())
 {
     curl_easy_setopt(m_EasyHandle, CURLOPT_USERAGENT, UserAgent);
+    // This will fall back to 1.1 if the server does not support HTTP 2
+    // Since curl 7.62.0 the default value is CURL_HTTP_VERSION_2TLS, but
+    // explicitly setting it here enables it for non https requests as well
+    curl_easy_setopt(m_EasyHandle, CURLOPT_HTTP_VERSION, CURL_HTTP_VERSION_2);
     curl_easy_setopt(m_EasyHandle, CURLOPT_WRITEFUNCTION, &Curler::write_cb);
     curl_easy_setopt(m_EasyHandle, CURLOPT_WRITEDATA, this);
     curl_easy_setopt(m_EasyHandle, CURLOPT_XFERINFOFUNCTION, &Curler::progress_cb);
