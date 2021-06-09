@@ -85,7 +85,7 @@ namespace AhoViewer
         void clear_notes();
         void update_notes();
 
-        static constexpr double SmoothScrollStep = 1000.0 / 60.0;
+        static constexpr double SmoothScrollStep = 1000.0 / 120.0;
 
         Gtk::Layout *m_Layout, *m_NoteLayout;
         Gtk::Overlay* m_Overlay;

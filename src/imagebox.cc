@@ -583,50 +583,47 @@ bool ImageBox::on_motion_notify_event(GdkEventMotion* e)
     return Gtk::ScrolledWindow::on_motion_notify_event(e);
 }
 
+// Override default scroll behavior to provide interpolated scrolling
+// FIXME: Interpolate zooming (possible after replacing Gtk::Image with manual cairo drawing)
 bool ImageBox::on_scroll_event(GdkEventScroll* e)
 {
+    bool handled{ e->delta_x != 0 || e->delta_y != 0 };
     grab_focus();
     cursor_timeout();
 
-    GdkScrollDirection direction = GDK_SCROLL_SMOOTH;
+    static auto get_scroll_unit = [&](const double page_size) {
+#ifdef __APPLE__
+        return 1;
+#else  // !__APPLE__
+        return std::min(std::pow(page_size, 2.0 / 3.0), page_size / 2.0);
+#endif // !__APPLE__
+    };
 
-    if (e->direction == GDK_SCROLL_SMOOTH)
+    // Scroll down
+    if (e->delta_y > 0)
     {
-        if (e->delta_y >= 0)
-            direction = GDK_SCROLL_DOWN;
-        else if (e->delta_y < 0)
-            direction = GDK_SCROLL_UP;
-        else if (e->delta_x < 0)
-            direction = GDK_SCROLL_LEFT;
-        else if (e->delta_x >= 0)
-            direction = GDK_SCROLL_RIGHT;
-    }
-
-    switch (direction)
-    {
-    case GDK_SCROLL_UP:
-        if ((e->state & GDK_CONTROL_MASK) == GDK_CONTROL_MASK)
-            on_zoom_in();
-        else
-            scroll(0, -300);
-        return true;
-    case GDK_SCROLL_DOWN:
         if ((e->state & GDK_CONTROL_MASK) == GDK_CONTROL_MASK)
             on_zoom_out();
         else
-            scroll(0, 300);
-        return true;
-    case GDK_SCROLL_LEFT:
-        scroll(-300, 0);
-        return true;
-    case GDK_SCROLL_RIGHT:
-        scroll(300, 0);
-        return true;
-    case GDK_SCROLL_SMOOTH:
-        return false;
+            scroll(0, get_scroll_unit(get_vadjustment()->get_page_size()));
+    }
+    // Scroll up
+    else if (e->delta_y < 0)
+    {
+        if ((e->state & GDK_CONTROL_MASK) == GDK_CONTROL_MASK)
+            on_zoom_in();
+        else
+            scroll(0, -get_scroll_unit(get_vadjustment()->get_page_size()));
     }
 
-    return Gtk::ScrolledWindow::on_scroll_event(e);
+    // Scroll right
+    if (e->delta_x > 0)
+        scroll(get_scroll_unit(get_hadjustment()->get_page_size()), 0);
+    // Scroll left
+    else if (e->delta_x < 0)
+        scroll(-get_scroll_unit(get_hadjustment()->get_page_size()), 0);
+
+    return handled || Gtk::ScrolledWindow::on_scroll_event(e);
 }
 
 // This must be called after m_Orig(Width/Height) are set
