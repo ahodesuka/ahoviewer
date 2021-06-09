@@ -9,7 +9,18 @@ using namespace AhoViewer::Booru;
 #define VERBOSE_LIBCURL 0
 #endif
 
-const char* Curler::UserAgent{ "Mozilla/5.0" };
+const char* Curler::UserAgent
+{
+#if defined(__linux__)
+    "Mozilla/5.0 (Linux x86_64; rv:89.0) Gecko/20100101 Firefox/89.0"
+#elif defined(__APPLE__)
+    "Mozilla/5.0 (Macintosh; Intel Mac OS X 11.4; rv:89.0) Gecko/20100101 Firefox/89.0"
+#elif defined(_WIN32)
+    "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:89.0) Gecko/20100101 Firefox/89.0"
+#else
+    "Mozilla/5.0"
+#endif
+};
 
 size_t Curler::write_cb(const unsigned char* ptr, size_t size, size_t nmemb, void* userp)
 {
