@@ -33,7 +33,7 @@ sudo ninja install
 
 If you don't want to compile with debug symbols replace the first command with:
 ```
-meson build -Dbuildtype=release
+meson build --buildtype=release
 ```
 
 ## Usage

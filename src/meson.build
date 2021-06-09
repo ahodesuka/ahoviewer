@@ -204,6 +204,6 @@ ahoviewer = executable(
   cpp_args : ahoviewer_cpp_args,
   dependencies : deps,
   include_directories : incdirs,
-  gui_app : true,
+  gui_app : get_option('buildtype').startswith('release'),
   install : true,
 )
