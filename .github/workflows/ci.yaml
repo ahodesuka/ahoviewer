@@ -1,0 +1,67 @@
+name: CI Build
+
+on: [push, pull_request]
+
+jobs:
+  build-linux:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout sources
+        uses: actions/checkout@v2.3.4
+      - uses: actions/setup-python@v2
+        with:
+          python-version: "3.x"
+      - name: Install dependencies
+        run: |
+          "${GITHUB_WORKSPACE}/.github/install-deps-ubuntu.sh"
+      - name: Build ahoviewer
+        uses: BSFishy/meson-build@v1.0.3
+        with:
+          action: build
+
+  build-msys2:
+    runs-on: windows-latest
+    defaults:
+      run:
+        shell: msys2 {0}
+    steps:
+      - name: Checkout sources
+        uses: actions/checkout@v2.3.4
+      - name: Setup MSYS/MINGW64
+        uses: msys2/setup-msys2@v2
+        with:
+          msystem: MINGW64
+          update: true
+          install: >-
+            base-devel
+            mingw-w64-x86_64-toolchain
+            mingw-w64-x86_64-meson
+            mingw-w64-x86_64-gtkmm3
+            mingw-w64-x86_64-libconfig
+            mingw-w64-x86_64-curl
+            mingw-w64-x86_64-gstreamer
+            mingw-w64-x86_64-gst-plugins-bad
+            mingw-w64-x86_64-gst-plugins-good
+            mingw-w64-x86_64-gobject-introspection
+            mingw-w64-x86_64-python-gobject
+            mingw-w64-x86_64-libpeas
+            mingw-w64-x86_64-libzip
+      - name: Cache libunrar
+        id: cache-libunrar
+        uses: actions/cache@v2
+        with:
+          path: .github/unrar/mingw-w64-*-any.pkg.tar.zst
+          key: ${{ runner.os }}-${{ hashFiles('.github/unrar/PKGBUILD') }}
+      - name: Build libunrar
+        if: steps.cache-libunrar.outputs.cache-hit != 'true'
+        run: |
+          cd "${GITHUB_WORKSPACE}/.github/unrar"
+          MINGW_ARCH=mingw64 makepkg-mingw -sCLfc --noconfirm --noprogressbar
+      - name: Install libunrar
+        run: |
+          cd "${GITHUB_WORKSPACE}/.github/unrar"
+          pacman --noconfirm -U mingw-w64-*-any.pkg.tar.zst
+      - name: Build ahoviewer
+        run: |
+          meson setup build -Dlibunrar-path=D:/a/_temp/msys/msys64/mingw64/include/unrar
+          meson compile -C build

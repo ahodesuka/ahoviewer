@@ -1,0 +1,27 @@
+--- unrar/makefile.orig	2020-05-21 04:13:21.000000000 -0500
++++ unrar/makefile		2021-06-10 06:32:57.035143100 -0500
+@@ -3,9 +3,9 @@
+ 
+ # Linux using GCC
+ CXX=c++
+-CXXFLAGS=-O2 -Wno-logical-op-parentheses -Wno-switch -Wno-dangling-else
++CXXFLAGS=-O2 -Wno-switch -Wno-dangling-else
+ LIBFLAGS=-fPIC
+-DEFINES=-D_FILE_OFFSET_BITS=64 -D_LARGEFILE_SOURCE -DRAR_SMP
++DEFINES=-D_FILE_OFFSET_BITS=64 -D_LARGEFILE_SOURCE
+ STRIP=strip
+ AR=ar
+ LDFLAGS=-pthread
+@@ -155,10 +155,8 @@ sfx:	clean $(OBJECTS)
+ 
+ lib:	WHAT=RARDLL
+ lib:	CXXFLAGS+=$(LIBFLAGS)
+-lib:	clean $(OBJECTS) $(LIB_OBJ)
+-	@rm -f libunrar.*
+-	$(LINK) -shared -o libunrar.so $(LDFLAGS) $(OBJECTS) $(LIB_OBJ)
+-	$(AR) rcs libunrar.a $(OBJECTS) $(LIB_OBJ)
++lib:	$(OBJECTS) $(LIB_OBJ)
++	$(LINK) -shared -Wl,--out-implib,libunrar.dll.a -o unrar.dll $(LDFLAGS) $(OBJECTS) $(LIB_OBJ) $(LIBS)
+ 
+ install-unrar:
+ 			install -D unrar $(DESTDIR)/bin/unrar

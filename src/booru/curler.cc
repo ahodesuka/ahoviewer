@@ -83,7 +83,7 @@ Curler::Curler(const std::string& url, CURLSH* share)
     gchar* g{ g_win32_get_package_installation_directory_of_module(NULL) };
     if (g)
     {
-        std::string cert_path{ Glib::build_filename(g, "curl-ca-bundle.crt") };
+        std::string cert_path{ Glib::build_filename(g, "ca-bundle.crt") };
         curl_easy_setopt(m_EasyHandle, CURLOPT_CAINFO, cert_path.c_str());
         g_free(g);
     }
