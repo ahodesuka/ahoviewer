@@ -591,21 +591,13 @@ bool ImageBox::on_scroll_event(GdkEventScroll* e)
     grab_focus();
     cursor_timeout();
 
-    static auto get_scroll_unit = [&](const double page_size) {
-#ifdef __APPLE__
-        return 1;
-#else  // !__APPLE__
-        return std::min(std::pow(page_size, 2.0 / 3.0), page_size / 2.0);
-#endif // !__APPLE__
-    };
-
     // Scroll down
     if (e->delta_y > 0)
     {
         if ((e->state & GDK_CONTROL_MASK) == GDK_CONTROL_MASK)
             on_zoom_out();
         else
-            scroll(0, get_scroll_unit(get_vadjustment()->get_page_size()));
+            scroll(0, 300);
     }
     // Scroll up
     else if (e->delta_y < 0)
@@ -613,15 +605,15 @@ bool ImageBox::on_scroll_event(GdkEventScroll* e)
         if ((e->state & GDK_CONTROL_MASK) == GDK_CONTROL_MASK)
             on_zoom_in();
         else
-            scroll(0, -get_scroll_unit(get_vadjustment()->get_page_size()));
+            scroll(0, -300);
     }
 
     // Scroll right
     if (e->delta_x > 0)
-        scroll(get_scroll_unit(get_hadjustment()->get_page_size()), 0);
+        scroll(300, 0);
     // Scroll left
     else if (e->delta_x < 0)
-        scroll(-get_scroll_unit(get_hadjustment()->get_page_size()), 0);
+        scroll(-300, 0);
 
     return handled || Gtk::ScrolledWindow::on_scroll_event(e);
 }
