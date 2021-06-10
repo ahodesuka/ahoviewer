@@ -921,10 +921,9 @@ Site::parse_post_data(unsigned char* data, const size_t size)
                     if (has_notes)
                         notes_url = Glib::ustring::compose(m_Url + NotesURI.at(m_Type), id);
 
-                    // safebooru.org provides the wrong file extension for thumbnails
-                    // All their thumbnails are .jpg, but their api gives urls with the
-                    // same exntension as the original images exnteion
-                    if (thumb_url.find("safebooru.org") != std::string::npos)
+                    // Some older Gelbooru based sites have a bug where their thumbnail urls file
+                    // extension match the normal file extension even though all thumbnails are .jpg
+                    if (m_Type == Type::GELBOORU)
                         thumb_url = thumb_url.substr(0, thumb_url.find_last_of('.')) + ".jpg";
 
                     date::sys_seconds t;
