@@ -65,15 +65,23 @@ libunrar = dependency('libunrar', required : false)
 # worse yet not all distros put the header into the same directory
 if not libunrar.found() and not get_option('libunrar').disabled()
   cpp = meson.get_compiler('cpp')
-  libunrar_found = host_machine.system() == 'windows'
+  libunrar_found = false
   libunrar = cpp.find_library('libunrar', required : get_option('libunrar'))
-  if libunrar.found() and host_machine.system() != 'windows'
-    foreach idir : [ get_option('libunrar-path'), '/usr/include/unrar', '/usr/include/libunrar',
-                    '/usr/include/x86_64-linux-gnu/unrar', '/usr/include/x86_64-linux-gnu/libunrar',
-                    '/usr/local/include/unrar', '/usr/local/include/libunrar']
-      if idir == ''
-        continue
-      endif
+  search_paths = [ '/usr/include/unrar', '/usr/include/libunrar',
+                   '/usr/include/x86_64-linux-gnu/unrar', '/usr/include/x86_64-linux-gnu/libunrar',
+                   '/usr/local/include/unrar', '/usr/local/include/libunrar']
+  # Can't easily access MINGW_PREFIX enviornment variable from meson so just search everywhere
+  if host_machine.system() == 'windows'
+    search_paths = [ '/mingw64/include/unrar', '/mingw32/include/unrar',
+                     '/clang64/include/unrar', '/clang32/include/unrar',
+                     '/ucrt64/include/unrar' ] + search_paths
+  endif
+  # Prepend manually set path
+  if get_option('libunrar-path') != ''
+    search_paths = [ get_option('libunrar-path') ] + search_paths
+  endif
+  if libunrar.found()
+    foreach idir : search_paths
       inc_arg = '-I' + idir
       if cpp.has_header('dll.hpp', args: inc_arg)
         unrar_incdir = idir
@@ -82,8 +90,6 @@ if not libunrar.found() and not get_option('libunrar').disabled()
       endif
     endforeach
   endif
-  # For whatever reason the has_header check fails no matter what I do on msys2
-  # even though it compiles fine
   if not (libunrar_found and libunrar.found()) and get_option('libunrar').enabled()
     error('libunrar enabled but was not found')
   endif
@@ -120,8 +126,6 @@ if host_machine.system() == 'windows'
     output : 'installer.nsi',
     configuration : version_data,
   )
-
-  run_target('installer', command : ['C:\\Program Files (x86)\\NSIS\\makensis.exe', installer_nsi])
 endif
 
 subdir('data')

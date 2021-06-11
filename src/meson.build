@@ -118,9 +118,7 @@ endif
 
 if libunrar_found
   conf.set('HAVE_LIBUNRAR', 1)
-  if host_machine.system() != 'windows'
-    incdirs += include_directories(unrar_incdir)
-  endif
+  incdirs += include_directories(unrar_incdir)
 endif
 
 if libzip.found()

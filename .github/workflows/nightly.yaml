@@ -1,0 +1,84 @@
+name: Nightly Windows Build
+
+on:
+  schedule:
+    - cron: "0 0 * * *" # run at 0 AM UTC
+  workflow_dispatch:
+
+jobs:
+  repo-check:
+    name: Check for changes
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2.3.4
+      - id: commit-check
+        run: 'echo ::set-output name=has-commits::$(git --no-pager log --pretty=oneline --since="24 hours ago" | wc -l)'
+    outputs:
+      has-commits: ${{ steps.commit-check.outputs.has-commits }}
+
+  build-msys2:
+    name: Nightly build
+    if: ${{ github.repository == 'ahodesuka/ahoviewer' && (github.event_name != 'schedule' || needs.repo-check.outputs.has-commits > 0) }}
+    runs-on: windows-latest
+    needs: repo-check
+    defaults:
+      run:
+        shell: msys2 {0}
+    steps:
+      - name: Checkout sources
+        uses: actions/checkout@v2.3.4
+      - name: Setup MSYS/MINGW64
+        uses: msys2/setup-msys2@v2
+        with:
+          msystem: MINGW64
+          update: true
+          install: >-
+            git
+            base-devel
+            zip
+            mingw-w64-x86_64-toolchain
+            mingw-w64-x86_64-meson
+            mingw-w64-x86_64-gtkmm3
+            mingw-w64-x86_64-libconfig
+            mingw-w64-x86_64-openssl
+            mingw-w64-x86_64-curl
+            mingw-w64-x86_64-gstreamer
+            mingw-w64-x86_64-gst-plugins-bad
+            mingw-w64-x86_64-gst-plugins-good
+            mingw-w64-x86_64-gobject-introspection
+            mingw-w64-x86_64-python-gobject
+            mingw-w64-x86_64-libpeas
+            mingw-w64-x86_64-libzip
+      - name: Cache libunrar
+        id: cache-libunrar
+        uses: actions/cache@v2
+        with:
+          path: .github/unrar/mingw-w64-*-any.pkg.tar.zst
+          key: ${{ runner.os }}-${{ hashFiles('.github/unrar/PKGBUILD') }}
+      - name: Build libunrar
+        if: steps.cache-libunrar.outputs.cache-hit != 'true'
+        run: |
+          cd "${GITHUB_WORKSPACE}/.github/unrar"
+          MINGW_ARCH=mingw64 makepkg-mingw -sCLfc --noconfirm --noprogressbar
+      - name: Install libunrar
+        run: |
+          cd "${GITHUB_WORKSPACE}/.github/unrar"
+          pacman --noconfirm -U mingw-w64-*-any.pkg.tar.zst
+      - name: Build ahoviewer
+        run: |
+          meson setup --buildtype=release build -Dlibunrar-path=D:/a/_temp/msys/msys64/mingw64/include/unrar
+          meson compile -C build
+          "${GITHUB_WORKSPACE}/.github/make-msys-snapshot.sh"
+      - name: Upload snapshot
+        if: |
+          github.repository_owner == 'ahodesuka'
+        uses: WebFreak001/deploy-nightly@v1.1.0
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: https://uploads.github.com/repos/ahodesuka/ahoviewer/releases/44500507/assets{?name,label}
+          release_id: 44500507
+          asset_path: ${{github.workspace}}/ahoviewer.zip
+          asset_name: ahoviewer-$$-nightly-win64-standalone.zip
+          asset_content_type: application/zip
+          max_releases: 5

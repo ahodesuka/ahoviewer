@@ -1,0 +1,36 @@
+_realname=unrar
+pkgbase=mingw-w64-${_realname}
+pkgname="${MINGW_PACKAGE_PREFIX}-${_realname}"
+pkgver=6.0.6
+pkgrel=1
+arch=('any')
+mingw_arch=('mingw32' 'mingw64' 'ucrt64' 'clang64')
+url="https://www.rarlab.com/rar_add.htm"
+license=("custom")
+options=('strip' 'staticlibs')
+makedepends=("${MINGW_PACKAGE_PREFIX}-gcc")
+depends=("${MINGW_PACKAGE_PREFIX}-gcc-libs")
+source=("https://www.rarlab.com/rar/unrarsrc-${pkgver}.tar.gz"
+        'build-dll.patch')
+sha256sums=('011ef7290d3394a62bb5bfced914cd510a7eea7255cf69417f9c952bb6056588'
+            '9bdcac18a3bb504f026a50276694344496005c0e5e474f4e66c5d6e37b1e3e0f')
+
+prepare() {
+  cd ${_realname}
+
+  patch -p1 -i ${srcdir}/build-dll.patch
+}
+
+build() {
+  cd ${_realname}
+  LIBS="${MINGW_PREFIX}/${MINGW_CHOST}/lib/libpowrprof.a" make lib CXXFLAGS="${CXXFLAGS}"
+}
+
+package() {
+  cd "${srcdir}/${_realname}"
+
+  install -Dm755 unrar.dll "${pkgdir}${MINGW_PREFIX}/bin/unrar.dll"
+  install -Dm755 libunrar.dll.a "${pkgdir}${MINGW_PREFIX}/lib/libunrar.dll.a"
+  install -Dm644 dll.hpp "${pkgdir}${MINGW_PREFIX}/include/unrar/dll.hpp"
+  install -Dm644 ${srcdir}/${_realname}/license.txt "${pkgdir}${MINGW_PREFIX}/share/licenses/${_realname}/LICENSE"
+}
