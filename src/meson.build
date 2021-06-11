@@ -127,11 +127,12 @@ endif
 
 # Falls back to project version when there's no .git directory, but still outputs a "fatal" error
 # message (which can just be ignored since it doesn't actually stop the configuring process)
-vcs_tag(
+version_h = vcs_tag(
   command : ['git', 'describe', '--dirty'],
   input : 'version.h.in',
   output : 'version.h',
 )
+deps += declare_dependency(sources: version_h)
 
 resources = gnome.compile_resources(
   'resources', 'ahoviewer.gresource.xml'
