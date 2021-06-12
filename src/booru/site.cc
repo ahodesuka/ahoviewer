@@ -1022,14 +1022,18 @@ std::vector<Note> Site::parse_note_data(unsigned char* data, const size_t size) 
                     y    = std::stoi(n.get_attribute("y"));
                 }
 
-                // Remove all html tags
+                // Remove all html tags, replace line breaks with \n
                 std::string::size_type sp;
                 while ((sp = body.find('<')) != std::string::npos)
                 {
-                    std::string::size_type ep{ body.find('>') };
+                    std::string::size_type ep{ body.find('>', sp) };
                     if (ep == std::string::npos)
                         break;
-                    body.erase(sp, ep + 1 - sp);
+
+                    if (body.substr(sp, ep).find("<br") != std::string::npos)
+                        body.replace(sp, ep + 1 - sp, "\n");
+                    else
+                        body.erase(sp, ep + 1 - sp);
                 }
 
                 decode_html_entities_utf8(body.data(), nullptr);
