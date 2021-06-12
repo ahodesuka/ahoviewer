@@ -323,12 +323,12 @@ Site::Site(std::string name,
         PCREDENTIALW pcred;
 
         std::string target = std::string(PACKAGE "/") + m_Name;
-        wchar_t* TargetName =
+        wchar_t* target_name =
             reinterpret_cast<wchar_t*>(g_utf8_to_utf16(target.c_str(), -1, NULL, NULL, NULL));
 
-        if (TargetName)
+        if (target_name)
         {
-            BOOL r = CredReadW(TargetName, CRED_TYPE_GENERIC, 0, &pcred);
+            BOOL r = CredReadW(target_name, CRED_TYPE_GENERIC, 0, &pcred);
 
             if (!r)
             {
@@ -337,21 +337,21 @@ Site::Site(std::string name,
             }
             else
             {
-                wchar_t* UserName = reinterpret_cast<wchar_t*>(
+                wchar_t* user_name = reinterpret_cast<wchar_t*>(
                     g_utf8_to_utf16(m_Username.c_str(), -1, NULL, NULL, NULL));
 
-                if (UserName)
+                if (user_name)
                 {
-                    if (wcscmp(pcred->UserName, UserName) == 0)
+                    if (wcscmp(pcred->UserName, user_name) == 0)
                         m_Password = (char*)pcred->CredentialBlob;
 
-                    g_free(UserName);
+                    g_free(user_name);
                 }
 
                 CredFree(pcred);
             }
 
-            g_free(TargetName);
+            g_free(target_name);
         }
     }
 #endif // _WIN32
@@ -565,33 +565,33 @@ void Site::set_password(const std::string& s)
     if (!m_Username.empty())
     {
         std::string target = std::string(PACKAGE "/") + m_Name;
-        wchar_t* TargetName =
+        wchar_t* target_name =
             reinterpret_cast<wchar_t*>(g_utf8_to_utf16(target.c_str(), -1, NULL, NULL, NULL));
 
-        if (TargetName)
+        if (target_name)
         {
-            wchar_t* UserName = reinterpret_cast<wchar_t*>(
+            wchar_t* user_name = reinterpret_cast<wchar_t*>(
                 g_utf8_to_utf16(m_Username.c_str(), -1, NULL, NULL, NULL));
 
-            if (UserName)
+            if (user_name)
             {
                 CREDENTIALW cred        = { 0 };
                 cred.Type               = CRED_TYPE_GENERIC;
-                cred.TargetName         = TargetName;
+                cred.TargetName         = target_name;
                 cred.CredentialBlobSize = s.length();
                 cred.CredentialBlob     = (LPBYTE)s.c_str();
                 cred.Persist            = CRED_PERSIST_LOCAL_MACHINE;
-                cred.UserName           = UserName;
+                cred.UserName           = user_name;
 
                 BOOL r = CredWriteW(&cred, 0);
                 if (!r)
                     std::cerr << "Failed to set password for " << m_Name << std::endl
                               << " errno " << GetLastError() << std::endl;
 
-                g_free(UserName);
+                g_free(user_name);
             }
 
-            g_free(TargetName);
+            g_free(target_name);
         }
     }
 #endif // _WIN32
