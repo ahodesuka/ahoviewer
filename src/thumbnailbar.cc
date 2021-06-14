@@ -124,6 +124,10 @@ void ThumbnailBar::on_cursor_changed()
     Gtk::TreeViewColumn* column;
 
     m_TreeView->get_cursor(path, column);
+
+    if (!path)
+        return;
+
     m_SignalSelectedChanged(path[0]);
 
     Gtk::TreeIter iter = m_ListStore->get_iter(path);
