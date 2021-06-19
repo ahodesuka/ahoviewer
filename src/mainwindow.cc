@@ -31,14 +31,17 @@ MainWindow::MainWindow(BaseObjectType* cobj, Glib::RefPtr<Gtk::Builder> bldr)
       m_Builder{ std::move(bldr) },
       m_LastSavePath{ Settings.get_string("LastSavePath") }
 {
+    if (!m_PreferencesDialog)
+        m_Builder->get_widget_derived("PreferencesDialog", m_PreferencesDialog);
+
+    g_signal_connect(this->gobj(), "screen-changed", G_CALLBACK(on_screen_changed), nullptr);
+    on_screen_changed(GTK_WIDGET(this->gobj()), nullptr, nullptr);
+
     m_Builder->get_widget_derived("ThumbnailBar", m_ThumbnailBar);
     m_Builder->get_widget_derived("Booru::Browser", m_BooruBrowser);
     m_Builder->get_widget_derived("Booru::Browser::InfoBox", m_InfoBox);
     m_Builder->get_widget_derived("ImageBox", m_ImageBox);
     m_Builder->get_widget_derived("StatusBar", m_StatusBar);
-
-    if (!m_PreferencesDialog)
-        m_Builder->get_widget_derived("PreferencesDialog", m_PreferencesDialog);
 
     m_Builder->get_widget("MainWindow::HPaned", m_HPaned);
     m_HPaned->property_position().signal_changed().connect([&]() {
@@ -1130,6 +1133,24 @@ void MainWindow::on_connect_proxy(const Glib::RefPtr<Gtk::Action>& action, Gtk::
         static_cast<Gtk::MenuItem*>(w)->signal_deselect().connect(sigc::bind(
             sigc::mem_fun(m_StatusBar, &StatusBar::clear_message), StatusBar::Priority::TOOLTIP));
     }
+}
+
+void MainWindow::on_screen_changed(GtkWidget* w, GdkScreen* prev, gpointer userp)
+{
+    auto screen{ Gdk::Screen::get_default() };
+    auto visual{ screen->get_rgba_visual() };
+
+    if (!visual || !screen->is_composited())
+    {
+        visual = screen->get_system_visual();
+        MainWindow::m_PreferencesDialog->set_has_rgba_visual(false);
+    }
+    else
+    {
+        MainWindow::m_PreferencesDialog->set_has_rgba_visual(true);
+    }
+
+    gtk_widget_set_visual(w, visual->gobj());
 }
 
 void MainWindow::on_open_file_dialog()

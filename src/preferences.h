@@ -20,6 +20,8 @@ namespace AhoViewer
         // message dialog (when the setting is true)
         void set_ask_delete_confirm(const bool val) { m_AskDeleteConfirm->set_active(val); }
 
+        void set_has_rgba_visual(const bool val) { m_BGColor->set_use_alpha(val); }
+
         sigc::signal<void> signal_bg_color_set() const { return m_SignalBGColorSet; }
         sigc::signal<void> signal_cursor_hide_delay_changed() const
         {
@@ -49,6 +51,7 @@ namespace AhoViewer
             Gtk::TreeModelColumn<std::string> text_column;
         };
 
+        Gtk::ColorButton* m_BGColor;
         SiteEditor* m_SiteEditor;
         KeybindingEditor* m_KeybindingEditor;
         Gtk::CheckButton* m_AskDeleteConfirm;

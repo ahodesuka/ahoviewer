@@ -217,8 +217,6 @@ void Application::on_startup()
         init_gnutls_locks();
 #endif // defined(USE_GNUTLS) && GCRYPT_VERSION_NUMBER < 0x010600
 
-    Gtk::Main::init_gtkmm_internals();
-
     Gtk::Application::on_startup();
 
 #ifdef _WIN32

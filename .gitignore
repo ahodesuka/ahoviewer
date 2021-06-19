@@ -10,6 +10,7 @@ Makefile.in
 aclocal.m4
 autom4te.cache/
 build/
+build-clang/
 mingw-build/
 build-mingw.sh
 config.*
@@ -31,3 +32,8 @@ src/version.h
 stamp-h1
 vgdump
 **/.vscode
+.clangd
+gtk.suppression
+compile_commands.json
+run-clang-tidy.py
+.vim

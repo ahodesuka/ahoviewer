@@ -17,9 +17,8 @@ PreferencesDialog::PreferencesDialog(BaseObjectType* cobj, const Glib::RefPtr<Gt
     bldr->get_widget_derived("KeybindingEditor", m_KeybindingEditor);
     bldr->get_widget("AskDeleteConfirm", m_AskDeleteConfirm);
 
-    m_AskDeleteConfirm->signal_toggled().connect([&] {
-        m_SignalAskDeleteConfirmChanged(m_AskDeleteConfirm->get_active());
-    });
+    m_AskDeleteConfirm->signal_toggled().connect(
+        [&] { m_SignalAskDeleteConfirmChanged(m_AskDeleteConfirm->get_active()); });
 
     Gtk::Button* close_button{ nullptr };
     bldr->get_widget("PreferencesDialog::CloseButton", close_button);
@@ -42,19 +41,18 @@ PreferencesDialog::PreferencesDialog(BaseObjectType* cobj, const Glib::RefPtr<Gt
     check_button->hide();
 #endif // !__linux__
 
-    Gtk::ColorButton* bg_color{ nullptr };
-    bldr->get_widget("BackgroundColor", bg_color);
-    signal_realize().connect([bg_color]() { bg_color->set_rgba(Settings.get_background_color()); });
-    bg_color->signal_color_set().connect([&, bg_color]() {
-        Settings.set_background_color(bg_color->get_rgba());
+    bldr->get_widget("BackgroundColor", m_BGColor);
+    signal_realize().connect([&]() { m_BGColor->set_rgba(Settings.get_background_color()); });
+    m_BGColor->signal_color_set().connect([&]() {
+        Settings.set_background_color(m_BGColor->get_rgba());
         m_SignalBGColorSet();
     });
 
-    Gtk::Button* reset_bg_color_button{ nullptr };
-    bldr->get_widget("ResetBGColorButton", reset_bg_color_button);
-    reset_bg_color_button->signal_clicked().connect([&, bg_color]() {
+    Gtk::Button* reset_m_BGColor_button{ nullptr };
+    bldr->get_widget("ResetBGColorButton", reset_m_BGColor_button);
+    reset_m_BGColor_button->signal_clicked().connect([&]() {
         Settings.remove("BackgroundColor");
-        bg_color->set_rgba(Settings.get_background_color());
+        m_BGColor->set_rgba(Settings.get_background_color());
         m_SignalBGColorSet();
     });
 

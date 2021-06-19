@@ -63,6 +63,8 @@ namespace AhoViewer
 
         void on_connect_proxy(const Glib::RefPtr<Gtk::Action>& action, Gtk::Widget* w);
 
+        static void on_screen_changed(GtkWidget* w, GdkScreen* prev, gpointer userp);
+
         // Action callbacks {{{
         void on_open_file_dialog();
         void on_show_preferences();
