@@ -37,6 +37,8 @@ MainWindow::MainWindow(BaseObjectType* cobj, Glib::RefPtr<Gtk::Builder> bldr)
     g_signal_connect(this->gobj(), "screen-changed", G_CALLBACK(on_screen_changed), nullptr);
     on_screen_changed(GTK_WIDGET(this->gobj()), nullptr, nullptr);
 
+    get_style_context()->remove_class("background");
+
     m_Builder->get_widget_derived("ThumbnailBar", m_ThumbnailBar);
     m_Builder->get_widget_derived("Booru::Browser", m_BooruBrowser);
     m_Builder->get_widget_derived("Booru::Browser::InfoBox", m_InfoBox);
@@ -857,6 +859,7 @@ void MainWindow::create_actions()
 
     m_MenuBar = static_cast<Gtk::MenuBar*>(m_UIManager->get_widget("/MenuBar"));
     m_MenuBar->set_hexpand();
+    m_MenuBar->get_style_context()->add_class("background");
 
 #ifdef HAVE_LIBPEAS
     auto plugins_menuitem{ Gtk::make_managed<Gtk::MenuItem>(_("Plugins")) };
