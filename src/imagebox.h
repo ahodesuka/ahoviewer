@@ -68,6 +68,15 @@ namespace AhoViewer
         bool on_scroll_event(GdkEventScroll* e) override;
 
     private:
+        struct SmoothScroll
+        {
+            SmoothScroll(Glib::RefPtr<Gtk::Adjustment> adj) : adj(adj) { }
+
+            double start_time, end_time, start{ 0 }, end{ 0 };
+            guint64 id{ 0 };
+            bool scrolling{ false };
+            Glib::RefPtr<Gtk::Adjustment> adj;
+        };
         void get_scale_and_position(int& w, int& h, int& x, int& y);
         void draw_image(bool scroll);
         bool update_animation();
@@ -75,8 +84,8 @@ namespace AhoViewer
                     const int y,
                     const bool panning        = false,
                     const bool from_slideshow = false);
-        void smooth_scroll(const int, const Glib::RefPtr<Gtk::Adjustment>&);
-        bool update_smooth_scroll();
+        void smooth_scroll(const int amount, ImageBox::SmoothScroll& ss);
+        void remove_scroll_callback(ImageBox::SmoothScroll& ss);
         void zoom(const uint32_t percent);
 
         bool advance_slideshow();
@@ -85,16 +94,14 @@ namespace AhoViewer
         void clear_notes();
         void update_notes();
 
-        static constexpr double SmoothScrollStep = 1000.0 / 120.0;
-
         Gtk::Layout *m_Layout, *m_NoteLayout;
         Gtk::Overlay* m_Overlay;
         Gtk::Image* m_GtkImage;
         Gtk::DrawingArea* m_DrawingArea;
         Gtk::Menu* m_PopupMenu;
-        Glib::RefPtr<Gtk::Adjustment> m_ScrollAdjust;
         Glib::RefPtr<Gtk::UIManager> m_UIManager;
         Glib::RefPtr<Gtk::Action> m_NextAction, m_PreviousAction;
+        SmoothScroll m_HSmoothScroll, m_VSmoothScroll;
 
 #ifdef HAVE_GSTREAMER
         static GstBusSyncReply create_window(GstBus* bus, GstMessage* msg, void* userp);
@@ -118,7 +125,7 @@ namespace AhoViewer
 
         std::shared_ptr<Image> m_Image;
         sigc::connection m_AnimConn, m_CursorConn, m_DrawConn, m_ImageConn, m_NotesConn,
-            m_ScrollConn, m_SlideshowConn, m_StyleUpdatedConn;
+            m_SlideshowConn, m_StyleUpdatedConn;
 
         bool m_FirstDraw{ false }, m_RedrawQueued{ false }, m_Loading{ false },
             m_ZoomScroll{ false };
@@ -126,8 +133,7 @@ namespace AhoViewer
         ScrollPos m_RestoreScrollPos;
         // TODO: add setting for this
         uint32_t m_ZoomPercent{ 100 };
-        double m_Scale{ 0 }, m_PressX, m_PreviousX, m_PressY, m_PreviousY, m_ScrollTime,
-            m_ScrollDuration, m_ScrollStart, m_ScrollTarget;
+        double m_Scale{ 0 }, m_PressX, m_PreviousX, m_PressY, m_PreviousY;
 
         std::vector<ImageBoxNote*> m_Notes;
 

@@ -8,6 +8,10 @@ using namespace AhoViewer;
 
 #include <iostream>
 
+#ifndef M_PI
+#define M_PI 3.14159265358979323846
+#endif // ! M_PI
+
 #ifdef HAVE_GSTREAMER
 #include <gst/audio/streamvolume.h>
 #include <gst/video/videooverlay.h>
@@ -136,6 +140,8 @@ Gdk::RGBA ImageBox::DefaultBGColor = Gdk::RGBA();
 
 ImageBox::ImageBox(BaseObjectType* cobj, const Glib::RefPtr<Gtk::Builder>& bldr)
     : Gtk::ScrolledWindow{ cobj },
+      m_HSmoothScroll{ get_hadjustment() },
+      m_VSmoothScroll{ get_vadjustment() },
       m_LeftPtrCursor{ Gdk::Cursor::create(Gdk::LEFT_PTR) },
       m_FleurCursor{ Gdk::Cursor::create(Gdk::FLEUR) },
       m_BlankCursor{ Gdk::Cursor::create(Gdk::BLANK_CURSOR) },
@@ -341,6 +347,8 @@ void ImageBox::set_image(const std::shared_ptr<Image>& image)
         m_AnimConn.disconnect();
         m_ImageConn.disconnect();
         m_NotesConn.disconnect();
+        remove_scroll_callback(m_HSmoothScroll);
+        remove_scroll_callback(m_VSmoothScroll);
         reset_slideshow();
         clear_notes();
 
@@ -385,6 +393,8 @@ void ImageBox::clear_image()
     m_DrawingArea->hide();
     m_Layout->set_size(0, 0);
 
+    remove_scroll_callback(m_HSmoothScroll);
+    remove_scroll_callback(m_VSmoothScroll);
     clear_notes();
 
 #ifdef HAVE_GSTREAMER
@@ -584,15 +594,14 @@ bool ImageBox::on_motion_notify_event(GdkEventMotion* e)
 }
 
 // Override default scroll behavior to provide interpolated scrolling
-// FIXME: Interpolate zooming (possible after replacing Gtk::Image with manual cairo drawing)
 bool ImageBox::on_scroll_event(GdkEventScroll* e)
 {
-    bool handled{ e->delta_x != 0 || e->delta_y != 0 };
+    bool handled{ e->delta_x != 0 || e->delta_y != 0 || e->direction != GDK_SCROLL_SMOOTH };
     grab_focus();
     cursor_timeout();
 
     // Scroll down
-    if (e->delta_y > 0)
+    if (e->delta_y > 0 || e->direction == GDK_SCROLL_DOWN)
     {
         if ((e->state & GDK_CONTROL_MASK) == GDK_CONTROL_MASK)
             on_zoom_out();
@@ -600,7 +609,7 @@ bool ImageBox::on_scroll_event(GdkEventScroll* e)
             scroll(0, 300);
     }
     // Scroll up
-    else if (e->delta_y < 0)
+    else if (e->delta_y < 0 || e->direction == GDK_SCROLL_UP)
     {
         if ((e->state & GDK_CONTROL_MASK) == GDK_CONTROL_MASK)
             on_zoom_in();
@@ -609,10 +618,10 @@ bool ImageBox::on_scroll_event(GdkEventScroll* e)
     }
 
     // Scroll right
-    if (e->delta_x > 0)
+    if (e->delta_x > 0 || e->direction == GDK_SCROLL_RIGHT)
         scroll(300, 0);
     // Scroll left
-    else if (e->delta_x < 0)
+    else if (e->delta_x < 0 || e->direction == GDK_SCROLL_LEFT)
         scroll(-300, 0);
 
     return handled || Gtk::ScrolledWindow::on_scroll_event(e);
@@ -923,8 +932,6 @@ void ImageBox::scroll(const int x, const int y, const bool panning, const bool f
         if ((get_hadjustment()->get_value() == adjust_upper_x && x > 0) ||
             (get_vadjustment()->get_value() == adjust_upper_y && y > 0))
         {
-            m_ScrollConn.disconnect();
-
             if (m_SlideshowConn && !m_NextAction->is_sensitive())
                 m_SignalSlideshowEnded();
             else
@@ -934,70 +941,68 @@ void ImageBox::scroll(const int x, const int y, const bool panning, const bool f
         else if ((get_hadjustment()->get_value() == 0 && x < 0) ||
                  (get_vadjustment()->get_value() == 0 && y < 0))
         {
-            m_ScrollConn.disconnect();
             m_PreviousAction->activate();
         }
         else if (x != 0)
         {
             smooth_scroll(round_scroll(get_hadjustment()->get_value(), adjust_upper_x, x),
-                          get_hadjustment());
+                          m_HSmoothScroll);
         }
         else if (y != 0)
         {
             smooth_scroll(round_scroll(get_vadjustment()->get_value(), adjust_upper_y, y),
-                          get_vadjustment());
+                          m_VSmoothScroll);
         }
     }
 }
 
-void ImageBox::smooth_scroll(const int amount, const Glib::RefPtr<Gtk::Adjustment>& adj)
+void ImageBox::smooth_scroll(const int amount, ImageBox::SmoothScroll& ss)
 {
-    // Cancel current animation if we changed direction
-    if ((amount < 0 && m_ScrollTarget > 0) || (amount > 0 && m_ScrollTarget < 0) ||
-        adj != m_ScrollAdjust || !m_ScrollConn)
+    // Start a new callback if changing directions or theres no active scrolling callback
+    auto target{ ss.end - ss.start };
+    if (!ss.scrolling || (amount < 0 && target > 0) || (amount > 0 && target < 0))
     {
-        m_ScrollConn.disconnect();
-        m_ScrollTarget = m_ScrollDuration = 0;
-        m_ScrollAdjust                    = adj;
+        remove_scroll_callback(ss);
+        ss.start = ss.adj->get_value();
+        ss.end   = ss.start + amount;
+    }
+    // Continuing an anmation by adding the remaining amount to the current target
+    else
+    {
+        ss.start = ss.adj->get_value();
+        ss.end += amount;
     }
 
-    m_ScrollTime = 0;
-    m_ScrollTarget += amount;
-    m_ScrollStart = m_ScrollAdjust->get_value();
+    ss.start_time = get_frame_clock()->get_frame_time();
+    ss.end_time =
+        ss.start_time + std::min(500, static_cast<int>(std::abs(ss.end - ss.start))) * 1000;
 
-    if (m_ScrollTarget > 0)
+    if (!ss.scrolling)
     {
-        double upper_max = m_ScrollAdjust->get_upper() - m_ScrollAdjust->get_page_size() -
-                           m_ScrollAdjust->get_value();
-        m_ScrollTarget = std::min(upper_max, m_ScrollTarget);
+        ss.id = add_tick_callback([&ss](const Glib::RefPtr<Gdk::FrameClock>& clock) {
+            auto now{ clock->get_frame_time() };
+            if (now < ss.end_time && ss.adj->get_value() != ss.end)
+            {
+                auto t{ static_cast<double>(now - ss.start_time) / (ss.end_time - ss.start_time) };
+                ss.adj->set_value((ss.end - ss.start) * std::sin(t * (M_PI / 2)) + ss.start);
+                return (ss.scrolling = true);
+            }
+            else
+            {
+                ss.adj->set_value(ss.end);
+                return (ss.scrolling = false);
+            }
+        });
     }
-    else if (m_ScrollTarget < 0)
-    {
-        double lower_max = m_ScrollAdjust->get_lower() - m_ScrollAdjust->get_value();
-        m_ScrollTarget   = std::max(lower_max, m_ScrollTarget);
-    }
-
-    m_ScrollDuration =
-        std::ceil(std::min(500.0, std::abs(m_ScrollTarget)) / SmoothScrollStep) * SmoothScrollStep;
-
-    if (!m_ScrollConn)
-        m_ScrollConn = Glib::signal_timeout().connect(
-            sigc::mem_fun(*this, &ImageBox::update_smooth_scroll), SmoothScrollStep);
 }
 
-bool ImageBox::update_smooth_scroll()
+void ImageBox::remove_scroll_callback(ImageBox::SmoothScroll& ss)
 {
-    m_ScrollTime += SmoothScrollStep;
-
-    // atan(1) * 4 = pi
-    double val =
-        m_ScrollTarget * std::sin(m_ScrollTime / m_ScrollDuration * (std::atan(1) * 4 / 2)) +
-        m_ScrollStart;
-    val = m_ScrollTarget < 0 ? std::floor(val) : std::ceil(val);
-
-    m_ScrollAdjust->set_value(val);
-
-    return m_ScrollAdjust->get_value() != m_ScrollStart + m_ScrollTarget;
+    if (ss.scrolling)
+    {
+        remove_tick_callback(ss.id);
+        ss.scrolling = false;
+    }
 }
 
 void ImageBox::zoom(const std::uint32_t percent)
