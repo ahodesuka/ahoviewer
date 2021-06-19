@@ -42,15 +42,15 @@ PreferencesDialog::PreferencesDialog(BaseObjectType* cobj, const Glib::RefPtr<Gt
 #endif // !__linux__
 
     bldr->get_widget("BackgroundColor", m_BGColor);
-    signal_realize().connect([&]() { m_BGColor->set_rgba(Settings.get_background_color()); });
+    m_BGColor->set_rgba(Settings.get_background_color());
     m_BGColor->signal_color_set().connect([&]() {
         Settings.set_background_color(m_BGColor->get_rgba());
         m_SignalBGColorSet();
     });
 
-    Gtk::Button* reset_m_BGColor_button{ nullptr };
-    bldr->get_widget("ResetBGColorButton", reset_m_BGColor_button);
-    reset_m_BGColor_button->signal_clicked().connect([&]() {
+    Gtk::Button* reset_bgolor_button{ nullptr };
+    bldr->get_widget("ResetBGColorButton", reset_bgolor_button);
+    reset_bgolor_button->signal_clicked().connect([&]() {
         Settings.remove("BackgroundColor");
         m_BGColor->set_rgba(Settings.get_background_color());
         m_SignalBGColorSet();

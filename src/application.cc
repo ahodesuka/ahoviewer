@@ -277,8 +277,8 @@ void Application::on_shutdown()
     for (const std::shared_ptr<Booru::Site>& site : Settings.get_sites())
         site->save_tags();
 
-        // Clean up gdbus-nonce-file-XXXXXX
 #if _WIN32
+    // Clean up gdbus-nonce-file-XXXXXX
     std::string tmp_dir{ Glib::get_tmp_dir() };
 
     for (auto&& i : Glib::Dir(Glib::get_tmp_dir()))
