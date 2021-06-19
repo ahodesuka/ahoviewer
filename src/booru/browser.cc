@@ -286,7 +286,16 @@ void Browser::on_realize()
     while (Glib::MainContext::get_default()->pending())
         Glib::MainContext::get_default()->iteration(true);
 
-    set_position(Settings.get_int("TagViewPosition"));
+    auto pos{ Settings.get_int("TagViewPosition") };
+    // default value, set the actual tagview height to either 350px or
+    // 25% of the height of the booru browser, whichever is larger
+    if (pos == -1)
+    {
+        auto height{ get_allocation().get_height() };
+        pos = std::max(static_cast<int>(height * 0.75), height - 350);
+    }
+
+    set_position(pos);
 
     get_window()->thaw_updates();
 
