@@ -328,7 +328,9 @@ void Image::reset_gif_animation()
 {
     m_GIFcurFrame = 0;
     m_GIFcurLoop  = 1;
-    m_Pixbuf.reset();
+
+    if (m_GIFanim)
+        m_Pixbuf.reset();
 }
 
 void Image::trash()
