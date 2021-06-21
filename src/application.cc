@@ -14,6 +14,7 @@ using namespace AhoViewer;
 #include <curl/curl.h>
 // This can be removed once it's implemented in C++20
 #include <date/tz.h>
+#include <future>
 #include <gtkmm.h>
 #include <iostream>
 #include <libxml/parser.h>
@@ -274,8 +275,9 @@ void Application::on_window_removed(Gtk::Window* w)
 
 void Application::on_shutdown()
 {
+    std::vector<std::future<void>> futures;
     for (const std::shared_ptr<Booru::Site>& site : Settings.get_sites())
-        site->save_tags();
+        futures.push_back(std::async(std::launch::async, &Booru::Site::save_tags, site));
 
 #if _WIN32
     // Clean up gdbus-nonce-file-XXXXXX
@@ -289,4 +291,7 @@ void Application::on_shutdown()
             g_unlink(Glib::build_filename(tmp_dir, i).c_str());
     }
 #endif // _WIN32
+
+    for (auto& f : futures)
+        f.get();
 }
