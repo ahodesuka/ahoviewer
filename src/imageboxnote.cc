@@ -32,10 +32,18 @@ ImageBoxNote::ImageBoxNote(const Note& note)
     css->load_from_resource("/ui/css/note-popover.css");
 }
 
+void ImageBoxNote::set_scale(const double scale)
+{
+    if (scale != m_Scale)
+    {
+        m_Scale = scale;
+        queue_resize();
+    }
+}
+
 Gtk::SizeRequestMode ImageBoxNote::get_request_mode_vfunc() const
 {
-    // Accept the default value supplied by the base class.
-    return Gtk::Widget::get_request_mode_vfunc();
+    return Gtk::SizeRequestMode::SIZE_REQUEST_CONSTANT_SIZE;
 }
 
 void ImageBoxNote::get_preferred_width_vfunc(int& minimum_width, int& natural_width) const
@@ -44,34 +52,17 @@ void ImageBoxNote::get_preferred_width_vfunc(int& minimum_width, int& natural_wi
     natural_width = m_Note.w * m_Scale;
 }
 
-void ImageBoxNote::get_preferred_height_for_width_vfunc(int,
-                                                        int& minimum_height,
-                                                        int& natural_height) const
-{
-    minimum_height = m_Note.h * m_Scale;
-    natural_height = m_Note.h * m_Scale;
-}
-
 void ImageBoxNote::get_preferred_height_vfunc(int& minimum_height, int& natural_height) const
 {
     minimum_height = m_Note.h * m_Scale;
     natural_height = m_Note.h * m_Scale;
 }
 
-void ImageBoxNote::get_preferred_width_for_height_vfunc(int,
-                                                        int& minimum_width,
-                                                        int& natural_width) const
-{
-    minimum_width = m_Note.w * m_Scale;
-    natural_width = m_Note.w * m_Scale;
-}
-
 void ImageBoxNote::on_size_allocate(Gtk::Allocation& allocation)
 {
     // Do something with the space that we have actually been given:
     //(We will not be given heights or widths less than we have requested,
-    // though
-    // we might get more)
+    // though we might get more)
 
     // Use the offered allocation for this container:
     set_allocation(allocation);

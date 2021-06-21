@@ -12,20 +12,14 @@ namespace AhoViewer
         ImageBoxNote(const Note& note);
         ~ImageBoxNote() override = default;
 
-        void set_scale(const double scale) { m_Scale = scale; }
+        void set_scale(const double scale);
         int get_x() const { return m_Note.x * m_Scale; }
         int get_y() const { return m_Note.y * m_Scale; }
 
     protected:
         Gtk::SizeRequestMode get_request_mode_vfunc() const override;
         void get_preferred_width_vfunc(int& minimum_width, int& natural_width) const override;
-        void get_preferred_height_for_width_vfunc(int width,
-                                                  int& minimum_height,
-                                                  int& natural_height) const override;
         void get_preferred_height_vfunc(int& minimum_height, int& natural_height) const override;
-        void get_preferred_width_for_height_vfunc(int height,
-                                                  int& minimum_width,
-                                                  int& natural_width) const override;
         void on_size_allocate(Gtk::Allocation& allocation) override;
         void on_realize() override;
         void on_unrealize() override;

@@ -18,13 +18,10 @@
             <property name="can-focus">False</property>
             <property name="homogeneous">True</property>
             <property name="layout-style">expand</property>
-            <style>
-              <class name="linked"/>
-            </style>
           </object>
           <packing>
-            <property name="expand">True</property>
-            <property name="fill">True</property>
+            <property name="expand">False</property>
+            <property name="fill">False</property>
             <property name="position">0</property>
           </packing>
         </child>
@@ -524,43 +521,43 @@
                         <property name="hadjustment">ImageBox::HAdjust</property>
                         <property name="vadjustment">ImageBox::VAdjust</property>
                         <child>
-                          <object class="GtkLayout" id="ImageBox::Layout">
+                          <object class="GtkViewport">
                             <property name="visible">True</property>
                             <property name="can-focus">False</property>
-                            <property name="events"/>
-                            <property name="hexpand">True</property>
-                            <property name="vexpand">True</property>
                             <property name="hadjustment">ImageBox::HAdjust</property>
                             <property name="vadjustment">ImageBox::VAdjust</property>
                             <child>
-                              <object class="GtkOverlay" id="ImageBox::Overlay">
+                              <object class="GtkFixed" id="ImageBox::Fixed">
                                 <property name="visible">True</property>
                                 <property name="can-focus">False</property>
                                 <child>
-                                  <object class="GtkImage" id="ImageBox::Image">
+                                  <object class="GtkOverlay" id="ImageBox::Overlay">
                                     <property name="visible">True</property>
                                     <property name="can-focus">False</property>
+                                    <child>
+                                      <object class="GtkImage" id="ImageBox::Image">
+                                        <property name="visible">True</property>
+                                        <property name="can-focus">False</property>
+                                      </object>
+                                      <packing>
+                                        <property name="index">-1</property>
+                                      </packing>
+                                    </child>
+                                    <child type="overlay">
+                                      <object class="GtkFixed" id="ImageBox::NoteFixed">
+                                        <property name="visible">True</property>
+                                        <property name="can-focus">False</property>
+                                      </object>
+                                    </child>
                                   </object>
-                                  <packing>
-                                    <property name="index">-1</property>
-                                  </packing>
                                 </child>
-                                <child type="overlay">
-                                  <object class="GtkLayout" id="ImageBox::NoteLayout">
-                                    <property name="visible">True</property>
+                                <child>
+                                  <object class="GtkDrawingArea" id="ImageBox::DrawingArea">
                                     <property name="can-focus">False</property>
                                   </object>
                                 </child>
                               </object>
                             </child>
-                            <child>
-                              <object class="GtkDrawingArea" id="ImageBox::DrawingArea">
-                                <property name="can-focus">False</property>
-                              </object>
-                            </child>
-                            <style>
-                              <class name="imagebox"/>
-                            </style>
                           </object>
                         </child>
                       </object>

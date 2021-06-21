@@ -94,7 +94,7 @@ namespace AhoViewer
         void clear_notes();
         void update_notes();
 
-        Gtk::Layout *m_Layout, *m_NoteLayout;
+        Gtk::Fixed *m_Fixed, *m_NoteFixed;
         Gtk::Overlay* m_Overlay;
         Gtk::Image* m_GtkImage;
         Gtk::DrawingArea* m_DrawingArea;

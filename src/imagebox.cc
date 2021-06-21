@@ -148,10 +148,10 @@ ImageBox::ImageBox(BaseObjectType* cobj, const Glib::RefPtr<Gtk::Builder>& bldr)
       m_ZoomMode{ Settings.get_zoom_mode() },
       m_RestoreScrollPos{ -1, -1, m_ZoomMode }
 {
-    bldr->get_widget("ImageBox::Layout", m_Layout);
+    bldr->get_widget("ImageBox::Fixed", m_Fixed);
     bldr->get_widget("ImageBox::Overlay", m_Overlay);
     bldr->get_widget("ImageBox::Image", m_GtkImage);
-    bldr->get_widget("ImageBox::NoteLayout", m_NoteLayout);
+    bldr->get_widget("ImageBox::NoteFixed", m_NoteFixed);
     bldr->get_widget("ImageBox::DrawingArea", m_DrawingArea);
     bldr->get_widget_derived("StatusBar", m_StatusBar);
     bldr->get_widget_derived("MainWindow", m_MainWindow);
@@ -313,8 +313,8 @@ ImageBox::ImageBox(BaseObjectType* cobj, const Glib::RefPtr<Gtk::Builder>& bldr)
     g_object_unref(bus);
 #endif // HAVE_GSTREAMER
 
-    m_StyleUpdatedConn = m_Layout->signal_style_updated().connect(
-        [&]() { m_Layout->get_style_context()->lookup_color("theme_bg_color", DefaultBGColor); });
+    m_StyleUpdatedConn = m_Fixed->signal_style_updated().connect(
+        [&]() { m_Fixed->get_style_context()->lookup_color("theme_bg_color", DefaultBGColor); });
 }
 
 ImageBox::~ImageBox()
@@ -391,7 +391,7 @@ void ImageBox::clear_image()
     m_GtkImage->clear();
     m_Overlay->hide();
     m_DrawingArea->hide();
-    m_Layout->set_size(0, 0);
+    m_Fixed->set_size_request(0, 0);
 
     remove_scroll_callback(m_HSmoothScroll);
     remove_scroll_callback(m_VSmoothScroll);
@@ -416,7 +416,7 @@ void ImageBox::update_background_color()
 void ImageBox::cursor_timeout()
 {
     m_CursorConn.disconnect();
-    m_Layout->get_window()->set_cursor(m_LeftPtrCursor);
+    m_Fixed->get_window()->set_cursor(m_LeftPtrCursor);
 
     if (Settings.get_int("CursorHideDelay") <= 0)
         return;
@@ -503,7 +503,7 @@ void ImageBox::on_realize()
     m_NextAction     = action_group->get_action("NextImage");
     m_PreviousAction = action_group->get_action("PreviousImage");
 
-    m_Layout->get_style_context()->lookup_color("theme_bg_color", DefaultBGColor);
+    m_Fixed->get_style_context()->lookup_color("theme_bg_color", DefaultBGColor);
     update_background_color();
 
     Gtk::ScrolledWindow::on_realize();
@@ -544,7 +544,7 @@ bool ImageBox::on_button_release_event(GdkEventButton* e)
 {
     if (e->button == 1 || e->button == 2)
     {
-        m_Layout->get_window()->set_cursor(m_LeftPtrCursor);
+        m_Fixed->get_window()->set_cursor(m_LeftPtrCursor);
 
         if (e->button == 1 && m_PressX == m_PreviousX && m_PressY == m_PreviousY)
         {
@@ -577,7 +577,7 @@ bool ImageBox::on_motion_notify_event(GdkEventMotion* e)
     if (m_Image && ((e->state & GDK_BUTTON1_MASK) == GDK_BUTTON1_MASK ||
                     (e->state & GDK_BUTTON2_MASK) == GDK_BUTTON2_MASK))
     {
-        m_Layout->get_window()->set_cursor(m_FleurCursor);
+        m_Fixed->get_window()->set_cursor(m_FleurCursor);
         scroll(m_PreviousX - e->x_root, m_PreviousY - e->y_root, true);
 
         m_PreviousX = e->x_root;
@@ -629,7 +629,7 @@ bool ImageBox::on_scroll_event(GdkEventScroll* e)
 
 // This must be called after m_Orig(Width/Height) are set
 // It sets the values of w, h to their scaled values, and x, y to center
-// coordinates for m_Layout to use
+// coordinates for m_Fixed to use
 void ImageBox::get_scale_and_position(int& w, int& h, int& x, int& y)
 {
     int ww, wh;
@@ -778,11 +778,11 @@ void ImageBox::draw_image(bool scroll)
 
     get_window()->freeze_updates();
 
-    m_Layout->set_size(w, h);
+    m_Fixed->set_size_request(w, h);
 
     if (temp_pixbuf)
     {
-        m_Layout->move(*m_Overlay, x, y);
+        m_Fixed->move(*m_Overlay, x, y);
         m_GtkImage->set(temp_pixbuf);
         m_Overlay->show();
     }
@@ -796,7 +796,7 @@ void ImageBox::draw_image(bool scroll)
             m_DrawingArea->show();
         }
 
-        m_Layout->move(*m_DrawingArea, x, y);
+        m_Fixed->move(*m_DrawingArea, x, y);
         m_DrawingArea->set_size_request(w, h);
 #ifndef _WIN32
         if (m_UsingWayland)
@@ -804,7 +804,7 @@ void ImageBox::draw_image(bool scroll)
             // waylandsink needs coordinates relative to the main window
             int wx{ 0 }, wy{ 0 };
             auto* toplevel = get_toplevel();
-            m_Layout->translate_coordinates(*toplevel, 0, 0, wx, wy);
+            m_Fixed->translate_coordinates(*toplevel, 0, 0, wx, wy);
             gst_video_overlay_set_render_rectangle(
                 GST_VIDEO_OVERLAY(m_VideoSink), wx + x, wy + y, w, h);
         }
@@ -1026,12 +1026,12 @@ bool ImageBox::advance_slideshow()
 
 bool ImageBox::on_cursor_timeout()
 {
-    m_Layout->get_window()->set_cursor(m_BlankCursor);
+    m_Fixed->get_window()->set_cursor(m_BlankCursor);
 
     return false;
 }
 
-void ImageBox::on_notes_changed(/*notes*/)
+void ImageBox::on_notes_changed()
 {
     double scale{ m_Scale / 100 };
     for (auto& note : m_Image->get_notes())
@@ -1040,7 +1040,7 @@ void ImageBox::on_notes_changed(/*notes*/)
         m_Notes.push_back(n);
 
         n->set_scale(scale);
-        m_NoteLayout->put(*n, n->get_x(), n->get_y());
+        m_NoteFixed->put(*n, n->get_x(), n->get_y());
         n->show();
     }
 }
@@ -1048,7 +1048,7 @@ void ImageBox::on_notes_changed(/*notes*/)
 void ImageBox::clear_notes()
 {
     for (auto& note : m_Notes)
-        m_NoteLayout->remove(*note);
+        m_NoteFixed->remove(*note);
 
     m_Notes.clear();
 }
@@ -1059,6 +1059,6 @@ void ImageBox::update_notes()
     for (auto& note : m_Notes)
     {
         note->set_scale(scale);
-        m_NoteLayout->move(*note, note->get_x(), note->get_y());
+        m_NoteFixed->move(*note, note->get_x(), note->get_y());
     }
 }
