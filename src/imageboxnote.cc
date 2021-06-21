@@ -25,6 +25,10 @@ ImageBoxNote::ImageBoxNote(const Note& note)
     m_Popover.add(*label);
     m_Popover.set_modal(false);
     m_Popover.set_name("NotePopover");
+    m_Popover.signal_enter_notify_event().connect(
+        sigc::mem_fun(*this, &ImageBoxNote::on_enter_notify_event));
+    m_Popover.signal_leave_notify_event().connect(
+        sigc::mem_fun(*this, &ImageBoxNote::on_leave_notify_event));
 
     auto css      = Gtk::CssProvider::create();
     style_context = m_Popover.get_style_context();
@@ -127,12 +131,26 @@ bool ImageBoxNote::on_draw(const Cairo::RefPtr<Cairo::Context>& cr)
 
 bool ImageBoxNote::on_enter_notify_event(GdkEventCrossing*)
 {
-    m_Popover.show();
+    // There's a chance that the popdown animation is playing and needs to be cancelled via hide
+    // before calling popup or else it will be ignored
+    if (!m_TimeoutConn)
+        m_Popover.hide();
+
+    m_TimeoutConn.disconnect();
+    m_Popover.popup();
+
     return true;
 }
 
-bool ImageBoxNote::on_leave_notify_event(GdkEventCrossing* e)
+bool ImageBoxNote::on_leave_notify_event(GdkEventCrossing*)
 {
-    m_Popover.hide();
+    // 200 millisecond delay on hiding the note popup
+    m_TimeoutConn = Glib::signal_timeout().connect(
+        [&]() {
+            m_Popover.popdown();
+            return false;
+        },
+        200);
+
     return true;
 }

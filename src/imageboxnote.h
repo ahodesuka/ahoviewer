@@ -34,7 +34,6 @@ namespace AhoViewer
         Gtk::Popover m_Popover;
 
         double m_Scale{ 1. };
-        bool m_Hovered{ false };
         sigc::connection m_TimeoutConn;
     };
 }
