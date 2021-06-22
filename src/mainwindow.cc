@@ -34,11 +34,6 @@ MainWindow::MainWindow(BaseObjectType* cobj, Glib::RefPtr<Gtk::Builder> bldr)
     if (!m_PreferencesDialog)
         m_Builder->get_widget_derived("PreferencesDialog", m_PreferencesDialog);
 
-    g_signal_connect(this->gobj(), "screen-changed", G_CALLBACK(on_screen_changed), this);
-    on_screen_changed(GTK_WIDGET(this->gobj()), nullptr, this);
-
-    get_style_context()->remove_class("background");
-
     m_Builder->get_widget_derived("ThumbnailBar", m_ThumbnailBar);
     m_Builder->get_widget_derived("Booru::Browser", m_BooruBrowser);
     m_Builder->get_widget_derived("Booru::Browser::InfoBox", m_InfoBox);
@@ -64,6 +59,11 @@ MainWindow::MainWindow(BaseObjectType* cobj, Glib::RefPtr<Gtk::Builder> bldr)
     m_Builder->get_widget_derived("Booru::Browser::TagView", m_TagView);
 
     m_UIManager = Glib::RefPtr<Gtk::UIManager>::cast_static(m_Builder->get_object("UIManager"));
+
+    create_actions();
+
+    g_signal_connect(this->gobj(), "screen-changed", G_CALLBACK(on_screen_changed), this);
+    on_screen_changed(GTK_WIDGET(this->gobj()), nullptr, this);
 
     m_LocalImageList = std::make_shared<ImageList>(m_ThumbnailBar);
     m_LocalImageList->signal_archive_error().connect(
@@ -167,8 +167,6 @@ MainWindow::MainWindow(BaseObjectType* cobj, Glib::RefPtr<Gtk::Builder> bldr)
 
     // Call this to make sure it is rendered in the main thread.
     Image::get_missing_pixbuf();
-
-    create_actions();
 
     // Restore window geometry
     int x, y, w, h;
@@ -836,7 +834,6 @@ void MainWindow::create_actions()
 
     m_MenuBar = static_cast<Gtk::MenuBar*>(m_UIManager->get_widget("/MenuBar"));
     m_MenuBar->set_hexpand();
-    m_MenuBar->get_style_context()->add_class("background");
 
 #ifdef HAVE_LIBPEAS
     auto plugins_menuitem{ Gtk::make_managed<Gtk::MenuItem>(_("Plugins")) };
@@ -1135,7 +1132,7 @@ void MainWindow::on_screen_changed(GtkWidget* w, GdkScreen* prev, gpointer userp
     auto screen{ Gdk::Screen::get_default() };
     auto visual{ screen->get_rgba_visual() };
 
-    if (!visual || !screen->is_composited())
+    if (!visual || !screen->is_composited() || !Settings.get_bool("UseRGBAVisual"))
     {
         visual                = screen->get_system_visual();
         self->m_HasRGBAVisual = false;
@@ -1145,6 +1142,11 @@ void MainWindow::on_screen_changed(GtkWidget* w, GdkScreen* prev, gpointer userp
     {
         self->m_HasRGBAVisual = true;
         MainWindow::m_PreferencesDialog->set_has_rgba_visual(true);
+
+        self->get_style_context()->remove_class("background");
+        self->m_MenuBar->get_style_context()->add_class("background");
+        self->m_StatusBar->get_style_context()->add_class("background");
+        self->m_BooruBrowser->get_style_context()->add_class("background");
     }
 
     gtk_widget_set_visual(w, visual->gobj());

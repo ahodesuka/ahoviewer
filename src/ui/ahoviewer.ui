@@ -501,9 +501,6 @@
                             <property name="shrink">True</property>
                           </packing>
                         </child>
-                        <style>
-                          <class name="background"/>
-                        </style>
                       </object>
                       <packing>
                         <property name="resize">False</property>
@@ -685,9 +682,6 @@
                 <property name="position">6</property>
               </packing>
             </child>
-            <style>
-              <class name="background"/>
-            </style>
           </object>
           <packing>
             <property name="expand">False</property>
