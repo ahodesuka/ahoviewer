@@ -56,6 +56,7 @@ namespace AhoViewer
 
         bool is_fullscreen() const;
 
+        void on_imagelist_load_success();
         void on_imagelist_changed(const std::shared_ptr<Image>& image);
         void on_imagelist_cleared();
         void on_cache_size_changed();
