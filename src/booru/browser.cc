@@ -26,8 +26,10 @@ Browser::Browser(BaseObjectType* cobj, const Glib::RefPtr<Gtk::Builder>& bldr)
 
     // Make the booru browser borders a little less ugly
     auto css{ Gtk::CssProvider::create() };
-    css->load_from_data("#BooruBrowserNotebook{border-right-width:0;border-bottom-width:0;}");
-    m_Notebook->get_style_context()->add_provider(css, GTK_STYLE_PROVIDER_PRIORITY_APPLICATION);
+    css->load_from_data("#BooruBrowserNotebook{border-right-width:0;border-bottom-width:0;} "
+                        "#BooruBrowserNotebook scrolledwindow{margin:1px;}");
+    get_style_context()->add_provider_for_screen(
+        Gdk::Screen::get_default(), css, GTK_STYLE_PROVIDER_PRIORITY_APPLICATION);
 
     // XXX: Gtk3 bug? if you set it to 0.0 without setting it previously it's set to 0.1? instead
     m_TagEntry->set_progress_fraction(1.0);
