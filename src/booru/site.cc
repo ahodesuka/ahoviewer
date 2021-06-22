@@ -390,7 +390,7 @@ Site::Site(std::string name,
             {
                 try
                 {
-                    json j = json::parse(curler.get_data());
+                    json j = json::parse(curler.get_buffer());
 
                     Settings.set(is_yandere ? "YandereTagsVersion" : "KonachanTagsVersion",
                                  j["version"].get<int>());

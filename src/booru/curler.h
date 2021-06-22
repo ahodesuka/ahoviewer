@@ -48,6 +48,7 @@ namespace AhoViewer::Booru
         bool is_active() const { return m_Active; }
         std::string get_url() const { return m_Url; }
 
+        const std::vector<unsigned char> get_buffer() { return m_Buffer; }
         unsigned char* get_data() { return m_Buffer.data(); }
         size_t get_data_size() const { return m_Buffer.size(); }
 
