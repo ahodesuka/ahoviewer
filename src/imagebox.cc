@@ -63,7 +63,7 @@ GstBusSyncReply ImageBox::create_window(GstBus* bus, GstMessage* msg, void* user
     if (GDK_IS_WAYLAND_DISPLAY(dpy) && gst_is_wayland_display_handle_need_context_message(msg))
     {
         auto* self                    = static_cast<ImageBox*>(userp);
-        GdkDisplay* display           = self->m_DrawingArea->get_display()->gobj();
+        GdkDisplay* display           = self->m_GstWidget->get_display()->gobj();
         struct wl_display* dpy_handle = gdk_wayland_display_get_wl_display(display);
         GstContext* ctx               = gst_wayland_display_handle_context_new(dpy_handle);
 
@@ -102,6 +102,20 @@ gboolean ImageBox::bus_cb(GstBus*, GstMessage* msg, void* userp)
     {
     case GST_MESSAGE_EOS:
         gst_element_seek_simple(self->m_Playbin, GST_FORMAT_TIME, GST_SEEK_FLAG_FLUSH, 0);
+        break;
+    case GST_MESSAGE_ERROR:
+    {
+        GError* err{ nullptr };
+        gchar* dbg_info{ nullptr };
+
+        gst_message_parse_error(msg, &err, &dbg_info);
+        std::cerr << "ERROR from element " << GST_OBJECT_NAME(msg->src) << ": " << err->message
+                  << std::endl;
+        std::cerr << "Debugging info: " << (dbg_info ? dbg_info : "none") << std::endl;
+        g_error_free(err);
+        g_free(dbg_info);
+    }
+    break;
     default:
         break;
     }
@@ -152,13 +166,34 @@ ImageBox::ImageBox(BaseObjectType* cobj, const Glib::RefPtr<Gtk::Builder>& bldr)
     bldr->get_widget("ImageBox::Overlay", m_Overlay);
     bldr->get_widget("ImageBox::Image", m_GtkImage);
     bldr->get_widget("ImageBox::NoteFixed", m_NoteFixed);
-    bldr->get_widget("ImageBox::DrawingArea", m_DrawingArea);
+    bldr->get_widget("ImageBox::DrawingArea", m_GstWidget);
     bldr->get_widget_derived("StatusBar", m_StatusBar);
     bldr->get_widget_derived("MainWindow", m_MainWindow);
 
     m_UIManager = Glib::RefPtr<Gtk::UIManager>::cast_static(bldr->get_object("UIManager"));
 
 #ifdef HAVE_GSTREAMER
+    // Prefer hardware accelerated decoders if they exist
+    const auto hw_decoders = {
+        "nvh264dec",       "nvh264sldec",    "nvh265dec",   "nvh265dec",   "nvmpeg2videodec",
+        "nvmpeg4videodec", "nvmpegvideodec", "nvvp8dec",    "nvvp9dec",    "vaapih264dec",
+        "vaapih264dec",    "vaapimpeg2dec",  "vaapivc1dec",
+#ifdef _WIN32
+        "d3d11h264dec",    "d3d11h265dec",   "d3d11vp8dec", "d3d11vp9dec",
+#endif
+    };
+    GstRegistry* plugins_register{ gst_registry_get() };
+
+    for (const auto& decoder : hw_decoders)
+    {
+        GstPluginFeature* feature{ gst_registry_lookup_feature(plugins_register, decoder) };
+        if (feature)
+        {
+            gst_plugin_feature_set_rank(feature, GST_RANK_PRIMARY + 1);
+            gst_object_unref(feature);
+        }
+    }
+
     auto videosink = Settings.get_string("VideoSink");
     if (!videosink.empty())
     {
@@ -169,9 +204,53 @@ ImageBox::ImageBox(BaseObjectType* cobj, const Glib::RefPtr<Gtk::Builder>& bldr)
 
     GdkDisplayManager* dpm{ gdk_display_manager_get() };
     [[maybe_unused]] GdkDisplay* dpy{ gdk_display_manager_get_default_display(dpm) };
+    bool gtk_sink{ false };
+
+#if defined(GDK_WINDOWING_X11) || defined(GDK_WINDOWING_WAYLAND)
+    // gtkglsink is the preferred sink to use on linux
+    if ((
+#ifdef GDK_WINDOWING_X11
+            GDK_IS_X11_DISPLAY(dpy)
+#else
+            false
+#endif
+            ||
+#ifdef GDK_WINDOWING_WAYLAND
+            GDK_IS_WAYLAND_DISPLAY(dpy)
+#else
+            false
+#endif
+                ) &&
+        !m_VideoSink)
+    {
+        GstElement* gtkglsink{ gst_element_factory_make("gtkglsink", "gtksink") };
+        if (gtkglsink)
+        {
+            GtkWidget* w{ nullptr };
+            g_object_get(gtkglsink, "widget", &w, nullptr);
+
+            if (w)
+            {
+                if ((m_VideoSink = gst_element_factory_make("glsinkbin", "glsinkbin")))
+                {
+                    m_Fixed->remove(*m_GstWidget);
+                    delete m_GstWidget;
+
+                    m_GstWidget = Glib::wrap(w);
+                    m_Fixed->add(*m_GstWidget);
+                    g_object_unref(w);
+
+                    g_object_set(m_VideoSink, "sink", gtkglsink, nullptr);
+                    gtk_sink = true;
+                }
+            }
+        }
+    }
+#endif
 
 #ifdef GDK_WINDOWING_X11
-    if (GDK_IS_X11_DISPLAY(dpy) && !m_VideoSink)
+    // These sinks don't work with rgba visual set
+    if (GDK_IS_X11_DISPLAY(dpy) && !m_VideoSink && !m_MainWindow->has_rgba_visual())
     {
         m_VideoSink = create_video_sink("xvimagesink");
         // Make sure the X server has the X video extension enabled
@@ -240,57 +319,61 @@ ImageBox::ImageBox(BaseObjectType* cobj, const Glib::RefPtr<Gtk::Builder>& bldr)
             g_free(name);
 
         // Store the window handle in order to use it in ::create_window
-        m_DrawingArea->signal_realize().connect([&]() {
-            GdkDisplayManager* dpm{ gdk_display_manager_get() };
-            GdkDisplay* dpy{ gdk_display_manager_get_default_display(dpm) };
+        // Gtk sink does this for us automatically
+        if (!gtk_sink)
+        {
+            m_GstWidget->signal_realize().connect([&, dpy]() {
 
 #ifdef GDK_WINDOWING_X11
-            if (GDK_IS_X11_DISPLAY(dpy))
-            {
-                m_WindowHandle = GDK_WINDOW_XID(m_DrawingArea->get_window()->gobj());
-            }
-            else
+                if (GDK_IS_X11_DISPLAY(dpy))
+                {
+                    m_WindowHandle = GDK_WINDOW_XID(m_GstWidget->get_window()->gobj());
+                }
+                else
 #endif // GDK_WINDOWING_X11
 #ifdef GDK_WINDOWING_WAYLAND
-                if (GDK_IS_WAYLAND_DISPLAY(dpy))
-            {
-                m_WindowHandle = (guintptr)gdk_wayland_window_get_wl_surface(
-                    m_DrawingArea->get_window()->gobj());
-            }
-            else
+                    if (GDK_IS_WAYLAND_DISPLAY(dpy))
+                {
+                    m_WindowHandle = (guintptr)gdk_wayland_window_get_wl_surface(
+                        m_GstWidget->get_window()->gobj());
+                }
+                else
 #endif // GDK_WINDOWING_WAYLAND
 #ifdef GDK_WINDOWING_WIN32
-                if (GDK_IS_WIN32_DISPLAY(dpy))
-            {
-                m_WindowHandle = (guintptr)GDK_WINDOW_HWND(m_DrawingArea->get_window()->gobj());
-            }
-            else
+                    if (GDK_IS_WIN32_DISPLAY(dpy))
+                {
+                    m_WindowHandle = (guintptr)GDK_WINDOW_HWND(m_GstWidget->get_window()->gobj());
+                }
+                else
 #endif // GDK_WINDOWING_WIN32
 #ifdef GDK_WINDOWING_QUARTZ
-                if (GDK_IS_QUARTZ_DISPLAY(dpy))
-            {
-                m_WindowHandle =
-                    (guintptr)gdk_quartz_window_get_nsview(m_DrawingArea->get_window()->gobj());
-            }
-            else
+                    if (GDK_IS_QUARTZ_DISPLAY(dpy))
+                {
+                    m_WindowHandle =
+                        (guintptr)gdk_quartz_window_get_nsview(m_GstWidget->get_window()->gobj());
+                }
+                else
 #endif // GDK_WINDOWING_QUARTZ
-            {
-                std::cerr << "Unsupported Gtk backend" << std::endl;
-                return;
-            }
+                {
+                    std::cerr << "Unsupported Gtk backend" << std::endl;
+                    return;
+                }
 
-            gst_element_set_state(m_Playbin, GST_STATE_READY);
+                gst_element_set_state(m_Playbin, GST_STATE_READY);
 
-            // This isn't needed right away and causes an input focus issue on Windows
-            Glib::signal_idle().connect_once([&]() {
-                if (!m_Playing)
-                    m_DrawingArea->hide();
+                // This isn't needed right away and causes an input focus issue on Windows
+                Glib::signal_idle().connect_once([&]() {
+                    if (!m_Playing)
+                        m_GstWidget->hide();
+                });
             });
-        });
+        }
 
         gst_object_ref(m_VideoSink);
     }
 
+    // playbin3 will break things.
+    Glib::setenv("USE_PLAYBIN3", "0", true);
     m_Playbin = gst_element_factory_make("playbin", "playbin");
     g_object_set(m_Playbin,
                  // For now users can put
@@ -354,7 +437,7 @@ void ImageBox::set_image(const std::shared_ptr<Image>& image)
 
 #ifdef HAVE_GSTREAMER
         reset_gstreamer_pipeline();
-        m_DrawingArea->hide();
+        m_GstWidget->hide();
 #endif // HAVE_GSTREAMER
 
         // reset GIF stuff so if it stays cached and is viewed again it will
@@ -390,7 +473,7 @@ void ImageBox::clear_image()
     m_AnimConn.disconnect();
     m_GtkImage->clear();
     m_Overlay->hide();
-    m_DrawingArea->hide();
+    m_GstWidget->hide();
     m_Fixed->set_size_request(0, 0);
 
     remove_scroll_callback(m_HSmoothScroll);
@@ -708,16 +791,19 @@ void ImageBox::draw_image(bool scroll)
 
             gst_element_set_state(m_Playbin, GST_STATE_PAUSED);
             // Wait for the above changes to actually happen
-            gst_element_get_state(m_Playbin, nullptr, nullptr, GST_CLOCK_TIME_NONE);
+            gst_element_get_state(m_Playbin, nullptr, nullptr, GST_SECOND * 5);
         }
 
-        GstPad* pad = nullptr;
+        GstPad* pad{ nullptr };
+        GstCaps* caps{ nullptr };
         g_signal_emit_by_name(m_Playbin, "get-video-pad", 0, &pad, NULL);
 
         if (pad)
+            caps = gst_pad_get_current_caps(pad);
+
+        if (pad && caps)
         {
-            GstCaps* caps   = gst_pad_get_current_caps(pad);
-            GstStructure* s = gst_caps_get_structure(caps, 0);
+            GstStructure* s{ gst_caps_get_structure(caps, 0) };
 
             gst_structure_get_int(s, "width", &m_OrigWidth);
             gst_structure_get_int(s, "height", &m_OrigHeight);
@@ -728,7 +814,10 @@ void ImageBox::draw_image(bool scroll)
         else
         {
             error = true;
-            m_DrawingArea->hide();
+            m_GstWidget->hide();
+
+            if (pad)
+                gst_object_unref(pad);
         }
     }
     else
@@ -804,11 +893,11 @@ void ImageBox::draw_image(bool scroll)
         {
             m_GtkImage->clear();
             m_Overlay->hide();
-            m_DrawingArea->show();
+            m_GstWidget->show();
         }
 
-        m_Fixed->move(*m_DrawingArea, x, y);
-        m_DrawingArea->set_size_request(w, h);
+        m_Fixed->move(*m_GstWidget, x, y);
+        m_GstWidget->set_size_request(w, h);
 #ifndef _WIN32
         if (m_UsingWayland)
         {
@@ -867,7 +956,7 @@ void ImageBox::draw_image(bool scroll)
 
 #ifdef HAVE_GSTREAMER
     // Finally start playing the video
-    if (!m_Playing && m_Image->is_webm())
+    if (!error && !m_Playing && m_Image->is_webm())
     {
         gst_element_set_state(m_Playbin, GST_STATE_PLAYING);
         m_Playing = true;

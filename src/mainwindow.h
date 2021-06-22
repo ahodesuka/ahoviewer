@@ -28,7 +28,7 @@ namespace AhoViewer
 
         void open_file(const std::string& path, const int index = 0, const bool restore = false);
         void restore_last_file();
-        void get_drawable_area_size(int& w, int& h) const;
+        bool has_rgba_visual() const { return m_HasRGBAVisual; }
 
     protected:
         void on_realize() override;
@@ -120,7 +120,7 @@ namespace AhoViewer
             // if it was set manually before fullscreening
             m_WasHideAll{ false },
             // Tracks whether this was the only window at one point
-            m_OriginalWindow{ false }, m_IsMinimized{ false };
+            m_OriginalWindow{ false }, m_IsMinimized{ false }, m_HasRGBAVisual{ false };
 
         std::shared_ptr<ImageList> m_ActiveImageList, m_LocalImageList;
         sigc::connection m_ImageListConn, m_ImageListClearedConn;

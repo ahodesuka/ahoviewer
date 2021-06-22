@@ -98,7 +98,7 @@ namespace AhoViewer
         Gtk::Fixed *m_Fixed, *m_NoteFixed;
         Gtk::Overlay* m_Overlay;
         Gtk::Image* m_GtkImage;
-        Gtk::DrawingArea* m_DrawingArea;
+        Gtk::Widget* m_GstWidget;
         Gtk::Menu* m_PopupMenu;
         Glib::RefPtr<Gtk::UIManager> m_UIManager;
         Glib::RefPtr<Gtk::Action> m_NextAction, m_PreviousAction;

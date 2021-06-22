@@ -34,8 +34,8 @@ MainWindow::MainWindow(BaseObjectType* cobj, Glib::RefPtr<Gtk::Builder> bldr)
     if (!m_PreferencesDialog)
         m_Builder->get_widget_derived("PreferencesDialog", m_PreferencesDialog);
 
-    g_signal_connect(this->gobj(), "screen-changed", G_CALLBACK(on_screen_changed), nullptr);
-    on_screen_changed(GTK_WIDGET(this->gobj()), nullptr, nullptr);
+    g_signal_connect(this->gobj(), "screen-changed", G_CALLBACK(on_screen_changed), this);
+    on_screen_changed(GTK_WIDGET(this->gobj()), nullptr, this);
 
     get_style_context()->remove_class("background");
 
@@ -1131,16 +1131,19 @@ void MainWindow::on_connect_proxy(const Glib::RefPtr<Gtk::Action>& action, Gtk::
 
 void MainWindow::on_screen_changed(GtkWidget* w, GdkScreen* prev, gpointer userp)
 {
+    auto self{ static_cast<MainWindow*>(userp) };
     auto screen{ Gdk::Screen::get_default() };
     auto visual{ screen->get_rgba_visual() };
 
     if (!visual || !screen->is_composited())
     {
-        visual = screen->get_system_visual();
+        visual                = screen->get_system_visual();
+        self->m_HasRGBAVisual = false;
         MainWindow::m_PreferencesDialog->set_has_rgba_visual(false);
     }
     else
     {
+        self->m_HasRGBAVisual = true;
         MainWindow::m_PreferencesDialog->set_has_rgba_visual(true);
     }
 
