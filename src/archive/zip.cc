@@ -13,7 +13,8 @@ Zip::Zip(const std::string& path, const std::string& ex_dir) : Archive::Archive(
 bool Zip::extract(const std::string& file) const
 {
     bool found{ false };
-    zip* zip{ zip_open(m_Path.c_str(), ZIP_RDONLY | ZIP_CHECKCONS, nullptr) };
+    int errorp{ 0 };
+    zip* zip{ zip_open(m_Path.c_str(), ZIP_RDONLY, &errorp) };
 
     if (zip)
     {
@@ -56,9 +57,12 @@ bool Zip::extract(const std::string& file) const
 
         zip_close(zip);
     }
-    else
+    else if (errorp)
     {
-        std::cerr << "zip_open: Failed to open '" + m_Path + "'" << std::endl;
+        zip_error err;
+        zip_error_init_with_code(&err, errorp);
+        std::cerr << "zip_open: Failed to open '" + m_Path + "'" << std::endl
+                  << "Error: " << zip_error_strerror(&err) << std::endl;
     }
 
     return found;
@@ -72,7 +76,8 @@ bool Zip::has_valid_files(const FileType t) const
 std::vector<std::string> Zip::get_entries(const FileType t) const
 {
     std::vector<std::string> entries;
-    zip* zip{ zip_open(m_Path.c_str(), ZIP_RDONLY | ZIP_CHECKCONS, nullptr) };
+    int errorp{ 0 };
+    zip* zip{ zip_open(m_Path.c_str(), ZIP_RDONLY, &errorp) };
 
     if (zip)
     {
@@ -88,6 +93,13 @@ std::vector<std::string> Zip::get_entries(const FileType t) const
         }
 
         zip_close(zip);
+    }
+    else if (errorp)
+    {
+        zip_error err;
+        zip_error_init_with_code(&err, errorp);
+        std::cerr << "zip_open: Failed to open '" + m_Path + "'" << std::endl
+                  << "Error: " << zip_error_strerror(&err) << std::endl;
     }
 
     return entries;
