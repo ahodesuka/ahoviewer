@@ -195,11 +195,18 @@ ImageBox::ImageBox(BaseObjectType* cobj, const Glib::RefPtr<Gtk::Builder>& bldr)
     }
 
     auto videosink = Settings.get_string("VideoSink");
+
     if (!videosink.empty())
     {
+        std::transform(videosink.begin(), videosink.end(), videosink.begin(), [](unsigned char c) {
+            return std::tolower(c);
+        });
+
         m_VideoSink = create_video_sink(videosink.c_str());
         if (!m_VideoSink)
             std::cerr << "Invalid VideoSink setting provided '" << videosink << "'" << std::endl;
+        else if (videosink == "waylandsink")
+            m_UsingWayland = true;
     }
 
     GdkDisplayManager* dpm{ gdk_display_manager_get() };
