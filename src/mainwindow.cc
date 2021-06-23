@@ -1417,8 +1417,7 @@ void MainWindow::on_toggle_booru_browser()
         if (!hide_all)
             m_BooruBrowser->get_tag_entry()->grab_focus();
 
-        if (m_BooruBrowser->get_active_page() &&
-            m_BooruBrowser->get_active_page()->get_imagelist() != m_ActiveImageList)
+        if (m_BooruBrowser->get_active_page())
             set_active_imagelist(m_BooruBrowser->get_active_page()->get_imagelist());
 
         if (tb_action->get_active())
