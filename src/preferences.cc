@@ -42,7 +42,9 @@ PreferencesDialog::PreferencesDialog(BaseObjectType* cobj, const Glib::RefPtr<Gt
 #endif // !__linux__
 
     bldr->get_widget("BackgroundColor", m_BGColor);
-    m_BGColor->set_rgba(Settings.get_background_color());
+    // This needs to be done on realize because the default color isn't known until the imagebox is
+    // realized
+    signal_realize().connect([&]() { m_BGColor->set_rgba(Settings.get_background_color()); });
     m_BGColor->signal_color_set().connect([&]() {
         Settings.set_background_color(m_BGColor->get_rgba());
         m_SignalBGColorSet();
