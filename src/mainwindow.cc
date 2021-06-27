@@ -1307,7 +1307,7 @@ void MainWindow::on_quit()
         { "ToggleThumbnailBar", "ThumbnailBarVisible" },
     } };
 
-    for (auto w : widget_vis)
+    for (auto& w : widget_vis)
     {
         bool v{ Glib::RefPtr<Gtk::ToggleAction>::cast_static(m_ActionGroup->get_action(w.first))
                     ->get_active() };
@@ -1419,6 +1419,8 @@ void MainWindow::on_toggle_booru_browser()
 
         if (m_BooruBrowser->get_active_page())
             set_active_imagelist(m_BooruBrowser->get_active_page()->get_imagelist());
+        else
+            update_widgets_visibility();
 
         if (tb_action->get_active())
         {
