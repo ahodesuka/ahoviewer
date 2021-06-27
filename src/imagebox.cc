@@ -429,6 +429,7 @@ void ImageBox::queue_draw_image(const bool scroll)
 
 void ImageBox::set_image(const std::shared_ptr<Image>& image)
 {
+    // very unlikely that image would be null here
     if (!image)
         return;
 

@@ -29,6 +29,7 @@ namespace AhoViewer
         void open_file(const std::string& path, const int index = 0, const bool restore = false);
         void restore_last_file();
         void get_drawable_area_size(int& w, int& h) const;
+
         bool has_rgba_visual() const { return m_HasRGBAVisual; }
 
     protected:

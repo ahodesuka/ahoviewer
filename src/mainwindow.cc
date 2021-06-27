@@ -316,8 +316,9 @@ void MainWindow::get_drawable_area_size(int& w, int& h) const
     if (m_ThumbnailBar->get_visible())
         w -= m_ThumbnailBar->get_width();
 
+    // +1 = the paned handle min-width
     if (m_BooruBrowser->get_visible())
-        w -= m_HPaned->get_position() + m_HPaned->get_handle_window()->get_width();
+        w -= m_HPaned->get_position() + 1;
 
     if (m_MenuBar->get_visible())
         h -= m_MenuBar->get_height();
@@ -915,6 +916,8 @@ void MainWindow::update_widgets_visibility()
                                      m_ActionGroup->get_action("ToggleThumbnailBar"))
                                      ->get_active();
 
+    get_window()->freeze_updates();
+
     m_MenuBar->set_visible(!hide_all && menu_bar_visible);
     m_StatusBar->set_visible(!hide_all && status_bar_visible);
     // The scrollbars are independent of the hideall setting
@@ -929,6 +932,8 @@ void MainWindow::update_widgets_visibility()
 
     m_ImageBox->queue_draw_image();
     set_sensitives();
+
+    get_window()->thaw_updates();
 }
 
 void MainWindow::set_sensitives()
@@ -1316,7 +1321,7 @@ void MainWindow::on_quit()
         { "ToggleThumbnailBar", "ThumbnailBarVisible" },
     } };
 
-    for (auto w : widget_vis)
+    for (auto& w : widget_vis)
     {
         bool v{ Glib::RefPtr<Gtk::ToggleAction>::cast_static(m_ActionGroup->get_action(w.first))
                     ->get_active() };
