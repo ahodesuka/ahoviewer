@@ -641,7 +641,7 @@ bool ImageBox::on_button_release_event(GdkEventButton* e)
             if (Settings.get_bool("SmartNavigation"))
             {
                 int w, h, x, y, ww, wh;
-                get_drawable_area(w, h);
+                m_MainWindow->get_drawable_area_size(w, h);
                 m_MainWindow->get_size(ww, wh);
                 m_MainWindow->get_position(x, y);
                 x += ww - w;
@@ -717,24 +717,13 @@ bool ImageBox::on_scroll_event(GdkEventScroll* e)
     return handled || Gtk::ScrolledWindow::on_scroll_event(e);
 }
 
-void ImageBox::get_drawable_area(int& w, int& h)
-{
-    queue_resize();
-    while (Glib::MainContext::get_default()->pending())
-        Glib::MainContext::get_default()->iteration(true);
-
-    auto alloc{ get_allocation() };
-    w = alloc.get_width();
-    h = alloc.get_height();
-}
-
 // This must be called after m_Orig(Width/Height) are set
 // It sets the values of w, h to their scaled values, and x, y to center
 // coordinates for m_Fixed to use
 void ImageBox::get_scale_and_position(int& w, int& h, int& x, int& y)
 {
     int ww, wh;
-    get_drawable_area(ww, wh);
+    m_MainWindow->get_drawable_area_size(ww, wh);
 
     w = m_OrigWidth;
     h = m_OrigHeight;

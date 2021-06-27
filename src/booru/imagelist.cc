@@ -123,7 +123,6 @@ void ImageList::load(const std::vector<PostDataTuple>& posts, const size_t posts
 }
 
 // Override this so we dont cancel and restart the thumbnail thread
-// force is used when setting the initial index
 void ImageList::set_current(const size_t index, const bool from_widget, const bool force)
 {
     if (index == m_Index && !force)

@@ -147,8 +147,8 @@ bool ImageList::load(const std::string path, std::string& error, int index)
         m_Images.push_back(std::move(img));
     }
 
-    set_current(index, false, true);
     m_SignalLoadSuccess();
+    set_current(index, false, true);
     m_ThumbnailThread = std::thread(sigc::mem_fun(*this, &ImageList::load_thumbnails));
 
     return true;
@@ -210,13 +210,7 @@ void ImageList::set_current(const size_t index, const bool from_widget, const bo
         return;
 
     m_Index = index;
-
-    // Force is only true when this method is called from ::load.  The MainWindow's
-    // signal_load_success handler will handle the first changed call so the the UI widget
-    // visibility can update before hand
-    if (!force)
-        m_SignalChanged(m_Images[m_Index]);
-
+    m_SignalChanged(m_Images[m_Index]);
     update_cache();
 
     if (m_ThreadPool.active())

@@ -69,7 +69,7 @@ MainWindow::MainWindow(BaseObjectType* cobj, Glib::RefPtr<Gtk::Builder> bldr)
     m_LocalImageList->signal_archive_error().connect(
         [&](const std::string e) { m_StatusBar->set_message(e); });
     m_LocalImageList->signal_load_success().connect(
-        sigc::mem_fun(*this, &MainWindow::on_imagelist_load_success));
+        [&]() { set_active_imagelist(m_LocalImageList); });
     m_LocalImageList->signal_size_changed().connect([&]() {
         if (m_LocalImageList == m_ActiveImageList)
         {
@@ -254,12 +254,14 @@ void MainWindow::open_file(const std::string& path, const int index, const bool 
     if (iter != m_LocalImageList->end())
     {
         m_LocalImageList->set_current(iter - m_LocalImageList->begin());
+        set_active_imagelist(m_LocalImageList);
     }
     // Dont waste time re-extracting the archive just go to the first image
     else if (m_LocalImageList->from_archive() &&
              absolute_path == m_LocalImageList->get_archive().get_path())
     {
         m_LocalImageList->go_first();
+        set_active_imagelist(m_LocalImageList);
     }
     else if (!m_LocalImageList->load(absolute_path, error, index))
     {
@@ -279,8 +281,14 @@ void MainWindow::open_file(const std::string& path, const int index, const bool 
     if (Settings.get_bool("StoreRecentFiles"))
         Gtk::RecentManager::get_default()->add_item(Glib::filename_to_uri(absolute_path));
 
-    if (restore)
-        set_active_imagelist(m_LocalImageList);
+    auto tb_action{ Glib::RefPtr<Gtk::ToggleAction>::cast_static(
+        m_ActionGroup->get_action("ToggleThumbnailBar")) };
+
+    // Show the thumbnail bar when opening a new file
+    if (!restore && !tb_action->get_active())
+        tb_action->set_active(true);
+    else
+        update_widgets_visibility();
 
     present();
 }
@@ -299,6 +307,23 @@ void MainWindow::restore_last_file()
         if (!path.empty())
             open_file(path, Settings.get_int("ArchiveIndex"), true);
     }
+}
+
+void MainWindow::get_drawable_area_size(int& w, int& h) const
+{
+    get_size(w, h);
+
+    if (m_ThumbnailBar->get_visible())
+        w -= m_ThumbnailBar->get_width();
+
+    if (m_BooruBrowser->get_visible())
+        w -= m_HPaned->get_position() + m_HPaned->get_handle_window()->get_width();
+
+    if (m_MenuBar->get_visible())
+        h -= m_MenuBar->get_height();
+
+    if (m_StatusBar->get_visible())
+        h -= m_StatusBar->get_height();
 }
 
 void MainWindow::on_realize()
@@ -446,8 +471,6 @@ bool MainWindow::on_motion_notify_event(GdkEventMotion* e)
 
 void MainWindow::set_active_imagelist(const std::shared_ptr<ImageList>& image_list)
 {
-    update_widgets_visibility();
-
     if (m_ActiveImageList == image_list)
         return;
 
@@ -901,6 +924,9 @@ void MainWindow::update_widgets_visibility()
     m_ThumbnailBar->set_visible(!hide_all && thumbnail_bar_visible && !booru_browser_visible &&
                                 !m_LocalImageList->empty());
 
+    while (Glib::MainContext::get_default()->pending())
+        Glib::MainContext::get_default()->iteration(true);
+
     m_ImageBox->queue_draw_image();
     set_sensitives();
 }
@@ -1045,23 +1071,6 @@ void MainWindow::save_image_as()
 bool MainWindow::is_fullscreen() const
 {
     return get_window() && (get_window()->get_state() & Gdk::WINDOW_STATE_FULLSCREEN) != 0;
-}
-
-void MainWindow::on_imagelist_load_success()
-{
-    auto tb_action{ Glib::RefPtr<Gtk::ToggleAction>::cast_static(
-        m_ActionGroup->get_action("ToggleThumbnailBar")) };
-
-    // Show the thumbnail bar when opening a new file
-    if (!tb_action->get_active())
-        tb_action->set_active(true);
-    else
-        update_widgets_visibility();
-
-    if (m_ActiveImageList == m_LocalImageList)
-        on_imagelist_changed(m_ActiveImageList->get_current());
-    else
-        set_active_imagelist(m_LocalImageList);
 }
 
 void MainWindow::on_imagelist_changed(const std::shared_ptr<Image>& image)
@@ -1307,7 +1316,7 @@ void MainWindow::on_quit()
         { "ToggleThumbnailBar", "ThumbnailBarVisible" },
     } };
 
-    for (auto& w : widget_vis)
+    for (auto w : widget_vis)
     {
         bool v{ Glib::RefPtr<Gtk::ToggleAction>::cast_static(m_ActionGroup->get_action(w.first))
                     ->get_active() };
@@ -1417,10 +1426,9 @@ void MainWindow::on_toggle_booru_browser()
         if (!hide_all)
             m_BooruBrowser->get_tag_entry()->grab_focus();
 
-        if (m_BooruBrowser->get_active_page())
+        if (m_BooruBrowser->get_active_page() &&
+            m_BooruBrowser->get_active_page()->get_imagelist() != m_ActiveImageList)
             set_active_imagelist(m_BooruBrowser->get_active_page()->get_imagelist());
-        else
-            update_widgets_visibility();
 
         if (tb_action->get_active())
         {
@@ -1428,10 +1436,8 @@ void MainWindow::on_toggle_booru_browser()
             return;
         }
     }
-    else
-    {
-        update_widgets_visibility();
-    }
+
+    update_widgets_visibility();
 }
 
 void MainWindow::on_toggle_thumbnail_bar()
@@ -1445,7 +1451,8 @@ void MainWindow::on_toggle_thumbnail_bar()
 
     if (tb_action->get_active())
     {
-        set_active_imagelist(m_LocalImageList);
+        if (m_ActiveImageList != m_LocalImageList)
+            set_active_imagelist(m_LocalImageList);
 
         if (bb_action->get_active())
         {
@@ -1453,10 +1460,8 @@ void MainWindow::on_toggle_thumbnail_bar()
             return;
         }
     }
-    else
-    {
-        update_widgets_visibility();
-    }
+
+    update_widgets_visibility();
 }
 
 void MainWindow::on_toggle_hide_all()

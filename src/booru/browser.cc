@@ -77,9 +77,9 @@ Browser::Browser(BaseObjectType* cobj, const Glib::RefPtr<Gtk::Builder>& bldr)
 
 Browser::~Browser()
 {
-    // Disconnect these to prevent them from being emitted when the notebook is freed
+    // Why isn't this automatically disconnected immediatly in the notebook
+    // destructor?
     m_PageSwitchedConn.disconnect();
-    m_SignalPageChanged.clear();
 
     delete m_Notebook;
 }

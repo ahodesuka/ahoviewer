@@ -77,7 +77,6 @@ namespace AhoViewer
             bool scrolling{ false };
             Glib::RefPtr<Gtk::Adjustment> adj;
         };
-        void get_drawable_area(int& w, int& h);
         void get_scale_and_position(int& w, int& h, int& x, int& y);
         void draw_image(bool scroll);
         bool update_animation();
