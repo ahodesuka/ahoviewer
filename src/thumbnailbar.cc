@@ -43,8 +43,27 @@ void ThumbnailBar::set_pixbuf(const size_t index, const Glib::RefPtr<Gdk::Pixbuf
     m_ScrollConn.unblock();
 
     // Keep the selected image centered while thumbnails are being added
-    if (m_KeepAligned)
-        scroll_to_selected();
+    if (m_KeepAligned && get_window())
+    {
+        get_window()->freeze_updates();
+
+        Gtk::TreePath path{ m_TreeView->get_selection()->get_selected() };
+        Gtk::TreeViewColumn* column{ m_TreeView->get_column(0) };
+        Gdk::Rectangle rect;
+
+        // Center the selected thumbnail
+        m_TreeView->get_background_area(path, *column, rect);
+        double value = m_VAdjust->get_value() + rect.get_y() + (rect.get_height() / 2) -
+                       (m_VAdjust->get_page_size() / 2);
+        value =
+            std::round(std::clamp(value, 0.0, m_VAdjust->get_upper() - m_VAdjust->get_page_size()));
+
+        m_ScrollConn.block();
+        m_VAdjust->set_value(value);
+        m_ScrollConn.unblock();
+
+        get_window()->thaw_updates();
+    }
 }
 
 void ThumbnailBar::on_realize()
@@ -71,28 +90,11 @@ void ThumbnailBar::scroll_to_selected()
 {
     if (get_window())
     {
-        get_window()->freeze_updates();
-
-        Gtk::TreePath path(m_TreeView->get_selection()->get_selected());
-        Gtk::TreeViewColumn* column = m_TreeView->get_column(0);
-        Gdk::Rectangle rect;
-
-        // Make sure everything is updated before getting scroll position
-        while (Glib::MainContext::get_default()->pending())
-            Glib::MainContext::get_default()->iteration(true);
-
-        // Center the selected thumbnail
-        m_TreeView->get_background_area(path, *column, rect);
-        double value = m_VAdjust->get_value() + rect.get_y() + (rect.get_height() / 2) -
-                       (m_VAdjust->get_page_size() / 2);
-        value =
-            std::round(std::clamp(value, 0.0, m_VAdjust->get_upper() - m_VAdjust->get_page_size()));
+        Gtk::TreePath path{ m_TreeView->get_selection()->get_selected() };
 
         m_ScrollConn.block();
-        m_VAdjust->set_value(value);
+        m_TreeView->scroll_to_row(path, 0.5);
         m_ScrollConn.unblock();
-
-        get_window()->thaw_updates();
     }
 }
 
