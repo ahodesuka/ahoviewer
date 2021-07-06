@@ -10,12 +10,6 @@ using namespace AhoViewer;
 #include <gtkmm.h>
 #include <iostream>
 
-#ifdef _WIN32
-#include <shobjidl.h>
-#include <wincodec.h>
-#include <windows.h>
-#endif // _WIN32
-
 const std::string Image::NormalThumbnailDir =
     Glib::build_filename(Glib::get_user_cache_dir(), "thumbnails", "normal");
 const std::string Image::LargeThumbnailDir =
