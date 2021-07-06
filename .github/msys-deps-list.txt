@@ -635,6 +635,7 @@ $MSYSTEM_PREFIX/lib/python3.8/_weakrefset.py
 $MSYSTEM_PREFIX/lib/python3.8/__future__.py
 $MSYSTEM_PREFIX/lib/python3.8/__phello__.foo.py
 $MSYSTEM_PREFIX/lib/gstreamer-1.0/libgstaom.dll
+$MSYSTEM_PREFIX/lib/gstreamer-1.0/libgstapp.dll
 $MSYSTEM_PREFIX/lib/gstreamer-1.0/libgstaudioconvert.dll
 $MSYSTEM_PREFIX/lib/gstreamer-1.0/libgstaudioparsers.dll
 $MSYSTEM_PREFIX/lib/gstreamer-1.0/libgstaudioresample.dll
