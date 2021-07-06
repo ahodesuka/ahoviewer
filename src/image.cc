@@ -16,8 +16,10 @@ using namespace AhoViewer;
 #include <windows.h>
 #endif // _WIN32
 
-const std::string Image::ThumbnailDir =
+const std::string Image::NormalThumbnailDir =
     Glib::build_filename(Glib::get_user_cache_dir(), "thumbnails", "normal");
+const std::string Image::LargeThumbnailDir =
+    Glib::build_filename(Glib::get_user_cache_dir(), "thumbnails", "large");
 
 bool Image::is_valid(const std::string& path)
 {
@@ -26,7 +28,7 @@ bool Image::is_valid(const std::string& path)
 
 bool Image::is_valid_extension(const std::string& path)
 {
-    std::string ext = path.substr(path.find_last_of('.') + 1);
+    std::string ext{ path.substr(path.find_last_of('.') + 1) };
     std::transform(ext.begin(), ext.end(), ext.begin(), ::tolower);
 
 #ifdef HAVE_GSTREAMER
@@ -154,28 +156,31 @@ const Glib::RefPtr<Gdk::Pixbuf>& Image::get_thumbnail(Glib::RefPtr<Gio::Cancella
         return m_ThumbnailPixbuf;
 
 #ifdef __linux__
-    std::string thumb_filename = Glib::Checksum::compute_checksum(Glib::Checksum::CHECKSUM_MD5,
-                                                                  Glib::filename_to_uri(m_Path)) +
-                                 ".png";
-    m_ThumbnailPath = Glib::build_filename(ThumbnailDir, thumb_filename);
-
-    if (is_valid(m_ThumbnailPath))
+    std::string thumb_filename{ Glib::Checksum::compute_checksum(Glib::Checksum::CHECKSUM_MD5,
+                                                                 Glib::filename_to_uri(m_Path)) +
+                                ".png" };
+    for (const auto& dir : { NormalThumbnailDir, LargeThumbnailDir })
     {
-        Glib::RefPtr<Gdk::Pixbuf> pixbuf =
-            create_pixbuf_at_size(m_ThumbnailPath, ThumbnailSize, ThumbnailSize, c);
+        m_ThumbnailPath = Glib::build_filename(dir, thumb_filename);
 
-        if (pixbuf)
+        if (is_valid(m_ThumbnailPath))
         {
-            struct stat file_info;
-            std::string s{ pixbuf->get_option("tEXt::Thumb::MTime") };
+            Glib::RefPtr<Gdk::Pixbuf> pixbuf =
+                create_pixbuf_at_size(m_ThumbnailPath, ThumbnailSize, ThumbnailSize, c);
 
-            // Make sure the file hasn't been modified since this thumbnail was created
-            if (!s.empty())
+            if (pixbuf)
             {
-                time_t mtime{ std::stol(s) };
+                struct stat file_info;
+                std::string s{ pixbuf->get_option("tEXt::Thumb::MTime") };
 
-                if ((stat(m_Path.c_str(), &file_info) == 0) && file_info.st_mtime == mtime)
-                    m_ThumbnailPixbuf = pixbuf;
+                // Make sure the file hasn't been modified since this thumbnail was created
+                if (!s.empty())
+                {
+                    time_t mtime{ std::stol(s) };
+
+                    if ((stat(m_Path.c_str(), &file_info) == 0) && file_info.st_mtime == mtime)
+                        m_ThumbnailPixbuf = pixbuf;
+                }
             }
         }
     }
@@ -440,7 +445,7 @@ Glib::RefPtr<Gdk::Pixbuf> Image::create_webm_thumbnail([[maybe_unused]] int w,
                                                        [[maybe_unused]] int h) const
 {
     Glib::RefPtr<Gdk::Pixbuf> pixbuf;
-#if defined(HAVE_GSTREAMER) && !defined(_WIN32)
+#ifdef HAVE_GSTREAMER
     gint64 dur, pos;
     GstSample* sample;
     GstMapInfo map;
@@ -523,8 +528,10 @@ Glib::RefPtr<Gdk::Pixbuf> Image::create_webm_thumbnail([[maybe_unused]] int w,
 
             if (gst_buffer_map(buffer, &map, GST_MAP_READ))
             {
+                // Make a copy since create_from_data doesn't copy the data itself
                 pixbuf = Gdk::Pixbuf::create_from_data(
-                    map.data, Gdk::COLORSPACE_RGB, false, 8, w, h, GST_ROUND_UP_4(w * 3));
+                             map.data, Gdk::COLORSPACE_RGB, false, 8, w, h, GST_ROUND_UP_4(w * 3))
+                             ->copy();
 
                 gst_buffer_unmap(buffer, &map);
             }
@@ -539,66 +546,7 @@ Glib::RefPtr<Gdk::Pixbuf> Image::create_webm_thumbnail([[maybe_unused]] int w,
     gst_object_unref(sink);
     gst_element_set_state(pipeline, GST_STATE_NULL);
     gst_object_unref(pipeline);
-#elif defined(HAVE_GSTREAMER) && defined(_WIN32)
-    CoInitializeEx(nullptr, COINIT_MULTITHREADED);
-    HBITMAP hbmp = nullptr;
-
-    IShellItemImageFactory* pImageFactory;
-    HRESULT hr = SHCreateItemFromParsingName(
-        Util::utf8_to_utf16(m_Path).c_str(), nullptr, IID_PPV_ARGS(&pImageFactory));
-
-    if (SUCCEEDED(hr))
-    {
-        SIZE size = { ThumbnailSize, ThumbnailSize };
-
-        hr = pImageFactory->GetImage(size, SIIGBF_THUMBNAILONLY | SIIGBF_SCALEUP, &hbmp);
-
-        if (SUCCEEDED(hr))
-        {
-            guchar* bits = nullptr;
-            BITMAP bm    = { 0 };
-            GetObject(hbmp, sizeof(bm), std::addressof(bm));
-
-            auto hDC = GetDC(nullptr);
-
-            BITMAPINFO bmi              = { 0 };
-            bmi.bmiHeader.biSize        = sizeof(BITMAPINFOHEADER);
-            bmi.bmiHeader.biWidth       = bm.bmWidth;
-            bmi.bmiHeader.biHeight      = -bm.bmHeight;
-            bmi.bmiHeader.biPlanes      = 1;
-            bmi.bmiHeader.biBitCount    = 32;
-            bmi.bmiHeader.biCompression = BI_RGB;
-
-            bits = (guchar*)g_malloc0(4 * bm.bmWidth * bm.bmHeight);
-
-            GetDIBits(hDC, hbmp, 0, bm.bmHeight, bits, &bmi, DIB_RGB_COLORS);
-            ReleaseDC(nullptr, hDC);
-
-            pixbuf = Gdk::Pixbuf::create(Gdk::COLORSPACE_RGB, false, 8, bm.bmWidth, bm.bmHeight);
-            auto pixels    = pixbuf->get_pixels();
-            auto rowstride = pixbuf->get_rowstride();
-
-            for (int y = 0; y < bm.bmHeight; y++)
-            {
-                for (int x = 0; x < bm.bmWidth; x++)
-                {
-                    pixels[2] = bits[(x + y * bm.bmWidth) * 4];
-                    pixels[1] = bits[(x + y * bm.bmWidth) * 4 + 1];
-                    pixels[0] = bits[(x + y * bm.bmWidth) * 4 + 2];
-                    pixels += 3;
-                }
-                pixels += (bm.bmWidth * 3 - rowstride);
-            }
-
-            g_free(bits);
-            DeleteObject(hbmp);
-        }
-
-        pImageFactory->Release();
-    }
-
-    CoUninitialize();
-#endif // defined(HAVE_GSTREAMER) && !defined(_WIN32)
+#endif // HAVE_GSTREAMER
     return pixbuf;
 }
 
@@ -620,8 +568,8 @@ void Image::save_thumbnail(Glib::RefPtr<Gdk::Pixbuf>& pixbuf, const gchar* mime_
                                              PACKAGE                             // Software
                                          };
 
-        if (!Glib::file_test(ThumbnailDir, Glib::FILE_TEST_EXISTS))
-            g_mkdir_with_parents(ThumbnailDir.c_str(), 0700);
+        if (!Glib::file_test(NormalThumbnailDir, Glib::FILE_TEST_EXISTS))
+            g_mkdir_with_parents(NormalThumbnailDir.c_str(), 0700);
 
         gchar* buf;
         gsize buf_size;
