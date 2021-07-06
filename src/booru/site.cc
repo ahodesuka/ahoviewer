@@ -235,7 +235,7 @@ Site::get_type_from_url(const std::string& url)
         else
         {
             for (const auto& site :
-                 Application::get_instance().get_plugin_manager().get_site_plugins())
+                 Application::get_default()->get_plugin_manager().get_site_plugins())
             {
                 auto uri{ site->get_test_uri() };
                 if (uri.empty())

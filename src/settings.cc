@@ -238,7 +238,7 @@ std::vector<std::shared_ptr<Site>>& SettingsManager::get_sites()
                 {
 #ifdef HAVE_LIBPEAS
                     const auto& plugins{
-                        Application::get_instance().get_plugin_manager().get_site_plugins()
+                        Application::get_default()->get_plugin_manager().get_site_plugins()
                     };
                     auto it{ std::find_if(
                         plugins.cbegin(), plugins.cend(), [&plugin_name](const auto& p) {
@@ -444,7 +444,7 @@ void SettingsManager::load_keybindings()
                 if (i.first == "Plugins")
                 {
                     const auto& plugins{
-                        Application::get_instance().get_plugin_manager().get_window_plugins()
+                        Application::get_default()->get_plugin_manager().get_window_plugins()
                     };
                     for (auto& p : plugins)
                     {

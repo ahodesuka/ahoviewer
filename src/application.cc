@@ -97,10 +97,15 @@ Application::Application()
     signal_shutdown().connect(sigc::mem_fun(*this, &Application::on_shutdown));
 }
 
-Application& Application::get_instance()
+Glib::RefPtr<Application> Application::create()
 {
-    static Application app;
-    return app;
+    return Glib::RefPtr<Application>(new Application());
+}
+
+Glib::RefPtr<Application> Application::get_default()
+{
+    auto gapp{ Gtk::Application::get_default() };
+    return Glib::RefPtr<Application>::cast_dynamic(gapp);
 }
 
 MainWindow* Application::create_window()
@@ -127,46 +132,6 @@ MainWindow* Application::create_window()
     add_window(*window);
 
     return w;
-}
-
-int Application::run(int argc, char** argv)
-{
-    register_application();
-
-    if (!is_remote())
-    {
-        gtk_init(&argc, &argv);
-#ifdef HAVE_GSTREAMER
-        gst_init(&argc, &argv);
-#endif // HAVE_GSTREAMER
-
-#if _WIN32
-        // Detect if windows 10 dark theme is enabled and change to my dark theme
-        DWORD value = 0, value_size = sizeof(value);
-        if (RegGetValueW(HKEY_CURRENT_USER,
-                         L"Software\\Microsoft\\Windows\\CurrentVersion\\Themes\\Personalize",
-                         L"AppsUseLightTheme",
-                         RRF_RT_REG_DWORD,
-                         nullptr,
-                         &value,
-                         &value_size) == ERROR_SUCCESS)
-        {
-            auto gtk_settings{ Gtk::Settings::get_default() };
-
-            if (value == 0)
-            {
-                // ahoka-light is the default theme for Windows binary distribution
-                if (gtk_settings->property_gtk_theme_name() == "ahoka-light")
-                    gtk_settings->property_gtk_theme_name() = "ahoka";
-
-                if (gtk_settings->property_gtk_icon_theme_name() == "ahoka-light")
-                    gtk_settings->property_gtk_icon_theme_name() = "ahoka";
-            }
-        }
-#endif // _WIN32
-    }
-
-    return Gtk::Application::run(argc, argv);
 }
 
 void Application::on_activate()
@@ -241,6 +206,31 @@ void Application::on_startup()
                       << std::endl;
         }
     } }.detach();
+
+#if _WIN32
+    // Detect if windows 10 dark theme is enabled and change to my dark theme
+    DWORD value = 0, value_size = sizeof(value);
+    if (RegGetValueW(HKEY_CURRENT_USER,
+                     L"Software\\Microsoft\\Windows\\CurrentVersion\\Themes\\Personalize",
+                     L"AppsUseLightTheme",
+                     RRF_RT_REG_DWORD,
+                     nullptr,
+                     &value,
+                     &value_size) == ERROR_SUCCESS)
+    {
+        auto gtk_settings{ Gtk::Settings::get_default() };
+
+        if (value == 0)
+        {
+            // ahoka-light is the default theme for Windows binary distribution
+            if (gtk_settings->property_gtk_theme_name() == "ahoka-light")
+                gtk_settings->property_gtk_theme_name() = "ahoka";
+
+            if (gtk_settings->property_gtk_icon_theme_name() == "ahoka-light")
+                gtk_settings->property_gtk_icon_theme_name() = "ahoka";
+        }
+    }
+#endif // _WIN32
 
     // Load this after plugins have been loaded so the active plugins can have their keybindings set
     Settings.load_keybindings();

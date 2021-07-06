@@ -17,6 +17,7 @@ using namespace AhoViewer;
 #include <glibmm/i18n.h>
 #include <iomanip>
 #include <iostream>
+#include <string_view>
 #include <utility>
 
 extern const char* const ahoviewer_version;
@@ -505,10 +506,11 @@ void MainWindow::save_window_geometry()
     if (is_fullscreen())
         return;
 
-    int x = m_LastXPos, y = m_LastYPos, w, h;
+    int x{ m_LastXPos }, y{ m_LastYPos }, w, h;
 
     get_size(w, h);
     // On Windows this will always return -32000, -32000 when minimized
+    // XXX: Is this still the case with gtk3?
     if (!m_IsMinimized)
     {
         get_position(x, y);
@@ -864,7 +866,7 @@ void MainWindow::create_actions()
     auto plugins_menu{ Gtk::make_managed<Gtk::Menu>() };
     plugins_menuitem->set_submenu(*plugins_menu);
 
-    for (auto& p : Application::get_instance().get_plugin_manager().get_window_plugins())
+    for (auto& p : Application::get_default()->get_plugin_manager().get_window_plugins())
     {
         if (p->get_action_name().empty())
             continue;
@@ -941,20 +943,20 @@ void MainWindow::set_sensitives()
     bool hide_all{ Glib::RefPtr<Gtk::ToggleAction>::cast_static(
                        m_ActionGroup->get_action("ToggleHideAll"))
                        ->get_active() };
-    static constexpr std::array ui_names{
+    static constexpr std::array<std::string_view, 3> ui_names{
         "ToggleMenuBar",
         "ToggleStatusBar",
         "ToggleBooruBrowser",
     };
 
-    for (const std::string& s : ui_names)
-        m_ActionGroup->get_action(s)->set_sensitive(!hide_all);
+    for (const auto s : ui_names)
+        m_ActionGroup->get_action(s.data())->set_sensitive(!hide_all);
 
-    static constexpr std::array action_names{
+    static constexpr std::array<std::string_view, 5> action_names{
         "NextImage", "PreviousImage", "FirstImage", "LastImage", "ToggleSlideshow",
     };
 
-    for (const std::string& s : action_names)
+    for (const auto s : action_names)
     {
         bool sens{ m_ActiveImageList && !m_ActiveImageList->empty() };
 
@@ -963,7 +965,7 @@ void MainWindow::set_sensitives()
         else if (s == "PreviousImage")
             sens = sens && m_ActiveImageList->can_go_previous();
 
-        m_ActionGroup->get_action(s)->set_sensitive(sens);
+        m_ActionGroup->get_action(s.data())->set_sensitive(sens);
     }
 
     const Booru::Page* page{ m_BooruBrowser->get_active_page() };
@@ -1140,7 +1142,7 @@ void MainWindow::on_connect_proxy(const Glib::RefPtr<Gtk::Action>& action, Gtk::
     }
 }
 
-void MainWindow::on_screen_changed(GtkWidget* w, GdkScreen* prev, gpointer userp)
+void MainWindow::on_screen_changed(GtkWidget* w, GdkScreen*, gpointer userp)
 {
     auto self{ static_cast<MainWindow*>(userp) };
     auto screen{ Gdk::Screen::get_default() };

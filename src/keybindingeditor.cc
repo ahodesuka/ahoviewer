@@ -24,7 +24,7 @@ KeybindingEditor::KeybindingEditor(BaseObjectType* cobj, const Glib::RefPtr<Gtk:
         if (i.first == "Plugins")
         {
             const auto& plugins{
-                Application::get_instance().get_plugin_manager().get_window_plugins()
+                Application::get_default()->get_plugin_manager().get_window_plugins()
             };
             for (auto& p : plugins)
             {

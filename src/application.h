@@ -14,11 +14,10 @@ namespace AhoViewer
     class Application : public Gtk::Application
     {
     public:
-        static Application& get_instance();
+        static Glib::RefPtr<Application> create();
+        static Glib::RefPtr<Application> get_default();
 
         MainWindow* create_window();
-
-        int run(int argc, char** argv);
 
 #ifdef HAVE_LIBPEAS
         Plugin::Manager& get_plugin_manager() const { return *m_PluginManager; }

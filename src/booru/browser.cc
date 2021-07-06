@@ -388,7 +388,7 @@ void Browser::on_image_progress(const Image* bimage, double c, double t)
 
 GtkNotebook* Browser::on_create_window(GtkNotebook*, GtkWidget*, gint x, gint y, gpointer*)
 {
-    auto window{ Application::get_instance().create_window() };
+    auto window{ Application::get_default()->create_window() };
 
     if (window)
     {
