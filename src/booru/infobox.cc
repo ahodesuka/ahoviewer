@@ -73,19 +73,21 @@ void InfoBox::hide()
 {
     if (Settings.get_bool("AutoHideInfoBox"))
     {
-        m_HideConn = Glib::signal_timeout().connect(
-            [&]() {
-                if (!m_IsVisible)
-                    m_Revealer->set_reveal_child(false);
-                return false;
-            },
-            500);
+        m_HideConn =
+            Glib::signal_timeout().connect(sigc::mem_fun(*this, &InfoBox::timeout_hide), 500);
     }
     else
     {
         m_Revealer->set_reveal_child(false);
     }
     m_IsVisible = false;
+}
+
+bool InfoBox::timeout_hide()
+{
+    if (!m_IsVisible)
+        m_Revealer->set_reveal_child(false);
+    return false;
 }
 
 bool InfoBox::on_button_press_event(GdkEventButton* e)

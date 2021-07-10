@@ -18,6 +18,7 @@ namespace AhoViewer::Booru
 
         void show();
         void hide();
+        bool timeout_hide();
         bool is_visible() const { return m_IsVisible; }
         GdkWindow* get_source_label_window() const
         {
