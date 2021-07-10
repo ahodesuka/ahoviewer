@@ -120,7 +120,7 @@ MainWindow* Application::create_window(bool from_dnd)
     // Automatically fullscreening windows that are created from dragging booru
     // tabs just seems dumb, so do not do it
     if (!from_dnd && Settings.get_bool("StartFullscreen"))
-        w->lookup_action("ToggleFullscreen")->change_state(true);
+        w->on_toggle_fullscreen(true);
 
     return w;
 }
