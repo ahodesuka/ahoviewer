@@ -15,6 +15,10 @@ Browser::Browser(BaseObjectType* cobj, const Glib::RefPtr<Gtk::Builder>& bldr)
     : Gtk::Paned{ cobj },
       m_LastSavePath{ Settings.get_string("LastSavePath") }
 {
+    auto model{ Glib::RefPtr<Gio::Menu>::cast_dynamic(bldr->get_object("BooruPopoverMenu")) };
+    m_PopupMenu = std::make_shared<Gtk::Menu>(model);
+    m_PopupMenu->attach_to_widget(*this);
+
     bldr->get_widget("Booru::Browser::Notebook", m_Notebook);
     bldr->get_widget("Booru::Browser::NewTabButton", m_NewTabButton);
     bldr->get_widget("Booru::Browser::SaveImagesButton", m_SaveImagesButton);
@@ -50,17 +54,14 @@ Browser::Browser(BaseObjectType* cobj, const Glib::RefPtr<Gtk::Builder>& bldr)
     m_ComboBox->pack_start(m_ComboColumns.name);
     (*m_ComboBox->get_cells().begin())->set_fixed_size(22, 16);
 
-    m_UIManager = Glib::RefPtr<Gtk::UIManager>::cast_static(bldr->get_object("UIManager"));
-
     m_Notebook->set_group_name(TempDir::get_instance().get_dir());
-    m_PageSwitchedConn =
-        m_Notebook->signal_switch_page().connect(sigc::mem_fun(*this, &Browser::on_switch_page));
+    m_Notebook->signal_switch_page().connect(sigc::mem_fun(*this, &Browser::on_switch_page));
     m_Notebook->signal_page_removed().connect(sigc::mem_fun(*this, &Browser::on_page_removed));
     m_Notebook->signal_page_added().connect(sigc::mem_fun(*this, &Browser::on_page_added));
 
     // This sets the minimum size to match 3 columns of a pages icon view
-    // 2 = border+margin size (1px each)
-    m_Notebook->set_size_request((Image::BooruThumbnailSize + 2 + IconViewItemPadding * 2) * 3, -1);
+    // 3 = margin-left + margin-right + border-left (all 1px)
+    m_Notebook->set_size_request((Image::BooruThumbnailSize + 3 + IconViewItemPadding * 2) * 3, -1);
 
     g_signal_connect(m_Notebook->gobj(), "create-window", G_CALLBACK(on_create_window), this);
 
@@ -76,10 +77,9 @@ Browser::Browser(BaseObjectType* cobj, const Glib::RefPtr<Gtk::Builder>& bldr)
 
 Browser::~Browser()
 {
-    // Why isn't this automatically disconnected immediatly in the notebook
-    // destructor?
-    m_PageSwitchedConn.disconnect();
-
+    // This needs to be done explicitly to prevent on_page_removed and on_switch_page
+    // from being trigged after other widgets they methods access have been destroyed
+    remove(*m_Notebook);
     delete m_Notebook;
 }
 
@@ -146,7 +146,7 @@ void Browser::on_new_tab()
     if (m_Notebook->get_n_pages() == 0)
         page->m_Tags = m_TagEntry->get_text();
 
-    int page_num = m_Notebook->append_page(*page, *page->get_tab(), *page->get_menu_label());
+    int page_num{ m_Notebook->append_page(*page, *page->get_tab(), *page->get_menu_label()) };
 
     m_Notebook->set_current_page(page_num);
     m_Notebook->set_tab_reorderable(*page, true);
@@ -265,18 +265,9 @@ void Browser::on_copy_post_url()
 
 void Browser::on_realize()
 {
-    m_PopupMenu = static_cast<Gtk::Menu*>(m_UIManager->get_widget("/BooruPopupMenu"));
-
-    // Connect buttons to their actions
-    Glib::RefPtr<Gtk::ActionGroup> action_group =
-        static_cast<std::vector<Glib::RefPtr<Gtk::ActionGroup>>>(
-            m_UIManager->get_action_groups())[0];
-
-    m_SaveImageAction  = action_group->get_action("SaveImage");
-    m_SaveImagesAction = action_group->get_action("SaveImages");
-
-    m_NewTabButton->set_related_action(action_group->get_action("NewTab"));
-    m_SaveImagesButton->set_related_action(m_SaveImagesAction);
+    // Gtkmm 3 does not implement the actionable interface
+    gtk_actionable_set_action_name(GTK_ACTIONABLE(m_NewTabButton->gobj()), "win.NewTab");
+    gtk_actionable_set_action_name(GTK_ACTIONABLE(m_SaveImagesButton->gobj()), "win.SaveImages");
 
     Gtk::Paned::on_realize();
 
@@ -284,6 +275,7 @@ void Browser::on_realize()
 
     update_combobox_model();
 
+    // This shouldn't be needed
     while (Glib::MainContext::get_default()->pending())
         Glib::MainContext::get_default()->iteration(true);
 
@@ -313,10 +305,10 @@ void Browser::on_realize()
     });
 }
 
-void Browser::on_show() // NOLINT
+void Browser::on_show()
 {
     Gtk::Paned::on_show();
-    Page* page = get_active_page();
+    Page* page{ get_active_page() };
 
     if (page)
         page->scroll_to_selected();
@@ -388,7 +380,7 @@ void Browser::on_image_progress(const Image* bimage, double c, double t)
 
 GtkNotebook* Browser::on_create_window(GtkNotebook*, GtkWidget*, gint x, gint y, gpointer*)
 {
-    auto window{ Application::get_default()->create_window() };
+    auto window{ Application::get_default()->create_window(true) };
 
     if (window)
     {
@@ -553,7 +545,7 @@ void Browser::on_page_removed_cleanup()
 
     auto* w{ static_cast<MainWindow*>(get_toplevel()) };
     if (w->m_LocalImageList->empty() && !w->m_OriginalWindow)
-        w->on_quit();
+        w->on_close();
 }
 
 void Browser::on_page_added(Gtk::Widget* w, guint)
@@ -575,16 +567,17 @@ void Browser::on_page_added(Gtk::Widget* w, guint)
 
     // Make sure the booru browser is visible
     auto* window{ static_cast<MainWindow*>(get_toplevel()) };
-    auto ha{ Glib::RefPtr<Gtk::ToggleAction>::cast_static(
-        window->m_ActionGroup->get_action("ToggleHideAll")) },
-        bb{ Glib::RefPtr<Gtk::ToggleAction>::cast_static(
-            window->m_ActionGroup->get_action("ToggleBooruBrowser")) };
+    auto ha{ window->lookup_action("ToggleHideAll") },
+        bb{ window->lookup_action("ToggleBooruBrowser") };
+    bool ha_state{ false }, bb_state{ false };
+    ha->get_state(ha_state);
+    bb->get_state(bb_state);
 
-    if (ha->get_active())
-        Glib::signal_idle().connect_once([ha]() { ha->set_active(false); });
+    if (ha_state)
+        Glib::signal_idle().connect_once([ha]() { ha->change_state(false); });
 
-    if (!bb->get_active())
-        Glib::signal_idle().connect_once([bb]() { bb->set_active(); });
+    if (!bb_state)
+        Glib::signal_idle().connect_once([bb]() { bb->change_state(true); });
 }
 
 void Browser::on_switch_page(Gtk::Widget* w, guint)

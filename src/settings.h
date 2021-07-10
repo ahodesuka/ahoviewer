@@ -28,6 +28,7 @@ namespace AhoViewer
                                              Booru::Type,
                                              bool,
                                              std::string>;
+        using KeybindingMap     = std::vector<std::pair<std::string, std::vector<Glib::ustring>>>;
 
     public:
         SettingsManager();
@@ -39,18 +40,25 @@ namespace AhoViewer
 
         std::vector<std::shared_ptr<Booru::Site>>& get_sites();
 
-        std::string get_keybinding(const std::string& group, const std::string& name) const;
-        void
-        set_keybinding(const std::string& group, const std::string& name, const std::string& value);
-
-        std::map<std::string, std::map<std::string, std::string>> get_keybindings() const
-        {
-            return m_Keybindings;
-        }
-
+        // Returns a map of all keybindings
+        const KeybindingMap& get_keybindings() const { return m_Keybindings; }
+        // Returns the keybindings for a single action, if there are none it will
+        // return an empty vector
+        const std::vector<Glib::ustring> get_keybindings(const std::string& name) const;
+        // Returns the default keybindings for a single action, if there are none it will
+        // return an empty vector
+        const std::vector<Glib::ustring> get_default_keybindings(const std::string& name) const;
+        // Sets the given action's keybindings
+        void set_keybindings(std::string name, const std::vector<Glib::ustring>& keys);
+        // Clears the first (only) binding that has the same value as value
+        // returns a pair with the action name and vector of new bindings
+        // for the binding that was removed, or a pair with an empty string
+        // and vector if no binding matched value
+        std::pair<std::string, std::vector<Glib::ustring>>
+        clear_keybinding(const std::string& value);
+        // Resets the given action's keybindings back to it's default value
+        void reset_keybindings(std::string name);
         void load_keybindings();
-        bool clear_keybinding(const std::string& value, std::string& group, std::string& name);
-        std::string reset_keybinding(const std::string& group, const std::string& name);
 
         void add_favorite_tag(const Booru::Tag& tag) { m_FavoriteTags.push_back(tag); }
         void remove_favorite_tag(const Booru::Tag& tag)
@@ -92,9 +100,9 @@ namespace AhoViewer
                 set(key, value, Setting::TypeString);
         }
 
-    private:
         void save_sites();
 
+    private:
         libconfig::Config m_Config;
 
         const std::string m_ConfigPath, m_ConfigFilePath, m_BooruPath, m_FavoriteTagsPath;
@@ -103,14 +111,14 @@ namespace AhoViewer
         const std::map<std::string, int> m_DefaultInts;
         const std::map<std::string, std::string> m_DefaultStrings;
         const std::vector<SiteTuple> m_DefaultSites;
-        const std::map<std::string, std::map<std::string, std::string>> m_DefaultKeybindings;
+        const KeybindingMap m_DefaultKeybindings;
         const Booru::Rating m_DefaultBooruMaxRating{ Booru::Rating::EXPLICIT };
         const ZoomMode m_DefaultZoomMode{ ZoomMode::MANUAL };
         const Booru::TagViewOrder m_DefaultTagViewOrder{ Booru::TagViewOrder::TYPE };
 
         std::vector<std::shared_ptr<Booru::Site>> m_Sites;
         std::vector<DisabledSiteTuple> m_DisabledSites;
-        std::map<std::string, std::map<std::string, std::string>> m_Keybindings;
+        KeybindingMap m_Keybindings;
         std::vector<Booru::Tag> m_FavoriteTags;
 
         template<typename T>

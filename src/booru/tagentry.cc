@@ -28,6 +28,11 @@ void TagEntry::set_tags(const std::set<Tag>& tags)
     m_Tags = &tags;
 }
 
+bool TagEntry::on_key_press_event(GdkEventKey* e)
+{
+    return Gtk::Entry::on_key_press_event(e);
+}
+
 void TagEntry::on_grab_focus()
 {
     Gtk::Entry::on_grab_focus();

@@ -1,11 +1,13 @@
 #include "imagebox.h"
 using namespace AhoViewer;
 
+#include "application.h"
 #include "imageboxnote.h"
 #include "mainwindow.h"
 #include "settings.h"
 #include "statusbar.h"
 
+#include <glibmm/i18n.h>
 #include <iostream>
 
 #ifndef M_PI
@@ -156,21 +158,27 @@ ImageBox::ImageBox(BaseObjectType* cobj, const Glib::RefPtr<Gtk::Builder>& bldr)
     : Gtk::ScrolledWindow{ cobj },
       m_HSmoothScroll{ get_hadjustment() },
       m_VSmoothScroll{ get_vadjustment() },
+      m_MainWindow{ static_cast<MainWindow*>(get_toplevel()) },
       m_LeftPtrCursor{ Gdk::Cursor::create(Gdk::LEFT_PTR) },
       m_FleurCursor{ Gdk::Cursor::create(Gdk::FLEUR) },
       m_BlankCursor{ Gdk::Cursor::create(Gdk::BLANK_CURSOR) },
       m_ZoomMode{ Settings.get_zoom_mode() },
       m_RestoreScrollPos{ -1, -1, m_ZoomMode }
 {
+    auto model{ Glib::RefPtr<Gio::Menu>::cast_dynamic(bldr->get_object("ImageBoxPopoverMenu")) };
+    // add the recent submenu
+    model->insert_submenu(1, _("Open _Recent"), Application::get_default()->get_recent_menu());
+    Gtk::Box* box;
+    bldr->get_widget("MainWindow::Box", box);
+    m_PopoverMenu = std::make_unique<Gtk::Popover>(*box, model);
+    static_cast<Gtk::Stack*>(m_PopoverMenu->get_child())->set_hhomogeneous(false);
+
     bldr->get_widget("ImageBox::Fixed", m_Fixed);
     bldr->get_widget("ImageBox::Overlay", m_Overlay);
     bldr->get_widget("ImageBox::Image", m_GtkImage);
     bldr->get_widget("ImageBox::NoteFixed", m_NoteFixed);
     bldr->get_widget("ImageBox::DrawingArea", m_GstWidget);
     bldr->get_widget_derived("StatusBar", m_StatusBar);
-    bldr->get_widget_derived("MainWindow", m_MainWindow);
-
-    m_UIManager = Glib::RefPtr<Gtk::UIManager>::cast_static(bldr->get_object("UIManager"));
 
 #ifdef HAVE_GSTREAMER
     // Prefer hardware accelerated decoders if they exist
@@ -256,8 +264,7 @@ ImageBox::ImageBox(BaseObjectType* cobj, const Glib::RefPtr<Gtk::Builder>& bldr)
 #endif
 
 #ifdef GDK_WINDOWING_X11
-    // These sinks don't work with rgba visual set
-    if (GDK_IS_X11_DISPLAY(dpy) && !m_VideoSink && !m_MainWindow->has_rgba_visual())
+    if (GDK_IS_X11_DISPLAY(dpy) && !m_VideoSink)
     {
         m_VideoSink = create_video_sink("xvimagesink");
         // Make sure the X server has the X video extension enabled
@@ -409,7 +416,6 @@ ImageBox::ImageBox(BaseObjectType* cobj, const Glib::RefPtr<Gtk::Builder>& bldr)
 
 ImageBox::~ImageBox()
 {
-    clear_image();
 #ifdef HAVE_GSTREAMER
     gst_object_unref(GST_OBJECT(m_Playbin));
 #endif // HAVE_GSTREAMER
@@ -585,14 +591,8 @@ void ImageBox::on_scroll_right()
 
 void ImageBox::on_realize()
 {
-    m_PopupMenu = static_cast<Gtk::Menu*>(m_UIManager->get_widget("/PopupMenu"));
-
-    Glib::RefPtr<Gtk::ActionGroup> action_group =
-        static_cast<std::vector<Glib::RefPtr<Gtk::ActionGroup>>>(
-            m_UIManager->get_action_groups())[0];
-
-    m_NextAction     = action_group->get_action("NextImage");
-    m_PreviousAction = action_group->get_action("PreviousImage");
+    m_NextAction     = m_MainWindow->lookup_action("NextImage");
+    m_PreviousAction = m_MainWindow->lookup_action("PreviousImage");
 
     m_Fixed->get_style_context()->lookup_color("theme_bg_color", DefaultBGColor);
     update_background_color();
@@ -616,9 +616,17 @@ bool ImageBox::on_button_press_event(GdkEventButton* e)
             m_PressY = m_PreviousY = e->y_root;
             return true;
         case 3:
-            m_PopupMenu->popup_at_pointer(reinterpret_cast<GdkEvent*>(e));
+        {
+            int x, y;
+            m_MainWindow->get_position(x, y);
+            Gdk::Rectangle rect{
+                static_cast<int>(e->x_root) - x, static_cast<int>(e->y_root) - y, 1, 1
+            };
+            m_PopoverMenu->set_pointing_to(rect);
+            m_PopoverMenu->popup();
             m_CursorConn.disconnect();
             return true;
+        }
         case 8: // Back
             m_PreviousAction->activate();
             return true;
@@ -1029,7 +1037,7 @@ void ImageBox::scroll(const int x, const int y, const bool panning, const bool f
         if ((get_hadjustment()->get_value() == adjust_upper_x && x > 0) ||
             (get_vadjustment()->get_value() == adjust_upper_y && y > 0))
         {
-            if (m_SlideshowConn && !m_NextAction->is_sensitive())
+            if (m_SlideshowConn && !m_NextAction->get_enabled())
                 m_SignalSlideshowEnded();
             else
                 m_NextAction->activate();

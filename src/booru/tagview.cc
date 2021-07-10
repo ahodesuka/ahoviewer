@@ -151,12 +151,14 @@ TagView::TagView(BaseObjectType* cobj, const Glib::RefPtr<Gtk::Builder>& bldr)
     : Gtk::ListBox{ cobj },
       m_FavoriteTags{ Settings.get_favorite_tags() }
 {
+    auto model{ Glib::RefPtr<Gio::Menu>::cast_dynamic(bldr->get_object("TagViewPopoverMenu")) };
+    m_PopupMenu = std::make_unique<Gtk::Menu>(model);
+    m_PopupMenu->attach_to_widget(*this);
+
     bldr->get_widget_derived("Booru::Browser::TagEntry", m_TagEntry);
     bldr->get_widget("Booru::Browser::TagView::ScrolledWindow", m_ScrolledWindow);
 
     m_TagEntry->signal_changed().connect(sigc::mem_fun(*this, &TagView::on_entry_value_changed));
-
-    m_UIManager = Glib::RefPtr<Gtk::UIManager>::cast_static(bldr->get_object("UIManager"));
 
     auto css{ Gtk::CssProvider::create() }, css_colors{ Gtk::CssProvider::create() };
     auto style_context{ get_style_context() };
@@ -251,11 +253,11 @@ void TagView::set_sort_order(const TagViewOrder& order)
     invalidate_headers();
 }
 
-void TagView::on_toggle_show_headers()
+void TagView::on_toggle_show_headers(bool state)
 {
-    Settings.set("ShowTagTypeHeaders", m_ShowTagTypeHeaders->get_active());
+    Settings.set("ShowTagTypeHeaders", state);
 
-    if (Settings.get_bool("ShowTagTypeHeaders"))
+    if (state)
         set_header_func(sigc::mem_fun(*this, &TagView::header_func));
     else
         unset_header_func();
@@ -263,15 +265,9 @@ void TagView::on_toggle_show_headers()
 
 void TagView::on_realize()
 {
-    m_PopupMenu = static_cast<Gtk::Menu*>(m_UIManager->get_widget("/TagViewPopupMenu"));
-    Glib::RefPtr<Gtk::ActionGroup> action_group =
-        static_cast<std::vector<Glib::RefPtr<Gtk::ActionGroup>>>(
-            m_UIManager->get_action_groups())[0];
-    m_ShowTagTypeHeaders = Glib::RefPtr<Gtk::ToggleAction>::cast_static(
-        action_group->get_action("ShowTagTypeHeaders"));
-
     Gtk::ListBox::on_realize();
 
+    // Can this be run in the constructor?
     set_sort_order(Settings.get_tag_view_order());
 
     if (Settings.get_bool("ShowTagTypeHeaders"))

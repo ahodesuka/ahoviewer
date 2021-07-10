@@ -121,7 +121,7 @@ namespace AhoViewer
             Gtk::CellRendererSpinner* m_SpinnerRenderer;
             sigc::connection m_SpinnerConn;
         }; /*}}}*/
-        struct ModelColumns : public Gtk::TreeModelColumnRecord
+        struct ModelColumns : public Gtk::TreeModel::ColumnRecord
         {
             ModelColumns()
             {

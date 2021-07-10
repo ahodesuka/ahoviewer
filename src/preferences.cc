@@ -14,7 +14,7 @@ PreferencesDialog::PreferencesDialog(BaseObjectType* cobj, const Glib::RefPtr<Gt
       })
 {
     bldr->get_widget_derived("BooruSiteEditor", m_SiteEditor);
-    bldr->get_widget_derived("KeybindingEditor", m_KeybindingEditor);
+    bldr->get_widget_derived("KeybindingsPage", m_KeybindingEditor);
     bldr->get_widget("AskDeleteConfirm", m_AskDeleteConfirm);
 
     m_AskDeleteConfirm->signal_toggled().connect(

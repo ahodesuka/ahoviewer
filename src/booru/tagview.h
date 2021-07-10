@@ -82,7 +82,7 @@ namespace AhoViewer::Booru
         void set_tags(std::vector<Tag>& tags, const double pos = 0.0);
 
         void set_sort_order(const TagViewOrder& order);
-        void on_toggle_show_headers();
+        void on_toggle_show_headers(bool state);
 
         SignalNewTabTagType signal_new_tab_tag() const { return m_SignalNewTabTag; }
 
@@ -101,9 +101,8 @@ namespace AhoViewer::Booru
 
         static const std::string StarSVG, StarOutlineSVG;
 
-        Glib::RefPtr<Gtk::UIManager> m_UIManager;
-        Gtk::Menu* m_PopupMenu{ nullptr };
-        Glib::RefPtr<Gtk::ToggleAction> m_ShowTagTypeHeaders;
+        std::unique_ptr<Gtk::Menu> m_PopupMenu;
+        Glib::RefPtr<Gio::SimpleAction> m_ShowTagTypeHeaders;
         Glib::RefPtr<Gtk::SizeGroup> m_HeaderSizeGroup;
 
         TagEntry* m_TagEntry;

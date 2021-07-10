@@ -20,6 +20,7 @@ using namespace AhoViewer;
 const std::vector<std::string> Archive::MimeTypes = {
 #ifdef HAVE_LIBZIP
     "application/x-zip", "application/x-zip-compressed", "application/zip",   "application/cbz",
+    "application/x-cbz",
 #endif // HAVE_LIBZIP
 
 #ifdef HAVE_LIBUNRAR

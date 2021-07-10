@@ -47,8 +47,15 @@ ImageList::~ImageList()
 {
     m_ThumbnailLoadedConn.disconnect();
 
-    reset();
+    if (m_FileMonitor)
+    {
+        m_FileMonitor->cancel();
+        m_FileMonitor.reset();
+    }
 
+    cancel_thumbnail_thread();
+
+    cancel_cache();
     m_CacheStop = true;
     m_CacheCancel->cancel();
     m_CacheCond.notify_one();

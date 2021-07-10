@@ -2,701 +2,10 @@
 <!-- Generated with glade 3.38.2 -->
 <interface>
   <requires lib="gtk+" version="3.22"/>
-  <object class="GtkMessageDialog" id="AskDeleteConfirmDialog">
-    <property name="can-focus">False</property>
-    <property name="type-hint">dialog</property>
-    <property name="message-type">warning</property>
-    <property name="buttons">yes-no</property>
-    <property name="secondary-text" translatable="yes">This will attempt to move the file to the trash, if supported, otherwise the file will be deleted permanently.</property>
-    <child internal-child="vbox">
-      <object class="GtkBox">
-        <property name="can-focus">False</property>
-        <property name="orientation">vertical</property>
-        <property name="spacing">2</property>
-        <child internal-child="action_area">
-          <object class="GtkButtonBox">
-            <property name="can-focus">False</property>
-            <property name="homogeneous">True</property>
-            <property name="layout-style">expand</property>
-          </object>
-          <packing>
-            <property name="expand">False</property>
-            <property name="fill">False</property>
-            <property name="position">0</property>
-          </packing>
-        </child>
-        <child>
-          <object class="GtkCheckButton" id="AskDeleteConfirmDialog::CheckButton">
-            <property name="label" translatable="yes">Always ask for confirmation before deleting files?</property>
-            <property name="visible">True</property>
-            <property name="can-focus">False</property>
-            <property name="focus-on-click">False</property>
-            <property name="receives-default">False</property>
-            <property name="margin-start">10</property>
-            <property name="margin-end">10</property>
-            <property name="active">True</property>
-            <property name="draw-indicator">True</property>
-          </object>
-          <packing>
-            <property name="expand">True</property>
-            <property name="fill">True</property>
-            <property name="padding">10</property>
-            <property name="position">2</property>
-          </packing>
-        </child>
-      </object>
-    </child>
-  </object>
-  <object class="GtkEntryCompletion" id="Booru::Browser::TagEntryCompletion">
-    <property name="minimum-key-length">3</property>
-    <property name="inline-completion">True</property>
-    <property name="inline-selection">True</property>
-  </object>
-  <object class="GtkAdjustment" id="BooruLimit::Adjustment">
-    <property name="lower">15</property>
-    <property name="upper">100</property>
-    <property name="step-increment">1</property>
-    <property name="page-increment">1</property>
-  </object>
-  <object class="GtkAdjustment" id="CacheSize::Adjustment">
-    <property name="upper">5</property>
-    <property name="step-increment">1</property>
-    <property name="page-increment">1</property>
-  </object>
-  <object class="GtkAdjustment" id="CursorHideDelay::Adjustment">
-    <property name="upper">100</property>
-    <property name="step-increment">1</property>
-    <property name="page-increment">10</property>
-  </object>
-  <object class="GtkAdjustment" id="ImageBox::HAdjust">
-    <property name="upper">100</property>
-    <property name="step-increment">1</property>
-    <property name="page-increment">10</property>
-  </object>
-  <object class="GtkAdjustment" id="ImageBox::VAdjust">
-    <property name="upper">100</property>
-    <property name="step-increment">1</property>
-    <property name="page-increment">10</property>
-  </object>
-  <object class="GtkAdjustment" id="SlideshowDelay::Adjustment1">
-    <property name="lower">1</property>
-    <property name="upper">300</property>
-    <property name="step-increment">1</property>
-    <property name="page-increment">1</property>
-  </object>
-  <object class="GtkAdjustment" id="ThumbnailBar::VAdjust">
-    <property name="upper">100</property>
-    <property name="step-increment">1</property>
-    <property name="page-increment">10</property>
-  </object>
-  <object class="GtkApplicationWindow" id="MainWindow">
-    <property name="can-focus">False</property>
-    <property name="title">ahoviewer</property>
-    <property name="window-position">center</property>
-    <property name="icon-name">ahoviewer</property>
-    <child>
-      <object class="GtkBox" id="MainWindow::Box">
-        <property name="visible">True</property>
-        <property name="can-focus">False</property>
-        <property name="orientation">vertical</property>
-        <child>
-          <object class="GtkStack" id="MainWindow::Stack">
-            <property name="visible">True</property>
-            <property name="can-focus">False</property>
-            <property name="transition-type">slide-up</property>
-            <child>
-              <object class="GtkBox" id="MainWindow::">
-                <property name="visible">True</property>
-                <property name="can-focus">False</property>
-                <child>
-                  <object class="GtkScrolledWindow" id="ThumbnailBar">
-                    <property name="can-focus">False</property>
-                    <property name="vadjustment">ThumbnailBar::VAdjust</property>
-                    <property name="hscrollbar-policy">never</property>
-                    <child>
-                      <object class="GtkTreeView" id="ThumbnailBar::TreeView">
-                        <property name="visible">True</property>
-                        <property name="can-focus">True</property>
-                        <property name="vadjustment">ThumbnailBar::VAdjust</property>
-                        <property name="headers-visible">False</property>
-                        <property name="enable-search">False</property>
-                        <child internal-child="selection">
-                          <object class="GtkTreeSelection"/>
-                        </child>
-                      </object>
-                    </child>
-                  </object>
-                  <packing>
-                    <property name="expand">False</property>
-                    <property name="fill">True</property>
-                    <property name="position">0</property>
-                  </packing>
-                </child>
-                <child>
-                  <object class="GtkPaned" id="MainWindow::HPaned">
-                    <property name="visible">True</property>
-                    <property name="can-focus">False</property>
-                    <property name="hexpand">True</property>
-                    <property name="vexpand">True</property>
-                    <child>
-                      <object class="GtkPaned" id="Booru::Browser">
-                        <property name="visible">True</property>
-                        <property name="can-focus">False</property>
-                        <property name="orientation">vertical</property>
-                        <child>
-                          <object class="GtkBox" id="vbox1">
-                            <property name="visible">True</property>
-                            <property name="can-focus">False</property>
-                            <property name="orientation">vertical</property>
-                            <child>
-                              <object class="GtkBox">
-                                <property name="visible">True</property>
-                                <property name="can-focus">False</property>
-                                <property name="margin-start">4</property>
-                                <property name="margin-end">4</property>
-                                <property name="margin-top">4</property>
-                                <property name="margin-bottom">4</property>
-                                <child>
-                                  <object class="GtkButton" id="Booru::Browser::NewTabButton">
-                                    <property name="visible">True</property>
-                                    <property name="can-focus">False</property>
-                                    <property name="focus-on-click">False</property>
-                                    <property name="receives-default">True</property>
-                                    <property name="tooltip-text" translatable="yes">New Tab</property>
-                                    <property name="relief">none</property>
-                                    <property name="always-show-image">True</property>
-                                    <child>
-                                      <object class="GtkImage">
-                                        <property name="visible">True</property>
-                                        <property name="can-focus">False</property>
-                                        <property name="icon-name">list-add</property>
-                                        <property name="use-fallback">True</property>
-                                      </object>
-                                    </child>
-                                  </object>
-                                  <packing>
-                                    <property name="expand">False</property>
-                                    <property name="fill">True</property>
-                                    <property name="position">0</property>
-                                  </packing>
-                                </child>
-                                <child>
-                                  <object class="GtkButton" id="Booru::Browser::SaveImagesButton">
-                                    <property name="visible">True</property>
-                                    <property name="can-focus">False</property>
-                                    <property name="focus-on-click">False</property>
-                                    <property name="receives-default">True</property>
-                                    <property name="tooltip-text" translatable="yes">Save All Images...</property>
-                                    <property name="relief">none</property>
-                                    <property name="always-show-image">True</property>
-                                    <child>
-                                      <object class="GtkImage" id="image3">
-                                        <property name="visible">True</property>
-                                        <property name="can-focus">False</property>
-                                        <property name="icon-name">document-save-all</property>
-                                        <property name="use-fallback">True</property>
-                                      </object>
-                                    </child>
-                                  </object>
-                                  <packing>
-                                    <property name="expand">False</property>
-                                    <property name="fill">True</property>
-                                    <property name="position">1</property>
-                                  </packing>
-                                </child>
-                                <child>
-                                  <object class="GtkBox">
-                                    <property name="visible">True</property>
-                                    <property name="can-focus">False</property>
-                                    <child>
-                                      <object class="GtkComboBox" id="Booru::Browser::ComboBox">
-                                        <property name="visible">True</property>
-                                        <property name="can-focus">False</property>
-                                        <property name="focus-on-click">False</property>
-                                      </object>
-                                      <packing>
-                                        <property name="expand">False</property>
-                                        <property name="fill">True</property>
-                                        <property name="position">0</property>
-                                      </packing>
-                                    </child>
-                                    <child>
-                                      <object class="GtkEntry" id="Booru::Browser::TagEntry">
-                                        <property name="visible">True</property>
-                                        <property name="can-focus">True</property>
-                                        <property name="has-focus">True</property>
-                                        <property name="caps-lock-warning">False</property>
-                                        <property name="secondary-icon-name">edit-find</property>
-                                        <property name="primary-icon-activatable">False</property>
-                                        <property name="placeholder-text" translatable="yes">search...</property>
-                                        <property name="completion">Booru::Browser::TagEntryCompletion</property>
-                                      </object>
-                                      <packing>
-                                        <property name="expand">True</property>
-                                        <property name="fill">True</property>
-                                        <property name="position">1</property>
-                                      </packing>
-                                    </child>
-                                    <style>
-                                      <class name="linked"/>
-                                    </style>
-                                  </object>
-                                  <packing>
-                                    <property name="expand">True</property>
-                                    <property name="fill">True</property>
-                                    <property name="position">5</property>
-                                  </packing>
-                                </child>
-                              </object>
-                              <packing>
-                                <property name="expand">False</property>
-                                <property name="fill">False</property>
-                                <property name="position">0</property>
-                              </packing>
-                            </child>
-                            <child>
-                              <object class="GtkOverlay">
-                                <property name="visible">True</property>
-                                <property name="can-focus">False</property>
-                                <child>
-                                  <object class="GtkNotebook" id="Booru::Browser::Notebook">
-                                    <property name="name">BooruBrowserNotebook</property>
-                                    <property name="visible">True</property>
-                                    <property name="can-focus">False</property>
-                                    <property name="hexpand">True</property>
-                                    <property name="vexpand">True</property>
-                                    <property name="scrollable">True</property>
-                                  </object>
-                                  <packing>
-                                    <property name="index">-1</property>
-                                  </packing>
-                                </child>
-                                <child type="overlay">
-                                  <object class="GtkRevealer" id="Booru::Browser::InfoRevealer">
-                                    <property name="visible">True</property>
-                                    <property name="can-focus">False</property>
-                                    <property name="valign">end</property>
-                                    <property name="margin-bottom">1</property>
-                                    <property name="transition-type">slide-up</property>
-                                    <child>
-                                      <object class="GtkEventBox" id="Booru::Browser::InfoBox">
-                                        <property name="visible">True</property>
-                                        <property name="can-focus">False</property>
-                                        <property name="events">GDK_POINTER_MOTION_MASK | GDK_STRUCTURE_MASK | GDK_SCROLL_MASK</property>
-                                        <child>
-                                          <object class="GtkBox">
-                                            <property name="name">BooruInfoBox</property>
-                                            <property name="visible">True</property>
-                                            <property name="can-focus">False</property>
-                                            <property name="orientation">vertical</property>
-                                            <property name="spacing">6</property>
-                                            <property name="homogeneous">True</property>
-                                            <child>
-                                              <object class="GtkBox">
-                                                <property name="visible">True</property>
-                                                <property name="can-focus">False</property>
-                                                <property name="hexpand">True</property>
-                                                <property name="spacing">3</property>
-                                                <child>
-                                                  <object class="GtkLabel" id="label12">
-                                                    <property name="visible">True</property>
-                                                    <property name="can-focus">False</property>
-                                                    <property name="label" translatable="yes">Posted:</property>
-                                                    <property name="xalign">0</property>
-                                                  </object>
-                                                  <packing>
-                                                    <property name="expand">False</property>
-                                                    <property name="fill">True</property>
-                                                    <property name="position">0</property>
-                                                  </packing>
-                                                </child>
-                                                <child>
-                                                  <object class="GtkLabel" id="Booru::Browser::InfoBox::DateLabel">
-                                                    <property name="visible">True</property>
-                                                    <property name="can-focus">False</property>
-                                                    <property name="ellipsize">end</property>
-                                                    <property name="xalign">0</property>
-                                                  </object>
-                                                  <packing>
-                                                    <property name="expand">True</property>
-                                                    <property name="fill">True</property>
-                                                    <property name="position">1</property>
-                                                  </packing>
-                                                </child>
-                                              </object>
-                                              <packing>
-                                                <property name="expand">False</property>
-                                                <property name="fill">True</property>
-                                                <property name="position">0</property>
-                                              </packing>
-                                            </child>
-                                            <child>
-                                              <object class="GtkBox">
-                                                <property name="visible">True</property>
-                                                <property name="can-focus">False</property>
-                                                <property name="hexpand">True</property>
-                                                <property name="spacing">3</property>
-                                                <child>
-                                                  <object class="GtkLabel" id="label13">
-                                                    <property name="visible">True</property>
-                                                    <property name="can-focus">False</property>
-                                                    <property name="halign">start</property>
-                                                    <property name="label" translatable="yes">Source:</property>
-                                                    <property name="xalign">0</property>
-                                                  </object>
-                                                  <packing>
-                                                    <property name="expand">False</property>
-                                                    <property name="fill">True</property>
-                                                    <property name="position">0</property>
-                                                  </packing>
-                                                </child>
-                                                <child>
-                                                  <object class="GtkLabel" id="Booru::Browser::InfoBox::SourceLabel">
-                                                    <property name="visible">True</property>
-                                                    <property name="can-focus">False</property>
-                                                    <property name="selectable">True</property>
-                                                    <property name="ellipsize">end</property>
-                                                    <property name="track-visited-links">False</property>
-                                                    <property name="xalign">0</property>
-                                                  </object>
-                                                  <packing>
-                                                    <property name="expand">True</property>
-                                                    <property name="fill">True</property>
-                                                    <property name="position">1</property>
-                                                  </packing>
-                                                </child>
-                                              </object>
-                                              <packing>
-                                                <property name="expand">False</property>
-                                                <property name="fill">True</property>
-                                                <property name="position">1</property>
-                                              </packing>
-                                            </child>
-                                            <child>
-                                              <object class="GtkBox">
-                                                <property name="visible">True</property>
-                                                <property name="can-focus">False</property>
-                                                <property name="hexpand">True</property>
-                                                <property name="spacing">3</property>
-                                                <child>
-                                                  <object class="GtkLabel" id="label14">
-                                                    <property name="visible">True</property>
-                                                    <property name="can-focus">False</property>
-                                                    <property name="halign">start</property>
-                                                    <property name="label" translatable="yes">Rating:</property>
-                                                    <property name="xalign">0</property>
-                                                  </object>
-                                                  <packing>
-                                                    <property name="expand">False</property>
-                                                    <property name="fill">True</property>
-                                                    <property name="position">0</property>
-                                                  </packing>
-                                                </child>
-                                                <child>
-                                                  <object class="GtkLabel" id="Booru::Browser::InfoBox::RatingLabel">
-                                                    <property name="visible">True</property>
-                                                    <property name="can-focus">False</property>
-                                                    <property name="ellipsize">end</property>
-                                                    <property name="xalign">0</property>
-                                                  </object>
-                                                  <packing>
-                                                    <property name="expand">True</property>
-                                                    <property name="fill">True</property>
-                                                    <property name="position">1</property>
-                                                  </packing>
-                                                </child>
-                                              </object>
-                                              <packing>
-                                                <property name="expand">False</property>
-                                                <property name="fill">True</property>
-                                                <property name="position">2</property>
-                                              </packing>
-                                            </child>
-                                            <child>
-                                              <object class="GtkBox">
-                                                <property name="visible">True</property>
-                                                <property name="can-focus">False</property>
-                                                <property name="hexpand">True</property>
-                                                <property name="spacing">3</property>
-                                                <child>
-                                                  <object class="GtkLabel" id="label15">
-                                                    <property name="visible">True</property>
-                                                    <property name="can-focus">False</property>
-                                                    <property name="halign">start</property>
-                                                    <property name="label" translatable="yes">Score:</property>
-                                                    <property name="xalign">0</property>
-                                                  </object>
-                                                  <packing>
-                                                    <property name="expand">False</property>
-                                                    <property name="fill">True</property>
-                                                    <property name="position">0</property>
-                                                  </packing>
-                                                </child>
-                                                <child>
-                                                  <object class="GtkLabel" id="Booru::Browser::InfoBox::ScoreLabel">
-                                                    <property name="visible">True</property>
-                                                    <property name="can-focus">False</property>
-                                                    <property name="ellipsize">end</property>
-                                                    <property name="xalign">0</property>
-                                                  </object>
-                                                  <packing>
-                                                    <property name="expand">True</property>
-                                                    <property name="fill">True</property>
-                                                    <property name="position">1</property>
-                                                  </packing>
-                                                </child>
-                                              </object>
-                                              <packing>
-                                                <property name="expand">False</property>
-                                                <property name="fill">True</property>
-                                                <property name="position">3</property>
-                                              </packing>
-                                            </child>
-                                          </object>
-                                        </child>
-                                      </object>
-                                    </child>
-                                  </object>
-                                  <packing>
-                                    <property name="pass-through">True</property>
-                                  </packing>
-                                </child>
-                              </object>
-                              <packing>
-                                <property name="expand">True</property>
-                                <property name="fill">True</property>
-                                <property name="position">1</property>
-                              </packing>
-                            </child>
-                          </object>
-                          <packing>
-                            <property name="resize">True</property>
-                            <property name="shrink">False</property>
-                          </packing>
-                        </child>
-                        <child>
-                          <object class="GtkScrolledWindow" id="Booru::Browser::TagView::ScrolledWindow">
-                            <property name="visible">True</property>
-                            <property name="can-focus">False</property>
-                            <property name="hscrollbar-policy">never</property>
-                            <child>
-                              <object class="GtkViewport">
-                                <property name="visible">True</property>
-                                <property name="can-focus">False</property>
-                                <property name="shadow-type">none</property>
-                                <child>
-                                  <object class="GtkListBox" id="Booru::Browser::TagView">
-                                    <property name="name">TagView</property>
-                                    <property name="visible">True</property>
-                                    <property name="can-focus">False</property>
-                                    <property name="selection-mode">none</property>
-                                    <property name="activate-on-single-click">False</property>
-                                  </object>
-                                </child>
-                              </object>
-                            </child>
-                          </object>
-                          <packing>
-                            <property name="resize">False</property>
-                            <property name="shrink">True</property>
-                          </packing>
-                        </child>
-                      </object>
-                      <packing>
-                        <property name="resize">False</property>
-                        <property name="shrink">False</property>
-                      </packing>
-                    </child>
-                    <child>
-                      <object class="GtkScrolledWindow" id="ImageBox">
-                        <property name="name">ImageBox</property>
-                        <property name="visible">True</property>
-                        <property name="can-focus">True</property>
-                        <property name="events">GDK_POINTER_MOTION_MASK | GDK_BUTTON_PRESS_MASK | GDK_BUTTON_RELEASE_MASK | GDK_SCROLL_MASK</property>
-                        <property name="hexpand">True</property>
-                        <property name="vexpand">True</property>
-                        <property name="hadjustment">ImageBox::HAdjust</property>
-                        <property name="vadjustment">ImageBox::VAdjust</property>
-                        <child>
-                          <object class="GtkViewport">
-                            <property name="visible">True</property>
-                            <property name="can-focus">False</property>
-                            <property name="hadjustment">ImageBox::HAdjust</property>
-                            <property name="vadjustment">ImageBox::VAdjust</property>
-                            <child>
-                              <object class="GtkFixed" id="ImageBox::Fixed">
-                                <property name="visible">True</property>
-                                <property name="can-focus">False</property>
-                                <child>
-                                  <object class="GtkOverlay" id="ImageBox::Overlay">
-                                    <property name="visible">True</property>
-                                    <property name="can-focus">False</property>
-                                    <child>
-                                      <object class="GtkImage" id="ImageBox::Image">
-                                        <property name="visible">True</property>
-                                        <property name="can-focus">False</property>
-                                      </object>
-                                      <packing>
-                                        <property name="index">-1</property>
-                                      </packing>
-                                    </child>
-                                    <child type="overlay">
-                                      <object class="GtkFixed" id="ImageBox::NoteFixed">
-                                        <property name="visible">True</property>
-                                        <property name="can-focus">False</property>
-                                      </object>
-                                    </child>
-                                  </object>
-                                </child>
-                                <child>
-                                  <object class="GtkDrawingArea" id="ImageBox::DrawingArea">
-                                    <property name="can-focus">False</property>
-                                  </object>
-                                </child>
-                              </object>
-                            </child>
-                          </object>
-                        </child>
-                      </object>
-                      <packing>
-                        <property name="resize">True</property>
-                        <property name="shrink">True</property>
-                      </packing>
-                    </child>
-                  </object>
-                  <packing>
-                    <property name="expand">False</property>
-                    <property name="fill">True</property>
-                    <property name="position">1</property>
-                  </packing>
-                </child>
-              </object>
-              <packing>
-                <property name="name">default</property>
-              </packing>
-            </child>
-          </object>
-          <packing>
-            <property name="expand">True</property>
-            <property name="fill">True</property>
-            <property name="position">0</property>
-          </packing>
-        </child>
-        <child>
-          <object class="GtkBox" id="StatusBar">
-            <property name="height-request">18</property>
-            <property name="visible">True</property>
-            <property name="can-focus">False</property>
-            <property name="spacing">2</property>
-            <child>
-              <object class="GtkLabel" id="PageInfoLabel">
-                <property name="can-focus">False</property>
-                <property name="width-chars">16</property>
-              </object>
-              <packing>
-                <property name="expand">False</property>
-                <property name="fill">False</property>
-                <property name="padding">8</property>
-                <property name="position">0</property>
-              </packing>
-            </child>
-            <child>
-              <object class="GtkSeparator" id="ResolutionSeparator">
-                <property name="visible">True</property>
-                <property name="can-focus">False</property>
-                <property name="orientation">vertical</property>
-              </object>
-              <packing>
-                <property name="expand">False</property>
-                <property name="fill">False</property>
-                <property name="padding">2</property>
-                <property name="position">1</property>
-              </packing>
-            </child>
-            <child>
-              <object class="GtkLabel" id="ResolutionLabel">
-                <property name="can-focus">False</property>
-                <property name="width-chars">24</property>
-              </object>
-              <packing>
-                <property name="expand">False</property>
-                <property name="fill">False</property>
-                <property name="padding">8</property>
-                <property name="position">2</property>
-              </packing>
-            </child>
-            <child>
-              <object class="GtkSeparator" id="FilenameSeparator">
-                <property name="visible">True</property>
-                <property name="can-focus">False</property>
-                <property name="orientation">vertical</property>
-              </object>
-              <packing>
-                <property name="expand">False</property>
-                <property name="fill">False</property>
-                <property name="padding">2</property>
-                <property name="position">3</property>
-              </packing>
-            </child>
-            <child>
-              <object class="GtkLabel" id="FilenameLabel">
-                <property name="can-focus">False</property>
-                <property name="label"> </property>
-                <property name="ellipsize">middle</property>
-                <property name="xalign">0</property>
-              </object>
-              <packing>
-                <property name="expand">True</property>
-                <property name="fill">True</property>
-                <property name="padding">8</property>
-                <property name="position">4</property>
-              </packing>
-            </child>
-            <child>
-              <object class="GtkLabel" id="MessageLabel">
-                <property name="can-focus">False</property>
-                <property name="no-show-all">True</property>
-                <property name="ellipsize">end</property>
-                <property name="xalign">1</property>
-              </object>
-              <packing>
-                <property name="expand">True</property>
-                <property name="fill">True</property>
-                <property name="padding">8</property>
-                <property name="position">5</property>
-              </packing>
-            </child>
-            <child>
-              <object class="GtkProgressBar" id="ProgressBar">
-                <property name="width-request">80</property>
-                <property name="height-request">1</property>
-                <property name="can-focus">False</property>
-                <property name="no-show-all">True</property>
-                <property name="halign">center</property>
-                <property name="valign">center</property>
-              </object>
-              <packing>
-                <property name="expand">False</property>
-                <property name="fill">False</property>
-                <property name="padding">8</property>
-                <property name="position">6</property>
-              </packing>
-            </child>
-          </object>
-          <packing>
-            <property name="expand">False</property>
-            <property name="fill">True</property>
-            <property name="position">1</property>
-          </packing>
-        </child>
-      </object>
-    </child>
-  </object>
   <object class="GtkAboutDialog" id="AboutDialog">
     <property name="can-focus">False</property>
     <property name="border-width">5</property>
     <property name="type-hint">dialog</property>
-    <property name="transient-for">MainWindow</property>
     <property name="comments" translatable="yes">ahoviewer is a GTK image viewer, manga reader, and booru browser.</property>
     <property name="logo-icon-name">image-missing</property>
     <property name="license-type">mit-x11</property>
@@ -721,6 +30,88 @@
       </object>
     </child>
   </object>
+  <object class="GtkAdjustment" id="BooruLimit::Adjustment">
+    <property name="lower">15</property>
+    <property name="upper">100</property>
+    <property name="step-increment">1</property>
+    <property name="page-increment">1</property>
+  </object>
+  <object class="GtkAdjustment" id="CacheSize::Adjustment">
+    <property name="upper">5</property>
+    <property name="step-increment">1</property>
+    <property name="page-increment">1</property>
+  </object>
+  <object class="GtkAdjustment" id="CursorHideDelay::Adjustment">
+    <property name="upper">100</property>
+    <property name="step-increment">1</property>
+    <property name="page-increment">10</property>
+  </object>
+  <object class="GtkMessageDialog" id="KeybindingEditor::AccelDialog">
+    <property name="can-focus">False</property>
+    <property name="title" translatable="yes">Please press a key (or a key combination)</property>
+    <property name="resizable">False</property>
+    <property name="modal">True</property>
+    <property name="type-hint">dialog</property>
+    <property name="skip-taskbar-hint">True</property>
+    <property name="buttons">close</property>
+    <property name="text" translatable="yes">Click the row below and press a key (or a key combination).
+The dialog will be closed when the key is released.</property>
+    <child internal-child="vbox">
+      <object class="GtkBox">
+        <property name="can-focus">False</property>
+        <property name="orientation">vertical</property>
+        <property name="spacing">20</property>
+        <child internal-child="action_area">
+          <object class="GtkButtonBox">
+            <property name="can-focus">False</property>
+            <property name="homogeneous">True</property>
+            <property name="layout-style">expand</property>
+            <child>
+              <placeholder/>
+            </child>
+            <child>
+              <placeholder/>
+            </child>
+          </object>
+          <packing>
+            <property name="expand">False</property>
+            <property name="fill">False</property>
+            <property name="position">0</property>
+          </packing>
+        </child>
+        <child>
+          <object class="GtkScrolledWindow">
+            <property name="visible">True</property>
+            <property name="can-focus">True</property>
+            <property name="margin-start">20</property>
+            <property name="margin-end">20</property>
+            <property name="shadow-type">in</property>
+            <property name="min-content-height">30</property>
+            <child>
+              <object class="GtkTreeView" id="KeybindingEditor::AccelView">
+                <property name="visible">True</property>
+                <property name="can-focus">True</property>
+                <property name="headers-visible">False</property>
+                <property name="enable-search">False</property>
+                <property name="show-expanders">False</property>
+              </object>
+            </child>
+          </object>
+          <packing>
+            <property name="expand">False</property>
+            <property name="fill">False</property>
+            <property name="position">2</property>
+          </packing>
+        </child>
+      </object>
+    </child>
+  </object>
+  <object class="GtkAdjustment" id="SlideshowDelay::Adjustment1">
+    <property name="lower">1</property>
+    <property name="upper">300</property>
+    <property name="step-increment">1</property>
+    <property name="page-increment">1</property>
+  </object>
   <object class="GtkDialog" id="PreferencesDialog">
     <property name="can-focus">False</property>
     <property name="border-width">4</property>
@@ -729,7 +120,6 @@
     <property name="default-width">-1</property>
     <property name="default-height">-1</property>
     <property name="type-hint">dialog</property>
-    <property name="transient-for">MainWindow</property>
     <child internal-child="vbox">
       <object class="GtkBox" id="dialog-vbox3">
         <property name="visible">True</property>
@@ -864,7 +254,7 @@
                                           <object class="GtkImage" id="image1">
                                             <property name="visible">True</property>
                                             <property name="can-focus">False</property>
-                                            <property name="icon-name">document-revert</property>
+                                            <property name="icon-name">document-revert-symbolic</property>
                                             <property name="use-fallback">True</property>
                                           </object>
                                         </child>
@@ -1561,13 +951,15 @@
                           <object class="GtkToolbar" id="toolbar1">
                             <property name="visible">True</property>
                             <property name="can-focus">False</property>
+                            <property name="toolbar-style">icons</property>
                             <property name="show-arrow">False</property>
+                            <property name="icon_size">2</property>
                             <child>
                               <object class="GtkToolButton" id="DeleteSiteButton">
                                 <property name="visible">True</property>
                                 <property name="can-focus">False</property>
                                 <property name="halign">end</property>
-                                <property name="icon-name">edit-delete</property>
+                                <property name="icon-name">edit-delete-symbolic</property>
                               </object>
                               <packing>
                                 <property name="expand">True</property>
@@ -1579,7 +971,7 @@
                                 <property name="visible">True</property>
                                 <property name="can-focus">False</property>
                                 <property name="halign">end</property>
-                                <property name="icon-name">list-add</property>
+                                <property name="icon-name">list-add-symbolic</property>
                               </object>
                               <packing>
                                 <property name="expand">False</property>
@@ -1968,63 +1360,185 @@
                     <property name="visible">True</property>
                     <property name="can-focus">False</property>
                     <property name="border-width">12</property>
+                    <property name="orientation">vertical</property>
                     <property name="spacing">12</property>
                     <child>
-                      <object class="GtkBox" id="vbox3">
+                      <object class="GtkScrolledWindow" id="scrolledwindow3">
+                        <property name="visible">True</property>
+                        <property name="can-focus">True</property>
+                        <child>
+                          <object class="GtkViewport" id="viewport2">
+                            <property name="visible">True</property>
+                            <property name="can-focus">False</property>
+                            <child>
+                              <object class="GtkTreeView" id="KeybindingEditor::TreeView">
+                                <property name="visible">True</property>
+                                <property name="can-focus">True</property>
+                                <property name="enable-search">False</property>
+                                <property name="enable-tree-lines">True</property>
+                                <child internal-child="selection">
+                                  <object class="GtkTreeSelection"/>
+                                </child>
+                              </object>
+                            </child>
+                          </object>
+                        </child>
+                        <style>
+                          <class name="frame"/>
+                        </style>
+                      </object>
+                      <packing>
+                        <property name="expand">True</property>
+                        <property name="fill">True</property>
+                        <property name="position">0</property>
+                      </packing>
+                    </child>
+                    <child>
+                      <object class="GtkBox">
                         <property name="visible">True</property>
                         <property name="can-focus">False</property>
                         <property name="orientation">vertical</property>
                         <child>
-                          <object class="GtkScrolledWindow" id="scrolledwindow3">
+                          <object class="GtkBox">
                             <property name="visible">True</property>
-                            <property name="can-focus">True</property>
+                            <property name="can-focus">False</property>
+                            <property name="margin-top">4</property>
+                            <property name="margin-bottom">4</property>
                             <child>
-                              <object class="GtkViewport" id="viewport2">
+                              <object class="GtkLabel">
                                 <property name="visible">True</property>
                                 <property name="can-focus">False</property>
+                                <property name="margin-start">4</property>
+                                <property name="margin-end">4</property>
+                                <property name="label" translatable="yes">Keybinding:</property>
+                              </object>
+                              <packing>
+                                <property name="expand">False</property>
+                                <property name="fill">True</property>
+                                <property name="position">0</property>
+                              </packing>
+                            </child>
+                            <child>
+                              <object class="GtkComboBoxText" id="KeybindingEditor::AccelCombo">
+                                <property name="visible">True</property>
+                                <property name="can-focus">False</property>
+                                <property name="margin-start">4</property>
+                                <property name="margin-end">4</property>
+                              </object>
+                              <packing>
+                                <property name="expand">True</property>
+                                <property name="fill">True</property>
+                                <property name="position">1</property>
+                              </packing>
+                            </child>
+                            <child>
+                              <object class="GtkButton" id="KeybindingEditor::EditButton">
+                                <property name="visible">True</property>
+                                <property name="sensitive">False</property>
+                                <property name="can-focus">True</property>
+                                <property name="receives-default">True</property>
+                                <property name="tooltip-text" translatable="yes">Edit binding</property>
+                                <property name="margin-start">4</property>
+                                <property name="margin-end">4</property>
                                 <child>
-                                  <object class="GtkTreeView" id="KeybindingEditor">
+                                  <object class="GtkImage" id="image2">
                                     <property name="visible">True</property>
-                                    <property name="can-focus">True</property>
-                                    <property name="enable-search">False</property>
-                                    <child internal-child="selection">
-                                      <object class="GtkTreeSelection"/>
-                                    </child>
+                                    <property name="can-focus">False</property>
+                                    <property name="icon-name">emblem-system-symbolic</property>
+                                    <property name="use-fallback">True</property>
                                   </object>
                                 </child>
                               </object>
+                              <packing>
+                                <property name="expand">False</property>
+                                <property name="fill">True</property>
+                                <property name="position">2</property>
+                              </packing>
                             </child>
-                            <style>
-                              <class name="frame"/>
-                            </style>
                           </object>
                           <packing>
-                            <property name="expand">True</property>
+                            <property name="expand">False</property>
                             <property name="fill">True</property>
                             <property name="position">0</property>
                           </packing>
                         </child>
                         <child>
-                          <object class="GtkToolbar" id="toolbar2">
+                          <object class="GtkBox">
                             <property name="visible">True</property>
                             <property name="can-focus">False</property>
-                            <property name="show-arrow">False</property>
+                            <property name="margin-top">4</property>
+                            <property name="margin-bottom">4</property>
                             <child>
-                              <object class="GtkToolButton" id="KeybindingEditor::ResetSelectedButton">
+                              <object class="GtkButton" id="KeybindingEditor::Add">
+                                <property name="label" translatable="yes">Add</property>
                                 <property name="visible">True</property>
-                                <property name="can-focus">False</property>
-                                <property name="tooltip-text" translatable="yes">Revert selected keybinding to default</property>
-                                <property name="halign">end</property>
-                                <property name="icon-name">document-revert</property>
+                                <property name="sensitive">False</property>
+                                <property name="can-focus">True</property>
+                                <property name="receives-default">True</property>
+                                <property name="margin-start">4</property>
+                                <property name="margin-end">2</property>
                               </object>
                               <packing>
                                 <property name="expand">True</property>
-                                <property name="homogeneous">False</property>
+                                <property name="fill">True</property>
+                                <property name="position">0</property>
                               </packing>
                             </child>
-                            <style>
-                              <class name="inline-toolbar"/>
-                            </style>
+                            <child>
+                              <object class="GtkButton" id="KeybindingEditor::Save">
+                                <property name="label" translatable="yes">Save</property>
+                                <property name="visible">True</property>
+                                <property name="sensitive">False</property>
+                                <property name="can-focus">True</property>
+                                <property name="receives-default">True</property>
+                                <property name="margin-start">2</property>
+                                <property name="margin-end">2</property>
+                              </object>
+                              <packing>
+                                <property name="expand">True</property>
+                                <property name="fill">True</property>
+                                <property name="position">1</property>
+                              </packing>
+                            </child>
+                            <child>
+                              <object class="GtkButton" id="KeybindingEditor::Default">
+                                <property name="label" translatable="yes">Default</property>
+                                <property name="visible">True</property>
+                                <property name="sensitive">False</property>
+                                <property name="can-focus">True</property>
+                                <property name="receives-default">True</property>
+                                <property name="tooltip-text" translatable="yes">Reset this actions keybindings back to their default value</property>
+                                <property name="margin-start">2</property>
+                                <property name="margin-end">4</property>
+                                <style>
+                                  <class name="suggested-action"/>
+                                </style>
+                              </object>
+                              <packing>
+                                <property name="expand">True</property>
+                                <property name="fill">True</property>
+                                <property name="position">2</property>
+                              </packing>
+                            </child>
+                            <child>
+                              <object class="GtkButton" id="KeybindingEditor::Delete">
+                                <property name="label" translatable="yes">Delete</property>
+                                <property name="visible">True</property>
+                                <property name="sensitive">False</property>
+                                <property name="can-focus">True</property>
+                                <property name="receives-default">True</property>
+                                <property name="margin-start">2</property>
+                                <property name="margin-end">2</property>
+                                <style>
+                                  <class name="destructive-action"/>
+                                </style>
+                              </object>
+                              <packing>
+                                <property name="expand">True</property>
+                                <property name="fill">True</property>
+                                <property name="position">3</property>
+                              </packing>
+                            </child>
                           </object>
                           <packing>
                             <property name="expand">False</property>
@@ -2034,9 +1548,9 @@
                         </child>
                       </object>
                       <packing>
-                        <property name="expand">True</property>
+                        <property name="expand">False</property>
                         <property name="fill">True</property>
-                        <property name="position">0</property>
+                        <property name="position">1</property>
                       </packing>
                     </child>
                   </object>
@@ -2068,127 +1582,5 @@
     <action-widgets>
       <action-widget response="0">PreferencesDialog::CloseButton</action-widget>
     </action-widgets>
-  </object>
-  <object class="GtkSizeGroup">
-    <widgets>
-      <widget name="label12"/>
-      <widget name="label13"/>
-      <widget name="label14"/>
-      <widget name="label15"/>
-    </widgets>
-  </object>
-  <object class="GtkUIManager" id="UIManager">
-    <ui>
-      <menubar name="MenuBar">
-        <menu action="FileMenu">
-          <menuitem action="OpenFile"/>
-          <menuitem action="RecentMenu"/>
-          <separator/>
-          <menuitem action="Preferences"/>
-          <separator/>
-          <menuitem action="Close"/>
-          <menuitem action="Quit"/>
-        </menu>
-        <menu action="ViewMenu">
-          <menuitem action="ToggleFullscreen"/>
-          <menuitem action="ToggleMangaMode"/>
-          <separator/>
-          <menuitem action="AutoFitMode"/>
-          <menuitem action="FitWidthMode"/>
-          <menuitem action="FitHeightMode"/>
-          <menuitem action="ManualZoomMode"/>
-          <separator/>
-          <menu action="ZoomMenu">
-            <menuitem action="ZoomIn"/>
-            <menuitem action="ZoomOut"/>
-            <menuitem action="ResetZoom"/>
-          </menu>
-          <separator/>
-          <menuitem action="ToggleMenuBar"/>
-          <menuitem action="ToggleStatusBar"/>
-          <menuitem action="ToggleScrollbars"/>
-          <menuitem action="ToggleThumbnailBar"/>
-          <menuitem action="ToggleBooruBrowser"/>
-          <separator/>
-          <menuitem action="ToggleHideAll"/>
-        </menu>
-        <menu action="GoMenu">
-          <menuitem action="NextImage"/>
-          <menuitem action="PreviousImage"/>
-          <menuitem action="FirstImage"/>
-          <menuitem action="LastImage"/>
-          <separator/>
-          <menuitem action="ToggleSlideshow"/>
-        </menu>
-        <menu action="HelpMenu">
-          <menuitem action="ReportIssue"/>
-          <separator/>
-          <menuitem action="About"/>
-        </menu>
-      </menubar>
-      <accelerator action="ScrollUp"/>
-      <accelerator action="ScrollDown"/>
-      <accelerator action="ScrollLeft"/>
-      <accelerator action="ScrollRight"/>
-      <accelerator action="NewTab"/>
-      <accelerator action="SaveImage"/>
-      <accelerator action="SaveImageAs"/>
-      <accelerator action="SaveImages"/>
-      <accelerator action="DeleteImage"/>
-      <popup name="PopupMenu">
-        <menuitem action="OpenFile"/>
-        <menuitem action="RecentMenu"/>
-        <separator/>
-        <menuitem action="NextImage"/>
-        <menuitem action="PreviousImage"/>
-        <separator/>
-        <menu action="ViewMenu">
-          <menuitem action="ToggleFullscreen"/>
-          <menuitem action="ToggleMangaMode"/>
-          <separator/>
-          <menuitem action="AutoFitMode"/>
-          <menuitem action="FitWidthMode"/>
-          <menuitem action="FitHeightMode"/>
-          <menuitem action="ManualZoomMode"/>
-          <separator/>
-          <menuitem action="ToggleMenuBar"/>
-          <menuitem action="ToggleStatusBar"/>
-          <menuitem action="ToggleScrollbars"/>
-          <menuitem action="ToggleThumbnailBar"/>
-          <menuitem action="ToggleBooruBrowser"/>
-          <separator/>
-          <menuitem action="ToggleHideAll"/>
-        </menu>
-        <separator/>
-        <menuitem action="Preferences"/>
-        <separator/>
-        <menuitem action="Close"/>
-        <menuitem action="Quit"/>
-      </popup>
-      <popup name="BooruPopupMenu">
-        <menuitem action="SaveImage"/>
-        <menuitem action="SaveImageAs"/>
-        <separator/>
-        <menuitem action="ViewPost"/>
-        <menuitem action="CopyImageURL"/>
-        <menuitem action="CopyImageData"/>
-        <menuitem action="CopyPostURL"/>
-      </popup>
-      <popup name="TagViewPopupMenu">
-        <menuitem action="SortByType"/>
-        <menuitem action="SortByTag"/>
-        <separator/>
-        <menuitem action="ShowTagTypeHeaders"/>
-      </popup>
-      <popup name="InfoBoxPopupMenu">
-        <menuitem action="AutoHideInfoBox"/>
-      </popup>
-      <popup name="ThumbnailBarPopupMenu">
-        <menuitem action="SaveImage"/>
-        <menuitem action="SaveImageAs"/>
-        <separator/>
-        <menuitem action="DeleteImage"/>
-      </popup>
-    </ui>
   </object>
 </interface>

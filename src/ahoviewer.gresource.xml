@@ -1,7 +1,10 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <gresources>
   <gresource prefix="/">
-    <file compressed="true" preprocess="xml-stripblanks">ui/ahoviewer.ui</file>
+    <file compressed="true" preprocess="xml-stripblanks">ui/dialogs.ui</file>
+    <file compressed="true" preprocess="xml-stripblanks">ui/mainwindow.ui</file>
+    <file compressed="true" preprocess="xml-stripblanks">ui/menubar.ui</file>
+    <file compressed="true" preprocess="xml-stripblanks">ui/menus.ui</file>
 
     <file>ui/css/booru-info-box.css</file>
     <file>ui/css/note.css</file>

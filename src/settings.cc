@@ -29,7 +29,7 @@ SettingsManager::SettingsManager()
                        { "HideAll", false },           { "HideAllFullscreen", true },
                        { "RememberWindowSize", true }, { "RememberWindowPos", true },
                        { "ShowTagTypeHeaders", true }, { "AutoHideInfoBox", true },
-                       { "AskDeleteConfirm", true },   { "UseRGBAVisual", false } }),
+                       { "AskDeleteConfirm", true } }),
       m_DefaultInts({ { "ArchiveIndex", -1 },
                       { "CacheSize", 2 },
                       { "SlideshowDelay", 5 },
@@ -59,70 +59,43 @@ SettingsManager::SettingsManager()
           std::make_tuple("Safebooru", "https://safebooru.org", Type::GELBOORU),
       }),
       m_DefaultKeybindings({
-          { "File",
-            {
-                { "OpenFile", "<Primary>o" },
-                { "DeleteImage", "<Shift>Delete" },
-                { "Preferences", "p" },
-                { "Close", "<Primary>w" },
-                { "Quit", "<Primary>q" },
-            } },
-          { "ViewMode",
-            {
-                { "ToggleMangaMode", "g" },
-                { "AutoFitMode", "a" },
-                { "FitWidthMode", "w" },
-                { "FitHeightMode", "h" },
-                { "ManualZoomMode", "m" },
-            } },
-          { "UserInterface",
-            {
-                { "ToggleFullscreen", "f" },
-                { "ToggleMenuBar", "<Primary>m" },
-                { "ToggleStatusBar", "<Primary>b" },
-                { "ToggleScrollbars", "<Primary>l" },
-                { "ToggleThumbnailBar", "t" },
-                { "ToggleBooruBrowser", "b" },
-                { "ToggleHideAll", "i" },
-            } },
-          { "Zoom",
-            {
-                { "ZoomIn", "<Primary>equal" },
-                { "ZoomOut", "<Primary>minus" },
-                { "ResetZoom", "<Primary>0" },
-            } },
-          { "Navigation",
-            {
-                { "NextImage", "Page_Down" },
-                { "PreviousImage", "Page_Up" },
-                { "FirstImage", "Home" },
-                { "LastImage", "End" },
-                { "ToggleSlideshow", "s" },
-            } },
-          { "Scroll",
-            {
-                { "ScrollUp", "Up" },
-                { "ScrollDown", "Down" },
-                { "ScrollLeft", "Left" },
-                { "ScrollRight", "Right" },
-            } },
-          { "BooruBrowser",
-            {
-                { "NewTab", "<Primary>t" },
-                { "SaveImage", "<Shift>s" },
-                { "SaveImageAs", "<Primary>s" },
-                { "SaveImages", "<Primary><Shift>s" },
-                { "ViewPost", "<Primary><Shift>o" },
-                { "CopyImageURL", "y" },
-                { "CopyImageData", "<Primary><Shift>y" },
-                { "CopyPostURL", "<Primary>y" },
-            } },
-#ifdef HAVE_LIBPEAS
-          { "Plugins",
-            {
-
-            } },
-#endif // HAVE_LIBPEAS
+          { "win.OpenFile", { "<Primary>o" } },
+          { "win.DeleteImage", { "<Shift>Delete" } },
+          { "app.Preferences", { "p" } },
+          { "win.Close", { "<Primary>w" } },
+          { "app.Quit", { "<Primary>q" } },
+          { "win.ToggleMangaMode", { "g" } },
+          { "win.ZoomMode::A", { "a" } },
+          { "win.ZoomMode::W", { "w" } },
+          { "win.ZoomMode::H", { "<Primary>h" } },
+          { "win.ZoomMode::M", { "m" } },
+          { "win.ToggleFullscreen", { "f", "F11" } },
+          { "win.ToggleMenuBar", { "<Primary>m" } },
+          { "win.ToggleStatusBar", { "<Primary>b" } },
+          { "win.ToggleScrollbars", { "<Primary>l" } },
+          { "win.ToggleThumbnailBar", { "t" } },
+          { "win.ToggleBooruBrowser", { "b" } },
+          { "win.ToggleHideAll", { "i" } },
+          { "win.ZoomIn", { "<Primary>equal" } },
+          { "win.ZoomOut", { "<Primary>minus" } },
+          { "win.ResetZoom", { "<Primary>0" } },
+          { "win.NextImage", { "Page_Down" } },
+          { "win.PreviousImage", { "Page_Up" } },
+          { "win.FirstImage", { "Home" } },
+          { "win.LastImage", { "End" } },
+          { "win.ToggleSlideshow", { "s", "F5" } },
+          { "win.ScrollUp", { "Up", "k" } },
+          { "win.ScrollDown", { "Down", "j" } },
+          { "win.ScrollLeft", { "Left", "h" } },
+          { "win.ScrollRight", { "Right", "l" } },
+          { "win.NewTab", { "<Primary>t" } },
+          { "win.SaveImage", { "<Shift>s" } },
+          { "win.SaveImageAs", { "<Primary>s" } },
+          { "win.SaveImages", { "<Primary><Shift>s" } },
+          { "win.ViewPost", { "<Primary><Shift>o" } },
+          { "win.CopyImageURL", { "y" } },
+          { "win.CopyImageData", { "<Primary><Shift>y" } },
+          { "win.CopyPostURL", { "<Primary>y" } },
       })
 // }}}
 {
@@ -153,8 +126,6 @@ SettingsManager::SettingsManager()
 
 SettingsManager::~SettingsManager()
 {
-    save_sites();
-
     try
     {
         m_Config.writeFile(m_ConfigFilePath.c_str());
@@ -258,8 +229,9 @@ std::vector<std::shared_ptr<Site>>& SettingsManager::get_sites()
                         continue;
                     }
 #else  // !HAVE_LIBPEAS
-                    std::cerr << "Previously saved site '" << name
-                              << "' uses a plugin, but plugin support was not enabled" << std::endl;
+                    g_warning("Previously saved site '%s' uses a plugin, but plugin support was "
+                              "not enabled\n",
+                              name.c_str());
                     continue;
 #endif // !HAVE_LIBPEAS
                 }
@@ -296,78 +268,78 @@ void SettingsManager::set_geometry(const int x, const int y, const int w, const 
     set("h", h, Setting::TypeInt, geo);
 }
 
-std::string SettingsManager::get_keybinding(const std::string& group, const std::string& name) const
+const std::vector<Glib::ustring> SettingsManager::get_keybindings(const std::string& name) const
 {
-    try
-    {
-        return m_Keybindings.at(group).at(name);
-    }
-    catch (const std::out_of_range&)
-    {
-        return "";
-    }
+    auto it{ std::find_if(m_Keybindings.begin(), m_Keybindings.end(), [&](const auto& k) {
+        return k.first == name;
+    }) };
+
+    if (it != m_Keybindings.end())
+        return it->second;
+    else
+        return {};
 }
 
-// Clears the first (only) binding that has the same value as value
-// Sets the group and name parameters to those of the binding that was cleared
-// Returns true if it actually cleared a binding
-// TODO: Add support for multiple keybindings per action
-bool SettingsManager::clear_keybinding(const std::string& value,
-                                       std::string& group,
-                                       std::string& name)
+const std::vector<Glib::ustring>
+SettingsManager::get_default_keybindings(const std::string& name) const
 {
-    for (const auto& i : m_Keybindings)
-    {
-        for (const auto& j : i.second)
-        {
-            if (j.second == value)
-            {
-                group = i.first;
-                name  = j.first;
+    auto it{ std::find_if(m_DefaultKeybindings.begin(),
+                          m_DefaultKeybindings.end(),
+                          [&](const auto& k) { return k.first == name; }) };
 
-                set_keybinding(group, name, "");
-
-                return true;
-            }
-        }
-    }
-
-    return false;
+    if (it != m_DefaultKeybindings.end())
+        return it->second;
+    else
+        return {};
 }
 
-void SettingsManager::set_keybinding(const std::string& group,
-                                     const std::string& name,
-                                     const std::string& value)
+std::pair<std::string, std::vector<Glib::ustring>>
+SettingsManager::clear_keybinding(const std::string& value)
 {
+    auto it{ std::find_if(m_Keybindings.begin(), m_Keybindings.end(), [&](auto& v) {
+        return std::find(v.second.begin(), v.second.end(), value) != v.second.end();
+    }) };
+    if (it != m_Keybindings.end())
+    {
+        it->second.erase(std::find(it->second.begin(), it->second.end(), value));
+        Application::get_default()->set_accels_for_action(it->first, it->second);
+        return *it;
+    }
+
+    return {};
+}
+
+void SettingsManager::set_keybindings(std::string name, const std::vector<Glib::ustring>& keys)
+{
+    Application::get_default()->set_accels_for_action(name, keys);
+    // libconfig does not allow . in key names, only a-z0-9-_*
+    // This means the action names must never have an asterisk!
+    std::replace(name.begin(), name.end(), '.', '*');
+
     if (!m_Config.exists("Keybindings"))
         m_Config.getRoot().add("Keybindings", Setting::TypeGroup);
 
-    Setting& keys{ m_Config.lookup("Keybindings") };
+    Setting& kb_group{ m_Config.lookup("Keybindings") };
 
-    if (!keys.exists(group))
-        keys.add(group, Setting::TypeGroup);
+    if (kb_group.exists(name))
+        kb_group.remove(name);
 
-    set(name, value, Setting::TypeString, keys[group.c_str()]);
-    m_Keybindings[group][name] = value;
+    Setting& bindings{ kb_group.add(name, Setting::TypeArray) };
+
+    for (const auto& k : keys)
+        bindings.add(Setting::TypeString) = k;
 }
 
-std::string SettingsManager::reset_keybinding(const std::string& group, const std::string& name)
+void SettingsManager::reset_keybindings(std::string name)
 {
+    Application::get_default()->set_accels_for_action(name, get_default_keybindings(name));
+    std::replace(name.begin(), name.end(), '.', '*');
     if (m_Config.exists("Keybindings"))
     {
         Setting& keys{ m_Config.lookup("Keybindings") };
 
-        if (keys.exists(group) && keys[group.c_str()].exists(name))
-            keys[group.c_str()].remove(name);
-    }
-
-    try
-    {
-        return m_DefaultKeybindings.at(group).at(name);
-    }
-    catch (const std::out_of_range&)
-    {
-        return "";
+        if (keys.exists(name))
+            keys.remove(name);
     }
 }
 
@@ -433,55 +405,51 @@ void SettingsManager::load_keybindings()
 {
     if (m_Config.exists("Keybindings"))
     {
-        Setting& keys{ m_Config.lookup("Keybindings") };
-
-        for (auto& i : m_DefaultKeybindings)
+        auto& saved_binds{ m_Config.lookup("Keybindings") };
+        for (const auto& [action_name, default_binds] : m_DefaultKeybindings)
         {
-            if (keys.exists(i.first))
+            std::string saved_action_name{ action_name };
+            // Saved actions replace . with * (libconfig doesn't allow for . in key names)
+            std::replace(saved_action_name.begin(), saved_action_name.end(), '*', '.');
+            std::vector<Glib::ustring> accels;
+
+            // There are saved keybindings for this action (or the default were deleted)
+            if (saved_binds.exists(saved_action_name))
             {
-#ifdef HAVE_LIBPEAS
-                // Assign keybindings only for plugins that have been loaded
-                if (i.first == "Plugins")
-                {
-                    const auto& plugins{
-                        Application::get_default()->get_plugin_manager().get_window_plugins()
-                    };
-                    for (auto& p : plugins)
-                    {
-                        if (!p->get_action_name().empty() &&
-                            keys[i.first.c_str()].exists(p->get_action_name().c_str()))
-                        {
-                            m_Keybindings[i.first][p->get_action_name()] =
-                                keys[i.first.c_str()][p->get_action_name().c_str()].c_str();
-                        }
-                    }
-                    continue;
-                }
-#endif // HAVE_LIBPEAS
-                for (auto& j : i.second)
-                {
-                    if (keys[i.first.c_str()].exists(j.first))
-                    {
-                        m_Keybindings[i.first][j.first] =
-                            keys[i.first.c_str()][j.first.c_str()].c_str();
-                    }
-                    else
-                    {
-                        m_Keybindings[i.first][j.first] =
-                            m_DefaultKeybindings.at(i.first).at(j.first);
-                    }
-                }
+                for (auto& accel : saved_binds.lookup(saved_action_name))
+                    accels.emplace_back(static_cast<const char*>(accel));
             }
             else
             {
-                m_Keybindings[i.first] = m_DefaultKeybindings.at(i.first);
+                accels = default_binds;
             }
+
+            m_Keybindings.emplace_back(action_name, accels);
         }
     }
     else
     {
         m_Keybindings = m_DefaultKeybindings;
     }
+#ifdef HAVE_LIBPEAS
+    // Add plugin actions if the user hasn't set a binding
+    const auto& plugins{ Application::get_default()->get_plugin_manager().get_window_plugins() };
+    for (auto& p : plugins)
+    {
+        // Plugins cannot set default keybindings, but if that functionality were to be added
+        // we would have to look for binding collisions in m_Keybindings here
+        if (!p->get_action_name().empty())
+        {
+            bool has_binding{ std::find_if(
+                                  m_Keybindings.begin(), m_Keybindings.end(), [&](const auto& k) {
+                                      return k.first == p->get_action_name();
+                                  }) != m_Keybindings.end() };
+            if (!has_binding)
+                m_Keybindings.emplace_back("win." + p->get_action_name(),
+                                           std::vector<Glib::ustring>{});
+        }
+    }
+#endif // HAVE_LIBPEAS
 }
 
 void SettingsManager::save_sites()

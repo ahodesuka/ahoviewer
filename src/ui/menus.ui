@@ -1,0 +1,212 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<interface>
+  <menu id="BooruPopoverMenu">
+    <section>
+      <item>
+        <attribute name="label" translatable="yes">_Save Image</attribute>
+        <attribute name="action">win.SaveImage</attribute>
+      </item>
+      <item>
+        <attribute name="label" translatable="yes">Save Image _As…</attribute>
+        <attribute name="action">win.SaveImageAs</attribute>
+      </item>
+    </section>
+    <section>
+      <item>
+        <attribute name="label" translatable="yes">_View Post</attribute>
+        <attribute name="action">win.ViewPost</attribute>
+      </item>
+      <item>
+        <attribute name="label" translatable="yes">_Copy Image URL</attribute>
+        <attribute name="action">win.CopyImageURL</attribute>
+      </item>
+      <item>
+        <attribute name="label" translatable="yes">Copy _Image</attribute>
+        <attribute name="action">win.CopyImageData</attribute>
+      </item>
+      <item>
+        <attribute name="label" translatable="yes">Copy _Post URL</attribute>
+        <attribute name="action">win.CopyPostURL</attribute>
+      </item>
+    </section>
+  </menu>
+  <menu id="ImageBoxPopoverMenu">
+    <section>
+      <item>
+        <attribute name="label" translatable="yes">_Open File...</attribute>
+        <attribute name="action">win.OpenFile</attribute>
+      </item>
+    </section>
+    <section>
+      <attribute name="display-hint">horizontal-buttons</attribute>
+      <item>
+        <attribute name="label" translatable="yes">_First Image</attribute>
+        <attribute name="action">win.FirstImage</attribute>
+        <attribute name="verb-icon">go-first-symbolic</attribute>
+      </item>
+      <item>
+        <attribute name="label" translatable="yes">_Previous Image</attribute>
+        <attribute name="action">win.PreviousImage</attribute>
+        <attribute name="verb-icon">go-previous-symbolic</attribute>
+      </item>
+      <item>
+        <attribute name="label" translatable="yes">_Next Image</attribute>
+        <attribute name="action">win.NextImage</attribute>
+        <attribute name="verb-icon">go-next-symbolic</attribute>
+      </item>
+      <item>
+        <attribute name="label" translatable="yes">_Last Image</attribute>
+        <attribute name="action">win.LastImage</attribute>
+        <attribute name="verb-icon">go-last-symbolic</attribute>
+      </item>
+    </section>
+    <section>
+      <submenu>
+        <attribute name="label" translatable="yes">_View</attribute>
+        <section>
+          <item>
+            <attribute name="label" translatable="yes">_Fullscreen</attribute>
+            <attribute name="action">win.ToggleFullscreen</attribute>
+          </item>
+          <item>
+            <attribute name="label" translatable="yes">_Manga Mode</attribute>
+            <attribute name="action">win.ToggleMangaMode</attribute>
+          </item>
+        </section>
+        <section>
+          <item>
+            <attribute name="label" translatable="yes">_Auto Fit Mode</attribute>
+            <attribute name="action">win.ZoomMode</attribute>
+            <attribute name="target">A</attribute>
+          </item>
+          <item>
+            <attribute name="label" translatable="yes">Fit _Width Mode</attribute>
+            <attribute name="action">win.ZoomMode</attribute>
+            <attribute name="target">W</attribute>
+          </item>
+          <item>
+            <attribute name="label" translatable="yes">Fit _Height Mode</attribute>
+            <attribute name="action">win.ZoomMode</attribute>
+            <attribute name="target">H</attribute>
+          </item>
+          <item>
+            <attribute name="label" translatable="yes">_Manual Zoom</attribute>
+            <attribute name="action">win.ZoomMode</attribute>
+            <attribute name="target">M</attribute>
+          </item>
+        </section>
+        <section>
+          <item>
+            <attribute name="label" translatable="yes">_Menubar</attribute>
+            <attribute name="action">win.ToggleMenuBar</attribute>
+          </item>
+          <item>
+            <attribute name="label" translatable="yes">_Statusbar</attribute>
+            <attribute name="action">win.ToggleStatusBar</attribute>
+          </item>
+          <item>
+            <attribute name="label" translatable="yes">_Scrollbars</attribute>
+            <attribute name="action">win.ToggleScrollbars</attribute>
+          </item>
+          <item>
+            <attribute name="label" translatable="yes">_Thumbnail Bar</attribute>
+            <attribute name="action">win.ToggleThumbnailBar</attribute>
+          </item>
+          <item>
+            <attribute name="label" translatable="yes">_Booru Browser</attribute>
+            <attribute name="action">win.ToggleBooruBrowser</attribute>
+          </item>
+        </section>
+        <section>
+          <item>
+            <attribute name="label" translatable="yes">_Hide All</attribute>
+            <attribute name="action">win.ToggleHideAll</attribute>
+          </item>
+        </section>
+      </submenu>
+    </section>
+    <section>
+      <attribute name="display-hint">horizontal-buttons</attribute>
+      <item>
+        <attribute name="label" translatable="yes">Zoom _In</attribute>
+        <attribute name="action">win.ZoomIn</attribute>
+        <attribute name="verb-icon">zoom-in-symbolic</attribute>
+        <attribute name="hidden-when">action-disabled</attribute>
+      </item>
+      <item>
+        <attribute name="label" translatable="yes">Zoom _Out</attribute>
+        <attribute name="action">win.ZoomOut</attribute>
+        <attribute name="verb-icon">zoom-out-symbolic</attribute>
+        <attribute name="hidden-when">action-disabled</attribute>
+      </item>
+      <item>
+        <attribute name="label" translatable="yes">_Reset Zoom</attribute>
+        <attribute name="action">win.ResetZoom</attribute>
+        <attribute name="verb-icon">zoom-original-symbolic</attribute>
+        <attribute name="hidden-when">action-disabled</attribute>
+      </item>
+    </section>
+    <section>
+      <item>
+        <attribute name="label" translatable="yes">_Preferences</attribute>
+        <attribute name="action">app.Preferences</attribute>
+      </item>
+    </section>
+    <section>
+      <item>
+        <attribute name="label" translatable="yes">_Close</attribute>
+        <attribute name="action">win.Close</attribute>
+      </item>
+      <item>
+        <attribute name="label" translatable="yes">_Quit</attribute>
+        <attribute name="action">app.Quit</attribute>
+      </item>
+    </section>
+  </menu>
+  <menu id="InfoBoxPopoverMenu">
+    <section>
+      <item>
+        <attribute name="label" translatable="yes">_Auto Hide</attribute>
+        <attribute name="action">win.AutoHideInfoBox</attribute>
+      </item>
+    </section>
+  </menu>
+  <menu id="TagViewPopoverMenu">
+    <section>
+      <item>
+        <attribute name="label" translatable="yes">_Sort by Type</attribute>
+        <attribute name="action">win.TagViewSortBy</attribute>
+        <attribute name="target" type="i">0</attribute>
+      </item>
+      <item>
+        <attribute name="label" translatable="yes">Sort by _Tag</attribute>
+        <attribute name="action">win.TagViewSortBy</attribute>
+        <attribute name="target" type="i">1</attribute>
+      </item>
+    </section>
+    <section>
+      <item>
+        <attribute name="label" translatable="yes">Show Tag Type _Headers</attribute>
+        <attribute name="action">win.ShowTagTypeHeaders</attribute>
+      </item>
+    </section>
+  </menu>
+  <menu id="ThumbnailBarPopoverMenu">
+    <section>
+      <item>
+        <attribute name="label" translatable="yes">_Save Image</attribute>
+        <attribute name="action">win.SaveImage</attribute>
+      </item>
+      <item>
+        <attribute name="label" translatable="yes">Save Image _As…</attribute>
+        <attribute name="action">win.SaveImageAs</attribute>
+      </item>
+    </section>
+    <section>
+      <item>
+        <attribute name="label" translatable="yes">_Delete Image</attribute>
+        <attribute name="action">win.DeleteImage</attribute>
+      </item>
+    </section>
+  </menu>
+</interface>

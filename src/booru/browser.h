@@ -54,7 +54,7 @@ namespace AhoViewer
             void on_show() override;
 
         private:
-            struct ComboBoxModelColumns : public Gtk::TreeModelColumnRecord
+            struct ComboBoxModelColumns : public Gtk::TreeModel::ColumnRecord
             {
                 ComboBoxModelColumns()
                 {
@@ -99,7 +99,7 @@ namespace AhoViewer
             Gtk::Button *m_NewTabButton, *m_SaveImagesButton;
             Gtk::ComboBox* m_ComboBox;
             Gtk::Notebook* m_Notebook;
-            Gtk::Menu* m_PopupMenu;
+            std::shared_ptr<Gtk::Menu> m_PopupMenu;
 
             ComboBoxModelColumns m_ComboColumns;
             Glib::RefPtr<Gtk::ListStore> m_ComboModel;
@@ -116,9 +116,6 @@ namespace AhoViewer
                 // workaround works for now.
                 m_FirstShow{ true };
             std::string m_LastSavePath;
-
-            Glib::RefPtr<Gtk::UIManager> m_UIManager;
-            Glib::RefPtr<Gtk::Action> m_SaveImageAction, m_SaveImagesAction;
 
             std::map<Page*, sigc::connection> m_PageCloseConns;
             std::vector<sigc::connection> m_SiteIconConns;

@@ -14,13 +14,10 @@ namespace AhoViewer
         ~PreferencesDialog() override = default;
 
         SiteEditor* get_site_editor() const { return m_SiteEditor; }
-        KeybindingEditor* get_keybinding_editor() const { return m_KeybindingEditor; }
 
         // This can also be set from the main window via the checkbutton in the
         // message dialog (when the setting is true)
         void set_ask_delete_confirm(const bool val) { m_AskDeleteConfirm->set_active(val); }
-
-        void set_has_rgba_visual(const bool val) { m_BGColor->set_use_alpha(val); }
 
         sigc::signal<void> signal_bg_color_set() const { return m_SignalBGColorSet; }
         sigc::signal<void> signal_cursor_hide_delay_changed() const
@@ -45,7 +42,7 @@ namespace AhoViewer
         }
 
     private:
-        struct BooruMaxRatingModelColumns : public Gtk::TreeModelColumnRecord
+        struct BooruMaxRatingModelColumns : public Gtk::TreeModel::ColumnRecord
         {
             BooruMaxRatingModelColumns() { add(text_column); }
             Gtk::TreeModelColumn<std::string> text_column;

@@ -23,12 +23,11 @@ namespace AhoViewer
         void scroll_to_selected() override;
 
     private:
-        bool on_button_press_event(GdkEventButton* e);
+        bool on_button_press_event(GdkEventButton* e) override;
         void on_cursor_changed();
 
-        Glib::RefPtr<Gtk::UIManager> m_UIManager;
         Gtk::TreeView* m_TreeView;
-        Gtk::Menu* m_PopupMenu;
+        std::unique_ptr<Gtk::Menu> m_PopupMenu;
         Glib::RefPtr<Gtk::Adjustment> m_VAdjust;
         bool m_KeepAligned{ true };
         sigc::connection m_ScrollConn;

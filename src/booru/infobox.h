@@ -11,7 +11,7 @@ namespace AhoViewer::Booru
     {
     public:
         InfoBox(BaseObjectType* cobj, const Glib::RefPtr<Gtk::Builder>& bldr);
-        ~InfoBox() override;
+        ~InfoBox() override = default;
 
         void set_info(const PostInfo& post_info);
         void clear();
@@ -27,13 +27,10 @@ namespace AhoViewer::Booru
         void on_toggle_auto_hide();
 
     protected:
-        void on_realize() override;
         bool on_button_press_event(GdkEventButton* e) override;
 
     private:
-        Glib::RefPtr<Gtk::UIManager> m_UIManager;
-        Gtk::Menu* m_PopupMenu{ nullptr };
-        Glib::RefPtr<Gtk::ToggleAction> m_AutoHideInfoBox;
+        std::unique_ptr<Gtk::Menu> m_PopupMenu{ nullptr };
 
         bool m_InfoSet{ false }, m_IsVisible{ false };
         Gtk::Revealer* m_Revealer;

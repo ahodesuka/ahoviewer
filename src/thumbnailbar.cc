@@ -8,8 +8,12 @@ using namespace AhoViewer;
 ThumbnailBar::ThumbnailBar(BaseObjectType* cobj, const Glib::RefPtr<Gtk::Builder>& bldr)
     : Gtk::ScrolledWindow(cobj)
 {
+    auto model{ Glib::RefPtr<Gio::Menu>::cast_dynamic(
+        bldr->get_object("ThumbnailBarPopoverMenu")) };
+    m_PopupMenu = std::make_unique<Gtk::Menu>(model);
+    m_PopupMenu->attach_to_widget(*this);
+
     bldr->get_widget("ThumbnailBar::TreeView", m_TreeView);
-    m_UIManager = Glib::RefPtr<Gtk::UIManager>::cast_static(bldr->get_object("UIManager"));
 
     m_VAdjust =
         Glib::RefPtr<Gtk::Adjustment>::cast_static(bldr->get_object("ThumbnailBar::VAdjust"));
@@ -69,8 +73,6 @@ void ThumbnailBar::set_pixbuf(const size_t index, const Glib::RefPtr<Gdk::Pixbuf
 void ThumbnailBar::on_realize()
 {
     Gtk::ScrolledWindow::on_realize();
-
-    m_PopupMenu = static_cast<Gtk::Menu*>(m_UIManager->get_widget("/ThumbnailBarPopupMenu"));
 }
 
 void ThumbnailBar::on_show()

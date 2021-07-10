@@ -15,7 +15,6 @@ ImageList::~ImageList()
 {
     // Explicitly clear all signal handlers since we are destroying everything
     m_SignalCleared.clear();
-    clear();
 }
 
 // This is also used when reusing the same page with a new query

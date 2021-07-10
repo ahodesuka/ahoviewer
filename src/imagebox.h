@@ -70,7 +70,7 @@ namespace AhoViewer
     private:
         struct SmoothScroll
         {
-            SmoothScroll(Glib::RefPtr<Gtk::Adjustment> adj) : adj(adj) { }
+            SmoothScroll(Glib::RefPtr<Gtk::Adjustment> adj) : adj{ std::move(adj) } { }
 
             double start_time, end_time, start{ 0 }, end{ 0 };
             guint64 id{ 0 };
@@ -98,9 +98,8 @@ namespace AhoViewer
         Gtk::Overlay* m_Overlay;
         Gtk::Image* m_GtkImage;
         Gtk::Widget* m_GstWidget;
-        Gtk::Menu* m_PopupMenu;
-        Glib::RefPtr<Gtk::UIManager> m_UIManager;
-        Glib::RefPtr<Gtk::Action> m_NextAction, m_PreviousAction;
+        std::unique_ptr<Gtk::Popover> m_PopoverMenu;
+        Glib::RefPtr<Gio::Action> m_NextAction, m_PreviousAction;
         SmoothScroll m_HSmoothScroll, m_VSmoothScroll;
 
 #ifdef HAVE_GSTREAMER
@@ -117,7 +116,7 @@ namespace AhoViewer
 #endif // HAVE_GSTREAMER
 
         StatusBar* m_StatusBar;
-        const MainWindow* m_MainWindow;
+        MainWindow* m_MainWindow;
 
         const Glib::RefPtr<Gdk::Cursor> m_LeftPtrCursor, m_FleurCursor, m_BlankCursor;
 

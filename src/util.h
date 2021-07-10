@@ -15,6 +15,22 @@ namespace AhoViewer
         FIT_HEIGHT = 'H',
         MANUAL     = 'M',
     };
+    // Fixed size map based on a std::array for doing constexpr lookups
+    template<typename Key, typename Value, std::size_t Size>
+    struct FlatMap
+    {
+        std::array<std::pair<Key, Value>, Size> data;
+
+        [[nodiscard]] constexpr Value at(const Key& key) const
+        {
+            const auto it{ std::find_if(
+                data.begin(), data.end(), [&key](const auto& v) { return v.first == key; }) };
+            if (it != data.end())
+                return it->second;
+            else
+                throw std::range_error("Value not found");
+        }
+    };
     struct Note
     {
         Note(std::string body, const int w, const int h, const int x, const int y)

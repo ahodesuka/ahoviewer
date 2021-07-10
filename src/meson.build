@@ -179,6 +179,7 @@ sources += [
   'main.cc',
   'mainwindow.cc',
   'preferences.cc',
+  'recentmenu.cc',
   'settings.cc',
   'siteeditor.cc',
   'statusbar.cc',

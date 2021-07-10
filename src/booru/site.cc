@@ -893,7 +893,7 @@ Site::parse_post_data(unsigned char* data, const size_t size)
                     // Prepends either the site url or https (not sure if any sites give links
                     // without a protocol), or does nothing to the url if it doesnt start with a
                     // /
-                    static const auto ensure_url = [&](std::string& url) {
+                    const auto ensure_url = [&](std::string& url) {
                         if (url[0] == '/')
                         {
                             if (url[1] == '/')

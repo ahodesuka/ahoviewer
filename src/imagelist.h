@@ -47,7 +47,7 @@ namespace AhoViewer
             {
                 return m_SignalSelectedChanged;
             }
-            struct ModelColumns : public Gtk::TreeModelColumnRecord
+            struct ModelColumns : public Gtk::TreeModel::ColumnRecord
             {
                 ModelColumns() { add(pixbuf); }
                 Gtk::TreeModelColumn<Glib::RefPtr<Gdk::Pixbuf>> pixbuf;

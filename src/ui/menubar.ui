@@ -1,0 +1,154 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<interface>
+  <menu id="MenuBar">
+    <submenu>
+      <attribute name="label" translatable="yes">_File</attribute>
+      <section>
+        <item>
+          <attribute name="label" translatable="yes">_Open File...</attribute>
+          <attribute name="action">win.OpenFile</attribute>
+        </item>
+      </section>
+      <section>
+        <item>
+          <attribute name="label" translatable="yes">_Preferences</attribute>
+          <attribute name="action">app.Preferences</attribute>
+        </item>
+      </section>
+      <section>
+        <item>
+          <attribute name="label" translatable="yes">_Close</attribute>
+          <attribute name="action">win.Close</attribute>
+        </item>
+        <item>
+          <attribute name="label" translatable="yes">_Quit</attribute>
+          <attribute name="action">app.Quit</attribute>
+        </item>
+      </section>
+    </submenu>
+    <submenu>
+      <attribute name="label" translatable="yes">_View</attribute>
+      <section>
+        <item>
+          <attribute name="label" translatable="yes">_Fullscreen</attribute>
+          <attribute name="action">win.ToggleFullscreen</attribute>
+        </item>
+        <item>
+          <attribute name="label" translatable="yes">_Manga Mode</attribute>
+          <attribute name="action">win.ToggleMangaMode</attribute>
+        </item>
+      </section>
+      <section>
+        <item>
+          <attribute name="label" translatable="yes">_Auto Fit Mode</attribute>
+          <attribute name="action">win.ZoomMode</attribute>
+          <attribute name="target">A</attribute>
+        </item>
+        <item>
+          <attribute name="label" translatable="yes">Fit _Width Mode</attribute>
+          <attribute name="action">win.ZoomMode</attribute>
+          <attribute name="target">W</attribute>
+        </item>
+        <item>
+          <attribute name="label" translatable="yes">Fit _Height Mode</attribute>
+          <attribute name="action">win.ZoomMode</attribute>
+          <attribute name="target">H</attribute>
+        </item>
+        <item>
+          <attribute name="label" translatable="yes">_Manual Zoom</attribute>
+          <attribute name="action">win.ZoomMode</attribute>
+          <attribute name="target">M</attribute>
+        </item>
+      </section>
+      <section>
+        <submenu>
+          <attribute name="label" translatable="yes">_Zoom</attribute>
+          <section>
+            <item>
+              <attribute name="label" translatable="yes">Zoom _In</attribute>
+              <attribute name="action">win.ZoomIn</attribute>
+            </item>
+            <item>
+              <attribute name="label" translatable="yes">Zoom _Out</attribute>
+              <attribute name="action">win.ZoomOut</attribute>
+            </item>
+            <item>
+              <attribute name="label" translatable="yes">_Reset Zoom</attribute>
+              <attribute name="action">win.ResetZoom</attribute>
+            </item>
+          </section>
+        </submenu>
+      </section>
+      <section>
+        <item>
+          <attribute name="label" translatable="yes">_Menubar</attribute>
+          <attribute name="action">win.ToggleMenuBar</attribute>
+        </item>
+        <item>
+          <attribute name="label" translatable="yes">_Statusbar</attribute>
+          <attribute name="action">win.ToggleStatusBar</attribute>
+        </item>
+        <item>
+          <attribute name="label" translatable="yes">_Scrollbars</attribute>
+          <attribute name="action">win.ToggleScrollbars</attribute>
+        </item>
+        <item>
+          <attribute name="label" translatable="yes">_Thumbnail Bar</attribute>
+          <attribute name="action">win.ToggleThumbnailBar</attribute>
+        </item>
+        <item>
+          <attribute name="label" translatable="yes">_Booru Browser</attribute>
+          <attribute name="action">win.ToggleBooruBrowser</attribute>
+        </item>
+      </section>
+      <section>
+        <item>
+          <attribute name="label" translatable="yes">_Hide All</attribute>
+          <attribute name="action">win.ToggleHideAll</attribute>
+        </item>
+      </section>
+    </submenu>
+    <submenu>
+      <attribute name="label" translatable="yes">_Go</attribute>
+      <section>
+        <item>
+          <attribute name="label" translatable="yes">_Next Image</attribute>
+          <attribute name="action">win.NextImage</attribute>
+        </item>
+        <item>
+          <attribute name="label" translatable="yes">_Previous Image</attribute>
+          <attribute name="action">win.PreviousImage</attribute>
+        </item>
+        <item>
+          <attribute name="label" translatable="yes">_First Image</attribute>
+          <attribute name="action">win.FirstImage</attribute>
+        </item>
+        <item>
+          <attribute name="label" translatable="yes">_Last Image</attribute>
+          <attribute name="action">win.LastImage</attribute>
+        </item>
+      </section>
+      <section>
+        <item>
+          <attribute name="label" translatable="yes">_Slideshow</attribute>
+          <attribute name="action">win.ToggleSlideshow</attribute>
+        </item>
+      </section>
+    </submenu>
+    <submenu>
+      <attribute name="label" translatable="yes">_Help</attribute>
+      <section>
+        <item>
+          <attribute name="label" translatable="yes">_Report Issue</attribute>
+          <attribute name="action">app.ReportIssue</attribute>
+        </item>
+      </section>
+      <section>
+        <item>
+          <attribute name="label" translatable="yes">_About ahoviewer</attribute>
+          <attribute name="action">app.About</attribute>
+        </item>
+      </section>
+    </submenu>
+  </menu>
+</interface>

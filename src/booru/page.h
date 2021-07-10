@@ -113,7 +113,7 @@ namespace AhoViewer::Booru
         bool on_button_press_event(GdkEventButton* e) override;
         bool on_tab_button_release_event(GdkEventButton* e);
 
-        Gtk::Menu* m_PopupMenu;
+        std::shared_ptr<Gtk::Menu> m_PopupMenu;
         Gtk::IconView* m_IconView;
         Gtk::EventBox* m_Tab;
         Gtk::Image* m_TabIcon;

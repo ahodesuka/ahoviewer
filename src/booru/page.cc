@@ -25,10 +25,9 @@ void Page::CellRendererThumbnail::get_preferred_width_vfunc(Gtk::Widget& widget,
 
 Page::Page()
     : Gtk::ScrolledWindow{},
-      m_PopupMenu{ nullptr },
       m_IconView{ Gtk::make_managed<IconView>() },
       m_Tab{ Gtk::make_managed<Gtk::EventBox>() },
-      m_TabIcon{ Gtk::make_managed<Gtk::Image>(Gtk::Stock::NEW, Gtk::ICON_SIZE_MENU) },
+      m_TabIcon{ Gtk::make_managed<Gtk::Image>("document-new-symbolic", Gtk::ICON_SIZE_MENU) },
       m_TabLabel{ Gtk::make_managed<Gtk::Label>(_("New Tab")) },
       m_MenuLabel{ Gtk::make_managed<Gtk::Label>(_("New Tab")) },
       m_TabButton{ Gtk::make_managed<Gtk::Button>() },
@@ -39,7 +38,8 @@ Page::Page()
     set_shadow_type(Gtk::SHADOW_ETCHED_IN);
 
     // Create page tab {{{
-    m_TabButton->add(*(Gtk::make_managed<Gtk::Image>(Gtk::Stock::CLOSE, Gtk::ICON_SIZE_MENU)));
+    m_TabButton->add(
+        *(Gtk::make_managed<Gtk::Image>("window-close-symbolic", Gtk::ICON_SIZE_MENU)));
     m_TabButton->property_relief() = Gtk::RELIEF_NONE;
     m_TabButton->set_focus_on_click(false);
     m_TabButton->set_tooltip_text(_("Close Tab"));
@@ -47,13 +47,15 @@ Page::Page()
 
     m_TabLabel->set_alignment(0.0, 0.5);
     m_TabLabel->set_ellipsize(Pango::ELLIPSIZE_END);
+    m_TabLabel->set_margin_left(4);
+    m_TabLabel->set_margin_right(4);
 
     m_MenuLabel->set_alignment(0.0, 0.5);
     m_MenuLabel->set_ellipsize(Pango::ELLIPSIZE_END);
 
     auto* hbox{ Gtk::make_managed<Gtk::HBox>() };
     hbox->pack_start(*m_TabIcon, false, false);
-    hbox->pack_start(*m_TabLabel, true, true, 2);
+    hbox->pack_start(*m_TabLabel, true, true);
     hbox->pack_start(*m_TabButton, false, false);
     hbox->show_all();
 

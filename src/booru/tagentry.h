@@ -14,12 +14,13 @@ namespace AhoViewer::Booru
         ~TagEntry() override = default;
 
         void set_tags(const std::set<Tag>& tags);
+        bool on_key_press_event(GdkEventKey* e) override;
 
     protected:
         void on_grab_focus() override;
 
     private:
-        struct ModelColumns : public Gtk::TreeModelColumnRecord
+        struct ModelColumns : public Gtk::TreeModel::ColumnRecord
         {
             ModelColumns() { add(tag); }
             Gtk::TreeModelColumn<Tag> tag;

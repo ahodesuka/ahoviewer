@@ -198,6 +198,7 @@ void SiteEditor::delete_site()
         m_Sites.erase(std::remove(m_Sites.begin(), m_Sites.end(), o->get_value(m_Columns.site)),
                       m_Sites.end());
         m_SignalEdited();
+        Settings.save_sites();
 
         Gtk::TreeIter n{ m_Model->erase(o) };
         if (m_Model->children().size())
@@ -282,6 +283,7 @@ void SiteEditor::on_row_changed(const Gtk::TreePath& path, const Gtk::TreeIter& 
 
             // Update the combobox
             m_SignalEdited();
+            Settings.save_sites();
 
             // Calling this directly doesn't work, something handling this
             // signal later one might be setting the selection?  Either way
@@ -385,7 +387,10 @@ void SiteEditor::on_site_checked()
     }
 
     if (m_SiteCheckEdit || m_SiteCheckSite)
+    {
         m_SignalEdited();
+        Settings.save_sites();
+    }
 
     if (m_SiteCheckThread.joinable())
         m_SiteCheckThread.join();
