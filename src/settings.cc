@@ -117,6 +117,10 @@ SettingsManager::SettingsManager()
                 { "CopyImageData", "<Primary><Shift>y" },
                 { "CopyPostURL", "<Primary>y" },
             } },
+          { "VideoControls",
+            {
+                { "Pause", "u" },
+            } },
 #ifdef HAVE_LIBPEAS
           { "Plugins",
             {

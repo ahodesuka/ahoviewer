@@ -569,7 +569,7 @@ void MainWindow::create_actions()
     m_ActionGroup->add(Gtk::Action::create("ZoomIn", Gtk::Stock::ZOOM_IN, _("Zoom _In")),
                        Gtk::AccelKey(Settings.get_keybinding("Zoom", "ZoomIn")),
                        sigc::mem_fun(m_ImageBox, &ImageBox::on_zoom_in));
-    m_ActionGroup->add(Gtk::Action::create("ZoomOut", Gtk::Stock::ZOOM_OUT, _("Zoom _Out")),
+   m_ActionGroup->add(Gtk::Action::create("ZoomOut", Gtk::Stock::ZOOM_OUT, _("Zoom _Out")),
                        Gtk::AccelKey(Settings.get_keybinding("Zoom", "ZoomOut")),
                        sigc::mem_fun(m_ImageBox, &ImageBox::on_zoom_out));
     m_ActionGroup->add(Gtk::Action::create("ResetZoom",
@@ -583,7 +583,7 @@ void MainWindow::create_actions()
         Gtk::Action::create(
             "NextImage", Gtk::Stock::GO_FORWARD, _("_Next Image"), _("Go to next image")),
         Gtk::AccelKey(Settings.get_keybinding("Navigation", "NextImage")),
-        sigc::mem_fun(*this, &MainWindow::on_next_image));
+        sigc::mem_fun(*this, &MainWindow::on_next_image)); 
     m_ActionGroup->add(
         Gtk::Action::create(
             "PreviousImage", Gtk::Stock::GO_BACK, _("_Previous Image"), _("Go to previous image")),
@@ -622,7 +622,10 @@ void MainWindow::create_actions()
     m_ActionGroup->add(Gtk::Action::create("ScrollRight"),
                        Gtk::AccelKey(Settings.get_keybinding("Scroll", "ScrollRight")),
                        sigc::mem_fun(m_ImageBox, &ImageBox::on_scroll_right));
-
+    m_ActionGroup->add(Gtk::Action::create("Pause"),
+                       Gtk::AccelKey(Settings.get_keybinding("VideoControls", "pause")),
+                       sigc::mem_fun(m_ImageBox, &ImageBox::toggle_gstream_play_status));
+                     //Video controls//
     m_ActionGroup->add(Gtk::Action::create("NewTab", Gtk::Stock::ADD, _("New Tab"), _("New Tab")),
                        Gtk::AccelKey(Settings.get_keybinding("BooruBrowser", "NewTab")),
                        sigc::mem_fun(m_BooruBrowser, &Booru::Browser::on_new_tab));

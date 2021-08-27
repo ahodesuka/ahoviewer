@@ -1159,3 +1159,20 @@ void ImageBox::update_notes()
         m_NoteFixed->move(*note, note->get_x(), note->get_y());
     }
 }
+//Playback Controls m_NextAction
+#ifdef HAVE_GSTREAMER
+void ImageBox::toggle_gstream_play_status()
+{   
+        GstState cur_state;
+        gst_element_get_state (m_Playbin, &cur_state, NULL, 0);
+    if (cur_state == GST_STATE_PLAYING) 
+    {
+        gst_element_set_state(m_Playbin, GST_STATE_PAUSED);
+        m_Playing = true;
+    } else if (cur_state == GST_STATE_PAUSED)
+    {
+    gst_element_set_state(m_Playbin, GST_STATE_PLAYING);
+       m_Playing = false;
+    }
+}
+#endif // Have_Gstreamer
