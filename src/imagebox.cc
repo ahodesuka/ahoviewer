@@ -1159,8 +1159,16 @@ void ImageBox::update_notes()
         m_NoteFixed->move(*note, note->get_x(), note->get_y());
     }
 }
-//Playback Controls m_NextAction
+//Playback Controls
 #ifdef HAVE_GSTREAMER
+bool seekenabled; // do not try to seek gifs, probably not necessary, but could prevent bugs
+bool seek_done; // Send that seeking is done, cagain, probably not necessary, but could prevent bugs.
+gint64 Gstreamlen, Gstreampos; // used for getting length and current time of video, in nanoseconds
+float Gstreamperc; // Current video time represented in percentage, 
+//no idea how GTK widgets work, but this may be usefull for simplification
+float NavGstperc; // will be input percent value input for navigating time, from GTK widget
+gint64 NavGstnano; // will be the input number for seeking, the raw value that gets sent to GST_Seek
+
 void ImageBox::toggle_gstream_play_status()
 {   
         GstState cur_state;
@@ -1175,4 +1183,37 @@ void ImageBox::toggle_gstream_play_status()
        m_Playing = false;
     }
 }
+
+void ImageBox::GstreamTime()
+{
+
+    //get the current time and duration of the video
+  if (gst_element_query_position (m_Playbin, GST_FORMAT_TIME, &Gstreampos)
+    && gst_element_query_duration (m_Playbin, GST_FORMAT_TIME, &Gstreamlen)) {
+//        20              40                 200
+        Gstreamperc = Gstreampos * 100 / Gstreamlen;
+            //Temporarily dump percent to console for testing
+            std::cout << Gstreamperc << " %" << std::endl;
+
+  }
+}
+
+void ImageBox::GstreamSeek()
+{
+//      Temporarily manually call GstreamTime, as Gstreamlen is needed to work, but should probably be called by time widget
+        ImageBox::GstreamTime();
+//  Temporarily make static to test compatibility
+    NavGstperc = 50;
+    NavGstnano = NavGstperc * 0.01 * Gstreamlen;
+
+       if (!gst_element_seek (m_Playbin, 1.0, GST_FORMAT_TIME, GST_SEEK_FLAG_FLUSH,
+                         GST_SEEK_TYPE_SET, NavGstnano,
+                         GST_SEEK_TYPE_NONE, GST_CLOCK_TIME_NONE)) {
+                            g_print ("Seek failed!\n");
+                            };
+        std::cout << "Navigating to " << NavGstnano << " Time" << std::endl;
+
+
+}
+
 #endif // Have_Gstreamer
