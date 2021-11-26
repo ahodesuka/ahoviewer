@@ -61,11 +61,11 @@ libpeas = dependency('libpeas-1.0', version : ['>=1.22.0'], required : get_optio
 libsecret = dependency('libsecret-1', required : get_option('libsecret'))
 
 libunrar = dependency('libunrar', required : false)
+libunrar_found = false
 # libunrar doesn't package a .pc file so we need to find it manually
 # worse yet not all distros put the header into the same directory
 if not libunrar.found() and not get_option('libunrar').disabled()
   cpp = meson.get_compiler('cpp')
-  libunrar_found = false
   libunrar = cpp.find_library('libunrar', required : get_option('libunrar'))
   search_paths = [ '/usr/include/unrar', '/usr/include/libunrar',
                    '/usr/include/x86_64-linux-gnu/unrar', '/usr/include/x86_64-linux-gnu/libunrar',
