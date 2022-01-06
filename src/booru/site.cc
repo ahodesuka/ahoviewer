@@ -715,10 +715,7 @@ Glib::RefPtr<Gdk::Pixbuf> Site::get_icon_pixbuf(const bool update)
                 for (const auto& url : icon_urls)
                 {
                     if (url.empty())
-                    {
-                        std::cout << "empty" << std::endl;
                         continue;
-                    }
 
                     m_Curler.set_url(url);
                     if (m_Curler.perform())
@@ -1067,7 +1064,7 @@ std::unordered_map<std::string, Tag::Type> Site::get_posts_tags(const xml::Docum
 
         for (const auto& post : posts.get_children())
         {
-            std::istringstream ss{ post.get_attribute("tags") };
+            std::istringstream ss{ post.get_value("tags") };
             std::vector<std::string> tags{ std::istream_iterator<std::string>{ ss },
                                            std::istream_iterator<std::string>{} };
             all_tags.insert(all_tags.end(), tags.begin(), tags.end());
@@ -1098,26 +1095,54 @@ std::unordered_map<std::string, Tag::Type> Site::get_posts_tags(const xml::Docum
     const int max_query_size{ 5120 };
     static const std::string_view space{ "%20" };
 
-    size_t splits_needed{ tags.length() / max_query_size };
     std::vector<std::string> split_tags;
+    static constexpr auto limit_to_1k = [](auto& tags, const auto& begin, const auto& end) {
+        size_t n{ 0 }, p{ static_cast<size_t>(std::distance(tags.begin(), begin)) };
+        // Make sure there are no more than 1000 tags for a given query
+        while (n < 1000)
+        {
+            ++p;
+            p = tags.find(space, p);
+            if (p == std::string::npos || p >= static_cast<size_t>(end - tags.begin()))
+                return end;
+
+            ++n;
+        }
+
+        std::cout << p << std::endl;
+        return tags.begin() + p;
+    };
+
     std::string::iterator it, last_it{ tags.begin() };
 
-    for (size_t i = 0; i < splits_needed; ++i)
+    while (true)
     {
-        // Find the last encoded space before max_query_size * (i+1)
-        it = std::find_end(
-            last_it, tags.begin() + max_query_size * (i + 1), space.begin(), space.end());
-        split_tags.push_back(
-            tags.substr(std::distance(tags.begin(), last_it), std::distance(last_it, it)));
+        if (static_cast<size_t>(last_it - tags.begin()) >= tags.length())
+            break;
+
+        // Find the last encoded space before max_query_size
+        if (tags.end() - last_it > max_query_size)
+        {
+            it = std::find_end(last_it, last_it + max_query_size, space.begin(), space.end());
+        }
+        else
+        {
+            it = tags.end();
+        }
+        it = limit_to_1k(tags, last_it, it);
+        std::string split{ tags.substr(std::distance(tags.begin(), last_it),
+                                       std::distance(last_it, it)) };
+
+        split_tags.push_back(split);
         // Advance past the space so the next string wont start with it
         last_it = it + space.length();
     }
-    // Add any remaining tags or all the tags if tags.length() < max_query_size
-    split_tags.push_back(tags.substr(std::distance(tags.begin(), last_it)));
     std::vector<std::future<TagMap>> jobs;
 
     static const auto tag_task = [](const std::string& url, const std::string& t) {
-        static const std::string tag_uri{ "/index.php?page=dapi&s=tag&q=index&limit=0&names=%1" };
+        static const std::string tag_uri{
+            "/index.php?page=dapi&s=tag&q=index&limit=1000&names=%1"
+        };
         Curler c{ url + Glib::ustring::compose(tag_uri, t) };
         TagMap tags;
         if (c.perform())
@@ -1134,13 +1159,13 @@ std::unordered_map<std::string, Tag::Type> Site::get_posts_tags(const xml::Docum
                     std::inserter(tags, tags.end()),
                     [](const auto& n) -> std::pair<std::string, Tag::Type> {
                         Tag::Type type{ Tag::Type::UNKNOWN };
-                        auto i{ std::stoi(n.get_attribute("type")) };
+                        auto i{ std::stoi(n.get_value("type")) };
                         auto it{ std::find_if(gb_types.begin(), gb_types.end(), [i](const auto& t) {
                             return t.first == i;
                         }) };
                         if (it != gb_types.end())
                             type = it->second;
-                        return { n.get_attribute("name"), type };
+                        return { n.get_value("name"), type };
                     });
             }
             catch (const std::runtime_error& e)
