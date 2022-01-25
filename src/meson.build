@@ -94,7 +94,6 @@ if libpeas.found()
     ],
     symbol_prefix : 'ahoviewer',
     identifier_prefix : 'Ahoviewer',
-    link_with: gir_dummy,
     install : true,
     extra_args: [
       '--warn-all',
