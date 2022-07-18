@@ -38,6 +38,7 @@ namespace AhoViewer
         std::string get_string(const std::string& key) const;
 
         std::vector<std::shared_ptr<Booru::Site>>& get_sites();
+        void save_sites();
 
         std::string get_keybinding(const std::string& group, const std::string& name) const;
         void
@@ -93,8 +94,6 @@ namespace AhoViewer
         }
 
     private:
-        void save_sites();
-
         libconfig::Config m_Config;
 
         const std::string m_ConfigPath, m_ConfigFilePath, m_BooruPath, m_FavoriteTagsPath;

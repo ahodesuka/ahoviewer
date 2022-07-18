@@ -153,8 +153,6 @@ SettingsManager::SettingsManager()
 
 SettingsManager::~SettingsManager()
 {
-    save_sites();
-
     try
     {
         m_Config.writeFile(m_ConfigFilePath.c_str());

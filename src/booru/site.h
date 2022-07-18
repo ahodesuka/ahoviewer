@@ -61,17 +61,10 @@ namespace AhoViewer::Booru
         std::string get_register_url() const;
 
         std::string get_username() const { return m_Username; }
-        void set_username(const std::string& s)
-        {
-            m_NewAccount = true;
-            m_Username   = s;
-        }
+        void set_username(const std::string& s) { m_Username = s; }
 
         std::string get_password() const { return m_Password; }
         void set_password(const std::string& s);
-
-        std::string get_cookie();
-        void cleanup_cookie() const;
 
         int get_max_connections() const { return m_MaxConnections; }
         CURLSH* get_share_handle() const { return m_ShareHandle; }
@@ -118,7 +111,7 @@ namespace AhoViewer::Booru
 
         std::string m_Name, m_Url, m_Username, m_Password, m_IconPath, m_TagsPath, m_CookiePath;
         Type m_Type;
-        bool m_NewAccount{ false }, m_UseSamples;
+        bool m_UseSamples;
         uint64_t m_CookieTS{ 0 };
         std::set<Tag> m_Tags;
 
