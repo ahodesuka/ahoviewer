@@ -230,6 +230,7 @@
                                         <property name="primary-icon-activatable">False</property>
                                         <property name="placeholder-text" translatable="yes">search...</property>
                                         <property name="completion">Booru::Browser::TagEntryCompletion</property>
+                                        <property name="input-hints">GTK_INPUT_HINT_NO_SPELLCHECK | GTK_INPUT_HINT_NO_EMOJI</property>
                                       </object>
                                       <packing>
                                         <property name="expand">True</property>
