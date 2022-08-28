@@ -59,6 +59,9 @@ namespace AhoViewer
         void on_scroll_down();
         void on_scroll_left();
         void on_scroll_right();
+        void toggle_gstream_play_status();
+        void GstreamTime();
+        void GstreamSeek();
         // }}}
     protected:
         void on_realize() override;
