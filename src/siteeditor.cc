@@ -173,7 +173,8 @@ void SiteEditor::on_my_cursor_changed()
     m_UsernameEntry->set_sensitive(can_register);
     m_PasswordEntry->set_sensitive(can_register);
 
-    if (!can_register || s->get_type() == Type::GELBOORU)
+    if (!can_register ||
+        (s->get_type() == Type::GELBOORU && s->get_url().find("gelbooru.com") == std::string::npos))
         m_PasswordLabel->set_text(_("Password:"));
     else
         m_PasswordLabel->set_text(_("API Key:"));

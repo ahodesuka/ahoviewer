@@ -39,6 +39,7 @@ namespace AhoViewer
         std::string get_string(const std::string& key) const;
 
         std::vector<std::shared_ptr<Booru::Site>>& get_sites();
+        void save_sites();
 
         // Returns a map of all keybindings
         const KeybindingMap& get_keybindings() const { return m_Keybindings; }
@@ -99,8 +100,6 @@ namespace AhoViewer
             else
                 set(key, value, Setting::TypeString);
         }
-
-        void save_sites();
 
     private:
         libconfig::Config m_Config;

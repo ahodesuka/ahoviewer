@@ -387,7 +387,7 @@ ImageBox::ImageBox(BaseObjectType* cobj, const Glib::RefPtr<Gtk::Builder>& bldr)
     }
 
     // playbin3 will break things.
-    Glib::setenv("USE_PLAYBIN3", "0", true);
+    Glib::unsetenv("USE_PLAYBIN3");
     m_Playbin = gst_element_factory_make("playbin", "playbin");
     g_object_set(m_Playbin,
                  // For now users can put

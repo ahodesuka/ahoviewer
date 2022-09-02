@@ -403,6 +403,8 @@ void Application::show_dialog(Gtk::Window* dialog)
 
 void Application::on_shutdown()
 {
+    Settings.save_sites();
+
     std::vector<std::future<void>> futures;
     for (const std::shared_ptr<Booru::Site>& site : Settings.get_sites())
         futures.push_back(std::async(std::launch::async, &Booru::Site::save_tags, site));

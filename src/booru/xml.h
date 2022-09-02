@@ -26,6 +26,13 @@ namespace AhoViewer::xml
                 attr = reinterpret_cast<char*>(prop);
                 xmlFree(prop);
             }
+            // Fallback to value of given name as child if the attribute didnt exist
+            // On 2022 Jan. 2nd~ Gelbooru decided to change their API to use values instead of attributes,
+            // but kept their naming conventions to not match danbooru.
+            else
+            {
+                attr = get_value(name);
+            }
 
             return attr;
         }

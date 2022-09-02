@@ -281,7 +281,6 @@ Site::Site(std::string name,
       m_Password{ std::move(pass) },
       m_IconPath{ Glib::build_filename(Settings.get_booru_path(), m_Name + ".png") },
       m_TagsPath{ Glib::build_filename(Settings.get_booru_path(), m_Name + "-tags") },
-      m_CookiePath{ Glib::build_filename(Settings.get_booru_path(), m_Name + "-cookie") },
       m_Type{ type },
       m_UseSamples{ use_samples },
       m_ShareHandle{ curl_share_init() }
@@ -292,7 +291,6 @@ Site::Site(std::string name,
 
     // Types of data to share between curlers for this site
     for (auto d : { CURL_LOCK_DATA_CONNECT,
-                    CURL_LOCK_DATA_COOKIE,
                     CURL_LOCK_DATA_DNS,
                     CURL_LOCK_DATA_SSL_SESSION,
                     CURL_LOCK_DATA_SHARE })
@@ -462,7 +460,6 @@ Site::~Site()
     if (m_IconCurlerThread.joinable())
         m_IconCurlerThread.join();
 
-    cleanup_cookie();
     curl_share_cleanup(m_ShareHandle);
 }
 
@@ -472,10 +469,16 @@ std::string Site::get_posts_url(const std::string& tags, size_t page)
     if (m_Type == Type::PLUGIN)
         return m_Url + m_Plugin->get_posts_uri(tags, page, Settings.get_int("BooruLimit"));
 #endif // HAVE_LIBPEAS
-    return Glib::ustring::compose(m_Url + RequestURI.at(m_Type),
-                                  (m_Type == Type::GELBOORU ? page - 1 : page),
-                                  Settings.get_int("BooruLimit"),
-                                  tags);
+    std::string url{ Glib::ustring::compose(m_Url + RequestURI.at(m_Type),
+                                            (m_Type == Type::GELBOORU ? page - 1 : page),
+                                            Settings.get_int("BooruLimit"),
+                                            tags) };
+    // Append gelbooru api key
+    if (m_Url.find("gelbooru.com") != std::string::npos &&
+        m_Password.find("&api_key=") != std::string::npos)
+        url.append(m_Password);
+
+    return url;
 }
 
 void Site::add_tags(const std::vector<Tag>& tags)
@@ -544,7 +547,6 @@ std::string Site::get_register_url() const
 
 void Site::set_password(const std::string& s)
 {
-    m_NewAccount = true;
 #ifdef HAVE_LIBSECRET
     if (!m_Username.empty())
         secret_password_store(SECRET_SCHEMA_COMPAT_NETWORK,
@@ -598,83 +600,6 @@ void Site::set_password(const std::string& s)
     m_Password = s;
 }
 
-// FIXME: Hopefully Gelbooru implements basic HTTP Authentication
-std::string Site::get_cookie()
-{
-    if (m_Type != Type::GELBOORU)
-        return "";
-
-    if (!m_Username.empty() && !m_Password.empty())
-    {
-        using namespace std::chrono;
-        uint64_t cts = duration_cast<seconds>(system_clock::now().time_since_epoch()).count();
-
-        if (cts >= m_CookieTS || m_NewAccount)
-        {
-            // Get cookie expiration timestamp
-            if (Glib::file_test(m_CookiePath, Glib::FILE_TEST_EXISTS))
-            {
-                std::ifstream ifs(m_CookiePath);
-                std::string line, tok;
-
-                while (std::getline(ifs, line))
-                {
-                    if (line.compare(0, 10, "#HttpOnly_") == 0)
-                        line = line.substr(1);
-
-                    // Skip comments
-                    if (line[0] == '#')
-                        continue;
-
-                    std::istringstream iss(line);
-                    size_t i = 0;
-
-                    while (std::getline(iss, tok, '\t'))
-                    {
-                        // Timestamp is always at the 4th index
-                        if (i == 4)
-                        {
-                            char* after = nullptr;
-                            uint64_t ts = strtoull(tok.c_str(), &after, 10);
-
-                            if (ts < m_CookieTS || m_CookieTS == 0)
-                                m_CookieTS = ts;
-                        }
-
-                        ++i;
-                    }
-                }
-            }
-
-            // Login and get a new cookie
-            // This does not check whether or not the login succeeded.
-            if (cts >= m_CookieTS || m_NewAccount)
-            {
-                if (Glib::file_test(m_CookiePath, Glib::FILE_TEST_EXISTS))
-                    g_unlink(m_CookiePath.c_str());
-
-                Curler curler(m_Url + "/index.php?page=account&s=login&code=00", m_ShareHandle);
-                std::string f = Glib::ustring::compose("user=%1&pass=%2", m_Username, m_Password);
-
-                curler.set_cookie_jar(m_CookiePath);
-                curler.set_post_fields(f);
-                curler.perform();
-
-                m_NewAccount = false;
-            }
-        }
-    }
-
-    return m_CookiePath;
-}
-
-void Site::cleanup_cookie() const
-{
-    if ((m_Username.empty() || m_Password.empty() || m_NewAccount) &&
-        Glib::file_test(m_CookiePath, Glib::FILE_TEST_EXISTS))
-        g_unlink(m_CookiePath.c_str());
-}
-
 Glib::RefPtr<Gdk::Pixbuf> Site::get_icon_pixbuf(const bool update)
 {
     if (!m_IconPixbuf || update)
@@ -715,10 +640,7 @@ Glib::RefPtr<Gdk::Pixbuf> Site::get_icon_pixbuf(const bool update)
                 for (const auto& url : icon_urls)
                 {
                     if (url.empty())
-                    {
-                        std::cout << "empty" << std::endl;
                         continue;
-                    }
 
                     m_Curler.set_url(url);
                     if (m_Curler.perform())
@@ -919,7 +841,13 @@ Site::parse_post_data(unsigned char* data, const size_t size)
                         has_notes = post.get_attribute("has_notes") == "true";
 
                     if (has_notes)
+                    {
                         notes_url = Glib::ustring::compose(m_Url + NotesURI.at(m_Type), id);
+                        // Append gelbooru api key
+                        if (m_Url.find("gelbooru.com") != std::string::npos &&
+                            m_Password.find("&api_key=") != std::string::npos)
+                            notes_url.append(m_Password);
+                    }
 
                     // Some older Gelbooru based sites have a bug where their thumbnail urls file
                     // extension match the normal file extension even though all thumbnails are .jpg
@@ -1067,7 +995,7 @@ std::unordered_map<std::string, Tag::Type> Site::get_posts_tags(const xml::Docum
 
         for (const auto& post : posts.get_children())
         {
-            std::istringstream ss{ post.get_attribute("tags") };
+            std::istringstream ss{ post.get_value("tags") };
             std::vector<std::string> tags{ std::istream_iterator<std::string>{ ss },
                                            std::istream_iterator<std::string>{} };
             all_tags.insert(all_tags.end(), tags.begin(), tags.end());
@@ -1094,31 +1022,64 @@ std::unordered_map<std::string, Tag::Type> Site::get_posts_tags(const xml::Docum
 
     // We need to split the tags into multiple requests if they are larger than 5K bytes because
     // Gelbooru has a max request header size of 6K bytes, generally the other data in the header
-    // should not exceed 1K bytes (but this may have to be looked at)
+    // should not exceed 1K bytes but this may have to be looked at
     const int max_query_size{ 5120 };
     static const std::string_view space{ "%20" };
 
-    size_t splits_needed{ tags.length() / max_query_size };
     std::vector<std::string> split_tags;
+    static constexpr auto limit_to_1k = [](auto& tags, const auto& begin, const auto& end) {
+        size_t n{ 0 }, p{ static_cast<size_t>(std::distance(tags.begin(), begin)) };
+        // Make sure there are no more than 1000 tags for a given query
+        while (n < 1000)
+        {
+            ++p;
+            p = tags.find(space, p);
+            if (p == std::string::npos || p >= static_cast<size_t>(end - tags.begin()))
+                return end;
+
+            ++n;
+        }
+
+        std::cout << p << std::endl;
+        return tags.begin() + p;
+    };
+
     std::string::iterator it, last_it{ tags.begin() };
 
-    for (size_t i = 0; i < splits_needed; ++i)
+    while (true)
     {
-        // Find the last encoded space before max_query_size * (i+1)
-        it = std::find_end(
-            last_it, tags.begin() + max_query_size * (i + 1), space.begin(), space.end());
-        split_tags.push_back(
-            tags.substr(std::distance(tags.begin(), last_it), std::distance(last_it, it)));
+        if (static_cast<size_t>(last_it - tags.begin()) >= tags.length())
+            break;
+
+        // Find the last encoded space before max_query_size
+        if (tags.end() - last_it > max_query_size)
+        {
+            it = std::find_end(last_it, last_it + max_query_size, space.begin(), space.end());
+        }
+        else
+        {
+            it = tags.end();
+        }
+        it = limit_to_1k(tags, last_it, it);
+        std::string split{ tags.substr(std::distance(tags.begin(), last_it),
+                                       std::distance(last_it, it)) };
+
+        split_tags.push_back(split);
         // Advance past the space so the next string wont start with it
         last_it = it + space.length();
     }
-    // Add any remaining tags or all the tags if tags.length() < max_query_size
-    split_tags.push_back(tags.substr(std::distance(tags.begin(), last_it)));
     std::vector<std::future<TagMap>> jobs;
 
-    static const auto tag_task = [](const std::string& url, const std::string& t) {
-        static const std::string tag_uri{ "/index.php?page=dapi&s=tag&q=index&limit=0&names=%1" };
-        Curler c{ url + Glib::ustring::compose(tag_uri, t) };
+    static const auto tag_task = [&apikey = m_Password](const std::string& url,
+                                                        const std::string& t) {
+        static const std::string tag_uri{
+            "%1/index.php?page=dapi&s=tag&q=index&limit=1000&names=%2"
+        };
+        std::string tags_url{ Glib::ustring::compose(tag_uri, url, t) };
+        if (apikey.find("&api_key=") != std::string::npos)
+            tags_url.append(apikey);
+
+        Curler c{ tags_url };
         TagMap tags;
         if (c.perform())
         {
@@ -1134,13 +1095,13 @@ std::unordered_map<std::string, Tag::Type> Site::get_posts_tags(const xml::Docum
                     std::inserter(tags, tags.end()),
                     [](const auto& n) -> std::pair<std::string, Tag::Type> {
                         Tag::Type type{ Tag::Type::UNKNOWN };
-                        auto i{ std::stoi(n.get_attribute("type")) };
+                        auto i{ std::stoi(n.get_value("type")) };
                         auto it{ std::find_if(gb_types.begin(), gb_types.end(), [i](const auto& t) {
                             return t.first == i;
                         }) };
                         if (it != gb_types.end())
                             type = it->second;
-                        return { n.get_attribute("name"), type };
+                        return { n.get_value("name"), type };
                     });
             }
             catch (const std::runtime_error& e)

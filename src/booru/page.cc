@@ -322,10 +322,7 @@ void Page::get_posts()
         }
 
         m_Curler.set_url(m_Site->get_posts_url(tags, m_Page));
-
-        if (m_Site->get_type() == Type::GELBOORU)
-            m_Curler.set_cookie_file(m_Site->get_cookie());
-        else
+        if (m_Site->get_url().find("gelbooru.com") == std::string::npos)
             m_Curler.set_http_auth(m_Site->get_username(), m_Site->get_password());
 
         bool success{ false };

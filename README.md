@@ -1,4 +1,4 @@
-# ahoviewer [![Donate with Bitcoin](https://en.cryptobadges.io/badge/micro/37ggEUusb22afoougFbJ3bPqQJTMH3i7ht)](https://en.cryptobadges.io/donate/37ggEUusb22afoougFbJ3bPqQJTMH3i7ht) [![Donate with Ethereum](https://en.cryptobadges.io/badge/micro/0x6CA30E3208bC5f70E8F24bE1171Ece6dB5799A8e)](https://en.cryptobadges.io/donate/0x6CA30E3208bC5f70E8F24bE1171Ece6dB5799A8e)
+# ahoviewer
 
 A GTK image viewer, manga reader, and booru browser.
 
