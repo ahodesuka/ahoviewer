@@ -152,7 +152,7 @@ TagView::TagView(BaseObjectType* cobj, const Glib::RefPtr<Gtk::Builder>& bldr)
       m_FavoriteTags{ Settings.get_favorite_tags() }
 {
     auto model{ Glib::RefPtr<Gio::Menu>::cast_dynamic(bldr->get_object("TagViewPopoverMenu")) };
-    m_PopupMenu = std::make_unique<Gtk::Menu>(model);
+    m_PopupMenu = Gtk::make_managed<Gtk::Menu>(model);
     m_PopupMenu->attach_to_widget(*this);
 
     bldr->get_widget_derived("Booru::Browser::TagEntry", m_TagEntry);

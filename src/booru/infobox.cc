@@ -7,7 +7,7 @@ InfoBox::InfoBox(BaseObjectType* cobj, const Glib::RefPtr<Gtk::Builder>& bldr)
     : Gtk::EventBox{ cobj }
 {
     auto model{ Glib::RefPtr<Gio::Menu>::cast_dynamic(bldr->get_object("InfoBoxPopoverMenu")) };
-    m_PopupMenu = std::make_unique<Gtk::Menu>(model);
+    m_PopupMenu = Gtk::make_managed<Gtk::Menu>(model);
     m_PopupMenu->attach_to_widget(*this);
 
     bldr->get_widget("Booru::Browser::InfoRevealer", m_Revealer);

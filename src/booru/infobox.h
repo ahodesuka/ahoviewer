@@ -31,7 +31,7 @@ namespace AhoViewer::Booru
         bool on_button_press_event(GdkEventButton* e) override;
 
     private:
-        std::unique_ptr<Gtk::Menu> m_PopupMenu{ nullptr };
+        Gtk::Menu* m_PopupMenu;
 
         bool m_InfoSet{ false }, m_IsVisible{ false };
         Gtk::Revealer* m_Revealer;

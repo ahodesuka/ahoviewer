@@ -27,7 +27,7 @@ namespace AhoViewer
         void on_cursor_changed();
 
         Gtk::TreeView* m_TreeView;
-        std::unique_ptr<Gtk::Menu> m_PopupMenu;
+        Gtk::Menu* m_PopupMenu;
         Glib::RefPtr<Gtk::Adjustment> m_VAdjust;
         bool m_KeepAligned{ true };
         sigc::connection m_ScrollConn;

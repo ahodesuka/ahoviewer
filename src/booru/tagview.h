@@ -101,7 +101,7 @@ namespace AhoViewer::Booru
 
         static const std::string StarSVG, StarOutlineSVG;
 
-        std::unique_ptr<Gtk::Menu> m_PopupMenu;
+        Gtk::Menu* m_PopupMenu;
         Glib::RefPtr<Gio::SimpleAction> m_ShowTagTypeHeaders;
         Glib::RefPtr<Gtk::SizeGroup> m_HeaderSizeGroup;
 
