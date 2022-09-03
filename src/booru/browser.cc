@@ -493,6 +493,13 @@ void Browser::on_entry_value_changed()
 void Browser::on_page_removed(Gtk::Widget* w, guint)
 {
     Page* page{ static_cast<Page*>(w) };
+    auto it{ m_PageCloseConns.find(page) };
+
+    if (it != m_PageCloseConns.end())
+    {
+        it->second.disconnect();
+        m_PageCloseConns.erase(it);
+    }
 
     if (m_Notebook->get_n_pages() == 0)
     {
@@ -545,6 +552,8 @@ void Browser::on_page_added(Gtk::Widget* w, guint)
 {
     Page* page{ static_cast<Page*>(w) };
     page->m_PopupMenu = m_PopupMenu;
+    m_PageCloseConns[page] =
+        page->signal_closed().connect(sigc::mem_fun(*this, &Browser::close_page));
 
     // This is needed to update a dnd'd page's vertical scrollbar position.
     // Without it the scrollbar will be in the right position but the page

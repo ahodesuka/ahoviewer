@@ -117,6 +117,7 @@ namespace AhoViewer
                 m_FirstShow{ true };
             std::string m_LastSavePath;
 
+            std::map<Page*, sigc::connection> m_PageCloseConns;
             std::vector<sigc::connection> m_SiteIconConns;
             sigc::connection m_ComboChangedConn, m_DownloadErrorConn, m_ImageListConn,
                 m_ImageProgConn, m_ImageErrorConn, m_PosChangedConn, m_SaveProgConn,

@@ -476,6 +476,7 @@ bool Page::on_button_press_event(GdkEventButton* e)
 
 bool Page::on_tab_button_release_event(GdkEventButton* e)
 {
+    // Middle mouse = close tab
     if (e->type == GDK_BUTTON_RELEASE && e->button == 2)
         m_SignalClosed(this);
 
