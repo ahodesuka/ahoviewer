@@ -98,7 +98,7 @@ namespace AhoViewer
         Gtk::Overlay* m_Overlay;
         Gtk::Image* m_GtkImage;
         Gtk::Widget* m_GstWidget;
-        std::unique_ptr<Gtk::Popover> m_PopoverMenu;
+        Gtk::Popover* m_PopoverMenu;
         Glib::RefPtr<Gio::Action> m_NextAction, m_PreviousAction;
         SmoothScroll m_HSmoothScroll, m_VSmoothScroll;
 

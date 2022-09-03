@@ -77,21 +77,21 @@ GstBusSyncReply ImageBox::create_window(GstBus* bus, GstMessage* msg, void* user
     else
 #endif // GDK_WINDOWING_WAYLAND
         if (gst_is_video_overlay_prepare_window_handle_message(msg))
-    {
-        auto* self = static_cast<ImageBox*>(userp);
+        {
+            auto* self = static_cast<ImageBox*>(userp);
 
-        gst_video_overlay_set_window_handle(GST_VIDEO_OVERLAY(self->m_VideoSink),
-                                            self->m_WindowHandle);
+            gst_video_overlay_set_window_handle(GST_VIDEO_OVERLAY(self->m_VideoSink),
+                                                self->m_WindowHandle);
 
-        // XXX: This is needed for waylandsink otherwise the initial draw will
-        // only be black pixels
-        if (self->m_UsingWayland)
-            gst_video_overlay_set_render_rectangle(
-                GST_VIDEO_OVERLAY(self->m_VideoSink), 0, 0, 10, 10);
+            // XXX: This is needed for waylandsink otherwise the initial draw will
+            // only be black pixels
+            if (self->m_UsingWayland)
+                gst_video_overlay_set_render_rectangle(
+                    GST_VIDEO_OVERLAY(self->m_VideoSink), 0, 0, 10, 10);
 
-        gst_message_unref(msg);
-        return GST_BUS_DROP;
-    }
+            gst_message_unref(msg);
+            return GST_BUS_DROP;
+        }
 
     return GST_BUS_PASS;
 }
@@ -168,9 +168,7 @@ ImageBox::ImageBox(BaseObjectType* cobj, const Glib::RefPtr<Gtk::Builder>& bldr)
     auto model{ Glib::RefPtr<Gio::Menu>::cast_dynamic(bldr->get_object("ImageBoxPopoverMenu")) };
     // add the recent submenu
     model->insert_submenu(1, _("Open _Recent"), Application::get_default()->get_recent_menu());
-    Gtk::Box* box;
-    bldr->get_widget("MainWindow::Box", box);
-    m_PopoverMenu = std::make_unique<Gtk::Popover>(*box, model);
+    m_PopoverMenu = Gtk::make_managed<Gtk::Popover>(*this, model);
     static_cast<Gtk::Stack*>(m_PopoverMenu->get_child())->set_hhomogeneous(false);
 
     bldr->get_widget("ImageBox::Fixed", m_Fixed);
@@ -617,11 +615,7 @@ bool ImageBox::on_button_press_event(GdkEventButton* e)
             return true;
         case 3:
         {
-            int x, y;
-            m_MainWindow->get_position(x, y);
-            Gdk::Rectangle rect{
-                static_cast<int>(e->x_root) - x, static_cast<int>(e->y_root) - y, 1, 1
-            };
+            Gdk::Rectangle rect{ static_cast<int>(e->x), static_cast<int>(e->y), 1, 1 };
             m_PopoverMenu->set_pointing_to(rect);
             m_PopoverMenu->popup();
             m_CursorConn.disconnect();
