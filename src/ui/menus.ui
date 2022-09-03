@@ -128,12 +128,6 @@
     <section>
       <attribute name="display-hint">horizontal-buttons</attribute>
       <item>
-        <attribute name="label" translatable="yes">Zoom _In</attribute>
-        <attribute name="action">win.ZoomIn</attribute>
-        <attribute name="verb-icon">zoom-in-symbolic</attribute>
-        <attribute name="hidden-when">action-disabled</attribute>
-      </item>
-      <item>
         <attribute name="label" translatable="yes">Zoom _Out</attribute>
         <attribute name="action">win.ZoomOut</attribute>
         <attribute name="verb-icon">zoom-out-symbolic</attribute>
@@ -143,6 +137,12 @@
         <attribute name="label" translatable="yes">_Reset Zoom</attribute>
         <attribute name="action">win.ResetZoom</attribute>
         <attribute name="verb-icon">zoom-original-symbolic</attribute>
+        <attribute name="hidden-when">action-disabled</attribute>
+      </item>
+      <item>
+        <attribute name="label" translatable="yes">Zoom _In</attribute>
+        <attribute name="action">win.ZoomIn</attribute>
+        <attribute name="verb-icon">zoom-in-symbolic</attribute>
         <attribute name="hidden-when">action-disabled</attribute>
       </item>
     </section>
