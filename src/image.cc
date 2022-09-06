@@ -178,6 +178,9 @@ const Glib::RefPtr<Gdk::Pixbuf>& Image::get_thumbnail(Glib::RefPtr<Gio::Cancella
             }
         }
     }
+
+    if (!m_ThumbnailPixbuf)
+        m_ThumbnailPath = Glib::build_filename(NormalThumbnailDir, thumb_filename);
 #endif // __linux__
 
     if (!m_ThumbnailPixbuf)
