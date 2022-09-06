@@ -459,17 +459,20 @@ void Browser::reset_tag_entry_progress()
 
 bool Browser::on_entry_key_press_event(GdkEventKey* e)
 {
-    // we only care if enter/return was pressed while shift or no modifier was down
+    // We only care if enter/return was pressed while shift or no modifier was down
+    // Shift+return = open search in a new tab
     if ((e->keyval == GDK_KEY_Return || e->keyval == GDK_KEY_ISO_Enter ||
          e->keyval == GDK_KEY_KP_Enter) &&
         ((e->state & GDK_SHIFT_MASK) == GDK_SHIFT_MASK ||
          (e->state & Gtk::AccelGroup::get_default_mod_mask()) == 0))
     {
         search((e->state & GDK_SHIFT_MASK) == GDK_SHIFT_MASK);
+        return true;
     }
     else if (e->keyval == GDK_KEY_Escape)
     {
         m_SignalEntryBlur();
+        return true;
     }
 
     return false;

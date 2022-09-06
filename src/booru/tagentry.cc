@@ -30,6 +30,16 @@ void TagEntry::set_tags(const std::set<Tag>& tags)
 
 bool TagEntry::on_key_press_event(GdkEventKey* e)
 {
+    // Let the booru browser handle these events
+    if (((e->keyval == GDK_KEY_Return || e->keyval == GDK_KEY_ISO_Enter ||
+          e->keyval == GDK_KEY_KP_Enter) &&
+         ((e->state & GDK_SHIFT_MASK) == GDK_SHIFT_MASK ||
+          (e->state & Gtk::AccelGroup::get_default_mod_mask()) == 0)) ||
+        e->keyval == GDK_KEY_Escape)
+    {
+        return false;
+    }
+
     return Gtk::Entry::on_key_press_event(e);
 }
 
