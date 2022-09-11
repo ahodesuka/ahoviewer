@@ -185,6 +185,7 @@ sources += [
   'thumbnailbar.cc',
   'util.cc',
   'version.cc',
+  'videobox.cc',
 ]
 
 if not libnsgif.found()
@@ -195,12 +196,17 @@ if not libnsgif.found()
   incdirs += include_directories('../ext/libnsgif')
 endif
 
+subsystem = 'console'
+if get_option('buildtype').startswith('release')
+  subsystem = 'windows'
+endif
+
 ahoviewer = executable(
   meson.project_name(),
   sources,
   cpp_args : ahoviewer_cpp_args,
   dependencies : deps,
   include_directories : incdirs,
-  gui_app : get_option('buildtype').startswith('release'),
+  win_subsystem : subsystem,
   install : true,
 )

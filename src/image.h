@@ -64,7 +64,7 @@ namespace AhoViewer
     protected:
         static bool is_webm(const std::string&);
 
-        void load_gif();
+        bool load_gif(gif_animation* anim, size_t data_size, unsigned char* data);
         void create_gif_frame_pixbuf();
         bool is_gif(const unsigned char* data);
         void create_thumbnail(Glib::RefPtr<Gio::Cancellable> c, bool save = true);
@@ -81,7 +81,6 @@ namespace AhoViewer
         Glib::RefPtr<Gdk::Pixbuf> m_Pixbuf;
 
         gif_animation* m_GIFanim{ nullptr };
-        size_t m_GIFdataSize{ 0 };
         unsigned char* m_GIFdata{ nullptr };
         gif_bitmap_callback_vt m_BitmapCallbacks;
         int m_GIFcurFrame{ 0 }, m_GIFcurLoop{ 1 };

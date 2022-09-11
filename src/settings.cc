@@ -29,7 +29,7 @@ SettingsManager::SettingsManager()
                        { "HideAll", false },           { "HideAllFullscreen", true },
                        { "RememberWindowSize", true }, { "RememberWindowPos", true },
                        { "ShowTagTypeHeaders", true }, { "AutoHideInfoBox", true },
-                       { "AskDeleteConfirm", true } }),
+                       { "AskDeleteConfirm", true },   { "Mute", false } }),
       m_DefaultInts({ { "ArchiveIndex", -1 },
                       { "CacheSize", 2 },
                       { "SlideshowDelay", 5 },
@@ -45,7 +45,7 @@ SettingsManager::SettingsManager()
                       { "KonachanTagsVersion", 0 } }),
       m_DefaultStrings({
           { "TitleFormat", "[%i / %c] %f - %p" },
-          { "AudioSink", "fakesink" },
+          { "AudioSink", "autoaudiosink" },
           { "TagArtistColor", "#A00" },
           { "TagCharacterColor", "#0A0" },
           { "TagCopyrightColor", "#A0A" },
@@ -410,7 +410,7 @@ void SettingsManager::load_keybindings()
         {
             std::string saved_action_name{ action_name };
             // Saved actions replace . with * (libconfig doesn't allow for . in key names)
-            std::replace(saved_action_name.begin(), saved_action_name.end(), '*', '.');
+            std::replace(saved_action_name.begin(), saved_action_name.end(), '.', '*');
             std::vector<Glib::ustring> accels;
 
             // There are saved keybindings for this action (or the default were deleted)

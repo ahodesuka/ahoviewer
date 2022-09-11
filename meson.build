@@ -1,7 +1,7 @@
 project('ahoviewer', ['c', 'cpp'],
-    version : run_command('sh', 'version.sh', '--').stdout().strip(),
+    version : run_command('sh', 'version.sh', '--', check : false).stdout().strip(),
     license : 'MIT',
-    meson_version : '>= 0.47.0',
+    meson_version : '>= 0.56.0',
     default_options : ['cpp_std=c++17'])
 
 project_url = 'https://github.com/ahodesuka/ahoviewer'
@@ -28,7 +28,7 @@ libxml = dependency('libxml-2.0')
 curl = dependency('libcurl', version : '>= 7.58.0')
 
 curl_ssl_backend = run_command(
-  [get_option('curl-config'), '--ssl-backends']).stdout().strip().to_lower()
+  [get_option('curl-config'), '--ssl-backends'], check : true).stdout().strip().to_lower()
 
 curl_openssl = false
 curl_gnutls = false

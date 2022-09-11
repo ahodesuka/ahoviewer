@@ -76,7 +76,7 @@ namespace AhoViewer::Booru
         Curler m_Curler, m_ThumbnailCurler, m_NotesCurler;
         Glib::RefPtr<Gdk::PixbufLoader> m_Loader;
         Glib::RefPtr<Gdk::Pixbuf> m_UnscaledThumbnailPixbuf;
-        bool m_PixbufError{ false }, m_IsGifChecked{ false };
+        bool m_PixbufError{ false }, m_IsGifChecked{ false }, m_IsGif{ false };
         std::shared_mutex m_ThumbnailLock;
 
         std::condition_variable m_DownloadCond, m_ThumbnailCond;

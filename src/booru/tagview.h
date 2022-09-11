@@ -16,12 +16,11 @@ namespace AhoViewer::Booru
 
             void set_favorite(const bool f)
             {
-                auto first_set{ !m_Image.get_pixbuf() };
-                auto tag_view{ static_cast<TagView*>(get_parent()) };
+                auto first_set{ m_Image.get_icon_name().empty() };
                 if (f)
-                    m_Image.set(tag_view->m_StarPixbuf);
+                    m_Image.set_from_icon_name("starred-symbolic", Gtk::ICON_SIZE_BUTTON);
                 else
-                    m_Image.set(tag_view->m_StarOutlinePixbuf);
+                    m_Image.set_from_icon_name("non-starred-symbolic", Gtk::ICON_SIZE_BUTTON);
 
                 m_AnimConn.disconnect();
                 if (!first_set)
@@ -54,8 +53,6 @@ namespace AhoViewer::Booru
             sigc::signal<void, Row*> m_SignalTagFavToggled;
             sigc::signal<bool, GdkEventButton*, Row*> m_SignalTagButtonPressed;
         };
-        // For access to the star pixbufs
-        friend class Row;
 
         class Header : public Gtk::Box
         {
@@ -88,7 +85,6 @@ namespace AhoViewer::Booru
 
     protected:
         void on_realize() override;
-        void on_style_updated() override;
         bool on_button_press_event(GdkEventButton* e) override;
 
     private:
@@ -97,20 +93,13 @@ namespace AhoViewer::Booru
         void on_tag_favorite_toggled(Row* row);
 
         void header_func(Gtk::ListBoxRow* a, Gtk::ListBoxRow* b);
-        void update_favorite_icons();
-
-        static const std::string StarSVG, StarOutlineSVG;
 
         Gtk::Menu* m_PopupMenu;
         Glib::RefPtr<Gio::SimpleAction> m_ShowTagTypeHeaders;
-        Glib::RefPtr<Gtk::SizeGroup> m_HeaderSizeGroup;
 
         TagEntry* m_TagEntry;
         Gtk::ScrolledWindow* m_ScrolledWindow;
         std::vector<Tag>*m_Tags, &m_FavoriteTags;
-
-        Gdk::RGBA m_Color, m_PrevColor;
-        Glib::RefPtr<Gdk::Pixbuf> m_StarPixbuf, m_StarOutlinePixbuf;
 
         SignalNewTabTagType m_SignalNewTabTag;
     };
