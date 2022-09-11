@@ -4,20 +4,17 @@ on: [push, pull_request]
 
 jobs:
   build-linux:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04
     steps:
       - name: Checkout sources
         uses: actions/checkout@v2.3.4
-      - uses: actions/setup-python@v2
-        with:
-          python-version: "3.x"
       - name: Install dependencies
         run: |
           "${GITHUB_WORKSPACE}/.github/install-deps-ubuntu.sh"
       - name: Build ahoviewer
-        uses: BSFishy/meson-build@v1.0.3
-        with:
-          action: build
+        run: |
+          meson setup build
+          meson compile -C build
 
   build-msys2:
     runs-on: windows-latest
