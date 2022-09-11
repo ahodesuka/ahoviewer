@@ -100,7 +100,7 @@ void ImageBoxNote::on_realize()
 
         attributes.event_mask  = get_events() | Gdk::EXPOSURE_MASK;
         attributes.window_type = GDK_WINDOW_CHILD;
-        attributes.wclass      = GDK_INPUT_OUTPUT;
+        attributes.wclass      = GDK_INPUT_ONLY;
 
         m_GdkWindow = Gdk::Window::create(get_parent_window(), &attributes, GDK_WA_X | GDK_WA_Y);
         set_window(m_GdkWindow);

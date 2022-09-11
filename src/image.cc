@@ -118,10 +118,9 @@ const Glib::RefPtr<Gdk::Pixbuf>& Image::get_pixbuf()
 }
 
 // Private method used internally by gif_advance_frame
-// and by get_pixbuf when m_Pixbuf is null
+// and by load_pixbuf when m_Pixbuf is null
 void Image::create_gif_frame_pixbuf()
 {
-    std::scoped_lock lock{ m_Mutex };
     gif_result result = gif_decode_frame(m_GIFanim, m_GIFcurFrame);
 
     if (result == GIF_OK)
@@ -195,23 +194,50 @@ void Image::load_pixbuf(Glib::RefPtr<Gio::Cancellable> c)
     {
         Glib::RefPtr<Gio::File> file{ Gio::File::create_for_path(m_Path) };
 
-        std::array<unsigned char, 4> data;
-        file->read()->read(&data, 4);
+        std::array<unsigned char, 4> header;
+        file->read()->read(&header, 4);
 
-        if (is_gif(data.data()))
+        if (is_gif(header.data()))
         {
-            m_GIFanim = new gif_animation;
-            gif_create(m_GIFanim, &m_BitmapCallbacks);
+            gif_animation* anim = new gif_animation;
+            gif_create(anim, &m_BitmapCallbacks);
 
-            char* buffer;
-            // returns false if c was cancelled, and frees the buffer for us?
-            if (file->load_contents(c, buffer, m_GIFdataSize))
+            char* buffer{ nullptr };
+            try
             {
-                m_GIFdata = new unsigned char[m_GIFdataSize];
-                memcpy(m_GIFdata, buffer, m_GIFdataSize);
-                free(buffer);
+                gsize len;
+                if (file->load_contents(c, buffer, len))
+                {
+                    if (!c->is_cancelled())
+                    {
+                        auto data{ reinterpret_cast<unsigned char*>(buffer) };
+                        if (load_gif(anim, len, data) && !c->is_cancelled())
+                        {
+                            std::scoped_lock lock{ m_Mutex };
+                            m_GIFanim = anim;
+                            m_GIFdata = data;
+                            create_gif_frame_pixbuf();
+                        }
+                    }
 
-                load_gif();
+                    if (c->is_cancelled())
+                    {
+                        delete anim;
+                        g_free(buffer);
+                    }
+                }
+                else
+                {
+                    delete anim;
+                }
+            }
+            catch (...)
+            {
+                if (!c->is_cancelled())
+                    std::cerr << "Failed to load pixbuf from file '" << m_Path << "'" << std::endl;
+
+                delete anim;
+                g_free(buffer);
             }
         }
         else
@@ -223,17 +249,16 @@ void Image::load_pixbuf(Glib::RefPtr<Gio::Cancellable> c)
             }
             catch (const Glib::Error& e)
             {
-                std::cerr << "Failed to load pixbuf from file '" << m_Path << "'" << std::endl
-                          << e.what() << std::endl;
+                if (!c->is_cancelled())
+                    std::cerr << "Failed to load pixbuf from file '" << m_Path << "'" << std::endl
+                              << e.what() << std::endl;
             }
 
             if (!p || c->is_cancelled())
                 return;
 
-            {
-                std::scoped_lock lock{ m_Mutex };
-                m_Pixbuf = p;
-            }
+            std::scoped_lock lock{ m_Mutex };
+            m_Pixbuf = p;
         }
 
         m_Loading = false;
@@ -241,13 +266,12 @@ void Image::load_pixbuf(Glib::RefPtr<Gio::Cancellable> c)
     }
 }
 
-// Call this once m_GIFdata has been set
-void Image::load_gif()
+bool Image::load_gif(gif_animation* anim, size_t data_size, unsigned char* data)
 {
     gif_result result;
     do
     {
-        result = gif_initialise(m_GIFanim, m_GIFdataSize, m_GIFdata);
+        result = gif_initialise(anim, data_size, data);
         if (result != GIF_OK && result != GIF_WORKING)
         {
             std::cerr << "Error while loading GIF " << m_Path << std::endl
@@ -256,10 +280,11 @@ void Image::load_gif()
         }
         else if (result == GIF_OK)
         {
-            // Load the first frame
-            create_gif_frame_pixbuf();
+            return true;
         }
     } while (result != GIF_OK);
+
+    return false;
 }
 
 void Image::reset_pixbuf()
@@ -276,7 +301,7 @@ void Image::reset_pixbuf()
 
         if (m_GIFdata)
         {
-            delete[] m_GIFdata;
+            g_free(m_GIFdata);
             m_GIFdata = nullptr;
         }
 
@@ -286,6 +311,7 @@ void Image::reset_pixbuf()
 
 bool Image::gif_advance_frame()
 {
+    std::scoped_lock lock{ m_Mutex };
     // Handle frame advacing and looping.
     if (m_GIFanim->frame_count > 1)
     {

@@ -241,13 +241,12 @@ void Image::on_write(const unsigned char* d, size_t l)
     if (m_Curler.is_cancelled())
         return;
 
-    if (!m_GIFanim && !m_IsGifChecked && m_Curler.get_data_size() >= 4)
+    if (!m_IsGifChecked && m_Curler.get_data_size() >= 4)
     {
         m_IsGifChecked = true;
         if (is_gif(m_Curler.get_data()))
         {
-            m_GIFanim = new gif_animation;
-            gif_create(m_GIFanim, &m_BitmapCallbacks);
+            m_IsGif = true;
             m_Pixbuf.reset();
             close_loader();
         }
@@ -282,13 +281,27 @@ void Image::on_finished()
 {
     if (m_Curler.get_data_size() > 0)
     {
-        if (m_GIFanim)
+        if (m_IsGif)
         {
-            m_GIFdataSize = m_Curler.get_data_size();
-            m_GIFdata     = new unsigned char[m_GIFdataSize];
-            memcpy(m_GIFdata, m_Curler.get_data(), m_GIFdataSize);
+            gif_animation* anim = new gif_animation;
+            gsize len           = m_Curler.get_data_size();
+            guint8* data        = (guint8*)g_malloc(len);
 
-            AhoViewer::Image::load_gif();
+            gif_create(anim, &m_BitmapCallbacks);
+            memcpy(data, m_Curler.get_data(), len);
+
+            if (AhoViewer::Image::load_gif(anim, len, data))
+            {
+                std::scoped_lock lock{ m_Mutex };
+                m_GIFanim = anim;
+                m_GIFdata = data;
+                create_gif_frame_pixbuf();
+            }
+            else
+            {
+                delete anim;
+                g_free(data);
+            }
         }
         m_Curler.save_file_async(m_Path, [&](Glib::RefPtr<Gio::AsyncResult>& r) {
             try

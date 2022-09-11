@@ -15,11 +15,11 @@ namespace AhoViewer
     class ImageBoxNote;
     class MainWindow;
     class StatusBar;
+    class VideoBox;
     class ImageBox : public Gtk::ScrolledWindow
     {
     public:
         ImageBox(BaseObjectType*, const Glib::RefPtr<Gtk::Builder>&);
-        ~ImageBox() override;
 
         void queue_draw_image(const bool scroll = false);
         void set_image(const std::shared_ptr<Image>& image);
@@ -97,23 +97,10 @@ namespace AhoViewer
         Gtk::Fixed *m_Fixed, *m_NoteFixed;
         Gtk::Overlay* m_Overlay;
         Gtk::Image* m_GtkImage;
-        Gtk::Widget* m_GstWidget;
         Gtk::Popover* m_PopoverMenu;
+        VideoBox* m_VideoBox;
         Glib::RefPtr<Gio::Action> m_NextAction, m_PreviousAction;
         SmoothScroll m_HSmoothScroll, m_VSmoothScroll;
-
-#ifdef HAVE_GSTREAMER
-        static GstBusSyncReply create_window(GstBus* bus, GstMessage* msg, void* userp);
-        static gboolean bus_cb(GstBus*, GstMessage* msg, void* userp);
-
-        void on_set_volume();
-        void reset_gstreamer_pipeline();
-        GstElement* create_video_sink(const std::string& name);
-
-        GstElement *m_Playbin{ nullptr }, *m_VideoSink{ nullptr };
-        guintptr m_WindowHandle{ 0 };
-        bool m_Playing{ false }, m_UsingWayland{ false };
-#endif // HAVE_GSTREAMER
 
         StatusBar* m_StatusBar;
         MainWindow* m_MainWindow;

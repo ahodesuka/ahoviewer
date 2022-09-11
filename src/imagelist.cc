@@ -32,8 +32,7 @@ ImageList::ImageList(Widget* const w)
         {
             {
                 std::unique_lock<std::mutex> lock(m_CacheMutex);
-                m_CacheCond.wait(
-                    lock, [&]() { return !m_CacheQueue.empty() || m_CacheCancel->is_cancelled(); });
+                m_CacheCond.wait(lock, [&]() { return !m_CacheQueue.empty() || m_CacheStop; });
             }
 
             std::shared_ptr<Image> img = nullptr;
@@ -57,7 +56,6 @@ ImageList::~ImageList()
 
     cancel_cache();
     m_CacheStop = true;
-    m_CacheCancel->cancel();
     m_CacheCond.notify_one();
     m_CacheThread.join();
 }
@@ -436,6 +434,8 @@ void ImageList::set_current_relative(const int d)
 
 void ImageList::update_cache()
 {
+    cancel_cache();
+
     std::vector<size_t> cache(m_Images.size()), diff;
     std::iota(cache.begin(), cache.end(), 0);
     std::sort(cache.begin(), cache.end(), m_IndexSort);
@@ -453,7 +453,6 @@ void ImageList::update_cache()
             m_Cache.begin(), m_Cache.end(), tmp.begin(), tmp.end(), std::back_inserter(diff));
     }
 
-    cancel_cache();
     m_Cache = cache;
 
     // Free images that are no longer in the cache
@@ -461,6 +460,7 @@ void ImageList::update_cache()
         if (i <= m_Images.size() - 1)
             m_Images[i]->reset_pixbuf();
 
+    m_CacheCancel->reset();
     // Copy the imgaes into the queue and
     // tell the cache thread it has some work
     for (const auto i : m_Cache)
@@ -474,4 +474,5 @@ void ImageList::cancel_cache()
 {
     m_Cache.clear();
     m_CacheQueue.clear();
+    m_CacheCancel->cancel();
 }

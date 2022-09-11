@@ -112,7 +112,19 @@ Glib::RefPtr<Application> Application::get_default()
 
 MainWindow* Application::create_window(bool from_dnd)
 {
-    MainWindow* w{ new MainWindow{} };
+    Glib::RefPtr<Gtk::Builder> builder{ Gtk::Builder::create() };
+
+    try
+    {
+        builder->add_from_resource("/ui/mainwindow.ui");
+    }
+    catch (const Glib::Error& ex)
+    {
+        std::cerr << "Gtk::Builder::add_from_resource: " << ex.what() << std::endl;
+    }
+
+    MainWindow* w{ nullptr };
+    builder->get_widget_derived("MainWindow", w);
 
     add_window(*w);
     w->show();
@@ -217,15 +229,10 @@ void Application::on_startup()
     {
         auto gtk_settings{ Gtk::Settings::get_default() };
 
-        if (value == 0)
-        {
-            // ahoka-light is the default theme for Windows binary distribution
-            if (gtk_settings->property_gtk_theme_name() == "ahoka-light")
-                gtk_settings->property_gtk_theme_name() = "ahoka";
-
-            if (gtk_settings->property_gtk_icon_theme_name() == "ahoka-light")
-                gtk_settings->property_gtk_icon_theme_name() = "ahoka";
-        }
+        // ahoka-light is the default theme for Windows binary distribution, don't change the theme
+        // if something else has been set
+        if (value == 0 && gtk_settings->property_gtk_theme_name() == "ahoka-light")
+            gtk_settings->property_gtk_theme_name() = "ahoka";
     }
 #endif // _WIN32
 
@@ -287,12 +294,9 @@ void Application::on_startup()
     add_action("About", sigc::bind(sigc::mem_fun(*this, &Application::show_dialog), m_AboutDialog));
     add_action("Quit", sigc::mem_fun(*this, &Application::on_quit));
 
-    // Zoom modes actions need to
-    // This connects actions to their keybindings (even for actions that haven't been created yet)
+    // Connect actions to their keybindings (even for actions that haven't been created yet)
     for (const auto& [action, binds] : Settings.get_keybindings())
-    {
         set_accels_for_action(action, binds);
-    }
 
     try
     {

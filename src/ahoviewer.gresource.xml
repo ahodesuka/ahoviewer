@@ -11,5 +11,6 @@
     <file>ui/css/note-popover.css</file>
     <file>ui/css/tagview.css</file>
     <file>ui/css/tagview-colors.css</file>
+    <file>ui/css/video-controls.css</file>
   </gresource>
 </gresources>

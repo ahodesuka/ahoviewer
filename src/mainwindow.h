@@ -23,13 +23,14 @@ namespace AhoViewer
         friend Booru::Browser;
 
     public:
-        MainWindow();
+        MainWindow(BaseObjectType* cobj, const Glib::RefPtr<Gtk::Builder>& bldr);
         ~MainWindow() override;
 
         void show();
         void open_file(const Glib::ustring& uri, const int index = 0, const bool restore = false);
         void restore_last_file();
         void get_drawable_area_size(int& w, int& h) const;
+        int get_menubar_height() const;
 
     protected:
         bool on_key_press_event(GdkEventKey* e) override;
@@ -88,6 +89,9 @@ namespace AhoViewer
         Gtk::MessageDialog* m_AskDeleteConfirmDialog;
         Gtk::CheckButton* m_AskDeleteConfirmCheckButton;
 
+        Gtk::MenuBar* m_MenuBar;
+        Gtk::Box* m_Box;
+        Gtk::Stack* m_Stack;
         ThumbnailBar* m_ThumbnailBar;
         ImageBox* m_ImageBox;
         StatusBar* m_StatusBar;

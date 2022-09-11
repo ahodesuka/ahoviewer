@@ -1,0 +1,80 @@
+#VideoBoxControlBox {
+    background: linear-gradient(to bottom, transparent 35%, rgba(0, 0, 0, 0.6));
+    min-height: 40px;
+    padding: 10px 20px;
+}
+
+#VideoBoxControlBox button {
+    color: #dedede;
+    transition: all 150ms;
+    -gtk-icon-shadow: 0 0 6px rgba(0, 0, 0, 0.2), 0 0 2px rgba(0, 0, 0, 0.4);
+}
+
+#VideoBoxControlBox button:hover {
+    background: none;
+    border-color: transparent;
+    box-shadow: none;
+    color: #ffffff;
+    -gtk-icon-shadow: 0 0 7px rgba(0, 0, 0, 0.3), 0 0 3px rgba(0, 0, 0, 0.6);
+}
+
+#VideoBoxControlBox label {
+    color: #e9e6e6;
+    text-shadow: rgba(0, 0, 0, 0.8) 0 0 5px;
+}
+
+#VideoBoxControlBox scale trough {
+    box-shadow: rgba(0, 0, 0, 0.2) 0 0 5px;
+    transition: box-shadow 100ms;
+}
+
+#VideoBoxControlBox scale:hover trough {
+    box-shadow: rgba(0, 0, 0, 0.4) 0 0 5px;
+}
+
+#VideoBoxControlBox #VolumeScale trough {
+    background: rgba(255, 255, 255, .2);
+    border-radius: 5px;
+}
+
+#VideoBoxControlBox #VolumeScale slider {
+    background: rgb(255, 255, 255);
+    border: none;
+    box-shadow: none;
+    min-height: 6px;
+    min-width: 6px;
+}
+
+#VideoBoxControlBox #VolumeScale highlight {
+    background: rgba(255, 255, 255, .8);
+    transition: all 100ms;
+    min-height: 6px;
+    min-width: 6px;
+    border-radius: 3px;
+}
+
+#VideoBoxControlBox #SeekScale trough,
+#VideoBoxControlBox #SeekScale highlight {
+    background: rgba(255, 255, 255, .2);
+    min-height: 6px;
+    transition: all 100ms;
+}
+
+#VideoBoxControlBox #SeekScale:hover trough,
+#VideoBoxControlBox #SeekScale:hover highlight {
+    min-height: 12px;
+    border-radius: 6px;
+}
+
+#VideoBoxControlBox #SeekScale slider {
+    background: @theme_selected_bg_color;
+    border: none;
+    border-radius: 6px;
+    box-shadow: none;
+    min-height: 12px;
+    min-width: 12px;
+}
+
+#VideoBoxControlBox #SeekScale highlight {
+    background: @theme_selected_bg_color;
+}

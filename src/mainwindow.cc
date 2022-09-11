@@ -20,37 +20,34 @@ using namespace AhoViewer;
 #include <string_view>
 #include <utility>
 
-MainWindow::MainWindow()
-    : Gtk::ApplicationWindow{},
+#ifdef GDK_WINDOWING_WIN32
+#include <gdk/gdkwin32.h>
+#endif // GDK_WINDOWING_WIN32
+
+MainWindow::MainWindow(BaseObjectType* cobj, const Glib::RefPtr<Gtk::Builder>& bldr)
+    : Gtk::ApplicationWindow{ cobj },
       m_LastSavePath{ Settings.get_string("LastSavePath") }
 {
-    Glib::RefPtr<Gtk::Builder> builder{ Gtk::Builder::create() };
-
     try
     {
-        builder->add_from_resource("/ui/mainwindow.ui");
-        // Child widgets will need the menus so add them to the builder for them
-        builder->add_from_resource("/ui/menus.ui");
+        bldr->add_from_resource("/ui/menus.ui");
     }
     catch (const Glib::Error& ex)
     {
         std::cerr << "Gtk::Builder::add_from_resource: " << ex.what() << std::endl;
     }
-    // We cannot use a Gtk::Builder to create this window because it prevents
-    // the use of a application wide menubar
-    Gtk::Box* box{ nullptr };
-    builder->get_widget("MainWindow::Box", box);
-    add(*box);
 
-    builder->get_widget_derived("ThumbnailBar", m_ThumbnailBar);
-    builder->get_widget_derived("Booru::Browser", m_BooruBrowser);
-    builder->get_widget_derived("Booru::Browser::TagEntry", m_TagEntry);
-    builder->get_widget_derived("Booru::Browser::TagView", m_TagView);
-    builder->get_widget_derived("Booru::Browser::InfoBox", m_InfoBox);
-    builder->get_widget_derived("ImageBox", m_ImageBox);
-    builder->get_widget_derived("StatusBar", m_StatusBar);
+    bldr->get_widget("MainWindow::Box", m_Box);
+    bldr->get_widget("MainWindow::Stack", m_Stack);
+    bldr->get_widget_derived("ThumbnailBar", m_ThumbnailBar);
+    bldr->get_widget_derived("Booru::Browser", m_BooruBrowser);
+    bldr->get_widget_derived("Booru::Browser::TagEntry", m_TagEntry);
+    bldr->get_widget_derived("Booru::Browser::TagView", m_TagView);
+    bldr->get_widget_derived("Booru::Browser::InfoBox", m_InfoBox);
+    bldr->get_widget_derived("ImageBox", m_ImageBox);
+    bldr->get_widget_derived("StatusBar", m_StatusBar);
 
-    builder->get_widget("MainWindow::HPaned", m_HPaned);
+    bldr->get_widget("MainWindow::HPaned", m_HPaned);
     m_HPaned->property_position().signal_changed().connect([&]() {
         if (!m_BooruBrowser->get_realized())
             return;
@@ -107,11 +104,11 @@ MainWindow::MainWindow()
         sigc::mem_fun(m_BooruBrowser, &Booru::Browser::update_combobox_model));
 
     // Used when deleting files and AskDeleteConfirm is true
-    builder->get_widget("AskDeleteConfirmDialog", m_AskDeleteConfirmDialog);
+    bldr->get_widget("AskDeleteConfirmDialog", m_AskDeleteConfirmDialog);
     m_AskDeleteConfirmDialog->signal_response().connect(
         [&](const int) { m_AskDeleteConfirmDialog->hide(); });
 
-    builder->get_widget("AskDeleteConfirmDialog::CheckButton", m_AskDeleteConfirmCheckButton);
+    bldr->get_widget("AskDeleteConfirmDialog::CheckButton", m_AskDeleteConfirmCheckButton);
 
     prefs->signal_ask_delete_confirm_changed().connect(
         [&](bool v) { m_AskDeleteConfirmCheckButton->set_active(v); });
@@ -144,14 +141,17 @@ void MainWindow::show()
         if (Settings.get_bool("RememberWindowSize"))
             set_default_size(w, h);
 
-        set_position(Gtk::WIN_POS_NONE);
-        // Window must be shown before moving it
-        show_all();
-
         if (Settings.get_bool("RememberWindowPos"))
+        {
+            set_position(Gtk::WIN_POS_NONE);
+            // Window must be shown before moving it
+            show_all();
+
             move(x, y);
+        }
     }
-    else
+
+    if (!Settings.get_bool("RememberWindowSize"))
     {
         auto dpy{ Gdk::Display::get_default() };
         int x, y;
@@ -161,7 +161,11 @@ void MainWindow::show()
         dpy->get_monitor_at_point(x, y)->get_workarea(rect);
 
         set_default_size(rect.get_width() * 0.75, rect.get_height() * 0.9);
+    }
 
+    if (!Settings.get_bool("RememberWindowPos"))
+    {
+        set_position(Gtk::WIN_POS_CENTER);
         show_all();
     }
 }
@@ -248,8 +252,19 @@ void MainWindow::get_drawable_area_size(int& w, int& h) const
     if (m_BooruBrowser->get_visible())
         w -= m_HPaned->get_position() + 1;
 
+    if (m_MenuBar->get_visible())
+        h -= m_MenuBar->get_height();
+
     if (m_StatusBar->get_visible())
         h -= m_StatusBar->get_height();
+}
+
+int MainWindow::get_menubar_height() const
+{
+    if (m_MenuBar->get_visible())
+        return m_MenuBar->get_height();
+
+    return 0;
 }
 
 // Prioritize key press events on the tag entry when it's focused.
@@ -266,6 +281,10 @@ bool MainWindow::on_key_press_event(GdkEventKey* e)
 void MainWindow::on_realize()
 {
     Gtk::ApplicationWindow::on_realize();
+
+    m_MenuBar = Gtk::make_managed<Gtk::MenuBar>(get_application()->get_menubar());
+    m_Box->pack_start(*m_MenuBar, false, false);
+    m_Box->reorder_child(*m_MenuBar, 0);
 
     update_widgets_visibility();
 
@@ -526,7 +545,6 @@ void MainWindow::add_actions()
     // window Plugin actions
     for (auto& p : Application::get_default()->get_plugin_manager().get_window_plugins())
     {
-        // rfind can be replaced with !starts_with in c++20
         if (p->get_action_name().empty())
             continue;
 
@@ -554,7 +572,7 @@ void MainWindow::update_widgets_visibility()
 
     get_window()->freeze_updates();
 
-    set_show_menubar(!hide_all && menu_bar_visible);
+    m_MenuBar->set_visible(!hide_all && menu_bar_visible);
     m_StatusBar->set_visible(!hide_all && status_bar_visible);
     // The scrollbars are independent of the hideall setting
     m_ImageBox->get_hscrollbar()->set_visible(scroll_bars_visible);
