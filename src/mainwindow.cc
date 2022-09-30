@@ -170,13 +170,34 @@ void MainWindow::show()
     }
 }
 
-void MainWindow::open_file(const Glib::ustring& uri, const int index, const bool restore)
+void MainWindow::open_file(const Glib::ustring& path, const int index, const bool restore)
 {
-    if (uri.empty())
+    if (path.empty())
         return;
 
-    Glib::ustring path{ Glib::filename_from_uri(uri) };
+    std::string absolute_path;
     std::string error;
+
+    if (Glib::path_is_absolute(path))
+    {
+        absolute_path = path;
+    }
+    else
+    {
+        try
+        {
+            absolute_path = Glib::filename_from_uri(path);
+        }
+        catch (Glib::ConvertError&)
+        {
+        }
+
+        // From relative path
+        if (absolute_path.empty())
+            absolute_path = Glib::build_filename(Glib::get_current_dir(), path);
+    }
+
+    std::string uri{ Glib::filename_to_uri(absolute_path) };
 
     // Check if this image list is already loaded,
     // no point in reloading it since there are dirwatches setup
