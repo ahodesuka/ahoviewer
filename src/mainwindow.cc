@@ -170,32 +170,53 @@ void MainWindow::show()
     }
 }
 
-void MainWindow::open_file(const Glib::ustring& uri, const int index, const bool restore)
+void MainWindow::open_file(const Glib::ustring& path, const int index, const bool restore)
 {
-    if (uri.empty())
+    if (path.empty())
         return;
 
-    Glib::ustring path{ Glib::filename_from_uri(uri) };
+    std::string absolute_path;
     std::string error;
+
+    if (Glib::path_is_absolute(path))
+    {
+        absolute_path = path;
+    }
+    else
+    {
+        try
+        {
+            absolute_path = Glib::filename_from_uri(path);
+        }
+        catch (Glib::ConvertError&)
+        {
+        }
+
+        // From relative path
+        if (absolute_path.empty())
+            absolute_path = Glib::build_filename(Glib::get_current_dir(), path);
+    }
+
+    std::string uri{ Glib::filename_to_uri(absolute_path) };
 
     // Check if this image list is already loaded,
     // no point in reloading it since there are dirwatches setup
     // just change the current image in the list
     auto iter{ std::find_if(m_LocalImageList->begin(),
                             m_LocalImageList->end(),
-                            [&path](const auto i) { return i->get_path() == path; }) };
+                            [&absolute_path](const auto i) { return i->get_path() == absolute_path; }) };
     if (iter != m_LocalImageList->end())
     {
         m_LocalImageList->set_current(iter - m_LocalImageList->begin());
         set_active_imagelist(m_LocalImageList);
     }
     // Dont waste time re-extracting the archive just go to the first image
-    else if (m_LocalImageList->from_archive() && path == m_LocalImageList->get_archive().get_path())
+    else if (m_LocalImageList->from_archive() && absolute_path == m_LocalImageList->get_archive().get_path())
     {
         m_LocalImageList->go_first();
         set_active_imagelist(m_LocalImageList);
     }
-    else if (!m_LocalImageList->load(path, error, index))
+    else if (!m_LocalImageList->load(absolute_path, error, index))
     {
         if (Gtk::RecentManager::get_default()->has_item(uri))
             Gtk::RecentManager::get_default()->remove_item(uri);
