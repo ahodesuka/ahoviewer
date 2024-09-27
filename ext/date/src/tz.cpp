@@ -92,6 +92,10 @@
 #  define TARGET_OS_SIMULATOR 0
 #endif
 
+#if defined(ANDROID) || defined(__ANDROID__)
+#include <sys/system_properties.h>
+#endif
+
 #if USE_OS_TZDB
 #  include <dirent.h>
 #endif
@@ -577,27 +581,58 @@ get_tzdb_list()
     return tz_db;
 }
 
+inline
+static
+char
+tolower(char c)
+{
+    return static_cast<char>(std::tolower(c));
+}
+
+inline
+static
+void
+tolower(std::string& s)
+{
+    for (auto& c : s)
+        c = tolower(c);
+}
+
+inline
 static
 std::string
-parse3(std::istream& in)
+get_alpha_word(std::istream& in)
 {
-    std::string r(3, ' ');
     ws(in);
-    r[0] = static_cast<char>(in.get());
-    r[1] = static_cast<char>(in.get());
-    r[2] = static_cast<char>(in.get());
-    return r;
+    std::string s;
+    while (!in.eof() && std::isalpha(in.peek()))
+        s.push_back(static_cast<char>(in.get()));
+    return s;
+}
+
+inline
+static
+bool
+is_prefix_of(std::string const& key, std::string const& value)
+{
+    return key.compare(0, key.size(), value, 0, key.size()) == 0;
 }
 
 static
 unsigned
 parse_month(std::istream& in)
 {
-    CONSTDATA char*const month_names[] =
-        {"Jan", "Feb", "Mar", "Apr", "May", "Jun",
-         "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"};
-    auto s = parse3(in);
-    auto m = std::find(std::begin(month_names), std::end(month_names), s) - month_names;
+    static std::string const month_names[] =
+        {"january", "february", "march", "april", "may", "june",
+         "july", "august", "september", "october", "november", "december"};
+    auto s = get_alpha_word(in);
+    tolower(s);
+    auto m = std::find_if(std::begin(month_names), std::end(month_names),
+                 [&s](std::string const& m)
+                 {
+                     return is_prefix_of(s, m);
+                 })
+                  - month_names;
     if (m >= std::end(month_names) - std::begin(month_names))
         throw std::runtime_error("oops: bad month name: " + s);
     return static_cast<unsigned>(++m);
@@ -813,10 +848,16 @@ static
 unsigned
 parse_dow(std::istream& in)
 {
-    CONSTDATA char*const dow_names[] =
-        {"Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"};
-    auto s = parse3(in);
-    auto dow = std::find(std::begin(dow_names), std::end(dow_names), s) - dow_names;
+    static std::string const dow_names[] =
+        {"sunday", "monday", "tuesday", "wednesday", "thursday", "friday", "saturday"};
+    auto s = get_alpha_word(in);
+    tolower(s);
+    auto dow = std::find_if(std::begin(dow_names), std::end(dow_names),
+                 [&s](std::string const& dow)
+                 {
+                     return is_prefix_of(s, dow);
+                 })
+                  - dow_names;
     if (dow >= std::end(dow_names) - std::begin(dow_names))
         throw std::runtime_error("oops: bad dow name: " + s);
     return static_cast<unsigned>(dow);
@@ -1077,7 +1118,7 @@ detail::operator>>(std::istream& is, MonthDayTime& x)
         auto m = parse_month(is);
         if (!is.eof() && ws(is) && !is.eof() && is.peek() != '#')
         {
-            if (is.peek() == 'l')
+            if (tolower(is.peek()) == 'l')
             {
                 for (int i = 0; i < 4; ++i)
                     is.get();
@@ -2704,7 +2745,8 @@ operator<<(std::ostream& os, const time_zone& z)
         os.width(8);
         os << s.format_ << "   ";
         os << s.until_year_ << ' ' << s.until_date_;
-        os << "   " << s.until_utc_ << " UTC";
+        os << "   ";
+        date::operator<<(os, s.until_utc_) << " UTC";
         os << "   " << s.until_std_ << " STD";
         os << "   " << s.until_loc_;
         os << "   " << make_time(s.initial_save_);
@@ -2729,8 +2771,7 @@ operator<<(std::ostream& os, const time_zone& z)
 std::ostream&
 operator<<(std::ostream& os, const leap_second& x)
 {
-    using namespace date;
-    return os << x.date_ << "  +";
+    return date::operator<<(os, x.date_) << "  +";
 }
 
 #if USE_OS_TZDB
@@ -2777,7 +2818,8 @@ find_read_and_leap_seconds()
                 iss.exceptions(std::ios::failbit | std::ios::badbit);
                 std::string word;
                 iss >> word;
-                if (word == "Leap")
+                tolower(word);
+                if (is_prefix_of(word, "leap"))
                 {
                     int y, m, d;
                     iss >> y;
@@ -2820,6 +2862,7 @@ find_read_and_leap_seconds()
         }
         return leap_seconds;
     }
+#if !MISSING_LEAP_SECONDS
     in.clear();
     in.open(get_tz_dir() + std::string(1, folder_delimiter) + "right/UTC",
                      std::ios_base::binary);
@@ -2834,6 +2877,7 @@ find_read_and_leap_seconds()
     {
         return load_just_leaps(in);
     }
+#endif
     return {};
 }
 
@@ -3636,22 +3680,23 @@ init_tzdb()
                 std::istringstream in(line);
                 std::string word;
                 in >> word;
-                if (word == "Rule")
+                tolower(word);
+                if (is_prefix_of(word, "rule"))
                 {
                     db->rules.push_back(Rule(line));
                     continue_zone = false;
                 }
-                else if (word == "Link")
+                else if (is_prefix_of(word, "link"))
                 {
                     db->links.push_back(time_zone_link(line));
                     continue_zone = false;
                 }
-                else if (word == "Leap")
+                else if (is_prefix_of(word, "leap"))
                 {
                     db->leap_seconds.push_back(leap_second(line, detail::undocumented{}));
                     continue_zone = false;
                 }
-                else if (word == "Zone")
+                else if (is_prefix_of(word, "zone"))
                 {
                     db->zones.push_back(time_zone(line, detail::undocumented{}));
                     continue_zone = true;
@@ -3709,6 +3754,67 @@ get_tzdb()
     return get_tzdb_list().front();
 }
 
+namespace {
+
+class recursion_limiter
+{
+    unsigned depth_ = 0;
+    unsigned limit_;
+
+    class restore_recursion_depth;
+
+public:
+    recursion_limiter(recursion_limiter const&) = delete;
+    recursion_limiter& operator=(recursion_limiter const&) = delete;
+
+    explicit constexpr recursion_limiter(unsigned limit) noexcept;
+
+    restore_recursion_depth count();
+};
+
+class recursion_limiter::restore_recursion_depth
+{
+    recursion_limiter* rc_;
+
+public:
+    ~restore_recursion_depth();
+    restore_recursion_depth(restore_recursion_depth&&) = default;
+
+    explicit restore_recursion_depth(recursion_limiter* rc) noexcept;
+};
+
+inline
+recursion_limiter::restore_recursion_depth::~restore_recursion_depth()
+{
+    --(rc_->depth_);
+}
+
+inline
+recursion_limiter::restore_recursion_depth::restore_recursion_depth(recursion_limiter* rc)
+                                                                                  noexcept
+    : rc_{rc}
+{}
+
+inline
+constexpr
+recursion_limiter::recursion_limiter(unsigned limit) noexcept
+    : limit_{limit}
+{
+}
+
+inline
+recursion_limiter::restore_recursion_depth
+recursion_limiter::count()
+{
+    ++depth_;
+    if (depth_ > limit_)
+        throw std::runtime_error("recursion limit of " +
+                                  std::to_string(limit_) + " exceeded");
+    return restore_recursion_depth{this};
+}
+
+}  // unnamed namespace
+
 const time_zone*
 #if HAS_STRING_VIEW
 tzdb::locate_zone(std::string_view tz_name) const
@@ -3716,6 +3822,10 @@ tzdb::locate_zone(std::string_view tz_name) const
 tzdb::locate_zone(const std::string& tz_name) const
 #endif
 {
+    // If a link-to-link chain exceeds this limit, give up
+    thread_local recursion_limiter rc{10};
+    auto restore_count = rc.count();
+
     auto zi = std::lower_bound(zones.begin(), zones.end(), tz_name,
 #if HAS_STRING_VIEW
         [](const time_zone& z, const std::string_view& nm)
@@ -3739,13 +3849,7 @@ tzdb::locate_zone(const std::string& tz_name) const
         });
         if (li != links.end() && li->name() == tz_name)
         {
-            zi = std::lower_bound(zones.begin(), zones.end(), li->target(),
-                [](const time_zone& z, const std::string& nm)
-                {
-                    return z.name() < nm;
-                });
-            if (zi != zones.end() && zi->name() == li->target())
-                return &*zi;
+            return locate_zone(li->target());
         }
 #endif  // !USE_OS_TZDB
         throw std::runtime_error(std::string(tz_name) + " not found in timezone database");
@@ -4031,6 +4135,18 @@ tzdb::current_zone() const
         if (!result.empty())
             return locate_zone(result);
 #endif
+    // Fall through to try other means.
+    }
+    {
+    // On Android, it is not possible to use file based approach either,
+    // we have to ask the value of `persist.sys.timezone` system property
+#if defined(ANDROID) || defined(__ANDROID__)
+    char sys_timezone[PROP_VALUE_MAX];
+    if (__system_property_get("persist.sys.timezone", sys_timezone) > 0)
+    {
+        return locate_zone(sys_timezone);
+    }
+#endif // defined(ANDROID) || defined(__ANDROID__)
     // Fall through to try other means.
     }
     {
