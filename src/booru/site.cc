@@ -1027,10 +1027,10 @@ std::unordered_map<std::string, Tag::Type> Site::get_posts_tags(const xml::Docum
     static const std::string_view space{ "%20" };
 
     std::vector<std::string> split_tags;
-    static constexpr auto limit_to_1k = [](auto& tags, const auto& begin, const auto& end) {
+    static constexpr auto limit_query = [](auto& tags, const auto& begin, const auto& end) {
         size_t n{ 0 }, p{ static_cast<size_t>(std::distance(tags.begin(), begin)) };
-        // Make sure there are no more than 1000 tags for a given query
-        while (n < 1000)
+        // Make sure there are no more than 100 tags for a given query
+        while (n < 100)
         {
             ++p;
             p = tags.find(space, p);
@@ -1040,7 +1040,6 @@ std::unordered_map<std::string, Tag::Type> Site::get_posts_tags(const xml::Docum
             ++n;
         }
 
-        std::cout << p << std::endl;
         return tags.begin() + p;
     };
 
@@ -1060,7 +1059,7 @@ std::unordered_map<std::string, Tag::Type> Site::get_posts_tags(const xml::Docum
         {
             it = tags.end();
         }
-        it = limit_to_1k(tags, last_it, it);
+        it = limit_query(tags, last_it, it);
         std::string split{ tags.substr(std::distance(tags.begin(), last_it),
                                        std::distance(last_it, it)) };
 
