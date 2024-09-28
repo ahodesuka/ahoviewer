@@ -18,22 +18,25 @@ A GTK image viewer, manga reader, and booru browser.
     * gst-plugins-good `runtime`
     * gst-plugins-vpx `runtime`
     * gst-plugins-libav `runtime`
+    * gst-plugins-gtk `runtime`
 * libpeas `>=1.22.0` `optional`
 * libsecret `optional`
     * gnome-keyring `runtime`
 * libunrar `optional`
 * libzip `optional`
 
+Package names may vary depending on your distro and package manager.
+
+### Compiling and Installing
 ```
-meson build
-cd build
-ninja
-sudo ninja install
+meson setup build
+meson compile -C build
+sudo meson install -C build
 ```
 
 If you don't want to compile with debug symbols replace the first command with:
 ```
-meson build --buildtype=release
+meson setup build --buildtype=release
 ```
 
 ## Usage
@@ -42,7 +45,7 @@ meson build --buildtype=release
 
 or
 
-    ahoviewer file[.zip|.rar|.webm|.(supported gdk-pixbuf file)]
+    ahoviewer file[.zip|.rar|.mp4|.webm|.(supported gdk-pixbuf file)]
 
 ### Screenshot
 ![Booru Browser](https://user-images.githubusercontent.com/1155344/91631124-e4bd4280-e99c-11ea-9432-72194d9b7aeb.gif)
