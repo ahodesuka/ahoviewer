@@ -7,7 +7,7 @@ jobs:
     runs-on: ubuntu-22.04
     steps:
       - name: Checkout sources
-        uses: actions/checkout@v2.3.4
+        uses: actions/checkout@v4.2.0
       - name: Install dependencies
         run: |
           "${GITHUB_WORKSPACE}/.github/install-deps-ubuntu.sh"
@@ -23,7 +23,7 @@ jobs:
         shell: msys2 {0}
     steps:
       - name: Checkout sources
-        uses: actions/checkout@v2.3.4
+        uses: actions/checkout@v4.2.0
       - name: Setup MSYS/MINGW64
         uses: msys2/setup-msys2@v2
         with:
