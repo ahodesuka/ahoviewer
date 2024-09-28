@@ -98,7 +98,7 @@ libzip = dependency('libzip', required : get_option('libzip'))
 
 # If not found on system the version found in ext directory will be built into
 # ahoviewer
-libnsgif = dependency('libnsgif', required : false)
+libnsgif = dependency('libnsgif', required : false, version : ['>=1.0.0'])
 
 prefix = get_option('prefix')
 datadir = join_paths(prefix, get_option('datadir'))

@@ -5,7 +5,7 @@
 
 extern "C"
 {
-#include <libnsgif.h>
+    #include <nsgif.h>
 }
 
 #include "config.h"
@@ -33,7 +33,7 @@ namespace AhoViewer
 
         const std::string get_path() const { return m_Path; }
         bool is_webm() const { return m_IsWebM; }
-        bool is_animated_gif() const { return m_GIFanim && m_GIFanim->frame_count > 1; }
+        bool is_animated_gif() const;
 
         // This is used to let the imagebox know that load_pixbuf has been or needs to be
         // called but has not yet finished loading.  When the image has finished loading
@@ -64,7 +64,7 @@ namespace AhoViewer
     protected:
         static bool is_webm(const std::string&);
 
-        bool load_gif(gif_animation* anim, size_t data_size, unsigned char* data);
+        bool load_gif(nsgif_t* anim, size_t data_size, uint8_t* data);
         void create_gif_frame_pixbuf();
         bool is_gif(const unsigned char* data);
         void create_thumbnail(Glib::RefPtr<Gio::Cancellable> c, bool save = true);
@@ -80,10 +80,11 @@ namespace AhoViewer
         Glib::RefPtr<Gdk::Pixbuf> m_ThumbnailPixbuf;
         Glib::RefPtr<Gdk::Pixbuf> m_Pixbuf;
 
-        gif_animation* m_GIFanim{ nullptr };
+        nsgif_t* m_GIFanim{ nullptr };
         unsigned char* m_GIFdata{ nullptr };
-        gif_bitmap_callback_vt m_BitmapCallbacks;
-        int m_GIFcurFrame{ 0 }, m_GIFcurLoop{ 1 };
+        uint32_t m_GIFcurFrame{ 0 }, m_GIFdelay{ 0 };
+        nsgif_bitmap_cb_vt m_BitmapCallbacks;
+        int m_GIFcurLoop{ 1 };
 
         std::vector<Note> m_Notes;
 

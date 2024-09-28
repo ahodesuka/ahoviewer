@@ -58,8 +58,8 @@ if libpeas.found()
     gir_dummy = executable(
       'gir_dummy',
       sources : [
-	plugin_sources,
-	'plugin/gir-dummy.c',
+        plugin_sources,
+        'plugin/gir-dummy.c',
       ],
       c_args : [ '-DGIR_DUMMY' ],
       dependencies : [ libpeas, gtk ],
@@ -70,8 +70,8 @@ if libpeas.found()
     gir_dummy = executable(
       'gir_dummy',
       sources : [
-	plugin_sources,
-	'plugin/gir-dummy.c',
+        plugin_sources,
+        'plugin/gir-dummy.c',
       ],
       c_args : [ '-DGIR_DUMMY' ],
       dependencies : [ libpeas, gtk ],
@@ -190,7 +190,7 @@ sources += [
 
 if not libnsgif.found()
   sources += [
-    '../ext/libnsgif/libnsgif.c',
+    '../ext/libnsgif/gif.c',
     '../ext/libnsgif/lzw.c',
   ]
   incdirs += include_directories('../ext/libnsgif')

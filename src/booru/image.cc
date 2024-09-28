@@ -283,11 +283,11 @@ void Image::on_finished()
     {
         if (m_IsGif)
         {
-            gif_animation* anim = new gif_animation;
-            gsize len           = m_Curler.get_data_size();
-            guint8* data        = (guint8*)g_malloc(len);
+            nsgif_t* anim;
+            gsize len    = m_Curler.get_data_size();
+            guint8* data = (guint8*)g_malloc(len);
 
-            gif_create(anim, &m_BitmapCallbacks);
+            nsgif_create(&m_BitmapCallbacks, NSGIF_BITMAP_FMT_R8G8B8A8, &anim);
             memcpy(data, m_Curler.get_data(), len);
 
             if (AhoViewer::Image::load_gif(anim, len, data))
@@ -299,7 +299,7 @@ void Image::on_finished()
             }
             else
             {
-                delete anim;
+                nsgif_destroy(anim);
                 g_free(data);
             }
         }

@@ -71,38 +71,50 @@ const Glib::RefPtr<Gdk::Pixbuf>& Image::get_missing_pixbuf()
     return pixbuf;
 }
 
-static void* _def_bitmap_create(int width, int height)
+static nsgif_bitmap_t* _def_bitmap_create(int width, int height)
 {
-    return new unsigned char[width * height * 4];
+    return new uint8_t[width * height * 4];
 }
 
-static void _def_bitmap_destroy(void* bitmap)
+static void _def_bitmap_destroy(nsgif_bitmap_t* bitmap)
 {
     if (bitmap)
     {
-        delete[] static_cast<unsigned char*>(bitmap);
+        delete[] static_cast<uint8_t*>(bitmap);
         bitmap = nullptr;
     }
 }
 
-static unsigned char* _def_bitmap_get_buffer(void* bitmap)
+static uint8_t* _def_bitmap_get_buffer(nsgif_bitmap_t* bitmap)
 {
-    return static_cast<unsigned char*>(bitmap);
+    return static_cast<uint8_t*>(bitmap);
 }
 
 Image::Image(std::string path) : m_IsWebM{ Image::is_webm(path) }, m_Path{ std::move(path) }
 {
-    m_BitmapCallbacks.bitmap_create      = _def_bitmap_create;
-    m_BitmapCallbacks.bitmap_destroy     = _def_bitmap_destroy;
-    m_BitmapCallbacks.bitmap_get_buffer  = _def_bitmap_get_buffer;
-    m_BitmapCallbacks.bitmap_test_opaque = nullptr;
-    m_BitmapCallbacks.bitmap_set_opaque  = nullptr;
-    m_BitmapCallbacks.bitmap_modified    = nullptr;
+    m_BitmapCallbacks.create      = _def_bitmap_create;
+    m_BitmapCallbacks.destroy     = _def_bitmap_destroy;
+    m_BitmapCallbacks.get_buffer  = _def_bitmap_get_buffer;
+    m_BitmapCallbacks.set_opaque  = nullptr;
+    m_BitmapCallbacks.test_opaque = nullptr;
+    m_BitmapCallbacks.modified    = nullptr;
+    m_BitmapCallbacks.get_rowspan = nullptr;
 }
 
 Image::~Image()
 {
     reset_pixbuf();
+}
+
+bool Image::is_animated_gif() const
+{
+    if (m_GIFanim)
+    {
+        const nsgif_info_t *info = nsgif_get_info(m_GIFanim);
+        return info && info->frame_count > 1;
+    }
+
+    return false;
 }
 
 std::string Image::get_filename() const
@@ -121,25 +133,40 @@ const Glib::RefPtr<Gdk::Pixbuf>& Image::get_pixbuf()
 // and by load_pixbuf when m_Pixbuf is null
 void Image::create_gif_frame_pixbuf()
 {
-    gif_result result = gif_decode_frame(m_GIFanim, m_GIFcurFrame);
+    const nsgif_info_t *info = nsgif_get_info(m_GIFanim);
+    nsgif_bitmap_t* frame_image;
+    nsgif_rect_t area;
+    nsgif_error result;
 
-    if (result == GIF_OK)
+    result = nsgif_frame_prepare(m_GIFanim, &area, &m_GIFdelay, &m_GIFcurFrame);
+
+    if (result != NSGIF_OK)
+    {
+        std::cerr << "Error while decoding GIF frame " << m_GIFcurFrame << " of " << m_Path
+                  << std::endl
+                  << "nsgif_error: " << result << std::endl;
+        return;
+    }
+
+    result = nsgif_frame_decode(m_GIFanim, m_GIFcurFrame, &frame_image);
+
+    if (result == NSGIF_OK)
     {
         m_Pixbuf =
-            Gdk::Pixbuf::create_from_data(static_cast<unsigned char*>(m_GIFanim->frame_image),
+            Gdk::Pixbuf::create_from_data(static_cast<unsigned char*>(frame_image),
                                           Gdk::COLORSPACE_RGB,
                                           true,
                                           8,
-                                          m_GIFanim->width,
-                                          m_GIFanim->height,
-                                          (m_GIFanim->width * 4 + 3) & ~3);
+                                          info->width,
+                                          info->height,
+                                          (info->width * 4 + 3) & ~3);
         m_SignalPixbufChanged();
     }
     else
     {
         std::cerr << "Error while decoding GIF frame " << m_GIFcurFrame << " of " << m_Path
                   << std::endl
-                  << "gif_result: " << result << std::endl;
+                  << "nsgif_error: " << result << std::endl;
     }
 }
 
@@ -199,8 +226,8 @@ void Image::load_pixbuf(Glib::RefPtr<Gio::Cancellable> c)
 
         if (is_gif(header.data()))
         {
-            gif_animation* anim = new gif_animation;
-            gif_create(anim, &m_BitmapCallbacks);
+            nsgif_t* anim;
+            nsgif_create(&m_BitmapCallbacks, NSGIF_BITMAP_FMT_R8G8B8A8, &anim);
 
             char* buffer{ nullptr };
             try
@@ -222,13 +249,12 @@ void Image::load_pixbuf(Glib::RefPtr<Gio::Cancellable> c)
 
                     if (c->is_cancelled())
                     {
-                        delete anim;
                         g_free(buffer);
                     }
                 }
                 else
                 {
-                    delete anim;
+                    nsgif_destroy(anim);
                 }
             }
             catch (...)
@@ -236,7 +262,7 @@ void Image::load_pixbuf(Glib::RefPtr<Gio::Cancellable> c)
                 if (!c->is_cancelled())
                     std::cerr << "Failed to load pixbuf from file '" << m_Path << "'" << std::endl;
 
-                delete anim;
+                nsgif_destroy(anim);
                 g_free(buffer);
             }
         }
@@ -266,25 +292,22 @@ void Image::load_pixbuf(Glib::RefPtr<Gio::Cancellable> c)
     }
 }
 
-bool Image::load_gif(gif_animation* anim, size_t data_size, unsigned char* data)
+bool Image::load_gif(nsgif_t* anim, size_t data_size, uint8_t* data)
 {
-    gif_result result;
-    do
-    {
-        result = gif_initialise(anim, data_size, data);
-        if (result != GIF_OK && result != GIF_WORKING)
-        {
-            std::cerr << "Error while loading GIF " << m_Path << std::endl
-                      << "gif_result: " << result << std::endl;
-            break;
-        }
-        else if (result == GIF_OK)
-        {
-            return true;
-        }
-    } while (result != GIF_OK);
+    nsgif_error result;
+    result = nsgif_data_scan(anim, data_size, data);
 
-    return false;
+    if (result == NSGIF_OK)
+    {
+        nsgif_data_complete(anim);
+        return true;
+    }
+    else
+    {
+        std::cerr << "Error while loading GIF " << m_Path << std::endl
+            << "nsgif_error: " << result << std::endl;
+        return false;
+    }
 }
 
 void Image::reset_pixbuf()
@@ -295,8 +318,7 @@ void Image::reset_pixbuf()
 
     if (m_GIFanim)
     {
-        gif_finalise(m_GIFanim);
-        delete m_GIFanim;
+        nsgif_destroy(m_GIFanim);
         m_GIFanim = nullptr;
 
         if (m_GIFdata)
@@ -312,20 +334,22 @@ void Image::reset_pixbuf()
 bool Image::gif_advance_frame()
 {
     std::scoped_lock lock{ m_Mutex };
+    const nsgif_info_t *info = nsgif_get_info(m_GIFanim);
+
     // Handle frame advacing and looping.
-    if (m_GIFanim->frame_count > 1)
+    if (info->frame_count > 1)
     {
         // Currently on the last frame, reset to first frame unless we finished
         // the final loop
-        if (m_GIFcurFrame == static_cast<int>(m_GIFanim->frame_count) - 1 &&
-            m_GIFcurLoop != m_GIFanim->loop_count)
+        if (m_GIFcurFrame == info->frame_count - 1 &&
+            m_GIFcurLoop != info->loop_max)
         {
             // Only increment the loop counter if it's not looping forever.
-            if (m_GIFanim->loop_count > 0)
+            if (info->loop_max > 0)
                 ++m_GIFcurLoop;
             m_GIFcurFrame = 0;
         }
-        else if (m_GIFcurFrame < static_cast<int>(m_GIFanim->frame_count) - 1)
+        else if (m_GIFcurFrame < info->frame_count - 1)
         {
             ++m_GIFcurFrame;
         }
@@ -338,18 +362,19 @@ bool Image::gif_advance_frame()
 
 bool Image::get_gif_finished_looping() const
 {
-    return m_GIFanim && m_GIFcurLoop == m_GIFanim->loop_count &&
-           m_GIFcurFrame == static_cast<int>(m_GIFanim->frame_count) - 1;
+    const nsgif_info_t *info = nsgif_get_info(m_GIFanim);
+    return m_GIFanim && m_GIFcurLoop == info->loop_max &&
+           m_GIFcurFrame == info->frame_count - 1;
 }
 
 unsigned int Image::get_gif_frame_delay() const
 {
     if (!m_GIFanim)
         return 0;
-    int delay = m_GIFanim->frames[m_GIFcurFrame].frame_delay;
+
     // libnsgif stores delay in centiseconds, convert it to milliseconds.
     // if delay is 0, use a 100ms delay by default
-    return delay ? delay * 10 : 100;
+    return m_GIFdelay ? m_GIFdelay * 10 : 100;
 }
 
 void Image::reset_gif_animation()
