@@ -24,10 +24,8 @@ namespace AhoViewer::Booru
         void set_url(std::string url);
         void set_follow_location(const bool n) const;
         void set_referer(const std::string& url) const;
+        void set_user_agent(const std::string& ua) const;
         void set_http_auth(const std::string& u, const std::string& p) const;
-        void set_cookie_jar(const std::string& path) const;
-        void set_cookie_file(const std::string& path) const;
-        void set_post_fields(const std::string& fields) const;
         void set_share_handle(CURLSH* s) const;
 
         std::string escape(const std::string& str) const;
@@ -75,7 +73,7 @@ namespace AhoViewer::Booru
         static size_t write_cb(const unsigned char* ptr, size_t size, size_t nmemb, void* userp);
         static int progress_cb(void* userp, curl_off_t, curl_off_t, curl_off_t, curl_off_t);
 
-        static const char* UserAgent;
+        static const char* DefaultUserAgent;
 
         CURL* m_EasyHandle;
         CURLcode m_Response;

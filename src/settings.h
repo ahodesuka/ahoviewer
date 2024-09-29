@@ -18,15 +18,17 @@ namespace AhoViewer
     }
     class SettingsManager
     {
+        // Used for default sites
         // name, url, type
         using SiteTuple = std::tuple<std::string, std::string, Booru::Type>;
-        // name, url, username, pass, type, use_samples, plugin_name
+        // name, url, username, pass, type, use_samples, user_agent, plugin_name
         using DisabledSiteTuple = std::tuple<std::string,
                                              std::string,
                                              std::string,
                                              std::string,
                                              Booru::Type,
                                              bool,
+                                             std::string,
                                              std::string>;
         using KeybindingMap     = std::vector<std::pair<std::string, std::vector<Glib::ustring>>>;
 

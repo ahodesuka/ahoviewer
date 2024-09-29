@@ -40,7 +40,9 @@ Image::Image(std::string path,
 
     m_ThumbnailCurler.signal_finished().connect([&]() { m_ThumbnailCond.notify_one(); });
     m_ThumbnailCurler.set_referer(m_Site->get_url());
+    m_ThumbnailCurler.set_user_agent(m_Site->get_user_agent());
     m_Curler.set_referer(m_PostUrl);
+    m_Curler.set_user_agent(m_Site->get_user_agent());
     m_Curler.signal_progress().connect(sigc::mem_fun(*this, &Image::on_progress));
     m_Curler.signal_finished().connect(sigc::mem_fun(*this, &Image::on_finished));
 

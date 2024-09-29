@@ -29,7 +29,8 @@ namespace AhoViewer::Booru
                                             Type type              = Type::UNKNOWN,
                                             const std::string&     = "",
                                             const std::string&     = "",
-                                            const bool use_samples = false);
+                                            const bool use_samples = false,
+                                            std::string user_agent = "");
         static const Glib::RefPtr<Gdk::Pixbuf>& get_missing_pixbuf();
 
 #ifdef HAVE_LIBSECRET
@@ -72,6 +73,9 @@ namespace AhoViewer::Booru
         bool use_samples() const { return m_UseSamples; }
         void set_use_samples(const bool s) { m_UseSamples = s; }
 
+        std::string get_user_agent() const { return m_UserAgent; }
+        void set_user_agent(const std::string& s) { m_UserAgent = s; }
+
         Glib::RefPtr<Gdk::Pixbuf> get_icon_pixbuf(const bool update = false);
 
         void save_tags() const;
@@ -91,7 +95,8 @@ namespace AhoViewer::Booru
              const Type type,
              std::string user,
              std::string pass,
-             const bool use_samples);
+             const bool use_samples,
+             std::string user_agent);
 
     private:
 #ifdef HAVE_LIBPEAS
@@ -109,10 +114,9 @@ namespace AhoViewer::Booru
 
         static const std::map<Type, std::string> RequestURI, PostURI, NotesURI, RegisterURI;
 
-        std::string m_Name, m_Url, m_Username, m_Password, m_IconPath, m_TagsPath, m_CookiePath;
+        std::string m_Name, m_Url, m_Username, m_Password, m_UserAgent, m_IconPath, m_TagsPath;
         Type m_Type;
         bool m_UseSamples;
-        uint64_t m_CookieTS{ 0 };
         std::set<Tag> m_Tags;
 
         std::unordered_map<std::string, Tag::Type> m_MoebooruTags;

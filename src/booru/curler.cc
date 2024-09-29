@@ -1,7 +1,9 @@
 #include "curler.h"
 using namespace AhoViewer::Booru;
 
+#include "config.h"
 #include "imagefetcher.h"
+#include "version.h"
 
 // Used for looking closer at what libcurl is doing
 // set it to 1 with CXXFLAGS and prepare to be spammed
@@ -9,18 +11,7 @@ using namespace AhoViewer::Booru;
 #define VERBOSE_LIBCURL 0
 #endif
 
-const char* Curler::UserAgent
-{
-#if defined(__linux__)
-    "Mozilla/5.0 (Linux x86_64; rv:89.0) Gecko/20100101 Firefox/89.0"
-#elif defined(__APPLE__)
-    "Mozilla/5.0 (Macintosh; Intel Mac OS X 11.4; rv:89.0) Gecko/20100101 Firefox/89.0"
-#elif defined(_WIN32)
-    "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:89.0) Gecko/20100101 Firefox/89.0"
-#else
-    "Mozilla/5.0"
-#endif
-};
+const char* Curler::DefaultUserAgent{ PACKAGE "/" AHOVIEWER_VERSION };
 
 size_t Curler::write_cb(const unsigned char* ptr, size_t size, size_t nmemb, void* userp)
 {
@@ -62,7 +53,7 @@ Curler::Curler(const std::string& url, CURLSH* share)
     : m_EasyHandle(curl_easy_init()),
       m_Cancel(Gio::Cancellable::create())
 {
-    curl_easy_setopt(m_EasyHandle, CURLOPT_USERAGENT, UserAgent);
+    curl_easy_setopt(m_EasyHandle, CURLOPT_USERAGENT, DefaultUserAgent);
     // This will fall back to 1.1 if the server does not support HTTP 2
     // Since curl 7.62.0 the default value is CURL_HTTP_VERSION_2TLS, but
     // explicitly setting it here enables it for non https requests as well
@@ -117,6 +108,12 @@ void Curler::set_referer(const std::string& url) const
     curl_easy_setopt(m_EasyHandle, CURLOPT_REFERER, url.c_str());
 }
 
+void Curler::set_user_agent(const std::string& ua) const
+{
+    if (!ua.empty())
+        curl_easy_setopt(m_EasyHandle, CURLOPT_USERAGENT, ua.c_str());
+}
+
 void Curler::set_http_auth(const std::string& u, const std::string& p) const
 {
     if (!u.empty())
@@ -124,22 +121,6 @@ void Curler::set_http_auth(const std::string& u, const std::string& p) const
         curl_easy_setopt(m_EasyHandle, CURLOPT_USERNAME, u.c_str());
         curl_easy_setopt(m_EasyHandle, CURLOPT_PASSWORD, p.c_str());
     }
-}
-
-void Curler::set_cookie_jar(const std::string& path) const
-{
-    curl_easy_setopt(m_EasyHandle, CURLOPT_COOKIEJAR, path.c_str());
-}
-
-void Curler::set_cookie_file(const std::string& path) const
-{
-    curl_easy_setopt(m_EasyHandle, CURLOPT_COOKIEFILE, path.c_str());
-}
-
-void Curler::set_post_fields(const std::string& fields) const
-{
-    curl_easy_setopt(m_EasyHandle, CURLOPT_POSTFIELDSIZE, fields.length());
-    curl_easy_setopt(m_EasyHandle, CURLOPT_POSTFIELDS, fields.c_str());
 }
 
 void Curler::set_share_handle(CURLSH* s) const

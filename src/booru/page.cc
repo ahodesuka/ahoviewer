@@ -181,6 +181,7 @@ void Page::search(const std::shared_ptr<Site>& site)
 
     m_Curler.set_share_handle(m_Site->get_share_handle());
     m_Curler.set_referer(m_Site->get_url());
+    m_Curler.set_user_agent(m_Site->get_user_agent());
 
     get_posts();
 }

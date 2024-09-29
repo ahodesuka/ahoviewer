@@ -112,7 +112,8 @@ std::shared_ptr<Site> Site::create(const std::string& name,
                                    Type type,
                                    const std::string& user,
                                    const std::string& pass,
-                                   const bool use_samples)
+                                   const bool use_samples,
+                                   std::string user_agent)
 {
     // When trying to create a new site from the site editor
     if (type == Type::UNKNOWN)
@@ -121,7 +122,8 @@ std::shared_ptr<Site> Site::create(const std::string& name,
         auto [t, p]{ get_type_from_url(url) };
         if (t != Type::UNKNOWN)
         {
-            auto site{ std::make_shared<SharedSite>(name, url, t, user, pass, use_samples) };
+            auto site{ std::make_shared<SharedSite>(
+                name, url, t, user, pass, use_samples, user_agent) };
 
             if (t == Type::PLUGIN)
                 site->set_plugin(p);
@@ -136,7 +138,7 @@ std::shared_ptr<Site> Site::create(const std::string& name,
     }
     else
     {
-        return std::make_shared<SharedSite>(name, url, type, user, pass, use_samples);
+        return std::make_shared<SharedSite>(name, url, type, user, pass, use_samples, user_agent);
     }
 
     return nullptr;
@@ -274,11 +276,13 @@ Site::Site(std::string name,
            const Type type,
            std::string user,
            std::string pass,
-           const bool use_samples)
+           const bool use_samples,
+           std::string user_agent)
     : m_Name{ std::move(name) },
       m_Url{ std::move(url) },
       m_Username{ std::move(user) },
       m_Password{ std::move(pass) },
+      m_UserAgent{ std::move(user_agent) },
       m_IconPath{ Glib::build_filename(Settings.get_booru_path(), m_Name + ".png") },
       m_TagsPath{ Glib::build_filename(Settings.get_booru_path(), m_Name + "-tags") },
       m_Type{ type },
@@ -301,6 +305,7 @@ Site::Site(std::string name,
             curl_share_setopt(m_ShareHandle, CURLSHOPT_SHARE, d);
     }
     m_Curler.set_share_handle(m_ShareHandle);
+    m_Curler.set_user_agent(m_UserAgent);
 
 #ifdef HAVE_LIBSECRET
     if (!m_Username.empty())

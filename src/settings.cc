@@ -194,12 +194,14 @@ std::vector<std::shared_ptr<Site>>& SettingsManager::get_sites()
                     url{ s.exists("url") ? s["url"] : "" },
                     username{ s.exists("username") ? s["username"] : "" },
                     password{ s.exists("password") ? s["password"] : "" },
+                    user_agent{ s.exists("user_agent") ? s["user_agent"] : "" },
                     plugin_name{ s.exists("plugin_name") ? s["plugin_name"] : "" };
                 Type type{ static_cast<Type>(static_cast<int>(s["type"])) };
                 bool use_samples{ false };
                 s.lookupValue("use_samples", use_samples);
 
-                auto site{ Site::create(name, url, type, username, password, use_samples) };
+                auto site{ Site::create(
+                    name, url, type, username, password, use_samples, user_agent) };
 
                 // unlikely
                 if (!site)
@@ -224,8 +226,14 @@ std::vector<std::shared_ptr<Site>>& SettingsManager::get_sites()
                     {
                         std::cerr << "Previously saved site '" << name
                                   << "' uses a plugin that is no longer installed" << std::endl;
-                        m_DisabledSites.emplace_back(
-                            name, url, username, password, type, use_samples, plugin_name);
+                        m_DisabledSites.emplace_back(name,
+                                                     url,
+                                                     username,
+                                                     password,
+                                                     type,
+                                                     use_samples,
+                                                     user_agent,
+                                                     plugin_name);
                         continue;
                     }
 #else  // !HAVE_LIBPEAS
@@ -470,7 +478,10 @@ void SettingsManager::save_sites()
         if (!s->get_password().empty())
             set("password", s->get_password(), Setting::TypeString, site);
 #endif // !defined(HAVE_LIBSECRET) && !defined(_WIN32)
-        set("use_samples", s->use_samples(), Setting::TypeBoolean, site);
+        if (s->use_samples())
+            set("use_samples", s->use_samples(), Setting::TypeBoolean, site);
+        if (!s->get_user_agent().empty())
+            set("user_agent", s->get_user_agent(), Setting::TypeString, site);
 #ifdef HAVE_LIBPEAS
         if (s->get_type() == Type::PLUGIN)
             set("plugin_name", s->get_plugin_name(), Setting::TypeString, site);
@@ -480,7 +491,7 @@ void SettingsManager::save_sites()
     for (const auto& s : m_DisabledSites)
     {
         Setting& site{ sites.add(Setting::TypeGroup) };
-        auto [name, url, username, password, type, use_samples, plugin_name] = s;
+        auto [name, url, username, password, type, use_samples, user_agent, plugin_name] = s;
 
         set("name", name, Setting::TypeString, site);
         set("url", url, Setting::TypeString, site);
@@ -492,7 +503,10 @@ void SettingsManager::save_sites()
         if (!password.empty())
             set("password", password, Setting::TypeString, site);
 #endif // !defined(HAVE_LIBSECRET) && !defined(_WIN32)
-        set("use_samples", use_samples, Setting::TypeBoolean, site);
+        if (use_samples)
+            set("use_samples", use_samples, Setting::TypeBoolean, site);
+        if (!user_agent.empty())
+            set("user_agent", user_agent, Setting::TypeString, site);
 #ifdef HAVE_LIBPEAS
         if (type == Type::PLUGIN)
             set("plugin_name", plugin_name, Setting::TypeString, site);
