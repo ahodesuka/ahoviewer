@@ -10,7 +10,7 @@ jobs:
     name: Check for changes
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4.2.0
+      - uses: actions/checkout@v4
       - id: commit-check
         run: 'echo ::set-output name=has-commits::$(git --no-pager log --pretty=oneline --since="24 hours ago" | wc -l)'
     outputs:
@@ -26,7 +26,7 @@ jobs:
         shell: msys2 {0}
     steps:
       - name: Checkout sources
-        uses: actions/checkout@v4.2.0
+        uses: actions/checkout@v4
       - name: Setup MSYS/MINGW64
         uses: msys2/setup-msys2@v2
         with:
@@ -52,7 +52,7 @@ jobs:
             mingw-w64-x86_64-libzip
       - name: Cache libunrar
         id: cache-libunrar
-        uses: actions/cache@v2
+        uses: actions/cache@v4
         with:
           path: .github/unrar/mingw-w64-*-any.pkg.tar.zst
           key: ${{ runner.os }}-${{ hashFiles('.github/unrar/PKGBUILD') }}

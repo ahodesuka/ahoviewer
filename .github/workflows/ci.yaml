@@ -7,7 +7,7 @@ jobs:
     runs-on: ubuntu-22.04
     steps:
       - name: Checkout sources
-        uses: actions/checkout@v4.2.0
+        uses: actions/checkout@v4
       - name: Install dependencies
         run: |
           "${GITHUB_WORKSPACE}/.github/install-deps-ubuntu.sh"
@@ -23,7 +23,7 @@ jobs:
         shell: msys2 {0}
     steps:
       - name: Checkout sources
-        uses: actions/checkout@v4.2.0
+        uses: actions/checkout@v4
       - name: Setup MSYS/MINGW64
         uses: msys2/setup-msys2@v2
         with:
@@ -45,7 +45,7 @@ jobs:
             mingw-w64-x86_64-libzip
       - name: Cache libunrar
         id: cache-libunrar
-        uses: actions/cache@v2
+        uses: actions/cache@v4
         with:
           path: .github/unrar/mingw-w64-*-any.pkg.tar.zst
           key: ${{ runner.os }}-${{ hashFiles('.github/unrar/PKGBUILD') }}
