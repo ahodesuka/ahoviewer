@@ -32,6 +32,7 @@ src/version.h
 stamp-h1
 vgdump
 **/.vscode
+.cache/
 .clangd
 gtk.suppression
 compile_commands.json
