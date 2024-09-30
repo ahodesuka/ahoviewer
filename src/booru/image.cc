@@ -1,7 +1,6 @@
 #include "image.h"
 using namespace AhoViewer::Booru;
 
-#include "browser.h"
 #include "settings.h"
 #include "site.h"
 
