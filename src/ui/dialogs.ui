@@ -1500,6 +1500,9 @@ The dialog will be closed when the key is released.</property>
                                 <property name="receives-default">True</property>
                                 <property name="margin-start">2</property>
                                 <property name="margin-end">2</property>
+                                <style>
+                                  <class name="suggested-action"/>
+                                </style>
                               </object>
                               <packing>
                                 <property name="expand">True</property>

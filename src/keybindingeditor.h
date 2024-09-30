@@ -132,7 +132,10 @@ namespace AhoViewer
         Glib::ustring get_readable_binding(const Glib::ustring& binding) const;
         Glib::ustring get_readable_bindings(const std::vector<Glib::ustring>& bindings) const;
         void update_accel(const Glib::ustring& accel);
-        void update_modifiers();
+
+        // Clears the first matching keybinding using accel in the Settings
+        // and updates the ui model to reflect the change
+        void clear_keybinding(const Glib::ustring& accel);
 
         void on_combo_changed();
         void on_show_accel_dialog();

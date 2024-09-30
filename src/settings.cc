@@ -302,14 +302,14 @@ SettingsManager::get_default_keybindings(const std::string& name) const
 }
 
 std::pair<std::string, std::vector<Glib::ustring>>
-SettingsManager::clear_keybinding(const std::string& value)
+SettingsManager::clear_keybinding(const std::string& accel)
 {
     auto it{ std::find_if(m_Keybindings.begin(), m_Keybindings.end(), [&](auto& v) {
-        return std::find(v.second.begin(), v.second.end(), value) != v.second.end();
+        return std::find(v.second.begin(), v.second.end(), accel) != v.second.end();
     }) };
     if (it != m_Keybindings.end())
     {
-        it->second.erase(std::find(it->second.begin(), it->second.end(), value));
+        it->second.erase(std::find(it->second.begin(), it->second.end(), accel));
         Application::get_default()->set_accels_for_action(it->first, it->second);
         return *it;
     }
@@ -317,9 +317,15 @@ SettingsManager::clear_keybinding(const std::string& value)
     return {};
 }
 
-void SettingsManager::set_keybindings(std::string name, const std::vector<Glib::ustring>& keys)
+void SettingsManager::set_keybindings(std::string name, const std::vector<Glib::ustring>& accels)
 {
-    Application::get_default()->set_accels_for_action(name, keys);
+    auto it{ std::find_if(m_Keybindings.begin(), m_Keybindings.end(), [&](const auto& k) {
+        return k.first == name;
+    }) };
+    if (it != m_Keybindings.end())
+        it->second = accels;
+
+    Application::get_default()->set_accels_for_action(name, accels);
     // libconfig does not allow . in key names, only a-z0-9-_*
     // This means the action names must never have an asterisk!
     std::replace(name.begin(), name.end(), '.', '*');
@@ -334,13 +340,20 @@ void SettingsManager::set_keybindings(std::string name, const std::vector<Glib::
 
     Setting& bindings{ kb_group.add(name, Setting::TypeArray) };
 
-    for (const auto& k : keys)
+    for (const auto& k : accels)
         bindings.add(Setting::TypeString) = k;
 }
 
 void SettingsManager::reset_keybindings(std::string name)
 {
-    Application::get_default()->set_accels_for_action(name, get_default_keybindings(name));
+    auto accels{ get_default_keybindings(name) };
+    auto it{ std::find_if(m_Keybindings.begin(), m_Keybindings.end(), [&](const auto& k) {
+        return k.first == name;
+    }) };
+    if (it != m_Keybindings.end())
+        it->second = accels;
+
+    Application::get_default()->set_accels_for_action(name, accels);
     std::replace(name.begin(), name.end(), '.', '*');
     if (m_Config.exists("Keybindings"))
     {
@@ -434,30 +447,58 @@ void SettingsManager::load_keybindings()
 
             m_Keybindings.emplace_back(action_name, accels);
         }
+
+#ifdef HAVE_LIBPEAS
+        // Add plugin actions if the user hasn't set a binding
+        for (auto& p : Application::get_default()->get_plugin_manager().get_window_plugins())
+        {
+            std::string action_name{ "win." + p->get_action_name() };
+            std::string saved_action_name{ action_name };
+            // Saved actions replace . with * (libconfig doesn't allow for . in key names)
+            std::replace(saved_action_name.begin(), saved_action_name.end(), '.', '*');
+            std::vector<Glib::ustring> accels;
+
+            if (saved_binds.exists(saved_action_name))
+            {
+                for (auto& accel : saved_binds.lookup(saved_action_name))
+                    accels.emplace_back(static_cast<const char*>(accel));
+            }
+            else if (!p->get_action_accel().empty())
+            {
+                accels.emplace_back(p->get_action_accel());
+            }
+
+            if (!action_name.empty())
+            {
+                // Check if any of the plugin accels are already in use by a base action
+                bool has_collision{ std::find_if(m_Keybindings.begin(),
+                                                 m_Keybindings.end(),
+                                                 [&](const auto& k) {
+                                                     return std::find_first_of(k.second.begin(),
+                                                                               k.second.end(),
+                                                                               accels.begin(),
+                                                                               accels.end()) !=
+                                                            k.second.end();
+                                                 }) != m_Keybindings.end() };
+
+                if (!has_collision)
+                {
+                    m_Keybindings.emplace_back(action_name, accels);
+                }
+                // If there was a collision we need to set this to a blank vector so it shows up in
+                // the keybinding edtior
+                else
+                {
+                    m_Keybindings.emplace_back(action_name, std::vector<Glib::ustring>{});
+                }
+            }
+        }
+#endif // HAVE_LIBPEAS
     }
     else
     {
         m_Keybindings = m_DefaultKeybindings;
     }
-#ifdef HAVE_LIBPEAS
-    // Add plugin actions if the user hasn't set a binding
-    const auto& plugins{ Application::get_default()->get_plugin_manager().get_window_plugins() };
-    for (auto& p : plugins)
-    {
-        // Plugins cannot set default keybindings, but if that functionality were to be added
-        // we would have to look for binding collisions in m_Keybindings here
-        if (!p->get_action_name().empty())
-        {
-            bool has_binding{ std::find_if(
-                                  m_Keybindings.begin(), m_Keybindings.end(), [&](const auto& k) {
-                                      return k.first == p->get_action_name();
-                                  }) != m_Keybindings.end() };
-            if (!has_binding)
-                m_Keybindings.emplace_back("win." + p->get_action_name(),
-                                           std::vector<Glib::ustring>{});
-        }
-    }
-#endif // HAVE_LIBPEAS
 }
 
 void SettingsManager::save_sites()

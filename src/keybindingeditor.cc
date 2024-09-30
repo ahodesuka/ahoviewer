@@ -229,6 +229,26 @@ void KeybindingEditor::update_accel(const Glib::ustring& accel)
                                    m_CurrentBindings != m_CurrentDefaults);
 }
 
+void KeybindingEditor::clear_keybinding(const Glib::ustring& binding)
+{
+    auto pair{ Settings.clear_keybinding(binding) };
+    if (!pair.first.empty())
+    {
+        Gtk::TreeIter it;
+        m_Model->foreach_iter([&](const Gtk::TreeIter& iter) {
+            Glib::ustring s{ iter->get_value(m_Columns.name) };
+            if (s == pair.first)
+            {
+                it = iter;
+                return true;
+            }
+            return false;
+        });
+        it->set_value(m_Columns.bindings_readable, get_readable_bindings(pair.second));
+        it->set_value(m_Columns.bindings, pair.second);
+    }
+}
+
 void KeybindingEditor::on_show_accel_dialog()
 {
     m_AccelModel->clear();
@@ -294,7 +314,7 @@ void KeybindingEditor::on_save_clicked()
     auto binding{ m_AccelCombo->get_active()->get_value(m_ComboColumns.binding) };
     if (m_CurrentAccel.empty())
     {
-        m_CurrentBindings.push_back(std::move(binding));
+        m_CurrentBindings.emplace_back(binding);
     }
     else
     {
@@ -304,25 +324,7 @@ void KeybindingEditor::on_save_clicked()
 
     std::sort(m_CurrentBindings.begin(), m_CurrentBindings.end());
 
-    // Remove the binding from any action using it already
-    // No real UI feedback when this happens, could maybe expand and scroll to the row
-    auto pair{ Settings.clear_keybinding(binding) };
-    if (!pair.first.empty())
-    {
-        Gtk::TreeIter it;
-        m_Model->foreach_iter([&](const Gtk::TreeIter& iter) {
-            Glib::ustring s{ iter->get_value(m_Columns.name) };
-            if (s == pair.first)
-            {
-                it = iter;
-                return true;
-            }
-            return false;
-        });
-        it->set_value(m_Columns.bindings_readable, get_readable_bindings(pair.second));
-        it->set_value(m_Columns.bindings, pair.second);
-    }
-
+    clear_keybinding(binding);
     Settings.set_keybindings(m_CurrentAction, m_CurrentBindings);
 
     auto iter{ m_TreeView->get_selection()->get_selected() };
@@ -336,10 +338,9 @@ void KeybindingEditor::on_save_clicked()
 void KeybindingEditor::on_delete_clicked()
 {
     auto it{ m_AccelCombo->get_active() };
-    auto is_placeholder{ it->get_value(m_ComboColumns.binding).empty() };
 
     // Remove it from the settings and update treeview
-    if (!is_placeholder)
+    if (!it->get_value(m_ComboColumns.binding).empty())
     {
         m_CurrentBindings.erase(
             std::find(m_CurrentBindings.begin(), m_CurrentBindings.end(), m_CurrentAccel));
@@ -360,6 +361,11 @@ void KeybindingEditor::on_delete_clicked()
 
 void KeybindingEditor::on_default_clicked()
 {
+    auto accels{ Settings.get_default_keybindings(m_CurrentAction) };
+
+    for (auto& accel : accels)
+        clear_keybinding(accel);
+
     Settings.reset_keybindings(m_CurrentAction);
     auto iter{ m_TreeView->get_selection()->get_selected() };
     iter->set_value(m_Columns.bindings_readable, get_readable_bindings(m_CurrentDefaults));
