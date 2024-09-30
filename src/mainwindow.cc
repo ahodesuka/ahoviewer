@@ -11,7 +11,6 @@ using namespace AhoViewer;
 #include "preferences.h"
 #include "settings.h"
 #include "statusbar.h"
-#include "tempdir.h"
 #include "thumbnailbar.h"
 
 #include <glibmm/i18n.h>
@@ -202,16 +201,18 @@ void MainWindow::open_file(const Glib::ustring& path, const int index, const boo
     // Check if this image list is already loaded,
     // no point in reloading it since there are dirwatches setup
     // just change the current image in the list
-    auto iter{ std::find_if(m_LocalImageList->begin(),
-                            m_LocalImageList->end(),
-                            [&absolute_path](const auto i) { return i->get_path() == absolute_path; }) };
+    auto iter{ std::find_if(
+        m_LocalImageList->begin(), m_LocalImageList->end(), [&absolute_path](const auto i) {
+            return i->get_path() == absolute_path;
+        }) };
     if (iter != m_LocalImageList->end())
     {
         m_LocalImageList->set_current(iter - m_LocalImageList->begin());
         set_active_imagelist(m_LocalImageList);
     }
     // Dont waste time re-extracting the archive just go to the first image
-    else if (m_LocalImageList->from_archive() && absolute_path == m_LocalImageList->get_archive().get_path())
+    else if (m_LocalImageList->from_archive() &&
+             absolute_path == m_LocalImageList->get_archive().get_path())
     {
         m_LocalImageList->go_first();
         set_active_imagelist(m_LocalImageList);
@@ -334,7 +335,7 @@ void MainWindow::on_size_allocate(Gtk::Allocation& alloc)
 bool MainWindow::on_delete_event(GdkEventAny* e)
 {
     bool r{ Gtk::ApplicationWindow::on_delete_event(e) };
-    on_close();
+    quit();
 
     return r;
 }
