@@ -1,4 +1,7 @@
 #include "tagentry.h"
+
+#include <algorithm>
+#include <cctype>
 using namespace AhoViewer::Booru;
 
 TagEntry::TagEntry(BaseObjectType* cobj, const Glib::RefPtr<Gtk::Builder>& bldr) : Gtk::Entry(cobj)
@@ -63,7 +66,7 @@ void TagEntry::on_text_changed()
     std::string key{ pos == std::string::npos ? get_text().substr(0, spos + 1)
                                               : get_text().substr(pos + 1, spos - pos) };
 
-    if (key.empty())
+    if (key.empty() || std::all_of(key.begin(), key.end(), isspace))
         return;
 
     if (key.back() == ' ')
