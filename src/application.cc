@@ -82,8 +82,6 @@ void init_gnutls_locks()
 #include <gst/gst.h>
 #endif // HAVE_GSTREAMER
 
-extern const char* const ahoviewer_version;
-
 Application::Application()
     : Gtk::Application{ "com.github.ahodesuka.ahoviewer", Gio::APPLICATION_HANDLES_OPEN },
       m_RecentMenu(RecentMenu::create())
@@ -275,7 +273,7 @@ void Application::on_startup()
     }
 
     m_AboutDialog->set_name(PACKAGE);
-    m_AboutDialog->set_version(ahoviewer_version);
+    m_AboutDialog->set_version(AHOVIEWER_VERSION);
     m_AboutDialog->set_copyright(u8"Copyright \u00A9 2013-2021 ahoka");
     m_AboutDialog->set_website(PACKAGE_URL);
     m_AboutDialog->set_website_label(PACKAGE_URL);

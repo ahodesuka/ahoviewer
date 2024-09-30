@@ -3,6 +3,7 @@ gnome = import('gnome')
 conf = configuration_data()
 conf.set_quoted('AHOVIEWER_DATADIR', datadir)
 conf.set_quoted('AHOVIEWER_PREFIX', prefix)
+conf.set_quoted('AHOVIEWER_VERSION', '@VCS_TAG@')
 conf.set_quoted('PACKAGE', meson.project_name())
 conf.set_quoted('PACKAGE_URL', project_url)
 conf.set_quoted('PACKAGE_BUGREPORT', project_bugreport)
@@ -124,14 +125,20 @@ if libzip.found()
   conf.set('HAVE_LIBZIP', 1)
 endif
 
-# Falls back to project version when there's no .git directory, but still outputs a "fatal" error
-# message (which can just be ignored since it doesn't actually stop the configuring process)
-version_h = vcs_tag(
-  command : ['git', 'describe', '--dirty'],
-  input : 'version.h.in',
-  output : 'version.h',
+config_h_in = configure_file(
+  output : 'config.h.in',
+  configuration : conf,
 )
-deps += declare_dependency(sources: version_h)
+
+config_h = declare_dependency(
+  sources: vcs_tag(
+    command : ['git', 'describe', '--dirty'],
+    input : config_h_in,
+    output : 'config.h',
+    fallback : meson.project_version(),
+  )
+)
+deps += config_h
 
 resources = gnome.compile_resources(
   'resources', 'ahoviewer.gresource.xml'
@@ -145,11 +152,6 @@ if host_machine.system() == 'windows'
     )
   resources += import('windows').compile_resources(ahoviewer_rc)
 endif
-
-configure_file(
-  output : 'config.h',
-  configuration : conf,
-)
 
 sources += [
   resources,
@@ -184,7 +186,6 @@ sources += [
   'statusbar.cc',
   'thumbnailbar.cc',
   'util.cc',
-  'version.cc',
   'videobox.cc',
 ]
 

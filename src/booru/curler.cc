@@ -3,7 +3,6 @@ using namespace AhoViewer::Booru;
 
 #include "config.h"
 #include "imagefetcher.h"
-#include "version.h"
 
 // Used for looking closer at what libcurl is doing
 // set it to 1 with CXXFLAGS and prepare to be spammed
