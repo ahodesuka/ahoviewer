@@ -7,6 +7,7 @@ using namespace AhoViewer;
 #include "mainwindow.h"
 #include "preferences.h"
 #include "settings.h"
+#include "version.h"
 
 #ifdef HAVE_LIBPEAS
 #include "plugin/manager.h"

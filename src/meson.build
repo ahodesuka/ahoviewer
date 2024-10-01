@@ -3,7 +3,6 @@ gnome = import('gnome')
 conf = configuration_data()
 conf.set_quoted('AHOVIEWER_DATADIR', datadir)
 conf.set_quoted('AHOVIEWER_PREFIX', prefix)
-conf.set_quoted('AHOVIEWER_VERSION', '@VCS_TAG@')
 conf.set_quoted('PACKAGE', meson.project_name())
 conf.set_quoted('PACKAGE_URL', project_url)
 conf.set_quoted('PACKAGE_BUGREPORT', project_bugreport)
@@ -125,20 +124,26 @@ if libzip.found()
   conf.set('HAVE_LIBZIP', 1)
 endif
 
-config_h_in = configure_file(
-  output : 'config.h.in',
+configure_file(
+  output : 'config.h',
   configuration : conf,
 )
 
-config_h = declare_dependency(
+version_conf = configuration_data()
+version_conf.set_quoted('AHOVIEWER_VERSION', '@VCS_TAG@')
+version_h_in = configure_file(
+  output : 'version.h.in',
+  configuration : version_conf,
+)
+
+deps += declare_dependency(
   sources: vcs_tag(
     command : ['git', 'describe', '--dirty'],
-    input : config_h_in,
-    output : 'config.h',
+    input : version_h_in,
+    output : 'version.h',
     fallback : meson.project_version(),
   )
 )
-deps += config_h
 
 resources = gnome.compile_resources(
   'resources', 'ahoviewer.gresource.xml'
