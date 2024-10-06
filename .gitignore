@@ -6,6 +6,8 @@ vgdump
 **/.vscode
 .cache/
 .clangd
+.github/unrar/mingw*
+.github/unrar/unrar*
 gtk.suppression
 compile_commands.json
 run-clang-tidy.py
