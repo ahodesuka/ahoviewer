@@ -1,40 +1,36 @@
 _realname=unrar
 pkgbase=mingw-w64-${_realname}
-pkgname=("${MINGW_PACKAGE_PREFIX}-${_realname}")
-pkgver=7.0.9
+pkgname="${MINGW_PACKAGE_PREFIX}-${_realname}"
+pkgver=6.1.4
 pkgrel=1
-pkgdesc='The RAR uncompression program (mingw-w64)'
-arch=(any)
-mingw_arch=('mingw32' 'mingw64' 'ucrt64' 'clang64' 'clang32' 'clangarm64')
-url='https://www.rarlab.com/rar_add.htm'
-license=('custom')
+arch=('any')
+mingw_arch=('mingw32' 'mingw64' 'ucrt64' 'clang64')
+url="https://www.rarlab.com/rar_add.htm"
+license=("custom")
+options=('strip' 'staticlibs')
+makedepends=("${MINGW_PACKAGE_PREFIX}-gcc")
 depends=("${MINGW_PACKAGE_PREFIX}-gcc-libs")
-makedepends=("${MINGW_PACKAGE_PREFIX}-cc")
 source=("https://www.rarlab.com/rar/unrarsrc-${pkgver}.tar.gz"
-        0001-fix-makefile.patch
-        0002-fix-redefinition.patch
-        0003-workaround-comsupp-library.patch)
-sha256sums=('505c13f9e4c54c01546f2e29b2fcc2d7fabc856a060b81e5cdfe6012a9198326'
-            'b0372a589d4b9fb5d3e7373c2b2e1cee1444ae49d6eb8a58847e8b7ee3e30d48'
-            '9882f163dfbf04ad6946e99690799bb5de50894688fbe3f3df00e5c54f74e0b2'
-            '707726b9280d7c929012e0c1d0af26b9fc86b8f3cb13ecd6c867e735adf722ba')
+        'build-dll.patch')
+sha256sums=('c0ed58629243961c3f1ec90c08b11ff93261e568dbfdce2bf3b759ee7a4a3b7c'
+            'c5d04090129df2e06b376a11a62acf8948bedf0033c95d3287aff6e3e980ca91')
 
 prepare() {
   cd ${_realname}
-  patch -p1 -i "${srcdir}/0001-fix-makefile.patch"
-  patch -p1 -i "${srcdir}/0002-fix-redefinition.patch"
-  patch -p1 -i "${srcdir}/0003-workaround-comsupp-library.patch"
+
+  patch -p1 -i ${srcdir}/build-dll.patch
 }
 
 build() {
   cd ${_realname}
-  make lib
+  LIBS="${MINGW_PREFIX}/lib/libpowrprof.a" make lib CXXFLAGS="${CXXFLAGS}"
 }
 
 package() {
-  cd ${_realname}
+  cd "${srcdir}/${_realname}"
+
   install -Dm755 libunrar.dll "${pkgdir}${MINGW_PREFIX}/bin/libunrar.dll"
   install -Dm755 libunrar.dll.a "${pkgdir}${MINGW_PREFIX}/lib/libunrar.dll.a"
   install -Dm644 dll.hpp "${pkgdir}${MINGW_PREFIX}/include/unrar/dll.hpp"
-  install -Dm644 license.txt "${pkgdir}${MINGW_PREFIX}/share/licenses/${_realname}/LICENSE"
+  install -Dm644 ${srcdir}/${_realname}/license.txt "${pkgdir}${MINGW_PREFIX}/share/licenses/${_realname}/LICENSE"
 }

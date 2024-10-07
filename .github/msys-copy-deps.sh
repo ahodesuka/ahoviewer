@@ -18,13 +18,14 @@ done 10<$SCRIPT_DIR/msys-deps-list.tmp
 
 rm $SCRIPT_DIR/msys-deps-list.tmp
 
-cp -v $MSYSTEM_PREFIX/bin/libssl-1_1-x64.dll .
-cp -v $MSYSTEM_PREFIX/bin/libcrypto-1_1-x64.dll .
+mkdir -p lib/gdk-pixbuf-2.0/2.10.0/loaders
+cp -v $MSYSTEM_PREFIX/lib/gdk-pixbuf-2.0/2.10.0/loaders/libpixbufloader-*.dll lib/gdk-pixbuf-2.0/2.10.0/loaders
+
 cp -v $MSYSTEM_PREFIX/bin/libunrar.dll .
 
-cp $MSYSTEM_PREFIX/bin/gdbus.exe .
-cp $MSYSTEM_PREFIX/bin/gspawn-win64-helper.exe .
-cp $MSYSTEM_PREFIX/bin/gspawn-win64-helper-console.exe .
+cp -v $MSYSTEM_PREFIX/bin/gdbus.exe .
+cp -v $MSYSTEM_PREFIX/bin/gspawn-win64-helper.exe .
+cp -v $MSYSTEM_PREFIX/bin/gspawn-win64-helper-console.exe .
 
 cp /usr/ssl/certs/ca-bundle.crt .
 
