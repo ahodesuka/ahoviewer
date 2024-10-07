@@ -97,7 +97,8 @@ VideoBox::VideoBox(BaseObjectType* cobj, const Glib::RefPtr<Gtk::Builder>& bldr)
     GstElement* glsinkbin{ nullptr };
     if (!gtksink)
     {
-        gtksink = gst_element_factory_make("gtksink", "gtksink");
+        gtksink   = gst_element_factory_make("gtksink", "gtksink");
+        glsinkbin = gtksink;
     }
     else
     {
