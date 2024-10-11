@@ -863,9 +863,17 @@ Site::parse_post_data(unsigned char* data, const size_t size)
                     // DANBOORU_V2 provides dates in the format "%FT%T%Ez"
                     if (m_Type == Type::DANBOORU_V2)
                     {
-                        std::string input{ date };
-                        std::istringstream stream{ input };
-                        stream >> date::parse("%FT%T%Ez", t);
+                        std::istringstream stream{ date };
+                        // If the user is using a danbooru API key with the timezone set to UTC
+                        // the date format provided does not include any timezone offset
+                        if (date.back() == 'Z')
+                        {
+                            stream >> date::parse("%FT%TZ", t);
+                        }
+                        else
+                        {
+                            stream >> date::parse("%FT%T%Ez", t);
+                        }
 
                         if (stream.fail())
                             std::cerr << "Failed to parse date '" << date << "' on site " << m_Name
