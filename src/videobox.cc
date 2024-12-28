@@ -60,8 +60,11 @@ gboolean VideoBox::bus_cb(GstBus*, GstMessage* msg, void* userp)
 #endif // HAVE_GSTREAMER
 
 VideoBox::VideoBox(BaseObjectType* cobj, const Glib::RefPtr<Gtk::Builder>& bldr)
-    : Gtk::Overlay{ cobj },
+    : Gtk::Overlay{ cobj }
+#ifdef HAVE_GSTREAMER
+      ,
       m_Mute{ Settings.get_bool("Mute") }
+#endif // HAVE_GSTREAMER
 {
     bldr->get_widget("VideoBox::ControlRevealer", m_ControlRevealer);
     bldr->get_widget("VideoBox::PlayPauseButton", m_PlayPauseButton);
@@ -79,7 +82,7 @@ VideoBox::VideoBox(BaseObjectType* cobj, const Glib::RefPtr<Gtk::Builder>& bldr)
         "vaapih264dec",    "vaapimpeg2dec",  "vaapivc1dec",
 #ifdef _WIN32
         "d3d11h264dec",    "d3d11h265dec",   "d3d11vp8dec", "d3d11vp9dec",
-#endif
+#endif // _WIN32
     };
     GstRegistry* plugins_register{ gst_registry_get() };
 
@@ -292,6 +295,7 @@ void VideoBox::start()
 
 bool VideoBox::hide_controls(bool skip_timeout)
 {
+#ifdef HAVE_GSTREAMER
     m_HideConn.disconnect();
     // Don't hide if the cursor is currently inside the control widget
     if (m_HoveringControls)
@@ -306,6 +310,7 @@ bool VideoBox::hide_controls(bool skip_timeout)
         skip_timeout ? 0 : 500);
 
     m_ShowControls = false;
+#endif // HAVE_GSTREAMER
 
     return true;
 }

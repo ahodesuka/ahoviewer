@@ -22,7 +22,9 @@ namespace AhoViewer
         std::tuple<bool, int, int> load_file(const std::string& path);
         void start();
 
+#ifdef HAVE_GSTREAMER
         bool is_playing() const { return m_Playing; };
+#endif // HAVE_GSTREAMER
 
         bool hide_controls(bool skip_timeout = false);
 
@@ -31,9 +33,9 @@ namespace AhoViewer
         Gtk::Button *m_PlayPauseButton, *m_VolumeButton;
         Gtk::Label *m_PosLabel, *m_DurLabel;
         Gtk::Scale *m_VolumeScale, *m_SeekScale;
+#ifdef HAVE_GSTREAMER
         Gtk::Widget* m_GstWidget;
 
-#ifdef HAVE_GSTREAMER
         static gboolean bus_cb(GstBus*, GstMessage* msg, void* userp);
         static void on_about_to_finish(GstElement*, void* userp);
 
