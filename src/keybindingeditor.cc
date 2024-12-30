@@ -50,6 +50,7 @@ KeybindingEditor::KeybindingEditor(BaseObjectType* cobj, const Glib::RefPtr<Gtk:
         it->set_value(m_Columns.name, std::string{ cat.data() });
         cat_iters.emplace(cat, it);
     }
+#ifdef HAVE_LIBPEAS
     static constexpr auto is_plugin_loaded = [&](const std::string& action_name) {
         const auto& plugins{
             Application::get_default()->get_plugin_manager().get_window_plugins()
@@ -59,6 +60,7 @@ KeybindingEditor::KeybindingEditor(BaseObjectType* cobj, const Glib::RefPtr<Gtk:
         }) };
         return it != plugins.end();
     };
+#endif // HAVE_LIBPEAS
 
     // Add the keybindings to the treeview model
     for (const auto& [name, binds] : Settings.get_keybindings())

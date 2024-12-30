@@ -133,7 +133,7 @@ std::shared_ptr<Site> Site::create(const std::string& name,
 #else  // !HAVE_LIBPEAS
         auto t{ get_type_from_url(url) };
         if (t != Type::UNKNOWN)
-            return std::make_shared<SharedSite>(name, url, t, user, pass, use_samples);
+            return std::make_shared<SharedSite>(name, url, t, user, pass, use_samples, user_agent);
 #endif // !HAVE_LIBPEAS
     }
     else

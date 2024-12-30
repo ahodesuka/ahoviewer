@@ -431,10 +431,12 @@ void ImageBox::draw_image(bool scroll)
             error = true;
         }
     }
+#ifdef HAVE_GSTREAMER
     else if (!m_VideoBox->is_playing())
     {
         std::tie(error, m_OrigWidth, m_OrigHeight) = m_VideoBox->load_file(m_Image->get_path());
     }
+#endif // HAVE_GSTREAMER
 
     if (error)
     {
@@ -473,6 +475,7 @@ void ImageBox::draw_image(bool scroll)
         m_GtkImage->set(temp_pixbuf);
         m_Overlay->show();
     }
+#ifdef HAVE_GSTREAMER
     else
     {
         if (!m_VideoBox->is_playing())
@@ -485,6 +488,7 @@ void ImageBox::draw_image(bool scroll)
         m_Fixed->move(*m_VideoBox, x, y);
         m_VideoBox->set_size_request(w, h);
     }
+#endif // HAVE_GSTREAMER
 
     // Reset the scrollbar positions
     if (scroll || m_FirstDraw)
@@ -523,9 +527,11 @@ void ImageBox::draw_image(bool scroll)
         m_ZoomScroll = false;
     }
 
+#ifdef HAVE_GSTREAMER
     // Finally start playing the video
     if (!error && !m_VideoBox->is_playing() && m_Image->is_webm())
         m_VideoBox->start();
+#endif // HAVE_GSTREAMER
 
     get_window()->thaw_updates();
     m_RedrawQueued = false;
@@ -684,10 +690,14 @@ bool ImageBox::advance_slideshow()
 
 bool ImageBox::on_cursor_timeout()
 {
+#ifdef HAVE_GSTREAMER
     // hide_controls will return false if the cursor is over the controls widget
     // meaning we should not hide the cursor
     if (!m_VideoBox->is_playing() || m_VideoBox->hide_controls(true))
         m_Fixed->get_window()->set_cursor(m_BlankCursor);
+#else  // !HAVE_GSTREAMER
+    m_Fixed->get_window()->set_cursor(m_BlankCursor);
+#endif // !HAVE_GSTREAMER
 
     return false;
 }
